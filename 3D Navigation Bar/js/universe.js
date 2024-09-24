@@ -2,7 +2,6 @@
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000); // Set background to black (space)
 
-// Camera setup for a more immersive experience
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
 camera.position.set(0, 250, 400);
 camera.lookAt(scene.position); // Focus on the center of the solar system
@@ -24,6 +23,7 @@ controls.update();
 
 // Texture Loader
 const textureLoader = new THREE.TextureLoader();
+const loadTexture = path => textureLoader.load(path);
 
 // Lighting Setup
 const light = new THREE.PointLight(0xffffff, 2, 500);
@@ -37,18 +37,11 @@ const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 const clickableObjects = []; // Store clickable objects (planets and the sun)
 
-// Utility function to load a texture
-function loadTexture(path) {
-    return textureLoader.load(path);
-}
-
 // Function to create a planet with textures, orbit, and rotation properties
-function createPlanet(size, texturePath, bumpMapPath, bumpScale, distanceFromCenter, speed, phaseOffset, rotationSpeed) {
+function createPlanet(size, texturePath, distanceFromCenter, speed, phaseOffset, rotationSpeed) {
     const geometry = new THREE.SphereGeometry(size, 64, 64);
     const material = new THREE.MeshStandardMaterial({
         map: loadTexture(texturePath),
-        bumpMap: bumpMapPath ? loadTexture(bumpMapPath) : null,
-        bumpScale: bumpScale
     });
     const planet = new THREE.Mesh(geometry, material);
 
@@ -64,14 +57,15 @@ function createPlanet(size, texturePath, bumpMapPath, bumpScale, distanceFromCen
     return planet;
 }
 
-// Function to create an atmosphere around planets
+// Function to create an atmosphere around a planet
 function createAtmosphere(planet, size, color, intensity) {
     const atmosphereGeometry = new THREE.SphereGeometry(size, 64, 64);
     const atmosphereMaterial = new THREE.MeshBasicMaterial({
         color: color,
         transparent: true,
         opacity: intensity,
-        blending: THREE.AdditiveBlending
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide, // Ensure the atmosphere is visible from all sides
     });
     const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
     planet.add(atmosphere);
@@ -84,84 +78,75 @@ function addSaturnRings(planet, innerRadius, outerRadius, texturePath) {
         map: loadTexture(texturePath),
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 0.8
+        opacity: 0.8,
     });
     const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-    ring.rotation.x = Math.PI / 2;
-    ring.rotation.z = THREE.Math.degToRad(27);
-    ring.position.y = 0.1;
+    ring.rotation.x = Math.PI / 2; // Align rings horizontally
     planet.add(ring);
 }
 
-// Planets creation (stored in an array for easy management)
+// Planets creation
 const planets = [
-    createPlanet(3, 'assets/mercury.jpg', null, 0, 50, 0.01, Math.random() * Math.PI * 2, 0.001),
-    createPlanet(4, 'assets/venus.jpg', null, 0, 100, 0.008, Math.random() * Math.PI * 2, 0.0009),
-    createPlanet(4.5, 'assets/earth.jpg', 'assets/earth_bump.jpg', 0.1, 150, 0.006, Math.random() * Math.PI * 2, 0.001),
-    createPlanet(3.5, 'assets/mars.jpg', 'assets/mars_bump.jpg', 0.05, 200, 0.004, Math.random() * Math.PI * 2, 0.0007),
-    createPlanet(25, 'assets/jupiter.jpg', null, 0, 400, 0.002, Math.random() * Math.PI * 2, 0.0005),
-    createPlanet(12, 'assets/uranus.jpg', null, 0, 800, 0.0015, Math.random() * Math.PI * 2, 0.0002),
-    createPlanet(12, 'assets/neptune.jpg', null, 0, 1000, 0.0012, Math.random() * Math.PI * 2, 0.0002),
+    createPlanet(3, 'assets/mercury.jpg', 50, 0.01, Math.random() * Math.PI * 2, 0.001),
+    createPlanet(4, 'assets/venus.jpg', 100, 0.008, Math.random() * Math.PI * 2, 0.0009),
+    createPlanet(4.5, 'assets/earth.jpg', 150, 0.006, Math.random() * Math.PI * 2, 0.001), // Earth without bump map
+    createPlanet(3.5, 'assets/mars.jpg', 200, 0.004, Math.random() * Math.PI * 2, 0.0007),
+    createPlanet(25, 'assets/jupiter.jpg', 250, 0.001, Math.random() * Math.PI * 2, 0.0005),
+    createPlanet(12, 'assets/uranus.jpg', 800, 0.0015, Math.random() * Math.PI * 2, 0.0002),
+    createPlanet(12, 'assets/neptune.jpg', 1000, 0.0012, Math.random() * Math.PI * 2, 0.0002),
 ];
 
-// Add Saturn with rings
-const saturn = createPlanet(20, 'assets/saturn.jpg', null, 0, 600, 0.0018, Math.random() * Math.PI * 2, 0.0003);
+// Apply atmosphere to Earth, Venus, and Mars
+createAtmosphere(planets[2], 4.8, 0x88ccff, 0.2); // Earth atmosphere
+createAtmosphere(planets[1], 4.5, 0xffcc88, 0.2); // Venus atmosphere
+createAtmosphere(planets[3], 4.0, 0xff5533, 0.15); // Mars atmosphere
+
+// Create Saturn and its rings
+const saturn = createPlanet(20, 'assets/saturn.jpg', 600, 0.0018, Math.random() * Math.PI * 2, 0.0003);
+planets.push(saturn);
 addSaturnRings(saturn, 23, 30, 'assets/saturn_ring.png');
 
-// Add atmospheres to Earth and Venus
-createAtmosphere(planets[2], 4.8, 0x88ccff, 0.2);
-createAtmosphere(planets[1], 4.5, 0xffcc88, 0.2);
-
-// Sun creation with rotation speed
-const sun = new THREE.Mesh(new THREE.SphereGeometry(30, 64, 64), new THREE.MeshBasicMaterial({ map: loadTexture('assets/sun.jpg') }));
+// Sun creation
+const sun = new THREE.Mesh(new THREE.SphereGeometry(40, 64, 64), new THREE.MeshBasicMaterial({ map: loadTexture('assets/sun.jpg') }));
 sun.rotationSpeed = 0.0005;
 scene.add(sun);
-clickableObjects.push(sun);
+clickableObjects.push(sun); // Make the sun clickable
 
-// Lens flare for the Sun
-const flareTexture = loadTexture('assets/lensflare0.png');
-const flareMaterial = new THREE.SpriteMaterial({
-    map: flareTexture,
-    transparent: true,
-    blending: THREE.AdditiveBlending,
-    opacity: 0.05
-});
-const lensFlare = new THREE.Sprite(flareMaterial);
-lensFlare.scale.set(100, 100, 1);
-sun.add(lensFlare);
+// Function to create and add the lens flare
+function createLensFlare() {
+    const flareTexture = loadTexture('assets/lensflare0.png');
+    const flareMaterial = new THREE.SpriteMaterial({
+        map: flareTexture,
+        transparent: true,
+        opacity: 0.4,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+    });
 
-// Handle clicks and touch events on planets using raycasting
-function handleInteraction(event) {
-    event.preventDefault(); // Prevent any unwanted default behavior
-    if (event.type === 'touchstart') {
-        mouse.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
-    } else if (event.type === 'click') {
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    }
-
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(clickableObjects);
-    if (intersects.length > 0) {
-        const planet = intersects[0].object;
-        console.log(`You clicked on ${planet.name}`);
-        window.open('https://awabja.github.io', '_blank');
-    }
+    const lensFlare = new THREE.Sprite(flareMaterial);
+    lensFlare.scale.set(100, 100, 1);
+    sun.add(lensFlare);
 }
 
-// Add event listeners for both click and touchstart
-window.addEventListener('click', handleInteraction);
-window.addEventListener('touchstart', handleInteraction);
+// Create the initial lens flare
+createLensFlare();
 
-// Starfield with blue glow effect (adjusted for density)
+// Update the lens flare on visibility change
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        const existingFlare = sun.children.find(child => child instanceof THREE.Sprite);
+        if (!existingFlare) {
+            createLensFlare(); // Recreate the lens flare if it's missing
+        }
+    }
+});
+
+// Starfield function to add stars to the scene
 function createStarField() {
     const starsGeometry = new THREE.BufferGeometry();
     const starVertices = [];
     const starColors = [];
-
-    // Adjust star density based on device type
-    const numberOfStars = window.innerWidth < 768 ? 10000 : 10000; // Adjust star count for mobile and desktop
+    const numberOfStars = 10000;
 
     for (let i = 0; i < numberOfStars; i++) {
         const x = (Math.random() - 0.5) * 8000;
@@ -179,11 +164,11 @@ function createStarField() {
 
     const starsMaterial = new THREE.PointsMaterial({
         map: loadTexture('assets/blue_star_glow.png'),
-        size: window.innerWidth < 768 ? 20 : 36, // Adjust star size for mobile
+        size: 36,
         vertexColors: true,
         transparent: true,
         blending: THREE.AdditiveBlending,
-        depthWrite: false
+        depthWrite: false,
     });
 
     const stars = new THREE.Points(starsGeometry, starsMaterial);
@@ -199,15 +184,47 @@ const nebulaPlane = new THREE.Mesh(
         transparent: true,
         opacity: 0.4,
         blending: THREE.AdditiveBlending,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
     })
 );
 nebulaPlane.position.set(0, 300, -1500);
 nebulaPlane.scale.set(0.4, 0.4, 0.4);
 scene.add(nebulaPlane);
 
-// Planet orbit and rotation animation
-function animatePlanets() {
+// Function to handle raycasting for mouse and touch interactions
+function handleInteraction(event) {
+    event.preventDefault(); // Prevent default behavior
+
+    if (event.type === 'touchstart') {
+        mouse.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
+    } else {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    }
+
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(clickableObjects);
+
+    if (intersects.length > 0) {
+        const clickedObject = intersects[0].object;
+        console.log(`You clicked on ${clickedObject.name}`);
+        window.open('https://awabja.github.io', '_blank'); // Redirect to your website
+    }
+}
+
+// Add event listeners for both click and touchstart
+window.addEventListener('click', handleInteraction);
+window.addEventListener('touchend', handleInteraction); // Robust for touch end
+
+// Main animation loop
+function animate() {
+    requestAnimationFrame(animate);
+
+    // Update controls and render the scene
+    controls.update();
+
+    // Update planet positions and rotations
     const time = Date.now() * 0.005;
     planets.forEach(planet => {
         planet.position.set(
@@ -217,18 +234,15 @@ function animatePlanets() {
         );
         planet.rotation.y += planet.rotationSpeed;
     });
-    sun.rotation.y += sun.rotationSpeed;
-}
 
-// Main animation loop
-let nebulaMovement = 0;
-function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    animatePlanets();
-    nebulaPlane.position.x = Math.sin(nebulaMovement += 0.001) * 50;
+    // Rotate the sun
+    sun.rotation.y += sun.rotationSpeed;
+
+    // Render the scene
     renderer.render(scene, camera);
 }
+
+// Start the animation loop
 animate();
 
 // Handle window resize
