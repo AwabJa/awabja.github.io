@@ -5,7 +5,6 @@ body, html {
     height: 100%;
     font-family: Arial, sans-serif;
     background: black; /* Space background */
-    touch-action: none; /* Prevent the default scrolling and zooming behavior */
     overscroll-behavior: none; /* Prevent pull-to-refresh on mobile browsers */
 }
 
@@ -16,4 +15,11 @@ body, html {
     text-align: center;
     color: white;
     font-size: 18px;
+    pointer-events: none; /* Allow interactions to pass through */
+}
+
+canvas {
+    display: block; /* Removes any inline spacing */
+    width: 100%;
+    height: 100%;
 }
