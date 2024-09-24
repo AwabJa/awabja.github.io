@@ -1,10 +1,12 @@
 body, html {
     margin: 0;
     padding: 0;
-    overflow: hidden;
+    overflow: hidden; /* Prevent scrolling */
     height: 100%;
     font-family: Arial, sans-serif;
     background: black; /* Space background */
+    touch-action: none; /* Prevent the default scrolling and zooming behavior */
+    overscroll-behavior: none; /* Prevent pull-to-refresh on mobile browsers */
 }
 
 #info {
