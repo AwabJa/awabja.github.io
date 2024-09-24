@@ -9,6 +9,7 @@ camera.lookAt(scene.position); // Focus on the center of the solar system
 
 // WebGL Renderer setup
 const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio); // Adjust for device pixel ratio
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
@@ -31,7 +32,7 @@ light.castShadow = true;
 scene.add(light);
 scene.add(new THREE.AmbientLight(0x404040, 1)); // Ambient Light for overall scene visibility
 
-// Raycaster and Mouse for object interaction
+// Raycaster and Mouse/Touch for object interaction
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 const clickableObjects = []; // Store clickable objects (planets and the sun)
@@ -122,17 +123,24 @@ const flareTexture = loadTexture('assets/lensflare0.png');
 const flareMaterial = new THREE.SpriteMaterial({
     map: flareTexture,
     transparent: true,
-    blending: THREE.NormalBlending,
-    opacity: 0.1
+    blending: THREE.AdditiveBlending,
+    opacity: 0.05
 });
 const lensFlare = new THREE.Sprite(flareMaterial);
-lensFlare.scale.set(150, 150, 1);
+lensFlare.scale.set(100, 100, 1);
 sun.add(lensFlare);
 
-// Handle clicks on planets using raycasting
-window.addEventListener('click', (event) => {
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+// Handle clicks and touch events on planets using raycasting
+function handleInteraction(event) {
+    event.preventDefault(); // Prevent any unwanted default behavior
+    if (event.type === 'touchstart') {
+        mouse.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
+    } else if (event.type === 'click') {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    }
+
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(clickableObjects);
     if (intersects.length > 0) {
@@ -140,15 +148,22 @@ window.addEventListener('click', (event) => {
         console.log(`You clicked on ${planet.name}`);
         window.open('https://awabja.github.io', '_blank');
     }
-});
+}
 
-// Starfield with blue glow effect
+// Add event listeners for both click and touchstart
+window.addEventListener('click', handleInteraction);
+window.addEventListener('touchstart', handleInteraction);
+
+// Starfield with blue glow effect (adjusted for density)
 function createStarField() {
     const starsGeometry = new THREE.BufferGeometry();
     const starVertices = [];
     const starColors = [];
 
-    for (let i = 0; i < 10000; i++) {
+    // Adjust star density based on device type
+    const numberOfStars = window.innerWidth < 768 ? 10000 : 10000; // Adjust star count for mobile and desktop
+
+    for (let i = 0; i < numberOfStars; i++) {
         const x = (Math.random() - 0.5) * 8000;
         const y = (Math.random() - 0.5) * 8000;
         const z = (Math.random() - 0.5) * 8000;
@@ -164,7 +179,7 @@ function createStarField() {
 
     const starsMaterial = new THREE.PointsMaterial({
         map: loadTexture('assets/blue_star_glow.png'),
-        size: 18,
+        size: window.innerWidth < 768 ? 20 : 36, // Adjust star size for mobile
         vertexColors: true,
         transparent: true,
         blending: THREE.AdditiveBlending,
