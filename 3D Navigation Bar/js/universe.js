@@ -195,13 +195,9 @@ scene.add(nebulaPlane);
 function handleInteraction(event) {
     event.preventDefault(); // Prevent default behavior
 
-    if (event.type === 'touchstart') {
-        mouse.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
-    } else {
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    }
+    // Use pointer events for consistent handling
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(clickableObjects);
@@ -213,9 +209,14 @@ function handleInteraction(event) {
     }
 }
 
-// Add event listeners for both click and touchstart
-window.addEventListener('click', handleInteraction);
+// Add event listeners for pointer events for robust handling
+window.addEventListener('pointerdown', handleInteraction);
 window.addEventListener('touchend', handleInteraction); // Robust for touch end
+
+// Prevent scrolling on touchmove
+window.addEventListener('touchmove', (event) => {
+    event.preventDefault(); // Prevent scrolling
+}, { passive: false });
 
 // Main animation loop
 function animate() {
