@@ -1,0 +1,17 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100%;
+    font-family: Arial, sans-serif;
+    background: black; /* Space background */
+}
+
+#info {
+    position: absolute;
+    top: 10px;
+    width: 100%;
+    text-align: center;
+    color: white;
+    font-size: 18px;
+}
