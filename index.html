@@ -2,47 +2,68 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Landing Page</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Landing Page | Awab J. Ahmed</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- CSS Stylesheet -->
-    <link rel="stylesheet" href="styles.css">
+    <meta name="description" content="Awab J. Ahmed's portfolio showcasing minimalistic designs with a futuristic touch. Explore my projects and get in touch.">
+    
+    <!-- Content Security Policy (Minimal Version) -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' https://cdnjs.cloudflare.com;
+        style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline';
+        font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
+        img-src 'self' data:;
+        connect-src 'self';
+        object-src 'none';">
+
+    <!-- Referrer Policy -->
+    <meta name="referrer" content="no-referrer">
+
+    <!-- Favicon -->
+    <link rel="icon" href="path_to_your_favicon.ico" type="image/x-icon">
+    
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:300,400&display=swap" rel="stylesheet">
+    
     <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- CSS Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
     <!-- Navigation Bar -->
     <nav>
-        <div class="logo">A.J.<span>| Sleek Solutions</span></div>
+        <div class="logo">A.J.<span> | Sleek Solutions</span></div>
         <div class="menu">
             <ul>
-                <li><a href="#home">Home</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#contact">Contact</a></li>
-                <li><a href="https://www.codecademy.com/profiles/BB99a" target="_blank">Certifications</a></li>
+                <li><a href="#home" aria-label="Go to Home section">Home</a></li>
+                <li><a href="#about" aria-label="Go to About section">About</a></li>
+                <li><a href="#contact" aria-label="Go to Contact section">Contact</a></li>
+                <li><a href="https://www.codecademy.com/profiles/BB99a" target="_blank" rel="noopener noreferrer" aria-label="View my certifications on Codecademy">Certifications</a></li>
             </ul>
         </div>
         <!-- Social Icons -->
         <div class="social-icons">
-            <a href="https://www.linkedin.com/in/awabjahmed/" target="_blank" aria-label="LinkedIn">
+            <a href="https://www.linkedin.com/in/awabjahmed/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
                 <i class="fab fa-linkedin"></i>
             </a>
-            <a href="https://github.com/AwabJa" target="_blank" aria-label="GitHub">
+            <a href="https://github.com/AwabJa" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
                 <i class="fab fa-github"></i>
             </a>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <section id="home" class="hero">
+    <section id="home" class="hero" aria-labelledby="welcome-text">
         <div class="hero-content">
             <h1 id="welcome-text">Welcome</h1>
             <p>Experience a new era of design and innovation.</p>
-            <a href="3D%20Navigation%20Bar/index.html" class="btn">😎 Explore</a>
+            <a href="3D%20Navigation%20Bar/index.html" class="btn" aria-label="Explore 3D Navigation Bar">😎 Explore</a>
         </div>
-		
+        
         <!-- Animated Background -->
         <div id="particles-js"></div>
         <div id="animated-bg"></div>
@@ -57,19 +78,16 @@
     <!-- Contact Section -->
     <section id="contact" class="contact">
         <h2>Send Me an Email</h2>
-        <p>You can reach me directly at <a href="mailto:awabjahmed@gmail.com">awabjahmed@gmail.com</a></p>
+        <p>You can reach me directly at <a href="mailto:awabjahmed@gmail.com" aria-label="Send an email to Awab">awabjahmed@gmail.com</a></p>
     </section>
 
     <!-- JavaScript -->
     <script src="script.js" defer></script>
 
-<!-- Footer -->
-<footer>
-    <p>&copy; 2024 Awab J. Ahmed | Empowering innovation, one byte at a time. All Rights Reserved.</p>
-</footer>
-
-
-
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 Awab J. Ahmed | Empowering innovation, one byte at a time. All Rights Reserved.</p>
+    </footer>
 
 </body>
 </html>
