@@ -5,6 +5,7 @@
     box-sizing: border-box;
 }
 
+
 /* Root Variables */
 :root {
     --primary-color: #0f0f0f;
@@ -15,9 +16,16 @@
 
 /* Body Styles */
 body {
-    font-family: var(--font-family);
-    background-color: var(--primary-color);
-    color: var(--text-color);
+    padding-bottom: 0; /* Keep the original size */
+}
+
+/* When the user scrolls near the bottom, increase padding subtly */
+@media screen and (max-width: 768px) {
+    body:after {
+        content: '';
+        display: block;
+        height: 5px; /* Subtle bottom space for iOS scrolling issues */
+    }
 }
 
 /* Navigation Bar */
