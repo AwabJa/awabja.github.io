@@ -100,6 +100,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    // Handle touch events for mobile devices (especially for iOS)
+    window.addEventListener('touchstart', handleScroll);
+
     // Change welcome text every 3 seconds
     setInterval(changeWelcomeText, 3000);
 });
