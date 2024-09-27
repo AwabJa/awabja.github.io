@@ -5,6 +5,7 @@
     box-sizing: border-box;
 }
 
+
 /* Root Variables */
 :root {
     --primary-color: #0f0f0f;
@@ -36,19 +37,16 @@ body::after {
 
 /* Navigation Bar */
 nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
     position: fixed;
     top: 0;
     width: 100%;
-    background-color: rgba(15, 15, 15, 0.9);
     z-index: 1000;
-    transition: transform 0.4s ease-in-out, background-color 0.3s ease;
+    transition: transform 0.4s ease-in-out, background-color 0.3s ease-in-out;
     -webkit-backface-visibility: hidden;  /* Prevent flickering on iOS */
     -webkit-transform: translateZ(0);     /* Force hardware acceleration */
+    will-change: transform;
 }
+
 
 nav .logo {
     font-size: 24px;
