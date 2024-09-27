@@ -232,9 +232,15 @@ body {
     overflow-x: hidden;
 }
 
+/* Anchor Styles */
 a {
     text-decoration: none;
     color: inherit;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0); /* Disable iOS tap highlight */
+}
+
+a:focus, a:active {
+    outline: none; /* Remove focus outline */
 }
 
 /* Navigation Bar */
@@ -471,7 +477,7 @@ footer a:hover {
 
 /* Footer */
 footer {
-    padding: 15px 8px; /* Reduced padding by 1/4 */
+    padding: 14px 8px; /* Reduced padding by 1/4 */
     text-align: center;
     background-color: #0a0a0a;
     color: var(--text-color);
