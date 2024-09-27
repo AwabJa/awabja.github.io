@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let lastScrollTop = 0;
     let isNavVisible = true;
     let currentIndex = 0;
+    let isScrolling = false;
 
     // Function to change the welcome text
     const changeWelcomeText = () => {
@@ -18,27 +19,25 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    let isScrolling = false;
-
     const handleScroll = () => {
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
 
-        // Determine if we're scrolling down or up
-        if (scrollTop > lastScrollTop) {
+        // Add a slight delay to prevent fast toggle flicker
+        if (scrollTop > lastScrollTop && scrollTop > 100) {
             // Scrolling down
             if (isNavVisible) {
                 nav.classList.add('hidden');
                 isNavVisible = false;
             }
-        } else {
-            // Scrolling up
+        } else if (scrollTop < lastScrollTop || scrollTop <= 100) {
+            // Scrolling up or near top
             if (!isNavVisible) {
                 nav.classList.remove('hidden');
                 isNavVisible = true;
             }
         }
 
-        // Add background color when scrolled down past 50px
+        // Add or remove the 'scrolled' class based on scroll position
         if (scrollTop > 50) {
             nav.classList.add('scrolled');
         } else {
@@ -49,7 +48,6 @@ document.addEventListener("DOMContentLoaded", () => {
         isScrolling = false;
     };
 
-    // Throttling the scroll event using requestAnimationFrame for smoother performance
     const onScroll = () => {
         if (!isScrolling) {
             window.requestAnimationFrame(handleScroll);
@@ -57,10 +55,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // Add event listener for the scroll event
+    // Add event listener for scroll
     window.addEventListener("scroll", onScroll);
 
-    // Resize event listener for iOS address bar handling
+    // Resize event listener to handle iOS address bar resizing issue
     window.addEventListener("resize", () => {
         lastScrollTop = window.pageYOffset || document.documentElement.scrollTop;
     });
