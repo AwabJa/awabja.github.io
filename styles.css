@@ -5,6 +5,12 @@
     box-sizing: border-box;
 }
 
+/* Prevent bounce effect and improve touch handling on iOS */
+html, body {
+    overscroll-behavior: none;
+    touch-action: manipulation;
+}
+
 /* Root Variables */
 :root {
     --primary-color: #0f0f0f;
