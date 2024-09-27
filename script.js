@@ -90,6 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     behavior: "smooth" // Smooth scroll behavior
                 });
             }
+            link.blur();  // Remove focus from the clicked link to avoid stuck highlight
             handleAnchorNavigation();
         });
     });
