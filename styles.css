@@ -47,7 +47,6 @@ nav {
     will-change: transform;
 }
 
-
 nav .logo {
     font-size: 24px;
     color: var(--accent-color);
@@ -70,12 +69,32 @@ nav .menu ul li a {
     color: var(--text-color);
     text-decoration: none;
     font-size: 16px;
+    position: relative; /* Ensure the pseudo-element positions correctly */
     transition: color 0.3s;
 }
 
+/* Hover and Active State for Text Color */
 nav .menu ul li a:hover,
 nav .menu ul li a.active {
     color: var(--accent-color);
+}
+
+/* Hover and Active State for Underline Effect */
+nav .menu ul li a::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    background-color: var(--accent-color); /* Use the accent color for the underline */
+    bottom: -5px; /* Position it slightly below the link */
+    left: 0;
+    transition: width 0.4s ease;
+}
+
+/* Extend underline on hover or active */
+nav .menu ul li a:hover::after,
+nav .menu ul li a.active::after {
+    width: 100%;
 }
 
 
