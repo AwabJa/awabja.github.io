@@ -16,7 +16,16 @@
 
 /* Body Styles */
 body {
-    padding-bottom: 0; /* Keep the original size */
+    padding-bottom: 5px; /* Minimal padding to maintain the bounce effect */
+    -webkit-overflow-scrolling: touch; /* Keep smooth scrolling on iOS */
+    overscroll-behavior-y: contain; /* Ensure the page doesn't scroll beyond the bounds */
+}
+body::after {
+    content: '';
+    display: block;
+    height: 2px; /* Just enough buffer for iOS, without noticeable padding */
+}
+
 }
 
 /* When the user scrolls near the bottom, increase padding subtly */
