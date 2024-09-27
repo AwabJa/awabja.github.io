@@ -517,11 +517,6 @@ footer a:hover {
     }
 }
 
-
-
-
-
-
 /* Animations */
 @keyframes fadeIn {
     from {
@@ -532,19 +527,12 @@ footer a:hover {
     }
 }
 
-/* Scroll Events */
-window.addEventListener('scroll', function() {
-    const nav = document.querySelector('nav');
-    nav.classList.toggle('scrolled', window.scrollY > 50);
-});
-
 /* Social Icons */
 .social-icons {
     display: flex;
     gap: 15px;/* Adjust space between icons */
     margin-left: 22px;/* Adjust space between social icons and other navbar elements */
 }
-
 
 .social-icons a {
     color: var(--text-color);
