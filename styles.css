@@ -32,6 +32,8 @@ nav {
     background-color: rgba(15, 15, 15, 0.9);
     z-index: 1000;
     transition: transform 0.4s ease-in-out, background-color 0.3s ease;
+    -webkit-backface-visibility: hidden;  /* Prevent flickering on iOS */
+    -webkit-transform: translateZ(0);     /* Force hardware acceleration */
 }
 
 nav .logo {
@@ -63,6 +65,7 @@ nav .menu ul li a:hover,
 nav .menu ul li a.active {
     color: var(--accent-color);
 }
+
 
 /* Hero Section */
 .hero {
