@@ -6,8 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
     ];
 
     let lastScrollTop = 0;
-    let isNavVisible = true; // Track if the navbar is currently visible
-    let currentIndex = 0; // For cycling through translations
+    let isNavVisible = true;
+    let currentIndex = 0;
 
     // Function to change the welcome text
     const changeWelcomeText = () => {
@@ -18,9 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // Throttle scroll handling for better performance
-    let scrollTimeout;
-    
+    let isScrolling = false;
+
     const handleScroll = () => {
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
 
@@ -46,17 +45,20 @@ document.addEventListener("DOMContentLoaded", () => {
             nav.classList.remove('scrolled');
         }
 
-        lastScrollTop = Math.max(scrollTop, 0); // Avoid negative scroll values
+        lastScrollTop = Math.max(scrollTop, 0);
+        isScrolling = false;
     };
 
-    // Debounce the scroll event
-    const debounceScroll = () => {
-        if (scrollTimeout) clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(handleScroll, 50); // Delay the scroll event handling for better performance
+    // Throttling the scroll event using requestAnimationFrame for smoother performance
+    const onScroll = () => {
+        if (!isScrolling) {
+            window.requestAnimationFrame(handleScroll);
+            isScrolling = true;
+        }
     };
 
     // Add event listener for the scroll event
-    window.addEventListener("scroll", debounceScroll);
+    window.addEventListener("scroll", onScroll);
 
     // Resize event listener for iOS address bar handling
     window.addEventListener("resize", () => {
