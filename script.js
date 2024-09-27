@@ -27,21 +27,34 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Scroll event handler to hide and show the navigation bar
     let lastScrollTop = 0;
+    let isTicking = false;
 
     window.addEventListener("scroll", function() {
         const nav = document.querySelector("nav");
         let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        let windowHeight = window.innerHeight;
+        let documentHeight = document.documentElement.scrollHeight;
 
-        // Scrolling down, hide the nav
-        if (scrollTop > lastScrollTop) {
-            nav.style.transform = "translateY(-100%)"; // Slide up
-        } 
-        // Scrolling up, show the nav
-        else {
-            nav.style.transform = "translateY(0)"; // Slide back into view
+        // Check if we're at the bottom or top of the page
+        const isAtBottom = scrollTop + windowHeight >= documentHeight - 10; // Buffer to avoid bounce
+        const isAtTop = scrollTop <= 0;
+
+        if (!isTicking) {
+            window.requestAnimationFrame(() => {
+                // Hide nav when scrolling down, except at the bottom or top
+                if (scrollTop > lastScrollTop && !isAtBottom && !isAtTop) {
+                    nav.style.transform = "translateY(-100%)"; // Slide up
+                } 
+                // Show nav when scrolling up, except at the bottom or top
+                else if (scrollTop < lastScrollTop && !isAtBottom && !isAtTop) {
+                    nav.style.transform = "translateY(0)"; // Slide back into view
+                }
+
+                // Update lastScrollTop and prevent negative values
+                lastScrollTop = Math.max(scrollTop, 0);
+                isTicking = false;
+            });
+            isTicking = true;
         }
-
-        // Update lastScrollTop with the current scroll position
-        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; // Avoid negative values
     });
 });
