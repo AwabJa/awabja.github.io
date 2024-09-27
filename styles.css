@@ -233,15 +233,26 @@ nav {
     padding: 20px 5%;
     background: transparent;
     position: fixed;
+    top: 0;
     width: 100%;
     z-index: 1000;
-    transition: transform 0.4s ease-in-out, background-color 0.3s ease;
-    will-change: transform; /* Hint for smoother transitions */
+    box-shadow: none; /* Ensure no shadow is applied */
+    transition: transform 0.2s ease-in-out, background-color 0.3s ease-in-out; /* Smoother transition */
+    will-change: transform, background-color;
 }
 
+/* Sticky navigation background with more transparency */
 nav.scrolled {
-    background-color: rgba(10, 10, 10, 0.9);
+    background-color: rgba(10, 10, 10, 0.5); /* More transparent */
+    transform: translateY(0);
+    box-shadow: none; /* Remove shadow when scrolled */
 }
+
+/* Hidden navbar when scrolling down */
+nav.hidden {
+    transform: translateY(-100%);
+}
+
 
 .logo {
     font-size: 1.8rem;
