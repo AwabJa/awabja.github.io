@@ -90,7 +90,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     behavior: "smooth" // Smooth scroll behavior
                 });
             }
-            link.blur();  // Remove focus from the clicked link to avoid stuck highlight
+            
+            // Remove focus to prevent stuck highlight on iOS
+            setTimeout(() => {
+                link.blur();  // Remove focus from the clicked link
+                link.classList.remove('active'); // Ensure the active class is removed if present
+            }, 300);  // Slight delay to allow smooth scrolling to complete
             handleAnchorNavigation();
         });
     });
