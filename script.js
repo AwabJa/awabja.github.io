@@ -27,18 +27,21 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Scroll event handler to hide and show the navigation bar
     let lastScrollTop = 0;
+
     window.addEventListener("scroll", function() {
         const nav = document.querySelector("nav");
         let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
 
+        // Scrolling down, hide the nav
         if (scrollTop > lastScrollTop) {
-            // Scrolling down, hide nav
             nav.style.transform = "translateY(-100%)"; // Slide up
-        } else {
-            // Scrolling up, show nav
+        } 
+        // Scrolling up, show the nav
+        else {
             nav.style.transform = "translateY(0)"; // Slide back into view
         }
-        lastScrollTop = scrollTop;
+
+        // Update lastScrollTop with the current scroll position
+        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; // Avoid negative values
     });
 });
-
