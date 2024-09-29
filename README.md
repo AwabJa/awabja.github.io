@@ -1,6 +1,6 @@
 A.J. Ahmed | Portfolio
 
-Welcome to my personal portfolio, where I showcase a range of projects focusing on minimalistic designs with a futuristic touch. This site is designed to give you a glimpse into my skills, creativity, and approach to solving design challenges, with projects that demonstrate my expertise in development and user experience.
+Welcome to my personal portfolio, where I explore minimalistic and futuristic designs through both creativity and code. Each project here represents my effort to bring concepts to life, from the initial design to the final development. Along the way, I’ve continued learning and refining my skills in both design and technology, aiming to create experiences that are both visually appealing and functional. I invite you to explore my work and see how I strive to balance aesthetics with thoughtful development
 
 ✨ About Me
 
