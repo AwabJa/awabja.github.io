@@ -35,6 +35,7 @@ Key Features:
 
 Explore the project [Landing Page](https://awabja.github.io/).
 
+---
 
 Featured Project: 3D Navigation Bar
 
