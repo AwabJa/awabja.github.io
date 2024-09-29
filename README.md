@@ -10,9 +10,24 @@ Explore my portfolio to see how I approach modern web design and development cha
 
 📁 Featured Projects: 
 
-- 3D Navigation Bar
+Featured Project: Landing Page
 
-The 3D Navigation Bar project showcases my ability to blend design innovation with interactive user experiences. In this project, users can navigate a 3D space with clickable planets, each leading to different sections or external links, offering an immersive and engaging experience.
+A minimalist, futuristic landing page designed and coded from scratch using HTML, CSS, and JavaScript.
+
+**Key Features:**
+
+- Custom, Responsive Design:** Optimized for all devices, with smooth navigation and clean layout.
+- Interactive Elements: Includes a sticky navigation bar and animated hero section for enhanced user engagement.
+- Futuristic Aesthetics: Dark theme with vibrant accent colors and sleek animations.
+- Accessible & User-Friendly: Designed for smooth interaction, easy navigation, and compatibility across screen sizes.
+
+🛠️ Technologies Used:
+
+- HTML5: For semantic and well-structured code.
+- CSS3: For modern styling, animations, and responsive designs.
+- JavaScript: To add interactivity and enhance user engagement.
+
+Explore the project [here](https://awabja.github.io/).
 
 Key Features:
 
