@@ -20,7 +20,7 @@ A minimalist, futuristic landing page designed and coded from scratch using HTML
 - CSS3: For modern styling, animations, and responsive designs.
 - JavaScript: To add interactivity and enhance user engagement.
 
-Explore the project [here](https://awabja.github.io/).
+Explore the project [Landing Page](https://awabja.github.io/).
 
 
 Featured Project: 3D Navigation Bar
