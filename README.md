@@ -11,7 +11,7 @@ Explore my portfolio to see how I approach modern web design and development cha
 
 Featured Project: Landing Page
 
-A minimalist, futuristic landing page designed and coded from scratch using HTML, CSS, and JavaScript.
+A minimalist, futuristic landing page designed and coded from scratch.
 
 🛠️ Technologies Used:
 
@@ -21,7 +21,7 @@ A minimalist, futuristic landing page designed and coded from scratch using HTML
 
 Key Features:
 
-Minimalistic and Futuristic Design**: Focus on simplicity with a sleek, modern aesthetic, combining advanced technology with clean design.
+Minimalistic and Futuristic Design: Focus on simplicity with a sleek, modern aesthetic, combining advanced technology with clean design.
 Responsive Layout: Ensures seamless experience across devices with specific optimizations for mobile screens.
 - Sticky Navigation Bar: A fixed navigation bar that becomes semi-transparent when scrolling, ensuring accessibility.
 - Hero Section with Animated Background: Centralized welcome text, accompanied by an animated background and call-to-action button.
