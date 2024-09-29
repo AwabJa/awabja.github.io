@@ -4,7 +4,7 @@ Welcome to my personal portfolio, where I explore minimalistic and futuristic de
 
 ✨ About Me
 
-I am passionate about merging simplicity and advanced technology to create sleek, functional, and forward-thinking designs. With a deep understanding of web development and UX/UI principles, I aim to bring innovation and aesthetic appeal to every project I work on.
+I am passionate about merging simplicity and advanced technology to create sleek, functional, and forward-thinking designs. With a deep understanding of development and UX/UI principles, I aim to bring innovation and aesthetic appeal to every project I work on.
 
 Explore my portfolio to see how I approach modern web design and development challenges.
 
