@@ -1,8 +1,8 @@
-A.J. Ahmed | Portfolio
+**A.J. Ahmed** | **Portfolio**
 
 Welcome to my personal portfolio, where I showcase my journey in design and development through creativity and code. Each project here represents my effort to bring concepts to life, from the initial design to the final development. Along the way, I’ve continued learning and refining my skills in both design and technology, aiming to create experiences that are both visually appealing and functional. I invite you to explore my work and see how I strive to balance aesthetics with thoughtful development.
 
-✨ About Me
+✨ **About Me**
 
 Passionate about integrating advanced technology to create sleek and functional designs, I leverage my understanding of development and UX/UI principles to contribute innovation and aesthetic appeal to each project I work on.
 Explore my portfolio to see how I approach modern web design and development challenges.
