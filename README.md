@@ -14,13 +14,6 @@ Featured Project: Landing Page
 
 A minimalist, futuristic landing page designed and coded from scratch using HTML, CSS, and JavaScript.
 
-**Key Features:**
-
-- Custom, Responsive Design: Optimized for all devices, with smooth navigation and clean layout.
-- Interactive Elements: Includes a sticky navigation bar and animated hero section for enhanced user engagement.
-- Futuristic Aesthetics: Dark theme with vibrant accent colors and sleek animations.
-- Accessible & User-Friendly: Designed for smooth interaction, easy navigation, and compatibility across screen sizes.
-
 🛠️ Technologies Used:
 
 - HTML5: For semantic and well-structured code.
@@ -28,6 +21,16 @@ A minimalist, futuristic landing page designed and coded from scratch using HTML
 - JavaScript: To add interactivity and enhance user engagement.
 
 Explore the project [here](https://awabja.github.io/).
+
+Featured Project: 3D Navigation Bar
+
+A dynamic 3D navigation bar featuring clickable, rotating planets. Offering an interactive and visually engaging experience.
+
+🛠️ Technologies Used
+
+- HTML5 for semantic and well-structured code.
+- CSS3 for modern styling, including animations and responsive designs.
+- JavaScript for adding interactivity and enhancing user engagement.
 
 Key Features:
 
@@ -39,11 +42,7 @@ You can explore this project by visiting the following link:
 
 [3D Navigation Bar Demo](https://awabja.github.io/3D%20Navigation%20Bar/index.html)
 
-🛠️ Technologies Used
 
-- HTML5 for semantic and well-structured code.
-- CSS3 for modern styling, including animations and responsive designs.
-- JavaScript for adding interactivity and enhancing user engagement.
 
 📞 Get in Touch
 
