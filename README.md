@@ -19,6 +19,18 @@ A minimalist, futuristic landing page designed and coded from scratch using HTML
 - CSS3: For modern styling, animations, and responsive designs.
 - JavaScript: To add interactivity and enhance user engagement.
 
+Key Features:
+
+Minimalistic and Futuristic Design**: Focus on simplicity with a sleek, modern aesthetic, combining advanced technology with clean design.
+Responsive Layout: Ensures seamless experience across devices with specific optimizations for mobile screens.
+- Sticky Navigation Bar: A fixed navigation bar that becomes semi-transparent when scrolling, ensuring accessibility.
+- Hero Section with Animated Background: Centralized welcome text, accompanied by an animated background and call-to-action button.
+- Social Media Integration: Direct links to LinkedIn, GitHub, and other platforms with custom SVG icons for branding consistency.
+- Interactive Hover Effects: Links and buttons include hover animations and smooth transitions for a more engaging user experience.
+- Custom Fonts: Use of 'Roboto Mono' for a modern, technical look.
+- Content Security Policy (CSP): Ensures security by limiting external content sources.
+- Optimized for SEO and Accessibility: Features like alt text for links and proper aria-labels for better web accessibility.
+  
 Explore the project [Landing Page](https://awabja.github.io/).
 
 
