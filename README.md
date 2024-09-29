@@ -9,7 +9,7 @@ Explore my portfolio to see how I approach modern web design and development cha
 
 ---
 
-📁 Featured Projects:
+📁 **Featured Projects**:
 
 **Featured Project**: Landing Page
 
