@@ -38,8 +38,8 @@ Key Features:
 - Responsive 3D Design: Smooth, animated transitions with dynamic, clickable elements (planets) that provide intuitive navigation across devices.
 - Interactive User Experience: Each planet in the 3D space is clickable, redirecting users to specific content or external links for a seamless interactive journey.
 - Futuristic Aesthetics: Minimalistic yet visually impactful, leveraging the latest design trends, advanced lighting, and sleek animations for a modern, high-tech feel.
-
-Explore the project [3D Navigation Bar]([https://awabja.github.io/](https://awabja.github.io/3D%20Navigation%20Bar/index.html)).
+  
+[Explore the project 3D Navigation Bar](https://awabja.github.io/3D%20Navigation%20Bar/index.html)
 
 
 📞 Get in Touch
