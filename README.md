@@ -22,6 +22,7 @@ A minimalist, futuristic landing page designed and coded from scratch using HTML
 
 Explore the project [here](https://awabja.github.io/).
 
+
 Featured Project: 3D Navigation Bar
 
 A dynamic 3D navigation bar featuring clickable, rotating planets. Offering an interactive and visually engaging experience.
@@ -41,7 +42,6 @@ Key Features:
 You can explore this project by visiting the following link:
 
 [3D Navigation Bar Demo](https://awabja.github.io/3D%20Navigation%20Bar/index.html)
-
 
 
 📞 Get in Touch
