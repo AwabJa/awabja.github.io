@@ -57,7 +57,7 @@ Explore the project [3D Navigation Bar](https://awabja.github.io/3D%20Navigation
 
 ---
 
-📞 Get in Touch
+📞 **Get in Touch**
 
 I am always open to discussing new opportunities and projects. If you're looking for someone with a strong background in Information Technology, modern web development, and a passion for elegant design solutions, feel free to reach out!
 
@@ -65,6 +65,6 @@ I am always open to discussing new opportunities and projects. If you're looking
 
 ---
 
-📜 License
+📜 **License**
 
 This portfolio and all its contents are All Rights Reserved. It is hosted on GitHub for viewing purposes only and not available for download or reproduction without permission.
