@@ -16,7 +16,7 @@ A minimalist, futuristic landing page designed and coded from scratch using HTML
 
 **Key Features:**
 
-- Custom, Responsive Design:** Optimized for all devices, with smooth navigation and clean layout.
+- Custom, Responsive Design: Optimized for all devices, with smooth navigation and clean layout.
 - Interactive Elements: Includes a sticky navigation bar and animated hero section for enhanced user engagement.
 - Futuristic Aesthetics: Dark theme with vibrant accent colors and sleek animations.
 - Accessible & User-Friendly: Designed for smooth interaction, easy navigation, and compatibility across screen sizes.
