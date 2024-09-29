@@ -11,7 +11,7 @@ Explore my portfolio to see how I approach modern web design and development cha
 
 📁 Featured Projects:
 
-Featured Project: Landing Page
+**Featured Project**: Landing Page
 
 A thoughtfully designed and coded landing page created from scratch.
 
@@ -37,7 +37,7 @@ Explore the project [Landing Page](https://awabja.github.io/).
 
 ---
 
-Featured Project: 3D Navigation Bar
+**Featured Project**: 3D Navigation Bar
 
 A dynamic navigation bar featuring clickable, rotating planets, offering an interactive and visually engaging experience.
 
