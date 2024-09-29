@@ -7,6 +7,8 @@ Welcome to my personal portfolio, where I showcase my journey in design and deve
 Passionate about integrating advanced technology to create sleek and functional designs, I leverage my understanding of development and UX/UI principles to contribute innovation and aesthetic appeal to each project I work on.
 Explore my portfolio to see how I approach modern web design and development challenges.
 
+---
+
 📁 Featured Projects:
 
 Featured Project: Landing Page
@@ -33,7 +35,6 @@ Key Features:
 
 Explore the project [Landing Page](https://awabja.github.io/).
 
----
 
 Featured Project: 3D Navigation Bar
 
