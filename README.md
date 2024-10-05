@@ -77,7 +77,7 @@ Key Features:
 
 🎮 Controls
 
-C: Crouch
+- C: Crouch
 - W/A/S/D: Move forward/left/backward/right
 - Mouse: Look around
 - Mouse Click: Shoot
