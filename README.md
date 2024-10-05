@@ -16,9 +16,9 @@ A thoughtfully designed and coded landing page created from scratch.
 
 🛠️ Technologies Used:
 
-- HTML5: For semantic and well-structured code.
-- CSS3: For modern styling, animations, and responsive designs.
-- JavaScript: To add interactivity and enhance user engagement.
+- HTML5
+- CSS3
+- JavaScript
 
 Key Features:
 
@@ -42,9 +42,10 @@ A dynamic navigation bar featuring clickable, rotating planets, offering an inte
 
 🛠️ Technologies Used
 
-- HTML5: For semantic and well-structured code.
-- CSS3: For modern styling, including animations and responsive designs.
-- JavaScript: For adding interactivity and enhancing user engagement.
+- JavaScript
+- Three.js
+- HTML/CSS
+- WebGL
 
 Key Features:
 
@@ -53,6 +54,36 @@ Key Features:
 - Modern Aesthetics: Visually impactful, leveraging the latest design trends, advanced lighting, and sleek animations.
 
 Explore the project [3D Navigation Bar](https://awabja.github.io/3D%20Navigation%20Bar/index.html)
+
+---
+
+Featured Project: Enzo 3D FPS
+
+This is my first attempt at building a 3D game, currently in its alpha state. Enzo 3D FPS is a simple first-person shooter where I'm learning the basics of movement, shooting, and enemy interactions. I'm growing along with the project, and thought I'd share these early stages.
+
+🛠️ Technologies Used
+
+- JavaScript
+- Three.js
+- HTML/CSS
+- WebGL
+
+Key Features:
+
+- Basic first-person movement controls
+- Shooting mechanics with simple projectiles
+- Enemy AI with surround behaviors
+- 3D environment with interactive elements
+
+🎮 Controls
+
+C: Crouch
+W/A/S/D: Move forward/left/backward/right
+Mouse: Look around
+Mouse Click: Shoot
+Spacebar: Jump
+Shift: Sprint
+
 
 ---
 
