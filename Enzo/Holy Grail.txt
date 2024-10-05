@@ -1,0 +1,24 @@
+Enzo - ALPHA
+
+Create a basic Three.js scene (set up scene, camera, renderer).    DONE
+
+Add lighting and environment (ambient light, directional light, ground, sky).   DONE
+
+Create a player (camera) with first-person controls (use PointerLockControls for camera 
+movement).    DONE
+
+Add collision detection (raycasting to detect intersections with objects). DONE
+
+Build a level/terrain (create walls, floors, or procedural terrain).  SKIPPED FOR LATER
+
+Add shooting mechanics (fire projectiles, raycasting for hit detection). DONE
+
+Add enemies and AI (use Three.js models for enemies, basic AI with movement or pathfinding). DONE
+
+Optimize performance (limit draw calls, frustum culling, texture sizes). NOT DONE
+
+Add HUD (Heads-Up Display) (using HTML/CSS for health, ammo, etc.). NOT DONE
+
+Display based Damage Numbers 
+
+Implement game loop and logic (handle player/enemy interactions, health, game over). NOT DONE
