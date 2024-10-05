@@ -78,11 +78,11 @@ Key Features:
 🎮 Controls
 
 C: Crouch
-W/A/S/D: Move forward/left/backward/right
-Mouse: Look around
-Mouse Click: Shoot
-Spacebar: Jump
-Shift: Sprint
+- W/A/S/D: Move forward/left/backward/right
+- Mouse: Look around
+- Mouse Click: Shoot
+- Spacebar: Jump
+- Shift: Sprint
 
 
 ---
