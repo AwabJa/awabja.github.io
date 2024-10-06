@@ -3,14 +3,14 @@ import { createEnemy, updateEnemies, enemies } from './enemies.js';
 import { Sky } from './objects/Sky.js';
 import { setupCamera } from './fpsCamera.js';
 import { setupMovement } from './movement.js';
-import { setupShootingEvents, updateProjectiles } from './shooting.js';
+import { setupShootingEvents } from './shooting.js'; // Removed updateProjectiles
 
 let hasEnteredFullscreen = false;
 let isShootingEnabled = false;
 let manualPointerUnlock = false;
 
 const gunOffset = new THREE.Vector3(0.2, -0.1, -0.5);
-const activeProjectiles = [];
+// const activeProjectiles = []; // Removed activeProjectiles
 
 // Event listener to handle click on the splash screen
 document.getElementById('splashScreen').addEventListener('click', () => {
@@ -27,7 +27,7 @@ document.getElementById('splashScreen').addEventListener('click', () => {
 document.addEventListener('pointerlockchange', () => {
     if (document.pointerLockElement) {
         isShootingEnabled = true;
-        setupShootingEvents(camera, scene, activeProjectiles, gunOffset);
+        setupShootingEvents(camera, scene, gunOffset); // Removed activeProjectiles
     } else {
         isShootingEnabled = false;
     }
@@ -218,7 +218,7 @@ function animate() {
     previousTime = currentTime;
 
     movement.updateMovement(delta);
-    updateProjectiles(scene, delta, activeProjectiles);
+    // updateProjectiles(scene, delta, activeProjectiles); // Removed this line
     updateEnemies(scene, delta, camera.position);
 
     const currentTimeOfDay = (Date.now() % (dayDurationInSeconds * 1000)) / (dayDurationInSeconds * 1000);
