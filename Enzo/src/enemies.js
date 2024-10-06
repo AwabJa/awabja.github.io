@@ -26,16 +26,15 @@ export function createEnemy(scene, position) {
         isChasing: false,
         isPatrolling: true, // Enemy will patrol by default
         patrolDirection: getRandomDirection(), // Random patrol direction
-        patrolSpeed: 1.2,  // Increased patrolling speed for more engagement
+        patrolSpeed: 1.2,  // Patrol speed
         patrolTime: 0,  // Timer for changing patrol direction
         patrolInterval: THREE.MathUtils.randFloat(1, 3), // More frequent patrol direction changes
         separationDistance: 4,  // Reduced minimum distance for tighter formations
         playerAvoidanceDistance: 3,  // Minimum distance to maintain from player
         originalColor: new THREE.Color(0xff0000),
         isHighlighted: false,
-        boundingBox: new THREE.Box3().setFromObject(enemy),  // Store bounding box for collision detection
+        highlightTime: 0, // Timer for how long the enemy stays highlighted
         stuckTime: 0,  // Timer to detect if enemy is stuck
-        orbitAngle: Math.random() * Math.PI * 2,  // Angle for circling behavior
         strafeDirection: Math.random() > 0.5 ? 1 : -1, // Random initial strafe direction (1 for right, -1 for left)
         isMarkedForRemoval: false, // Flag to prevent double removal
         velocityY: 0 // Velocity in the Y direction for simulating gravity
@@ -77,16 +76,20 @@ export function spawnMultipleEnemyGroups(scene, playerSpawnPosition, safeDistanc
 
 // Function to update enemies (chasing player, patrolling, respawning, etc.)
 export function updateEnemies(scene, delta, playerPosition) {
-    enemies.forEach((enemyData, index) => {
-        if (enemyData.isMarkedForRemoval) return; // Skip if enemy is marked for removal
+    // Iterate in reverse order to safely remove enemies during iteration
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        const enemyData = enemies[i];
+
+        if (enemyData.isMarkedForRemoval) {
+            // Remove the enemy from arrays and scene
+            enemies.splice(i, 1);
+            scene.remove(enemyData.object);
+            console.log(`Enemy fully removed from the scene.`);
+            continue;
+        }
 
         const enemy = enemyData.object;
         const distanceToPlayer = enemy.position.distanceTo(playerPosition);
-
-        // Update bounding box position less frequently
-        if (enemyData.isChasing || enemyData.isPatrolling) {
-            enemyData.boundingBox.setFromObject(enemy);  // Ensure bounding box is accurate only when moving
-        }
 
         // If player is close, the enemy starts chasing
         if (distanceToPlayer < 25 && distanceToPlayer > enemyData.playerAvoidanceDistance) {
@@ -124,6 +127,7 @@ export function updateEnemies(scene, delta, playerPosition) {
                 enemy.position.add(direction.multiplyScalar(3.5 * delta));
             }
 
+            // Handling enemy getting stuck
             if (direction.length() < 0.01) {
                 enemyData.stuckTime += delta;
             } else {
@@ -138,11 +142,6 @@ export function updateEnemies(scene, delta, playerPosition) {
             }
         }
 
-        // Apply separation force only during patrolling
-        if (enemyData.isPatrolling) {
-            applySeparationForce(enemyData, delta);
-        }
-
         // Apply gravity and ensure enemies stay above the ground
         enemyData.velocityY -= 9.8 * delta; // Gravity effect
         enemy.position.y += enemyData.velocityY * delta;
@@ -153,35 +152,18 @@ export function updateEnemies(scene, delta, playerPosition) {
 
         // Reset the enemy's color if highlighted for damage
         if (enemyData.isHighlighted) {
-            setTimeout(() => {
-                if (enemyData.isMarkedForRemoval) return;
+            enemyData.highlightTime -= delta;
+            if (enemyData.highlightTime <= 0) {
                 enemy.material.color.copy(enemyData.originalColor);
                 enemyData.isHighlighted = false;
-            }, 100);
+            }
         }
 
         // Remove the enemy if health is 0 or less
         if (enemyData.health <= 0) {
-            removeEnemy(scene, enemyData, index);
+            removeEnemy(scene, enemyData);
         }
-    });
-}
-
-// Apply separation force to prevent enemies from overlapping
-function applySeparationForce(enemyData, delta) {
-    const separationForce = new THREE.Vector3();
-    enemies.forEach((otherEnemyData) => {
-        if (otherEnemyData === enemyData || otherEnemyData.isMarkedForRemoval) return;
-
-        const otherEnemy = otherEnemyData.object;
-        const distance = enemyData.object.position.distanceTo(otherEnemy.position);
-
-        if (distance < enemyData.separationDistance) {
-            const directionAway = new THREE.Vector3().subVectors(enemyData.object.position, otherEnemy.position).normalize();
-            separationForce.add(directionAway.multiplyScalar(1.0));
-        }
-    });
-    enemyData.object.position.add(separationForce.multiplyScalar(delta));
+    }
 }
 
 // Helper function to check if the enemy is at a boundary
@@ -199,72 +181,63 @@ function getDynamicBoundaryLimit() {
     return Math.min(boundaryLimit, 50); // Set a fixed maximum boundary limit to avoid unintended behavior on extreme aspect ratios
 }
 
-// Remove the enemy from the scene and respawn after a delay
-function removeEnemy(scene, enemyData, index) {
-    if (enemyData.isMarkedForRemoval) return;
-    enemyData.isMarkedForRemoval = true;
-
-    console.log(`Removing enemy at index ${index}`);
-
-    setTimeout(() => {
-        scene.remove(enemyData.object);
-        shootableObjects.splice(shootableObjects.indexOf(enemyData.object), 1);
-        enemies.splice(index, 1);
-        console.log(`Enemy fully removed.`);
-
-        const respawnTime = 3000;
-        setTimeout(() => {
-            const respawnPosition = new THREE.Vector3(
-                THREE.MathUtils.randFloatSpread(100),
-                GROUND_LEVEL,
-                THREE.MathUtils.randFloatSpread(100)
-            );
-            spawnEnemyGroup(scene, respawnPosition, 1);
-        }, respawnTime);
-    }, 100);
-}
-
 // Function to apply damage to the enemy
 export function damageEnemy(scene, enemy, amount) {
     const enemyData = enemies.find(e => e.object === enemy);
 
     if (enemyData && !enemyData.isMarkedForRemoval) {
+        // Apply damage and update health
         enemyData.health = Math.max(0, enemyData.health - amount);
-        enemyData.isHighlighted = true;
-        enemyData.object.material.color.set(0xffff00);
+        enemyData.isHighlighted = true;  // Highlight enemy when damaged
+        enemyData.highlightTime = 0.1;   // Highlight duration in seconds (e.g., 0.1 seconds)
+        enemyData.object.material.color.set(0xffff00);  // Change color to indicate hit
 
         console.log(`Enemy damaged. Health: ${enemyData.health}`);
 
+        // If health is zero or below, mark for removal
         if (enemyData.health <= 0) {
             console.log(`Enemy killed, removing...`);
-            removeEnemy(scene, enemyData, enemies.indexOf(enemyData));
+
+            // Remove the enemy from shootableObjects array immediately
+            const objIndex = shootableObjects.indexOf(enemyData.object);
+            if (objIndex > -1) {
+                shootableObjects.splice(objIndex, 1);
+            }
+
+            // Mark the enemy for removal
+            removeEnemy(scene, enemyData);
         }
+
+        return true;  // Return true if enemy was found and damaged
     } else {
         console.log("Enemy not found or already marked for removal.");
+        return false;  // Return false if enemy was not found or already marked for removal
     }
 }
 
-// Collision detection between projectiles and enemies
-export function checkProjectileCollision(projectile, scene) {
-    const projectileBox = new THREE.Box3().setFromObject(projectile);
+// Remove the enemy from the scene and handle respawn
+export function removeEnemy(scene, enemyData) {
+    if (enemyData.isMarkedForRemoval) return;  // If already marked, avoid double removal
+    enemyData.isMarkedForRemoval = true;  // Mark the enemy as ready for removal
 
-    for (let i = enemies.length - 1; i >= 0; i--) {
-        const enemyData = enemies[i];
-        const enemyBox = enemyData.boundingBox;
+    console.log(`Removing enemy`);
 
-        if (projectileBox.intersectsBox(enemyBox)) {
-            console.log("Projectile hit enemy");
-            damageEnemy(scene, enemyData.object, 25);
-            setTimeout(() => {
-                scene.remove(projectile);
-            }, 100); // Add a small delay before removing the projectile for visual consistency
-            return true;
-        }
-    }
-    return false;
+    // Enemy will be removed from arrays and scene in updateEnemies
+
+    // Respawn logic to spawn new enemy after a delay
+    const respawnTime = 3000;  // Delay before respawning
+    setTimeout(() => {
+        const respawnPosition = new THREE.Vector3(
+            THREE.MathUtils.randFloatSpread(100),
+            GROUND_LEVEL,
+            THREE.MathUtils.randFloatSpread(100)
+        );
+        spawnEnemyGroup(scene, respawnPosition, 1);  // Respawn a new enemy
+    }, respawnTime);
 }
 
 // Function to get an array of enemy hitboxes for raycasting
 export function getEnemyHitboxes() {
-    return enemies.map(e => e.object);
+    // Return only active enemies that are not marked for removal
+    return enemies.filter(e => !e.isMarkedForRemoval).map(e => e.object);
 }
