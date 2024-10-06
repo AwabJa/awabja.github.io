@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enzo - UNDER DEVELOPMENT</title>
+    <title>ENZO - UNDER DEVELOPMENT</title>
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaina+2:wght@700&display=swap" rel="stylesheet">
@@ -11,22 +11,32 @@
 
     <!-- External Stylesheet -->
     <link rel="stylesheet" href="styles/style.css">
+    
+    <!-- Transparent Favicon to Prevent 404 -->
+    <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z/C/HwAFgwJ/lMT6kQAAAABJRU5ErkJggg==" type="image/png">
+
 </head>
 <body>
 
     <!-- Splash Screen -->
     <div id="splashScreen">
         <img src="logo.png" alt="Enzo Game Logo" id="splashLogo">
-        <div id="loadingMessage">Click to Start | ESC to Exit</div>
-        
+        <!-- Removed the loadingMessage div -->
+        <!-- Dedicated Start Button -->
+        <button id="startButton" aria-label="Start Game">Start Game</button>
     </div>
 
-    <!-- Crosshair -->
-    <div id="crosshair">
-        <div class="horizontal left"></div>
-        <div class="horizontal right"></div>
-        <div class="vertical top"></div>
-        <div class="vertical bottom"></div>
+    <!-- Pause Screen (Initially Hidden) -->
+    <div id="pauseScreen" class="pause-screen">
+        <h1>Game Paused</h1>
+        <button id="resumeButton" aria-label="Resume Game">Resume Game</button>
+        <button id="exitButton" aria-label="Exit to Menu">Exit to Menu</button>
+    </div>
+
+    <!-- Crosshair (Initially Hidden) -->
+    <div id="crosshair" class="crosshair">
+        <div class="horizontal"></div>
+        <div class="vertical"></div>
     </div>
 
     <!-- Include the main.js script -->
