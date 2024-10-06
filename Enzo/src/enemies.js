@@ -1,3 +1,5 @@
+// enemies.js
+
 import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
 
 export const enemies = [];
@@ -118,8 +120,7 @@ export function updateEnemies(scene, delta, playerPosition) {
 
         // Chasing behavior
         if (enemyData.isChasing) {
-            const direction = new THREE.Vector3();
-            direction.subVectors(playerPosition, enemy.position).normalize();
+            const direction = new THREE.Vector3().subVectors(playerPosition, enemy.position).normalize();
 
             if (distanceToPlayer > enemyData.playerAvoidanceDistance) {
                 direction.x += THREE.MathUtils.randFloat(-0.1, 0.1);
@@ -225,7 +226,7 @@ export function removeEnemy(scene, enemyData) {
     // Enemy will be removed from arrays and scene in updateEnemies
 
     // Respawn logic to spawn new enemy after a delay
-    const respawnTime = 3000;  // Delay before respawning
+    const respawnTime = 3000;  // Delay before respawning (in milliseconds)
     setTimeout(() => {
         const respawnPosition = new THREE.Vector3(
             THREE.MathUtils.randFloatSpread(100),
@@ -240,4 +241,26 @@ export function removeEnemy(scene, enemyData) {
 export function getEnemyHitboxes() {
     // Return only active enemies that are not marked for removal
     return enemies.filter(e => !e.isMarkedForRemoval).map(e => e.object);
+}
+
+// Initialize enemies (added function)
+export function initializeEnemies(scene, count) {
+    for (let i = 0; i < count; i++) {
+        const position = new THREE.Vector3(
+            THREE.MathUtils.randFloatSpread(100),
+            GROUND_LEVEL,
+            THREE.MathUtils.randFloatSpread(100)
+        );
+        createEnemy(scene, position);
+    }
+}
+
+// Clear all enemies from the scene and enemies array (added function)
+export function clearEnemies(scene) {
+    enemies.forEach(enemyData => {
+        scene.remove(enemyData.object);
+    });
+    enemies.length = 0;  // Clear the array
+    shootableObjects.length = 0; // Clear shootableObjects if necessary
+    console.log("All enemies have been cleared from the scene.");
 }
