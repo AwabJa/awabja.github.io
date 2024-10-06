@@ -7,12 +7,20 @@
     --shadow-color-light: rgba(255, 255, 255, 0.4);
 }
 
+/* Reset and base styles */
 html, body {
     margin: 0;
     padding: 0;
     overflow: hidden;
     height: 100%;
     width: 100%;
+    background-color: #000; /* Ensure a black background for better contrast */
+}
+
+canvas {
+    display: block; /* Removes unwanted margins/padding */
+    width: 100%;
+    height: 100%;
 }
 
 /* Splash screen */
@@ -26,9 +34,9 @@ html, body {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 10; /* Reduced z-index for better control */
+    z-index: 10; /* Ensures splash screen is on top */
     opacity: 1;
-    transition: opacity 0.5s ease-out;
+    transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
     width: 100vw;
     height: 100vh;
     flex-direction: column;
@@ -36,50 +44,122 @@ html, body {
 
 #splashScreen.fade-out {
     opacity: 0;
+    visibility: hidden; /* Hides the splash screen after fade-out */
     pointer-events: none;
-    display: none; /* Hide completely after fading out */
 }
 
 /* Splash screen logo styling */
 #splashLogo {
-    max-width: 60%;
-    max-height: 60%;
+    max-width: 90%; /* Increased from 80% to 90% for a larger logo */
+    max-height: 90%; /* Increased from 80% to 90% for a larger logo */
+    min-width: 200px; /* Prevents the logo from becoming too small */
+    min-height: 200px; /* Prevents the logo from becoming too small */
     object-fit: contain;
     animation: fadeInLogo 2s ease-in-out forwards;
-    margin-bottom: 20px;
+    margin-bottom: 15px; /* Slightly increased margin for better spacing */
+}
+
+/* Start Button Styling */
+#startButton {
+    padding: 1rem 2.5rem; /* Using rem units for scalability */
+    font-size: 1.2rem; /* Increased font size for better readability */
+    font-family: var(--font-family);
+    color: var(--message-color);
+    background-color: transparent;
+    border: 3px solid var(--message-color);
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s, transform 0.2s;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    outline: none;
+}
+
+#startButton:hover {
+    background-color: var(--message-color);
+    color: black;
+    transform: scale(1.05); /* Slightly enlarge on hover */
+}
+
+#startButton:active {
+    transform: scale(0.95); /* Slightly shrink on click */
 }
 
 /* Loading message */
 #loadingMessage {
     font-family: var(--font-family);
-    font-size: 1.2rem; /* Improved readability */
+    font-size: 0.6rem; /* Decreased from 0.8rem to make text smaller */
     color: var(--message-color); /* Use defined message color variable */
-    text-align: right;
-    animation: messageBounce 2s infinite;
-    margin-top: 0%;
+    text-align: center; /* Centered text for better readability */
+    margin-top: 0;
+    max-width: 80%; /* Prevent text from stretching too wide */
 }
 
-/* Keyframes for bounce effect */
-@keyframes messageBounce {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-20px);
-    }
+/* Pause Screen Styling */
+.pause-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.85); /* Semi-transparent background */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 15; /* Above splash screen and crosshair */
+    color: var(--message-color);
+    font-family: var(--font-family);
+    visibility: hidden; /* Initially hidden */
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
 }
 
-/* Hide crosshair while splash screen is displayed */
+.pause-screen.active {
+    visibility: visible;
+    opacity: 1; /* Show with fade-in effect */
+}
+
+.pause-screen h1 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.pause-screen button {
+    padding: 1rem 3rem; /* Using rem units for scalability */
+    font-size: 1rem;
+    font-family: var(--font-family);
+    color: var(--message-color);
+    background-color: transparent;
+    border: 2px solid var(--message-color);
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s, transform 0.2s;
+    margin: 10px;
+    border-radius: 5px;
+    outline: none;
+}
+
+.pause-screen button:hover {
+    background-color: var(--message-color);
+    color: black;
+    transform: scale(1.05); /* Slightly enlarge on hover */
+}
+
+.pause-screen button:active {
+    transform: scale(0.95); /* Slightly shrink on click */
+}
+
+/* Crosshair styling */
 #crosshair {
     position: absolute;
     top: 50%;
     left: 50%;
     width: 20px;
     height: 20px;
-    transform: translate(-50%, -50%); /* Simplified centering */
+    transform: translate(-50%, -50%); /* Center the crosshair */
     z-index: 5; /* Ensure crosshair appears below the splash screen */
     pointer-events: none;
-    display: none;
+    display: none; /* Initially hidden */
     justify-content: center;
     align-items: center;
 }
@@ -88,32 +168,69 @@ html, body {
     display: flex;
 }
 
-/* Crosshair styling */
-#crosshair div {
-    position: absolute;
-    background-color: var(--crosshair-color);
-}
-
-/* Crosshair size and gap */
+/* Crosshair elements */
 #crosshair .horizontal {
-    width: 6px;
+    width: 20px;
     height: 2px;
+    background-color: var(--crosshair-color);
+    border-radius: 1px;
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
 }
 
 #crosshair .vertical {
-    height: 6px;
     width: 2px;
-}
-
-#crosshair .horizontal.left,
-#crosshair .horizontal.right,
-#crosshair .vertical.top,
-#crosshair .vertical.bottom {
-    transform: translate(0, 0); /* Improved consistency for positioning */
+    height: 20px;
+    background-color: var(--crosshair-color);
+    border-radius: 1px;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 /* Animations */
 @keyframes fadeInLogo {
     0% { opacity: 0; transform: scale(0.8); }
     100% { opacity: 1; transform: scale(1); }
+}
+
+/* Responsive Design Enhancements */
+@media (max-width: 600px) {
+    /* Adjust splash logo for smaller screens */
+    #splashLogo {
+        max-width: 80%;
+        max-height: 80%;
+        min-width: 150px;
+        min-height: 150px;
+    }
+
+    /* Adjust pause screen headings */
+    .pause-screen h1 {
+        font-size: 1.5rem;
+    }
+
+    /* Adjust buttons for smaller screens */
+    #startButton, .pause-screen button {
+        padding: 0.8rem 2rem;
+        font-size: 0.9rem;
+    }
+
+    /* Adjust crosshair size */
+    #crosshair {
+        width: 15px;
+        height: 15px;
+    }
+
+    #crosshair .horizontal {
+        width: 15px;
+        height: 2px;
+    }
+
+    #crosshair .vertical {
+        width: 2px;
+        height: 15px;
+    }
 }
