@@ -11,11 +11,17 @@ function debugLog(message, ...optionalParams) {
     }
 }
 
+// Flag to prevent multiple event listeners
+let shootingEventsSetup = false;
+
 // Set up shooting events (listens for mouse click)
 export function setupShootingEvents(camera, scene, gunOffset) {
-    window.addEventListener('mousedown', (event) =>
-        handleShooting(event, camera, scene, gunOffset)
-    );
+    if (!shootingEventsSetup) {
+        window.addEventListener('mousedown', (event) =>
+            handleShooting(event, camera, scene, gunOffset)
+        );
+        shootingEventsSetup = true;
+    }
 }
 
 // Handle shooting
