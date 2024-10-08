@@ -1,3 +1,4 @@
+// Executes after DOM loads, selects the <nav> element, and defines multilingual greetings for potential use.
 document.addEventListener("DOMContentLoaded", () => {
     const nav = document.querySelector("nav");
     const translations = [
