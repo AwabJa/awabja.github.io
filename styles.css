@@ -205,7 +205,7 @@ nav.hidden {
 }
 
 /* =============================
-   Animated Background
+   Animated Hero Background
 ============================= */
 #animated-bg {
     position: absolute;
@@ -214,14 +214,40 @@ nav.hidden {
     width: 100%;
     height: 100%;
     z-index: 1;
-    background: radial-gradient(circle at 50% 50%, rgba(0,255,204,0.2), transparent);
-    opacity: 0.1;
-    animation: pulse 8s infinite ease-in-out;
+    background: radial-gradient(circle at 50% 50%, rgba(0,255,204,0.15), transparent 70%);
+    filter: blur(12px);
+    opacity: 0.25;
+    animation: pulse 8s infinite ease-in-out, moveBg 30s linear infinite;
+    transform: translateZ(0);
+}
+
+#animated-bg-layer2 {
+    position: absolute;
+    top: -20%;
+    left: -20%;
+    width: 140%;
+    height: 140%;
+    background: radial-gradient(circle at 30% 30%, rgba(0,255,204,0.05), transparent 80%);
+    z-index: 0;
+    filter: blur(18px);
+    animation: rotateBg 40s linear infinite;
+    transform: translateZ(0);
 }
 
 @keyframes pulse {
     0%,100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes moveBg {
+    0% { background-position: 0% 0%; }
+    50% { background-position: 50% 50%; }
+    100% { background-position: 0% 0%; }
+}
+
+@keyframes rotateBg {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* =============================
