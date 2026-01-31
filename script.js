@@ -101,9 +101,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Handle touch events for mobile devices (especially for iOS)
-    window.addEventListener('touchstart', handleScroll);
+// Handle touch events for mobile devices (especially for iOS)
+// Using passive: true improves scrolling performance on mobile
+window.addEventListener('touchstart', handleScroll, { passive: true });
 
-    // Change welcome text every 3 seconds
-    setInterval(changeWelcomeText, 3000);
+// Change welcome text every 3 seconds
+const welcomeInterval = setInterval(changeWelcomeText, 3000);
 });
