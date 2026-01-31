@@ -8,17 +8,17 @@
     
     <!-- Content Security Policy (CSP) -->
     <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self';
-        script-src 'self' https://cdnjs.cloudflare.com;
-        style-src 'self' https://fonts.googleapis.com;
-        font-src 'self' https://fonts.gstatic.com;
-        img-src 'self' data:;
-        connect-src 'self';
-        object-src 'none';
-        frame-src 'none';
-        form-action 'self';
-        base-uri 'self';
-        upgrade-insecure-requests;">
+    default-src 'self';
+    script-src 'self' https://cdnjs.cloudflare.com;
+    style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
+    font-src 'self' https://fonts.gstatic.com;
+    img-src 'self' data:;
+    connect-src 'self';
+    object-src 'none';
+    frame-src 'none';
+    form-action 'self';
+    base-uri 'self';
+    upgrade-insecure-requests;">
 
     <!-- Referrer Policy -->
     <meta name="referrer" content="no-referrer">
