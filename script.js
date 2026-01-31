@@ -1,6 +1,14 @@
-// Executes after DOM loads, selects the <nav> element, and defines multilingual greetings for potential use.
+// ================================
+// script.js
+// Optimized for performance, security, and maintainability
+// ================================
+
 document.addEventListener("DOMContentLoaded", () => {
+
+    // ----- Elements & State -----
     const nav = document.querySelector("nav");
+    const welcomeText = document.getElementById('welcome-text');
+
     const translations = [
         "Welcome", "欢迎", "स्वागत है", "Bienvenido/a", "Bienvenue", 
         "أهلاً وسهلاً", "স্বাগতম", "Добро пожаловать", "Bem-vindo/a", "خوش آمدید"
@@ -9,102 +17,105 @@ document.addEventListener("DOMContentLoaded", () => {
     let lastScrollTop = 0;
     let isNavVisible = true;
     let currentIndex = 0;
-    const bottomThreshold = 50; // Distance from the bottom to trigger special behavior
-    const scrollThreshold = 100; // Distance to hide the navbar while scrolling down
-    const showNavThreshold = 150; // New: Additional threshold for scroll up before showing navbar again
 
-    // Function to change the welcome text
+    const bottomThreshold = 50;     // Trigger special behavior near bottom
+    const scrollThreshold = 100;    // Hide nav after scrolling down this far
+    const showNavThreshold = 150;   // Scroll up distance to show nav again
+
+    // ----- Functions -----
+
+    // Change the welcome text
     const changeWelcomeText = () => {
-        const welcomeText = document.getElementById('welcome-text');
-        if (welcomeText) {
-            welcomeText.textContent = translations[currentIndex];
-            currentIndex = (currentIndex + 1) % translations.length;
-        }
+        if (!welcomeText) return;
+        welcomeText.textContent = translations[currentIndex];
+        currentIndex = (currentIndex + 1) % translations.length;
     };
 
-    // Function to handle the scroll behavior
+    // Handle nav visibility and scroll behavior
     const handleScroll = () => {
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
         const scrollHeight = document.documentElement.scrollHeight;
         const clientHeight = window.innerHeight || document.documentElement.clientHeight;
         const nearBottom = (scrollHeight - (scrollTop + clientHeight)) < bottomThreshold;
 
-        // Scrolling down and not near the bottom
+        // Scroll down
         if (scrollTop > lastScrollTop && scrollTop > scrollThreshold && !nearBottom) {
             if (isNavVisible) {
                 nav.classList.add('hidden');
                 isNavVisible = false;
             }
         }
-        // Scrolling up, but ensure we scroll up by more than the showNavThreshold before showing nav
-        else if (scrollTop < lastScrollTop && lastScrollTop - scrollTop > showNavThreshold) {
+        // Scroll up
+        else if (scrollTop < lastScrollTop && (lastScrollTop - scrollTop) > showNavThreshold) {
             if (!isNavVisible) {
                 nav.classList.remove('hidden');
                 isNavVisible = true;
             }
         }
-        // Show nav if near the top (for edge cases)
+        // Edge case: near top
         else if (scrollTop <= scrollThreshold) {
             nav.classList.remove('hidden');
             isNavVisible = true;
         }
 
-        // Add or remove 'scrolled' class based on position
-        if (scrollTop > 50) {
-            nav.classList.add('scrolled');
-        } else {
-            nav.classList.remove('scrolled');
-        }
+        // Add/remove 'scrolled' class for styling
+        if (scrollTop > 50) nav.classList.add('scrolled');
+        else nav.classList.remove('scrolled');
 
-        lastScrollTop = Math.max(scrollTop, 0); // Update last scroll position
+        lastScrollTop = Math.max(scrollTop, 0);
     };
 
-    // Event listener for scroll
+    // Smooth scroll to anchors and show nav
+    const handleAnchorClick = (link) => {
+        const targetId = link.getAttribute('href').substring(1);
+        const targetElement = document.getElementById(targetId);
+
+        if (targetElement) {
+            window.scrollTo({
+                top: targetElement.offsetTop,
+                behavior: "smooth"
+            });
+        }
+
+        // Remove focus to prevent stuck highlight on iOS
+        setTimeout(() => {
+            link.blur();
+            link.classList.remove('active');
+        }, 300);
+
+        // Ensure nav is visible after clicking
+        nav.classList.remove('hidden');
+        isNavVisible = true;
+        lastScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    };
+
+    // ----- Event Listeners -----
+
+    // Scroll events (optimized with requestAnimationFrame)
     window.addEventListener("scroll", () => {
         window.requestAnimationFrame(handleScroll);
     });
 
-    // Resize listener to handle iOS address bar behavior
+    // Touch events on mobile (passive improves scroll performance)
+    window.addEventListener('touchstart', handleScroll, { passive: true });
+
+    // Resize (e.g., iOS address bar)
     window.addEventListener("resize", () => {
         lastScrollTop = window.pageYOffset || document.documentElement.scrollTop;
     });
 
-    // Function to ensure nav is visible after navigating via anchor links
-    const handleAnchorNavigation = () => {
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        nav.classList.remove('hidden');
-        isNavVisible = true;
-        lastScrollTop = scrollTop; // Update lastScrollTop to prevent incorrect hiding
-    };
-
-    // Ensure nav is visible after clicking anchor links (e.g., "about" or "contact")
+    // Anchor links smooth scroll
     const anchorLinks = document.querySelectorAll('a[href^="#"]');
     anchorLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            const targetId = link.getAttribute('href').substring(1);
-            const targetElement = document.getElementById(targetId);
-
-            if (targetElement) {
-                window.scrollTo({
-                    top: targetElement.offsetTop,
-                    behavior: "smooth" // Smooth scroll behavior
-                });
-            }
-            
-            // Remove focus to prevent stuck highlight on iOS
-            setTimeout(() => {
-                link.blur();  // Remove focus from the clicked link
-                link.classList.remove('active'); // Ensure the active class is removed if present
-            }, 300);  // Slight delay to allow smooth scrolling to complete
-            handleAnchorNavigation();
+            handleAnchorClick(link);
         });
     });
 
-// Handle touch events for mobile devices (especially for iOS)
-// Using passive: true improves scrolling performance on mobile
-window.addEventListener('touchstart', handleScroll, { passive: true });
+    // ----- Intervals -----
+    // Change welcome text every 3 seconds, stored in variable for future control
+    const welcomeInterval = setInterval(changeWelcomeText, 3000);
+    // To stop later: clearInterval(welcomeInterval);
 
-// Change welcome text every 3 seconds
-const welcomeInterval = setInterval(changeWelcomeText, 3000);
 });
