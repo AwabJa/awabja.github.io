@@ -3,23 +3,107 @@ body, html {
     padding: 0;
     overflow: hidden; /* Prevent scrolling */
     height: 100%;
-    font-family: Arial, sans-serif;
-    background: black; /* Space background */
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #000; /* Space background */
     overscroll-behavior: none; /* Prevent pull-to-refresh on mobile browsers */
-}
-
-#info {
-    position: absolute;
-    top: 10px;
-    width: 100%;
-    text-align: center;
-    color: white;
-    font-size: 18px;
-    pointer-events: none; /* Allow interactions to pass through */
 }
 
 canvas {
     display: block; /* Removes any inline spacing */
     width: 100%;
     height: 100%;
+}
+
+/* ---------- Top info bar ---------- */
+#info {
+    position: absolute;
+    top: 18px;
+    width: 100%;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    pointer-events: none; /* Allow interactions to pass through */
+    text-shadow: 0 0 10px rgba(0, 150, 255, 0.6);
+    transition: opacity 0.3s ease;
+    z-index: 5;
+}
+
+/* ---------- Hover tooltip that follows the cursor ---------- */
+#tooltip {
+    position: absolute;
+    pointer-events: none;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: rgba(10, 15, 30, 0.75);
+    border: 1px solid rgba(120, 190, 255, 0.4);
+    box-shadow: 0 0 12px rgba(80, 170, 255, 0.35);
+    backdrop-filter: blur(4px);
+    transform: translate(-50%, -140%);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 10;
+}
+
+#tooltip.visible {
+    opacity: 1;
+}
+
+/* ---------- Loading overlay ---------- */
+#loading-screen {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, #0a1020 0%, #000000 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    transition: opacity 0.6s ease;
+}
+
+#loading-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#loading-title {
+    color: #cfe8ff;
+    font-size: 20px;
+    letter-spacing: 2px;
+    margin-bottom: 18px;
+    text-transform: uppercase;
+    text-shadow: 0 0 12px rgba(100, 180, 255, 0.7);
+}
+
+#loading-bar-track {
+    width: 260px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+#loading-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #3a8dff, #8fd6ff);
+    box-shadow: 0 0 10px rgba(100, 190, 255, 0.8);
+    transition: width 0.2s ease;
+}
+
+#loading-percent {
+    margin-top: 10px;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+/* Pointer feedback when hovering a clickable body */
+canvas.hovering {
+    cursor: pointer;
 }
