@@ -33,13 +33,17 @@
 
     <!-- CSS -->
     <link rel="stylesheet" href="styles.css">
+    <meta name="theme-color" content="#0a0a0a">
 </head>
 <body>
 
+    <a class="skip-link" href="#home">Skip to main content</a>
+
     <!-- Navigation Bar -->
-    <nav>
+    <nav aria-label="Primary navigation">
         <div class="logo">A.J.<span> | Sleek Solutions</span></div>
-        <div class="menu">
+        <button class="menu-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="primary-menu"><span></span><span></span><span></span></button>
+        <div class="menu" id="primary-menu">
             <ul>
                 <li><a href="#home" aria-label="Go to Home section">Home</a></li>
                 <li><a href="#about" aria-label="Go to About section">About</a></li>
@@ -67,16 +71,16 @@
     </nav>
 
     <!-- Hero Section -->
-    <section id="home" class="hero" aria-labelledby="welcome-text">
+    <main><section id="home" class="hero" aria-labelledby="welcome-text">
         <!-- Animated Background Layers -->
-        <div id="animated-bg"></div>
-        <div id="animated-bg-layer2"></div> <!-- New second layer for depth -->
+        <div id="animated-bg" aria-hidden="true"></div>
+        <div id="animated-bg-layer2" aria-hidden="true"></div> <!-- New second layer for depth -->
 
         <!-- Hero Content -->
         <div class="hero-content">
             <h1 id="welcome-text">Welcome</h1>
             <p>Experience a new era of design and innovation.</p>
-            <a href="https://awabja.github.io/3D%20Navigation%20Bar/index.html" class="btn" aria-label="Explore Enzo FPS">Explore 😎</a>
+            <a href="https://awabja.github.io/3D%20Navigation%20Bar/index.html" class="btn" aria-label="Explore the 3D Navigation Bar project">Explore 😎</a>
         </div>
     </section>
 
@@ -91,6 +95,8 @@
         <h2>Send Me an Email</h2>
         <p>You can reach me directly at <a href="mailto:awabjahmed@gmail.com" aria-label="Send an email to Awab">awabjahmed@gmail.com</a></p>
     </section>
+
+    </main>
 
     <!-- Footer -->
     <footer>
