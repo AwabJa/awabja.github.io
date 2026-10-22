@@ -447,3 +447,30 @@ section { scroll-margin-top: 90px; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
   #animated-bg, #animated-bg-layer2 { animation: none; }
 }
+
+/* Featured projects: lightweight CSS art instead of large image downloads */
+.projects {padding:110px max(6%, calc((100vw - 1150px)/2)); background:#0b1010; color:#eee;}
+.projects-heading {max-width:730px; margin:0 auto 42px; text-align:center;}
+.eyebrow,.project-tag {color:#00ffc6; font-size:.72rem; letter-spacing:.13em;}
+.projects h2 {font-size:clamp(1.9rem,4vw,2.7rem); margin:12px 0 18px; color:#00ffc6;}
+.projects-heading p {color:#aebcba; line-height:1.7;}
+.project-grid {display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:26px;}
+.project-card {background:#121b1b; border:1px solid #29423d; border-radius:16px; overflow:hidden; transition:transform .25s,border-color .25s;}
+.project-card:hover,.project-card:focus-within {transform:translateY(-4px); border-color:#00ffc6;}
+.project-art {height:225px; position:relative; overflow:hidden; background:radial-gradient(circle at center,#183a3c,#080e13 65%);}
+.solar-art .solar-sun {position:absolute; width:86px; height:86px; border-radius:50%; background:#ffcb68; box-shadow:0 0 50px #ff9d50,0 0 100px #ff7d3055; top:50%;left:50%;transform:translate(-50%,-50%);}
+.solar-orbit {position:absolute; width:290px;height:145px;border:1px solid #5a8b8c; border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-24deg);}
+.solar-planet {position:absolute;width:34px;height:34px;border-radius:50%;background:linear-gradient(120deg,#68c9ee,#254b9d);top:22%;left:23%;box-shadow:0 0 24px #68c9ee88;}
+.enzo-art {background:linear-gradient(#142536 0 52%,#26382e 52%,#0c1612 100%);}
+.enzo-horizon {position:absolute;bottom:0;left:-10%;width:120%;height:46%;background:repeating-linear-gradient(90deg,transparent 0 68px,#00ffc61a 69px 70px),linear-gradient(#2a4437,#0b1b17);clip-path:polygon(0 55%,22% 20%,45% 52%,70% 10%,100% 40%,100% 100%,0 100%);}
+.enzo-target {position:absolute;width:42px;height:64px;left:64%;top:44%;background:linear-gradient(130deg,#ff6c62,#791a21);box-shadow:0 0 25px #ff393955;}
+.enzo-reticle {position:absolute;left:50%;top:50%;width:24px;height:24px;transform:translate(-50%,-50%);z-index:2;border:1px solid #00ffc6;border-radius:50%;box-shadow:0 0 15px #00ffc6;}
+.project-details {padding:28px;}.project-details h3 {font-size:1.4rem;margin:13px 0;}.project-details p {color:#b7c3c1;line-height:1.7;font-size:.91rem;min-height:110px;}
+.project-alpha {font-size:.62rem;letter-spacing:.1em;border:1px solid #00ffc6;color:#00ffc6;padding:4px 7px;border-radius:5px;vertical-align:middle;}
+.project-actions {display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-top:24px;}
+.project-link {background:#00ffc6;color:#06120e;border-radius:8px;padding:12px 16px;font-weight:bold;font-size:.86rem;}
+.project-source {color:#b6eae0;font-size:.85rem;text-decoration:underline;text-underline-offset:4px;}
+.project-link:hover {background:#92ffe5;}
+nav:focus-within {transform:translateY(0)!important;}
+@media(max-width:760px){.project-grid{grid-template-columns:1fr}.projects{padding:80px 6%}.project-details p{min-height:0}.project-art{height:190px}}
+@media(prefers-reduced-motion:reduce){.project-card{transition:none}}
