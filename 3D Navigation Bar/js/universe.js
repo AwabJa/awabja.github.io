@@ -126,7 +126,7 @@ if (typeof THREE.OrbitControls === 'function') {
     const pauseAutoRotate = () => {
         controls.autoRotate = false;
         clearTimeout(idleTimer);
-        idleTimer = setTimeout(() => { controls.autoRotate = true; }, 4000);
+        idleTimer = setTimeout(() => { if (!focusActive) controls.autoRotate = true; }, 4000);
     };
     renderer.domElement.addEventListener('pointerdown', pauseAutoRotate);
     renderer.domElement.addEventListener('wheel', pauseAutoRotate, { passive: true });
@@ -624,7 +624,7 @@ function animate() {
     });
 
     // Lunar orbit is relative to Earth's current position, not the Sun's.
-    const lunarAngle = time * 0.025 + 1.7;
+    const lunarAngle = time * 0.078 + 1.7; // approximately 13 lunar orbits per Earth solar orbit
     moon.position.copy(earth.position).add(new THREE.Vector3(
         Math.cos(lunarAngle) * 12,
         Math.sin(lunarAngle) * 1.08,
