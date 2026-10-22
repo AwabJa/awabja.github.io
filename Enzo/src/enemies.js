@@ -10,8 +10,8 @@ const GROUND_LEVEL = 0.8;
 
 // Function to create an enemy and add it to the scene
 export function createEnemy(scene, position) {
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+    const geometry = new THREE.DodecahedronGeometry(0.82, 0);
+    const material = new THREE.MeshStandardMaterial({ color: 0xe84856, emissive: 0x3b060d, roughness: 0.55, metalness: 0.25 });
     const enemy = new THREE.Mesh(geometry, material);
 
     // Ensure enemy is above the ground
@@ -228,16 +228,7 @@ export function removeEnemy(scene, enemyData) {
 
     // Enemy will be removed from arrays and scene in updateEnemies
 
-    // Respawn logic to spawn new enemy after a delay
-    const respawnTime = 3000;  // Delay before respawning (in milliseconds)
-    setTimeout(() => {
-        const respawnPosition = new THREE.Vector3(
-            THREE.MathUtils.randFloatSpread(100),
-            GROUND_LEVEL,
-            THREE.MathUtils.randFloatSpread(100)
-        );
-        spawnEnemyGroup(scene, respawnPosition, 1);  // Respawn a new enemy
-    }, respawnTime);
+    // Wave spawning is coordinated by main.js, not per-enemy timers.
 }
 
 // Function to get an array of enemy hitboxes for raycasting
