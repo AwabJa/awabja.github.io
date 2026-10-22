@@ -463,6 +463,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !inspector
 function inspectBody(body) {
   selectedBody = body;
   focusActive = true;
+  if (controls) controls.autoRotate = false;
   document.getElementById('inspector-name').textContent = body.name;
   document.getElementById('inspector-description').textContent = PLANET_FACTS[body.name][0];
   document.getElementById('inspector-fact').textContent = PLANET_FACTS[body.name][1];
