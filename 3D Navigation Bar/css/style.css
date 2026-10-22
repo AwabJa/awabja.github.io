@@ -123,3 +123,8 @@ a:focus-visible,button:focus-visible{outline:3px solid #00ffc6;outline-offset:3p
 .planet-inspector[hidden]{display:none}.inspector-label{font-size:10px;letter-spacing:.18em;color:#6be4d5}.planet-inspector h2{font-size:29px;margin:12px 0;color:#a7fff1}.planet-inspector p{line-height:1.65;color:#d4e2e8;font-size:14px}.planet-inspector p+p{color:#9abac6}.planet-inspector a{display:block;margin:18px 0 12px;padding:12px;background:#00ffc6;color:#08201c;text-align:center;text-decoration:none;font-weight:bold;border-radius:8px}.planet-inspector button{cursor:pointer}#inspector-close{position:absolute;right:10px;top:8px;background:none;border:0;color:white;font-size:26px}#inspector-reset{border:1px solid #598c92;color:#d7faff;background:transparent;padding:10px 12px;border-radius:7px;width:100%}
 @media(max-width:650px){.planet-inspector{top:auto;bottom:76px;left:12px;transform:none;width:min(340px,calc(100vw - 24px));padding:17px}.planet-inspector h2{font-size:22px}.planet-inspector p{font-size:12px;margin:7px 0}.planet-guide{bottom:12px}}
 @media(prefers-reduced-motion:reduce){.planet-inspector{backdrop-filter:none}}
+
+/* Moon explorer is a real accessible action, visually consistent with destinations. */
+.planet-links #select-moon{display:block;width:100%;text-align:left;color:#e8f4fa;background:#18394b;border:1px solid #3c7285;border-radius:7px;padding:11px 9px;font:inherit;font-size:14px;cursor:pointer;}
+.planet-links #select-moon:hover{background:#265569;}
+@media(max-width:650px){#info{max-width:calc(100vw - 145px);font-size:11px;line-height:1.5}}

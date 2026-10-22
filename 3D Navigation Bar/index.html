@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Solar System | A.J. Ahmed</title>
-    <meta name="description" content="Explore a 3D solar system and navigate A.J. Ahmed’s projects.">
+    <meta name="description" content="Explore the Sun, eight planets, and Earth’s Moon with generated planetary surface textures and interactive facts.">
     <link rel="stylesheet" href="css/style.css">
     <link rel="icon" href="data:,"> <!-- This prevents the 404 favicon.ico error -->
 </head>
@@ -18,8 +18,8 @@
     </div>
 
     <a class="back-link" href="/">← Portfolio</a>
-    <div id="info">Select a planet to explore</div>
-    <aside class="planet-guide" aria-label="Solar system navigation"><button id="guide-toggle" type="button" aria-expanded="false" aria-controls="planet-links">Explore destinations ☰</button><div id="planet-links" class="planet-links" hidden><p>Drag to rotate · Scroll to zoom · Tap a planet to inspect it, or choose a link.</p><a href="/">Mercury — Portfolio</a><a href="/#projects">Venus — Projects</a><a href="/#about">Earth — About</a><a href="/Enzo/index.html">Mars — Enzo FPS</a><a href="/3D%20Navigation%20Bar/index.html">Jupiter — Solar System</a><a href="/#contact">Saturn — Contact</a><a href="https://github.com/AwabJa" target="_blank" rel="noopener noreferrer">Uranus — GitHub</a><a href="https://www.linkedin.com/in/awabjahmed/" target="_blank" rel="noopener noreferrer">Neptune — LinkedIn</a><a href="https://www.codecademy.com/profiles/BB99a" target="_blank" rel="noopener noreferrer">Sun — Certifications</a></div></aside>
+    <div id="info">The Sun · 8 planets · Earth’s Moon — orbits and sizes shown for exploration, not to scale</div>
+    <aside class="planet-guide" aria-label="Solar system navigation"><button id="guide-toggle" type="button" aria-expanded="false" aria-controls="planet-links">Explore planets & destinations ☰</button><div id="planet-links" class="planet-links" hidden><p>Drag to rotate · Scroll to zoom · Tap a planet to inspect it, or choose a link.</p><a href="/">Mercury — Portfolio</a><a href="/#projects">Venus — Projects</a><a href="/#about">Earth — About</a><button type="button" id="select-moon">Moon — Inspect orbiting Earth</button><a href="/Enzo/index.html">Mars — Enzo FPS</a><a href="/3D%20Navigation%20Bar/index.html">Jupiter — Solar System</a><a href="/#contact">Saturn — Contact</a><a href="https://github.com/AwabJa" target="_blank" rel="noopener noreferrer">Uranus — GitHub</a><a href="https://www.linkedin.com/in/awabjahmed/" target="_blank" rel="noopener noreferrer">Neptune — LinkedIn</a><a href="https://www.codecademy.com/profiles/BB99a" target="_blank" rel="noopener noreferrer">Sun — Certifications</a></div></aside>
     <section id="planet-inspector" class="planet-inspector" aria-label="Planet details" hidden>
       <button id="inspector-close" type="button" aria-label="Close planet details">×</button>
       <span class="inspector-label">SOLAR SYSTEM / EXPLORE</span>
@@ -44,7 +44,8 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 
     <!-- Main Script -->
-    <script src="js/universe.js"></script>
+    <script src="js/proceduralTextures.js?v=3"></script>
+    <script src="js/universe.js?v=3"></script>
     <script>document.getElementById('guide-toggle').addEventListener('click',function(){const panel=document.getElementById('planet-links');panel.hidden=!panel.hidden;this.setAttribute('aria-expanded',String(!panel.hidden));});</script>
 </body>
 </html>

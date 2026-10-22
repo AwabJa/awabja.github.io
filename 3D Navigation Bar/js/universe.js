@@ -23,7 +23,7 @@ const PLANET_LINKS = {
     Mercury: '/', Venus: '/#projects', Earth: '/#about', Mars: '/Enzo/index.html',
     Jupiter: '/3D%20Navigation%20Bar/index.html', Saturn: '/#contact',
     Uranus: 'https://github.com/AwabJa', Neptune: 'https://www.linkedin.com/in/awabjahmed/',
-    Sun: 'https://www.codecademy.com/profiles/BB99a'
+    Sun: 'https://www.codecademy.com/profiles/BB99a', Moon: 'https://science.nasa.gov/moon/'
 };
 
 /* ---------------------------------------------------------------------- */
@@ -113,7 +113,7 @@ if (typeof THREE.OrbitControls === 'function') {
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
-    controls.minDistance = 90;
+    controls.minDistance = 7; // Enable genuinely close inspection of the Moon and smaller planets
     controls.maxDistance = 1400;
     controls.enablePan = true;
     controls.target.set(0, 0, 0);
@@ -126,7 +126,7 @@ if (typeof THREE.OrbitControls === 'function') {
     const pauseAutoRotate = () => {
         controls.autoRotate = false;
         clearTimeout(idleTimer);
-        idleTimer = setTimeout(() => { controls.autoRotate = true; }, 4000);
+        idleTimer = setTimeout(() => { if (!focusActive) controls.autoRotate = true; }, 4000);
     };
     renderer.domElement.addEventListener('pointerdown', pauseAutoRotate);
     renderer.domElement.addEventListener('wheel', pauseAutoRotate, { passive: true });
@@ -175,43 +175,16 @@ let hoveredObject = null;
 /* Planet / Atmosphere / Ring / Orbit-line factories                      */
 /* ---------------------------------------------------------------------- */
 
-function createPlanet(name, size, texturePath, distance, orbitSpeed, phaseOffset, rotationSpeed, axialTilt = 0) {
-    const geometry = new THREE.SphereGeometry(size, 64, 64);
+function createPlanet(name, size, distance, orbitSpeed, phaseOffset, rotationSpeed, axialTilt = 0) {
+    const geometry = new THREE.SphereGeometry(size, 64, 48);
+    const surface = window.generateSpaceTexture(name, THREE);
     const material = new THREE.MeshStandardMaterial({
-        map: loadTexture(texturePath),
-        roughness: name === 'Earth' ? 0.72 : 0.96,
-        metalness: 0.0,
-        bumpMap: null,
+        map: surface.map,
+        bumpMap: surface.bumpMap,
+        bumpScale: name === 'Earth' ? 0.09 : (name === 'Mercury' || name === 'Mars' ? 0.2 : 0),
+        roughness: name === 'Earth' ? 0.84 : 0.96,
+        metalness: 0.0
     });
-    // Derive subtle relief from the existing surface image without shipping large normal maps.
-    // Height is restrained to avoid exaggerating mountains at planetary scale.
-    if (name === 'Mercury' || name === 'Earth' || name === 'Mars') {
-        const surfaceMap = material.map;
-        const applyRelief = () => {
-            const image = surfaceMap.image;
-            if (!image || !image.width || !image.height) return;
-            const c = document.createElement('canvas');
-            c.width = Math.min(image.width, 1024); c.height = Math.min(image.height, 512);
-            const context = c.getContext('2d');
-            try {
-                context.drawImage(image, 0, 0, c.width, c.height);
-                const data = context.getImageData(0,0,c.width,c.height);
-                for(let i=0;i<data.data.length;i+=4){
-                    const lum=data.data[i]*.3+data.data[i+1]*.59+data.data[i+2]*.11;
-                    data.data[i]=data.data[i+1]=data.data[i+2]=lum;
-                }
-                context.putImageData(data,0,0);
-                const relief=new THREE.CanvasTexture(c);
-                material.bumpMap=relief;material.bumpScale=name==='Earth' ? .09 : .16;
-                material.needsUpdate=true;
-            } catch(error) { console.warn('Optional relief unavailable:',name,error); }
-        };
-        if(surfaceMap.image && surfaceMap.image.complete) applyRelief();
-        else surfaceMap.addEventListener?.('update', applyRelief);
-        // Three.js textures do not always emit update events: image loading is also checked below.
-        const checkRelief = setInterval(() => { if(surfaceMap.image && surfaceMap.image.width){clearInterval(checkRelief);applyRelief();} }, 400);
-        setTimeout(()=>clearInterval(checkRelief),12000);
-    }
     const planet = new THREE.Mesh(geometry, material);
     planet.name = name;
     planet.rotation.z = axialTilt;
@@ -292,38 +265,52 @@ function addSaturnRings(planet, innerRadius, outerRadius, texturePath) {
 /* ---------------------------------------------------------------------- */
 
 const planets = [
-    createPlanet('Mercury', 3,    'assets/mercury.jpg', 60,   0.010, Math.random() * Math.PI * 2, 0.0010),
-    createPlanet('Venus',   4,    'assets/venus.jpg',   100,  0.008, Math.random() * Math.PI * 2, 0.0009),
-    createPlanet('Earth',   4.5,  'assets/earth.jpg',   150,  0.006, Math.random() * Math.PI * 2, 0.0100, 0.41),
-    createPlanet('Mars',    3.5,  'assets/mars.jpg',    200,  0.004, Math.random() * Math.PI * 2, 0.0090),
-    createPlanet('Jupiter', 25,   'assets/jupiter.jpg', 280,  0.0022, Math.random() * Math.PI * 2, 0.0200),
-    createPlanet('Saturn',  20,   'assets/saturn.jpg',  400,  0.0016, Math.random() * Math.PI * 2, 0.0180, 0.47),
-    createPlanet('Uranus',  12,   'assets/uranus.jpg',  520,  0.0012, Math.random() * Math.PI * 2, 0.0120, 1.71),
-    createPlanet('Neptune', 12,   'assets/neptune.jpg', 620,  0.0009, Math.random() * Math.PI * 2, 0.0110),
+    createPlanet('Mercury', 3, 60,   0.010, Math.random() * Math.PI * 2, 0.0010),
+    createPlanet('Venus',   4,   100,  0.008, Math.random() * Math.PI * 2, 0.0009),
+    createPlanet('Earth',   4.5,   150,  0.006, Math.random() * Math.PI * 2, 0.0100, 0.41),
+    createPlanet('Mars',    3.5,    200,  0.004, Math.random() * Math.PI * 2, 0.0090),
+    createPlanet('Jupiter', 25, 280,  0.0022, Math.random() * Math.PI * 2, 0.0200),
+    createPlanet('Saturn',  20,  400,  0.0016, Math.random() * Math.PI * 2, 0.0180, 0.47),
+    createPlanet('Uranus',  12,  520,  0.0012, Math.random() * Math.PI * 2, 0.0120, 1.71),
+    createPlanet('Neptune', 12, 620,  0.0009, Math.random() * Math.PI * 2, 0.0110),
 ];
 
 const [mercury, venus, earth, mars, jupiter, saturn, uranus, neptune] = planets;
 
-// Thin independent cloud shell: procedural cloud cover adds depth without new binary assets.
-function createCloudMap() {
-    const c=document.createElement('canvas');c.width=1024;c.height=512;
-    const ctx=c.getContext('2d'),img=ctx.createImageData(c.width,c.height);
-    const hash=(x,y)=>{const v=Math.sin(x*127.1+y*311.7)*43758.5453;return v-Math.floor(v);};
-    const sample=(x,y,scale)=>{const xx=x/scale,yy=y/scale,ix=Math.floor(xx),iy=Math.floor(yy),fx=xx-ix,fy=yy-iy;
-      const u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy);
-      return ((hash(ix,iy)*(1-u)+hash(ix+1,iy)*u)*(1-v)+(hash(ix,iy+1)*(1-u)+hash(ix+1,iy+1)*u)*v);};
-    for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++){
-      const cloud=sample(x,y,100)*.55+sample(x,y,38)*.3+sample(x,y,14)*.15;
-      const a=Math.max(0,Math.min(195,(cloud-.46)*700));const i=(y*c.width+x)*4;
-      img.data[i]=235;img.data[i+1]=242;img.data[i+2]=250;img.data[i+3]=a;
-    }
-    ctx.putImageData(img,0,0);const tex=new THREE.CanvasTexture(c);tex.encoding=THREE.sRGBEncoding;return tex;
-}
-const cloudLayer=new THREE.Mesh(new THREE.SphereGeometry(4.59,48,32),new THREE.MeshBasicMaterial({map:createCloudMap(),transparent:true,depthWrite:false,opacity:.63}));
+// Semi-transparent cloud map floats over Earth and rotates independently.
+const cloudTexture = window.generateSpaceTexture('Clouds', THREE).map;
+const cloudLayer = new THREE.Mesh(
+    new THREE.SphereGeometry(4.57, 48, 32),
+    new THREE.MeshStandardMaterial({map: cloudTexture, transparent: true, depthWrite: false, roughness: 1, opacity: .84})
+);
 earth.add(cloudLayer);
 createAtmosphere(earth, 4.75, 0x88ccff, 0.25);
 createAtmosphere(venus, 4.35, 0xffcc88, 0.28);
 createAtmosphere(mars, 3.65, 0xff5533, 0.15);
+
+// Earth's Moon is a separate selectable world. Unlike Mercury and the other
+// planets it revolves around Earth, with a mildly inclined orbit.
+// Sizes and orbital distances are compressed for interactive visibility.
+const moonSurface = window.generateSpaceTexture('Moon', THREE);
+const moon = new THREE.Mesh(new THREE.SphereGeometry(1.24, 40, 28), new THREE.MeshStandardMaterial({
+    map: moonSurface.map, bumpMap: moonSurface.bumpMap, bumpScale: 0.16, roughness: 1
+}));
+moon.name = 'Moon';
+moon.castShadow = true;
+moon.receiveShadow = true;
+moon.userData = {distance: 12, baseScale: 1};
+scene.add(moon);
+clickableObjects.push(moon);
+const moonOrbitVertices=[];
+for(let i=0;i<96;i++){
+    const a=i/96*Math.PI*2;
+    moonOrbitVertices.push(new THREE.Vector3(Math.cos(a)*12,Math.sin(a)*12*.09,Math.sin(a)*12));
+}
+const moonOrbit=new THREE.LineLoop(
+    new THREE.BufferGeometry().setFromPoints(moonOrbitVertices),
+    new THREE.LineBasicMaterial({color:0x9eb4c3, transparent:true, opacity:.27})
+);
+scene.add(moonOrbit);
 
 addSaturnRings(saturn, 26, 40, 'assets/saturn_ring.png');
 
@@ -332,7 +319,7 @@ addSaturnRings(saturn, 26, 40, 'assets/saturn_ring.png');
 /* ---------------------------------------------------------------------- */
 
 const sunGeometry = new THREE.SphereGeometry(40, 64, 64);
-const sunMaterial = new THREE.MeshBasicMaterial({ map: loadTexture('assets/sun.jpg') });
+const sunMaterial = new THREE.MeshBasicMaterial({ map: window.generateSpaceTexture('Sun', THREE).map });
 const sun = new THREE.Mesh(sunGeometry, sunMaterial);
 sun.name = 'Sun';
 sun.userData = { rotationSpeed: 0.0005 };
@@ -446,7 +433,7 @@ const nebulaGeometry = new THREE.PlaneGeometry(2200, 1100);
 const nebulaMaterial = new THREE.MeshBasicMaterial({
     map: loadTexture('assets/nebula_texture.jpg'),
     transparent: true,
-    opacity: 0.18,
+    opacity: 0.06,
     blending: THREE.AdditiveBlending,
     side: THREE.DoubleSide,
     depthWrite: false,
@@ -495,7 +482,8 @@ const PLANET_FACTS = {
   Saturn: ['A gas giant surrounded by spectacular rings.', 'Its rings are mostly icy fragments.'],
   Uranus: ['An ice giant rotating almost on its side.', 'Its axial tilt is about 98 degrees.'],
   Neptune: ['A distant blue world with supersonic winds.', 'It takes about 165 Earth years to orbit the Sun.'],
-  Sun: ['The star powering our solar system.', 'Sunlight reaches Earth in about 8 minutes.']
+  Sun: ['The star powering our solar system.', 'Sunlight reaches Earth in about 8 minutes.'],
+  Moon: ['Earth’s only natural satellite, with a cratered rocky surface.', 'The Moon orbits Earth in roughly 27.3 days.']
 };
 const inspector = document.getElementById('planet-inspector');
 const inspectorLink = document.getElementById('inspector-link');
@@ -505,6 +493,7 @@ const overviewPosition = camera.position.clone();
 const overviewTarget = controls ? controls.target.clone() : new THREE.Vector3();
 function closeInspector() { inspector.hidden = true; selectedBody = null; focusActive = false; }
 document.getElementById('inspector-close').addEventListener('click', closeInspector);
+document.getElementById('select-moon').addEventListener('click', () => { inspectBody(moon); document.getElementById('planet-links').hidden = true; document.getElementById('guide-toggle').setAttribute('aria-expanded','false'); });
 document.getElementById('inspector-reset').addEventListener('click', () => { closeInspector(); if (controls) controls.target.copy(overviewTarget); camera.position.copy(overviewPosition); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !inspector.hidden) closeInspector(); });
 function inspectBody(body) {
@@ -550,7 +539,7 @@ function updateHover(clientX, clientY) {
     } else {
         if (hoveredObject) {
             hoveredObject = null;
-            infoBar.textContent = 'Click a planet to explore';
+            infoBar.textContent = 'Select a planet or the Moon to explore';
         }
         tooltip.classList.remove('visible');
         renderer.domElement.classList.remove('hovering');
@@ -611,7 +600,8 @@ function animate() {
     if (controls && focusActive && selectedBody) {
         const target = selectedBody.position;
         controls.target.lerp(target, 0.055);
-        const desired = target.clone().add(new THREE.Vector3(0, Math.max(12, selectedBody.geometry.boundingSphere ? selectedBody.geometry.boundingSphere.radius * 2 : 18), Math.max(32, (selectedBody.userData.distance || 50) * 0.13)));
+        const radius = selectedBody.geometry.parameters.radius || 2;
+        const desired = target.clone().add(new THREE.Vector3(0, Math.max(3, radius * 1.2), Math.max(9, radius * 3.2)));
         camera.position.lerp(desired, 0.045);
     }
     if (controls) controls.update();
@@ -626,12 +616,23 @@ function animate() {
             Math.sin(time * orbitSpeed + phaseOffset) * distance
         );
         planet.rotation.y += rotationSpeed;
-        if (planet === earth) cloudLayer.rotation.y += 0.00025;
+
 
         // Gentle "breathe" highlight while hovered so the clickable target reads clearly
         const targetScale = (hoveredObject === planet) ? 1.08 : 1.0;
         planet.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.15);
     });
+
+    // Lunar orbit is relative to Earth's current position, not the Sun's.
+    const lunarAngle = time * 0.078 + 1.7; // approximately 13 lunar orbits per Earth solar orbit
+    moon.position.copy(earth.position).add(new THREE.Vector3(
+        Math.cos(lunarAngle) * 12,
+        Math.sin(lunarAngle) * 1.08,
+        Math.sin(lunarAngle) * 12
+    ));
+    moon.rotation.y = -lunarAngle;
+    moonOrbit.position.copy(earth.position);
+    cloudLayer.rotation.y += 0.0003;
 
     sun.rotation.y += sun.userData.rotationSpeed;
     const sunTargetScale = (hoveredObject === sun) ? 1.05 : 1.0;
