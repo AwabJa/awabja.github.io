@@ -331,6 +331,9 @@ let health = 100;
 let wave = 1;
 let hitCooldown = 0;
 let nextWavePending = false;
+let hitEffectTimer;
+window.addEventListener('enzo:player-hit', () => { document.body.classList.remove('player-hit'); void document.body.offsetWidth; document.body.classList.add('player-hit'); clearTimeout(hitEffectTimer); hitEffectTimer = setTimeout(() => document.body.classList.remove('player-hit'), 350); });
+window.addEventListener('enzo:enemy-hit', () => { document.body.classList.add('enemy-hit'); setTimeout(() => document.body.classList.remove('enemy-hit'), 130); });
 const healthDisplay = document.getElementById('healthValue');
 const waveDisplay = document.getElementById('waveValue');
 function updateSurvival(delta) {
@@ -348,7 +351,7 @@ function updateSurvival(delta) {
             showPauseScreen();
         }
     }
-    if (!nextWavePending && enemies.every(e => e.isMarkedForRemoval) && enemies.length > 0) {
+    if (!nextWavePending && enemies.every(e => e.isMarkedForRemoval)) {
         nextWavePending = true;
         wave++;
         waveDisplay.textContent = String(wave);
