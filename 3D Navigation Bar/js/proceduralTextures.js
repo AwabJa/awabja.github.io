@@ -152,7 +152,7 @@
         if(rock) craters(ctx,width,height,rock.craters,rock.seed);
         const map=new THREE.CanvasTexture(canvas);
         map.encoding=THREE.sRGBEncoding;
-        map.anisotropy=Math.min(8,THREE.WebGLRenderer ? 8:1);
+        map.anisotropy=mobile ? 4 : 8;
         let bumpMap=null;
         if(bumpPixels){
             const bumpCanvas=document.createElement('canvas');
