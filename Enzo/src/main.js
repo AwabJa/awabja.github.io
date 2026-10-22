@@ -248,6 +248,8 @@ function onPointerLockChange() {
         // Pointer lock acquired
         console.log("Pointer lock acquired.");
         removeSplashScreen();
+        hidePauseScreen();
+        previousTime = performance.now();
         isGamePaused = false; // Ensure the game is active
     } else {
         // Pointer lock lost
