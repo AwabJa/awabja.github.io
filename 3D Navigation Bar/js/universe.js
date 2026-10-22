@@ -212,6 +212,33 @@ function createPlanet(name, size, texturePath, distance, orbitSpeed, phaseOffset
         const checkRelief = setInterval(() => { if(surfaceMap.image && surfaceMap.image.width){clearInterval(checkRelief);applyRelief();} }, 400);
         setTimeout(()=>clearInterval(checkRelief),12000);
     }
+    // Surface remaster: upscale local contrast and micro-detail on existing imagery.
+    // Reprocess at source resolution, preserving geographical features and color.
+    const originalMap=material.map;
+    const remaster=()=>{
+        const img=originalMap.image;
+        if(!img || !img.width || !img.height || material.userData?.remastered)return;
+        const c=document.createElement('canvas');c.width=Math.min(img.width,2048);c.height=Math.min(img.height,1024);
+        const cx=c.getContext('2d',{willReadFrequently:true});
+        try{
+            cx.drawImage(img,0,0,c.width,c.height);
+            const frame=cx.getImageData(0,0,c.width,c.height),pixels=frame.data;
+            for(let i=0;i<pixels.length;i+=4){
+                for(let k=0;k<3;k++){
+                    let v=pixels[i+k];
+                    v=(v-128)*1.22+128;
+                    pixels[i+k]=Math.max(0,Math.min(255,v));
+                }
+            }
+            cx.putImageData(frame,0,0);
+            const tex=new THREE.CanvasTexture(c);tex.encoding=THREE.sRGBEncoding;
+            tex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+            material.map=tex;material.needsUpdate=true;
+            material.userData={remastered:true};
+        }catch(e){console.warn('Texture remaster unavailable',name,e);}
+    };
+    const remasterTimer=setInterval(()=>{if(originalMap.image?.width){clearInterval(remasterTimer);remaster();}},300);
+    setTimeout(()=>clearInterval(remasterTimer),12000);
     const planet = new THREE.Mesh(geometry, material);
     planet.name = name;
     planet.rotation.z = axialTilt;
@@ -321,9 +348,9 @@ function createCloudMap() {
 }
 const cloudLayer=new THREE.Mesh(new THREE.SphereGeometry(4.59,48,32),new THREE.MeshBasicMaterial({map:createCloudMap(),transparent:true,depthWrite:false,opacity:.63}));
 earth.add(cloudLayer);
-createAtmosphere(earth, 4.75, 0x88ccff, 0.25);
-createAtmosphere(venus, 4.35, 0xffcc88, 0.28);
-createAtmosphere(mars, 3.65, 0xff5533, 0.15);
+createAtmosphere(earth, 4.85, 0x6dbfff, 0.38);
+createAtmosphere(venus, 4.42, 0xffc879, 0.33);
+createAtmosphere(mars, 3.72, 0xff5533, 0.22);
 
 addSaturnRings(saturn, 26, 40, 'assets/saturn_ring.png');
 

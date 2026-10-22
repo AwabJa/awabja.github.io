@@ -99,6 +99,41 @@ const floorMaterial=new THREE.MeshStandardMaterial({map:groundMaps.color,normalM
 const floor=new THREE.Mesh(new THREE.PlaneGeometry(175,175,1,1),floorMaterial);
 floor.rotation.x=-Math.PI/2;floor.position.y=0;floor.receiveShadow=true;scene.add(floor);
 
+// Environment art pass: unmistakable sci-fi industrial arena geometry.
+// Uses shared materials and low-poly geometry to stay mobile-friendly.
+const arenaConcrete = new THREE.MeshStandardMaterial({color:0x465057,roughness:.94,metalness:.08});
+const arenaSteel = new THREE.MeshStandardMaterial({color:0x222c35,roughness:.48,metalness:.78});
+const arenaAccent = new THREE.MeshStandardMaterial({color:0x172e32,emissive:0x0a8590,emissiveIntensity:1.25,roughness:.4,metalness:.65});
+function arenaBox(w,h,d,x,y,z,material=arenaConcrete){
+    const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);
+    mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;scene.add(mesh);return mesh;
+}
+// Perimeter walls frame the playable space, without blocking the central sightline.
+for (const side of [-1,1]) {
+    arenaBox(172,13,3,0,6.5,side*86);
+    arenaBox(3,13,172,side*86,6.5,0);
+    for(let i=-3;i<=3;i++){
+        arenaBox(3.6,18,3.6,i*23,9,side*83,arenaSteel);
+        arenaBox(1.4,11,.2,i*23,9,side*81.35,arenaAccent);
+        arenaBox(3.6,18,3.6,side*83,9,i*23,arenaSteel);
+        arenaBox(.2,11,1.4,side*81.35,9,i*23,arenaAccent);
+    }
+}
+// Low cover, stacked cargo modules, and landmark towers create readable depth.
+for(const [x,z] of [[-34,-27],[37,-31],[-42,33],[43,39],[-8,54],[18,-54]]){
+    arenaBox(11,3.4,6,x,1.7,z,arenaSteel);
+    arenaBox(10.3,.35,6.3,x,3.6,z,arenaConcrete);
+    arenaBox(9,.15,.22,x,2.2,z+3.12,arenaAccent);
+}
+for(const [x,z] of [[-58,-55],[58,55],[-58,55],[58,-55]]){
+    arenaBox(8,23,8,x,11.5,z,arenaSteel);
+    arenaBox(9,1,9,x,23.5,z,arenaConcrete);
+    arenaBox(8.2,.3,8.2,x,22.7,z,arenaAccent);
+}
+const runway=new THREE.Mesh(new THREE.PlaneGeometry(8,140),new THREE.MeshStandardMaterial({color:0x252c31,roughness:.95}));
+runway.rotation.x=-Math.PI/2;runway.position.y=.025;runway.receiveShadow=true;scene.add(runway);
+for(let z=-65;z<=65;z+=10){arenaBox(.22,.025,3,0,.05,z,new THREE.MeshBasicMaterial({color:0xd4a854}));}
+
 // Sky setup
 const sky = new Sky();
 sky.scale.setScalar(450);
