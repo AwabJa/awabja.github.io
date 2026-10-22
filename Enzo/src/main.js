@@ -18,7 +18,7 @@ setupShootingEvents(camera, scene, gunOffset); // Set up shooting events once
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -30,8 +30,8 @@ scene.add(ambientLight);
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
 directionalLight.castShadow = true;
-directionalLight.shadow.mapSize.width = 4096;
-directionalLight.shadow.mapSize.height = 4096;
+directionalLight.shadow.mapSize.width = 2048;
+directionalLight.shadow.mapSize.height = 2048;
 directionalLight.shadow.camera.near = 0.5;
 directionalLight.shadow.camera.far = 100;
 directionalLight.shadow.bias = -0.0005;
@@ -148,7 +148,7 @@ function animate() {
         updateSunPosition(currentTimeOfDay);
     }
 
-    renderer.render(scene, camera);
+    if (!document.hidden) renderer.render(scene, camera);
 }
 
 animate();
