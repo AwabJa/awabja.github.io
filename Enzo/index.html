@@ -20,14 +20,14 @@
 <body>
 
     <a class="enzo-back" href="/">← Back to portfolio</a>
-    <div id="gameHUD" class="game-hud" aria-live="off" hidden><span>ELIMINATIONS <strong id="killCount">0</strong></span><span>GOAL <strong id="killGoal">5</strong></span><span id="objectiveText">Eliminate 5 enemies</span></div>
+    <div id="gameHUD" class="game-hud" aria-live="off" hidden><span>HEALTH <strong id="healthValue">100</strong></span><span>WAVE <strong id="waveValue">1</strong></span><span>ELIMINATIONS <strong id="killCount">0</strong></span><span>GOAL <strong id="killGoal">5</strong></span><span id="objectiveText">Eliminate 5 enemies</span></div>
     <div id="gameToast" class="game-toast" role="status" aria-live="polite"></div>
     <!-- Splash Screen -->
     <div id="splashScreen">
         <img src="logo.png" alt="Enzo Game Logo" id="splashLogo">
         <!-- Removed the loadingMessage div -->
         <!-- Dedicated Start Button -->
-        <p class="game-intro">Survive the arena. Eliminate 5 enemies to complete the challenge.<br>WASD move · Mouse aim/shoot · Space jump · Shift sprint · Esc pause.<br>Desktop keyboard and mouse recommended.</p>
+        <p class="game-intro">Survive increasingly difficult waves. Eliminate 5 enemies to complete the first challenge.<br>WASD move · Mouse aim/shoot · Space jump · Shift sprint · Esc pause.<br>Desktop keyboard and mouse recommended.</p>
         <button id="startButton" aria-label="Start Game">Start Game</button>
     </div>
 
