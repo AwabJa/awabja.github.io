@@ -18,7 +18,7 @@ setupShootingEvents(camera, scene, gunOffset); // Set up shooting events once
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -30,8 +30,8 @@ scene.add(ambientLight);
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
 directionalLight.castShadow = true;
-directionalLight.shadow.mapSize.width = 4096;
-directionalLight.shadow.mapSize.height = 4096;
+directionalLight.shadow.mapSize.width = 2048;
+directionalLight.shadow.mapSize.height = 2048;
 directionalLight.shadow.camera.near = 0.5;
 directionalLight.shadow.camera.far = 100;
 directionalLight.shadow.bias = -0.0005;
@@ -136,10 +136,10 @@ let isExitingToMenu = false; // Flag to indicate exiting to menu
 function animate() {
     requestAnimationFrame(animate);
 
-    if (!isGamePaused) {
-        const currentTime = performance.now();
-        const delta = (currentTime - previousTime) / 1000;
-        previousTime = currentTime;
+    const currentTime = performance.now();
+    const delta = Math.min((currentTime - previousTime) / 1000, 0.05);
+    previousTime = currentTime;
+    if (!isGamePaused && !document.hidden) {
 
         movement.updateMovement(delta);
         updateEnemies(scene, delta, camera.position);
@@ -148,7 +148,7 @@ function animate() {
         updateSunPosition(currentTimeOfDay);
     }
 
-    renderer.render(scene, camera);
+    if (!document.hidden) renderer.render(scene, camera);
 }
 
 animate();
@@ -215,6 +215,7 @@ function removeSplashScreen() {
         splashScreen.classList.add('fade-out'); // Add fade-out class
     }
 
+    hud.hidden = false;
     if (crosshair) {
         crosshair.classList.add('show'); // Show crosshair
     }
@@ -229,6 +230,7 @@ function showSplashScreen() {
         splashScreen.classList.remove('fade-out');
     }
 
+    hud.hidden = true;
     if (crosshair) {
         crosshair.classList.remove('show'); // Hide crosshair
     }
@@ -246,6 +248,8 @@ function onPointerLockChange() {
         // Pointer lock acquired
         console.log("Pointer lock acquired.");
         removeSplashScreen();
+        hidePauseScreen();
+        previousTime = performance.now();
         isGamePaused = false; // Ensure the game is active
     } else {
         // Pointer lock lost
@@ -320,7 +324,24 @@ function adjustCrosshair() {
 adjustCrosshair();
 
 // Function to reset the game (including enemies)
+let eliminations = 0;
+const goal = 5;
+const hud = document.getElementById('gameHUD');
+const toast = document.getElementById('gameToast');
+let toastTimer;
+function announce(message) { toast.textContent = message; clearTimeout(toastTimer); toastTimer = setTimeout(() => { toast.textContent = ''; }, 3500); }
+window.addEventListener('enzo:elimination', () => {
+    if (isGamePaused || !document.pointerLockElement) return;
+    eliminations++;
+    document.getElementById('killCount').textContent = String(eliminations);
+    if (eliminations === goal) { document.getElementById('objectiveText').textContent = 'Mission complete — keep surviving!'; announce('MISSION COMPLETE — 5 ELIMINATIONS!'); }
+    else if (eliminations < goal) announce('Enemy eliminated! ' + eliminations + '/' + goal);
+});
 function resetGame() {
+    eliminations = 0;
+    document.getElementById('killCount').textContent = '0';
+    document.getElementById('objectiveText').textContent = 'Eliminate 5 enemies';
+    toast.textContent = '';
     // Clear existing enemies
     clearEnemies(scene);
 
@@ -341,7 +362,7 @@ document.getElementById('startButton').addEventListener('click', () => {
 // Event listener to handle click on the resume button
 document.getElementById('resumeButton').addEventListener('click', () => {
     hidePauseScreen();
-    resetGame(); // Reset the game when resuming
+    // Resuming preserves progress and existing enemies.
     shouldRequestPointerLock = true; // Flag to request pointer lock after fullscreen
     requestFullscreen();
 });

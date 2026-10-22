@@ -107,3 +107,13 @@ canvas {
 canvas.hovering {
     cursor: pointer;
 }
+
+.back-link{position:fixed;top:16px;left:18px;z-index:20;color:#b7fff1;background:#0b1d2ddd;border:1px solid #3c7a81;padding:10px 14px;border-radius:9px;text-decoration:none;font-weight:600;}
+.planet-guide{position:fixed;right:16px;bottom:18px;z-index:30;max-width:min(340px,calc(100vw - 32px));color:#e6f8ff;}
+#guide-toggle{display:block;margin-left:auto;border:1px solid #4d9a9b;border-radius:9px;background:#0b2233ee;color:#e6f8ff;padding:12px 16px;font:inherit;cursor:pointer;}
+.planet-links{margin-top:8px;background:#091b2af2;border:1px solid #4d9a9b;border-radius:12px;padding:15px;max-height:min(58vh,420px);overflow:auto;box-shadow:0 12px 30px #0009;}
+.planet-links[hidden]{display:none}.planet-links p{margin:0 0 12px;font-size:13px;color:#b8d3d9;line-height:1.5;}
+.planet-links a{display:block;color:#c5fff3;text-decoration:none;padding:9px 5px;border-bottom:1px solid #35505b;}
+.planet-links a:hover{color:white;background:#14384a;}
+a:focus-visible,button:focus-visible{outline:3px solid #00ffc6;outline-offset:3px;}
+@media(max-width:600px){#info{top:75px;font-size:13px}.back-link{top:12px;left:12px}}

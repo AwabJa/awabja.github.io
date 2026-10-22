@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ENZO - UNDER DEVELOPMENT</title>
+    <title>Enzo FPS | Playable Alpha by A.J. Ahmed</title>
+    <meta name="description" content="Play Enzo, a browser-based first-person shooter alpha built with Three.js. Desktop keyboard and mouse required.">
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaina+2:wght@700&display=swap" rel="stylesheet">
@@ -18,11 +19,15 @@
 </head>
 <body>
 
+    <a class="enzo-back" href="/">← Back to portfolio</a>
+    <div id="gameHUD" class="game-hud" aria-live="off" hidden><span>ELIMINATIONS <strong id="killCount">0</strong></span><span>GOAL <strong id="killGoal">5</strong></span><span id="objectiveText">Eliminate 5 enemies</span></div>
+    <div id="gameToast" class="game-toast" role="status" aria-live="polite"></div>
     <!-- Splash Screen -->
     <div id="splashScreen">
         <img src="logo.png" alt="Enzo Game Logo" id="splashLogo">
         <!-- Removed the loadingMessage div -->
         <!-- Dedicated Start Button -->
+        <p class="game-intro">Survive the arena. Eliminate 5 enemies to complete the challenge.<br>WASD move · Mouse aim/shoot · Space jump · Shift sprint · Esc pause.<br>Desktop keyboard and mouse recommended.</p>
         <button id="startButton" aria-label="Start Game">Start Game</button>
     </div>
 

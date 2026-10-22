@@ -20,15 +20,10 @@ window.addEventListener('error', (event) => {
 });
 
 const PLANET_LINKS = {
-    Mercury: 'https://awabja.github.io/',
-    Venus:   'https://awabja.github.io/',
-    Earth:   'https://awabja.github.io/',
-    Mars:    'https://awabja.github.io/',
-    Jupiter: 'https://awabja.github.io/',
-    Saturn:  'https://awabja.github.io/',
-    Uranus:  'https://awabja.github.io/',
-    Neptune: 'https://awabja.github.io/',
-    Sun:     'https://awabja.github.io/',
+    Mercury: '/', Venus: '/#projects', Earth: '/#about', Mars: '/Enzo/index.html',
+    Jupiter: '/3D%20Navigation%20Bar/index.html', Saturn: '/#contact',
+    Uranus: 'https://github.com/AwabJa', Neptune: 'https://www.linkedin.com/in/awabjahmed/',
+    Sun: 'https://www.codecademy.com/profiles/BB99a'
 };
 
 /* ---------------------------------------------------------------------- */
@@ -100,7 +95,7 @@ camera.position.set(0, 220, 420);
 camera.lookAt(scene.position);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -515,7 +510,8 @@ function handleInteraction(event) {
         const clickedObject = intersects[0].object;
         console.log(`You clicked on ${clickedObject.name}`);
         const url = PLANET_LINKS[clickedObject.name] || 'https://awabja.github.io/';
-        window.open(url, '_blank', 'noopener,noreferrer');
+        if (url.startsWith('/')) window.location.assign(url);
+        else window.open(url, '_blank', 'noopener,noreferrer');
     }
 }
 
@@ -529,6 +525,7 @@ renderer.domElement.addEventListener('touchend', handleInteraction, false);
 function animate() {
     requestAnimationFrame(animate);
 
+    if (document.hidden) return;
     if (controls) controls.update();
 
     const time = Date.now() * 0.005;

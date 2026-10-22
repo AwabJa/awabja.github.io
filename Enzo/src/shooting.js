@@ -2,7 +2,7 @@ import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
 import { damageEnemy, getEnemyHitboxes } from './enemies.js';
 
 // Set this to `true` to enable debug mode or `false` to disable it
-const debugMode = true;
+const debugMode = false;
 
 // Helper function for logging when debug mode is enabled
 function debugLog(message, ...optionalParams) {
