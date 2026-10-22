@@ -86,6 +86,8 @@ export function updateEnemies(scene, delta, playerPosition) {
             // Remove the enemy from arrays and scene
             enemies.splice(i, 1);
             scene.remove(enemyData.object);
+            enemyData.object.geometry.dispose();
+            enemyData.object.material.dispose();
             console.log(`Enemy fully removed from the scene.`);
             continue;
         }
@@ -197,6 +199,7 @@ export function damageEnemy(scene, enemy, amount) {
 
         // If health is zero or below, mark for removal
         if (enemyData.health <= 0) {
+            window.dispatchEvent(new Event('enzo:elimination'));
             console.log(`Enemy killed, removing...`);
 
             // Remove the enemy from shootableObjects array immediately
@@ -259,6 +262,8 @@ export function initializeEnemies(scene, count) {
 export function clearEnemies(scene) {
     enemies.forEach(enemyData => {
         scene.remove(enemyData.object);
+        enemyData.object.geometry.dispose();
+        enemyData.object.material.dispose();
     });
     enemies.length = 0;  // Clear the array
     shootableObjects.length = 0; // Clear shootableObjects if necessary
