@@ -10,6 +10,9 @@ Passionate about integrating advanced technology to create sleek and functional 
 
 📁 **Featured Projects**:
 
+The homepage includes a dedicated [Projects gallery](https://awabja.github.io/#projects) with demos and source links.
+
+
 Featured Project: **Landing Page**
 
 A thoughtfully designed and coded landing page created from scratch.
@@ -38,7 +41,7 @@ Explore the project [Landing Page](https://awabja.github.io/).
 
 Featured Project: **3D Navigation Bar**
 
-A dynamic navigation bar featuring clickable, rotating planets, offering an interactive and visually engaging experience.
+A dynamic navigation bar featuring clickable, rotating planets, a destination guide, and HTML navigation links for keyboard and touch users.
 
 🛠️ Technologies Used
 
@@ -59,7 +62,7 @@ Explore the project [3D Navigation Bar](https://awabja.github.io/3D%20Navigation
 
 Featured Project: Enzo 3D FPS
 
-This is my first attempt at building a 3D game, currently in its alpha state. Enzo 3D FPS is a simple first-person shooter where I'm learning the basics of movement, shooting, and enemy interactions. I'm growing along with the project, and thought I'd share these early stages.
+This is my first attempt at building a 3D game, currently in its alpha state. The latest build includes a five-elimination challenge, progress HUD, and performance optimizations. Enzo 3D FPS is a simple first-person shooter where I'm learning the basics of movement, shooting, and enemy interactions. I'm growing along with the project, and thought I'd share these early stages.
 
 🛠️ Technologies Used
 
