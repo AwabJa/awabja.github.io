@@ -1,121 +1,54 @@
-// ================================
-// script.js
-// Optimized for performance, security, and maintainability
-// ================================
-
+// Accessible navigation and lightweight welcome animation
 document.addEventListener("DOMContentLoaded", () => {
-
-    // ----- Elements & State -----
-    const nav = document.querySelector("nav");
-    const welcomeText = document.getElementById('welcome-text');
-
-    const translations = [
-        "Welcome", "欢迎", "स्वागत है", "Bienvenido/a", "Bienvenue", 
-        "أهلاً وسهلاً", "স্বাগতম", "Добро пожаловать", "Bem-vindo/a", "خوش آمدید"
-    ];
-
-    let lastScrollTop = 0;
-    let isNavVisible = true;
-    let currentIndex = 0;
-
-    const bottomThreshold = 50;     // Trigger special behavior near bottom
-    const scrollThreshold = 100;    // Hide nav after scrolling down this far
-    const showNavThreshold = 150;   // Scroll up distance to show nav again
-
-    // ----- Functions -----
-
-    // Change the welcome text
-    const changeWelcomeText = () => {
-        if (!welcomeText) return;
-        welcomeText.textContent = translations[currentIndex];
-        currentIndex = (currentIndex + 1) % translations.length;
-    };
-
-    // Handle nav visibility and scroll behavior
-    const handleScroll = () => {
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        const scrollHeight = document.documentElement.scrollHeight;
-        const clientHeight = window.innerHeight || document.documentElement.clientHeight;
-        const nearBottom = (scrollHeight - (scrollTop + clientHeight)) < bottomThreshold;
-
-        // Scroll down
-        if (scrollTop > lastScrollTop && scrollTop > scrollThreshold && !nearBottom) {
-            if (isNavVisible) {
-                nav.classList.add('hidden');
-                isNavVisible = false;
-            }
-        }
-        // Scroll up
-        else if (scrollTop < lastScrollTop && (lastScrollTop - scrollTop) > showNavThreshold) {
-            if (!isNavVisible) {
-                nav.classList.remove('hidden');
-                isNavVisible = true;
-            }
-        }
-        // Edge case: near top
-        else if (scrollTop <= scrollThreshold) {
-            nav.classList.remove('hidden');
-            isNavVisible = true;
-        }
-
-        // Add/remove 'scrolled' class for styling
-        if (scrollTop > 50) nav.classList.add('scrolled');
-        else nav.classList.remove('scrolled');
-
-        lastScrollTop = Math.max(scrollTop, 0);
-    };
-
-    // Smooth scroll to anchors and show nav
-    const handleAnchorClick = (link) => {
-        const targetId = link.getAttribute('href').substring(1);
-        const targetElement = document.getElementById(targetId);
-
-        if (targetElement) {
-            window.scrollTo({
-                top: targetElement.offsetTop,
-                behavior: "smooth"
-            });
-        }
-
-        // Remove focus to prevent stuck highlight on iOS
-        setTimeout(() => {
-            link.blur();
-            link.classList.remove('active');
-        }, 300);
-
-        // Ensure nav is visible after clicking
-        nav.classList.remove('hidden');
-        isNavVisible = true;
-        lastScrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    };
-
-    // ----- Event Listeners -----
-
-    // Scroll events (optimized with requestAnimationFrame)
-    window.addEventListener("scroll", () => {
-        window.requestAnimationFrame(handleScroll);
+  const nav = document.querySelector("nav");
+  const toggle = document.querySelector(".menu-toggle");
+  const menu = document.getElementById("primary-menu");
+  const welcome = document.getElementById("welcome-text");
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const translations = ["Welcome", "欢迎", "स्वागत है", "Bienvenido/a", "Bienvenue", "أهلاً وسهلاً", "স্বাগতম", "Добро пожаловать", "Bem-vindo/a", "خوش آمدید"];
+  let index = 0, lastY = window.scrollY, scheduled = false, interval;
+  const closeMenu = () => {
+    menu.classList.remove("is-open");
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.setAttribute("aria-label", "Open navigation menu");
+  };
+  toggle.addEventListener("click", () => {
+    const open = menu.classList.toggle("is-open");
+    toggle.setAttribute("aria-expanded", String(open));
+    toggle.setAttribute("aria-label", open ? "Close navigation menu" : "Open navigation menu");
+    nav.classList.remove("hidden");
+  });
+  document.addEventListener("keydown", event => { if (event.key === "Escape" && menu.classList.contains("is-open")) { closeMenu(); toggle.focus(); } });
+  document.addEventListener("click", event => { if (!nav.contains(event.target)) closeMenu(); });
+  window.addEventListener("resize", () => { if (window.innerWidth > 768) closeMenu(); }, { passive: true });
+  document.querySelectorAll('a[href^="#"]').forEach(link => {
+    link.addEventListener("click", event => {
+      const target = document.getElementById(link.hash.slice(1));
+      if (!target) return;
+      event.preventDefault();
+      closeMenu();
+      target.scrollIntoView({ behavior: reducedMotion.matches ? "instant" : "smooth" });
+      history.replaceState(null, "", link.hash);
+      nav.classList.remove("hidden");
     });
-
-    // Touch events on mobile (passive improves scroll performance)
-    window.addEventListener('touchstart', handleScroll, { passive: true });
-
-    // Resize (e.g., iOS address bar)
-    window.addEventListener("resize", () => {
-        lastScrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    });
-
-    // Anchor links smooth scroll
-    const anchorLinks = document.querySelectorAll('a[href^="#"]');
-    anchorLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            handleAnchorClick(link);
-        });
-    });
-
-    // ----- Intervals -----
-    // Change welcome text every 3 seconds, stored in variable for future control
-    const welcomeInterval = setInterval(changeWelcomeText, 3000);
-    // To stop later: clearInterval(welcomeInterval);
-
+  });
+  const updateScroll = () => {
+    const y = Math.max(window.scrollY, 0);
+    const nearBottom = document.documentElement.scrollHeight - (y + window.innerHeight) < 50;
+    nav.classList.toggle("scrolled", y > 50);
+    if (y < 100 || y < lastY || nearBottom || menu.classList.contains("is-open")) nav.classList.remove("hidden");
+    else if (y > lastY + 3) nav.classList.add("hidden");
+    lastY = y;
+    scheduled = false;
+  };
+  window.addEventListener("scroll", () => { if (!scheduled) { scheduled = true; requestAnimationFrame(updateScroll); } }, { passive: true });
+  updateScroll();
+  const stopWelcome = () => { clearInterval(interval); interval = undefined; };
+  const syncWelcome = () => {
+    if (reducedMotion.matches || document.hidden) { stopWelcome(); welcome.textContent = "Welcome"; index = 0; }
+    else if (!interval) interval = setInterval(() => { index = (index + 1) % translations.length; welcome.textContent = translations[index]; }, 3000);
+  };
+  document.addEventListener("visibilitychange", syncWelcome);
+  reducedMotion.addEventListener("change", syncWelcome);
+  syncWelcome();
 });
