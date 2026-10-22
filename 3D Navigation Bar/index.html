@@ -19,7 +19,16 @@
 
     <a class="back-link" href="/">← Portfolio</a>
     <div id="info">Select a planet to explore</div>
-    <aside class="planet-guide" aria-label="Solar system navigation"><button id="guide-toggle" type="button" aria-expanded="false" aria-controls="planet-links">Explore destinations ☰</button><div id="planet-links" class="planet-links" hidden><p>Drag to rotate · Scroll to zoom · Tap a planet or choose a link.</p><a href="/">Mercury — Portfolio</a><a href="/#projects">Venus — Projects</a><a href="/#about">Earth — About</a><a href="/Enzo/index.html">Mars — Enzo FPS</a><a href="/3D%20Navigation%20Bar/index.html">Jupiter — Solar System</a><a href="/#contact">Saturn — Contact</a><a href="https://github.com/AwabJa" target="_blank" rel="noopener noreferrer">Uranus — GitHub</a><a href="https://www.linkedin.com/in/awabjahmed/" target="_blank" rel="noopener noreferrer">Neptune — LinkedIn</a><a href="https://www.codecademy.com/profiles/BB99a" target="_blank" rel="noopener noreferrer">Sun — Certifications</a></div></aside>
+    <aside class="planet-guide" aria-label="Solar system navigation"><button id="guide-toggle" type="button" aria-expanded="false" aria-controls="planet-links">Explore destinations ☰</button><div id="planet-links" class="planet-links" hidden><p>Drag to rotate · Scroll to zoom · Tap a planet to inspect it, or choose a link.</p><a href="/">Mercury — Portfolio</a><a href="/#projects">Venus — Projects</a><a href="/#about">Earth — About</a><a href="/Enzo/index.html">Mars — Enzo FPS</a><a href="/3D%20Navigation%20Bar/index.html">Jupiter — Solar System</a><a href="/#contact">Saturn — Contact</a><a href="https://github.com/AwabJa" target="_blank" rel="noopener noreferrer">Uranus — GitHub</a><a href="https://www.linkedin.com/in/awabjahmed/" target="_blank" rel="noopener noreferrer">Neptune — LinkedIn</a><a href="https://www.codecademy.com/profiles/BB99a" target="_blank" rel="noopener noreferrer">Sun — Certifications</a></div></aside>
+    <section id="planet-inspector" class="planet-inspector" aria-label="Planet details" hidden>
+      <button id="inspector-close" type="button" aria-label="Close planet details">×</button>
+      <span class="inspector-label">SOLAR SYSTEM / EXPLORE</span>
+      <h2 id="inspector-name">Earth</h2>
+      <p id="inspector-description"></p>
+      <p id="inspector-fact"></p>
+      <a id="inspector-link" href="/">Explore destination ↗</a>
+      <button id="inspector-reset" type="button">Return to overview</button>
+    </section>
     <div id="tooltip"></div>
 
     <!-- Three.js core + add-ons (r128) -->

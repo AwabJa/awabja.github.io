@@ -1,7 +1,7 @@
 // src/main.js
 
 import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
-import { createEnemy, updateEnemies, initializeEnemies, clearEnemies } from './enemies.js';
+import { enemies, createEnemy, updateEnemies, initializeEnemies, clearEnemies } from './enemies.js';
 import { Sky } from './objects/Sky.js';
 import { setupCamera } from './fpsCamera.js';
 import { setupMovement } from './movement.js';
@@ -143,6 +143,7 @@ function animate() {
 
         movement.updateMovement(delta);
         updateEnemies(scene, delta, camera.position);
+        updateSurvival(delta);
 
         const currentTimeOfDay = (Date.now() % (dayDurationInSeconds * 1000)) / (dayDurationInSeconds * 1000);
         updateSunPosition(currentTimeOfDay);
@@ -326,6 +327,42 @@ adjustCrosshair();
 // Function to reset the game (including enemies)
 let eliminations = 0;
 const goal = 5;
+let health = 100;
+let wave = 1;
+let hitCooldown = 0;
+let nextWavePending = false;
+let hitEffectTimer;
+window.addEventListener('enzo:player-hit', () => { document.body.classList.remove('player-hit'); void document.body.offsetWidth; document.body.classList.add('player-hit'); clearTimeout(hitEffectTimer); hitEffectTimer = setTimeout(() => document.body.classList.remove('player-hit'), 350); });
+window.addEventListener('enzo:enemy-hit', () => { document.body.classList.add('enemy-hit'); setTimeout(() => document.body.classList.remove('enemy-hit'), 130); });
+const healthDisplay = document.getElementById('healthValue');
+const waveDisplay = document.getElementById('waveValue');
+function updateSurvival(delta) {
+    if (!document.pointerLockElement || health <= 0) return;
+    hitCooldown = Math.max(0, hitCooldown - delta);
+    if (hitCooldown === 0 && enemies.some(e => !e.isMarkedForRemoval && e.object.position.distanceTo(camera.position) < 3.3)) {
+        health = Math.max(0, health - 12);
+        healthDisplay.textContent = String(health);
+        hitCooldown = 1.2;
+        window.dispatchEvent(new Event('enzo:player-hit'));
+        announce(health ? 'Under attack! Health: ' + health : 'GAME OVER — Select Restart');
+        if (health === 0) {
+            isGamePaused = true;
+            if (document.exitPointerLock) document.exitPointerLock();
+            showPauseScreen();
+        }
+    }
+    if (!nextWavePending && enemies.every(e => e.isMarkedForRemoval)) {
+        nextWavePending = true;
+        wave++;
+        waveDisplay.textContent = String(wave);
+        announce('WAVE ' + wave + ' INCOMING');
+        setTimeout(() => {
+            if (!nextWavePending) return;
+            initializeEnemies(scene, Math.min(4 + wave * 2, 14));
+            nextWavePending = false;
+        }, 1800);
+    }
+}
 const hud = document.getElementById('gameHUD');
 const toast = document.getElementById('gameToast');
 let toastTimer;
@@ -338,6 +375,12 @@ window.addEventListener('enzo:elimination', () => {
     else if (eliminations < goal) announce('Enemy eliminated! ' + eliminations + '/' + goal);
 });
 function resetGame() {
+    health = 100;
+    wave = 1;
+    hitCooldown = 0;
+    nextWavePending = false;
+    healthDisplay.textContent = '100';
+    waveDisplay.textContent = '1';
     eliminations = 0;
     document.getElementById('killCount').textContent = '0';
     document.getElementById('objectiveText').textContent = 'Eliminate 5 enemies';
@@ -362,7 +405,7 @@ document.getElementById('startButton').addEventListener('click', () => {
 // Event listener to handle click on the resume button
 document.getElementById('resumeButton').addEventListener('click', () => {
     hidePauseScreen();
-    // Resuming preserves progress and existing enemies.
+    if (health === 0) resetGame(); // Restart after defeat; ordinary pause preserves progress.
     shouldRequestPointerLock = true; // Flag to request pointer lock after fullscreen
     requestFullscreen();
 });

@@ -437,6 +437,43 @@ try {
     composer = null;
 }
 
+
+// Planet inspector: select a body to discover it, then follow its project destination.
+const PLANET_FACTS = {
+  Mercury: ['The smallest planet and closest to the Sun.', 'A year lasts just 88 Earth days.'],
+  Venus: ['Our hottest planet, wrapped in dense clouds.', 'Its surface is hot enough to melt lead.'],
+  Earth: ['Our ocean-covered home in the habitable zone.', 'The only known world with life.'],
+  Mars: ['The red planet, home to giant volcanoes.', 'Olympus Mons is the tallest known volcano in the solar system.'],
+  Jupiter: ['The largest planet, with powerful storms.', 'Its Great Red Spot is a long-lived storm.'],
+  Saturn: ['A gas giant surrounded by spectacular rings.', 'Its rings are mostly icy fragments.'],
+  Uranus: ['An ice giant rotating almost on its side.', 'Its axial tilt is about 98 degrees.'],
+  Neptune: ['A distant blue world with supersonic winds.', 'It takes about 165 Earth years to orbit the Sun.'],
+  Sun: ['The star powering our solar system.', 'Sunlight reaches Earth in about 8 minutes.']
+};
+const inspector = document.getElementById('planet-inspector');
+const inspectorLink = document.getElementById('inspector-link');
+let selectedBody = null;
+let focusActive = false;
+const overviewPosition = camera.position.clone();
+const overviewTarget = controls ? controls.target.clone() : new THREE.Vector3();
+function closeInspector() { inspector.hidden = true; selectedBody = null; focusActive = false; }
+document.getElementById('inspector-close').addEventListener('click', closeInspector);
+document.getElementById('inspector-reset').addEventListener('click', () => { closeInspector(); if (controls) controls.target.copy(overviewTarget); camera.position.copy(overviewPosition); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !inspector.hidden) closeInspector(); });
+function inspectBody(body) {
+  selectedBody = body;
+  focusActive = true;
+  if (controls) controls.autoRotate = false;
+  document.getElementById('inspector-name').textContent = body.name;
+  document.getElementById('inspector-description').textContent = PLANET_FACTS[body.name][0];
+  document.getElementById('inspector-fact').textContent = PLANET_FACTS[body.name][1];
+  inspectorLink.href = PLANET_LINKS[body.name] || '/';
+  inspectorLink.textContent = 'Explore ' + body.name + ' destination ↗';
+  if (!inspectorLink.href.startsWith(location.origin)) { inspectorLink.target = '_blank'; inspectorLink.rel = 'noopener noreferrer'; }
+  else { inspectorLink.removeAttribute('target'); inspectorLink.removeAttribute('rel'); }
+  inspector.hidden = false;
+}
+
 /* ---------------------------------------------------------------------- */
 /* Hover + Click Interaction                                                */
 /* ---------------------------------------------------------------------- */
@@ -509,9 +546,7 @@ function handleInteraction(event) {
     if (intersects.length > 0) {
         const clickedObject = intersects[0].object;
         console.log(`You clicked on ${clickedObject.name}`);
-        const url = PLANET_LINKS[clickedObject.name] || 'https://awabja.github.io/';
-        if (url.startsWith('/')) window.location.assign(url);
-        else window.open(url, '_blank', 'noopener,noreferrer');
+        inspectBody(clickedObject);
     }
 }
 
@@ -526,6 +561,12 @@ function animate() {
     requestAnimationFrame(animate);
 
     if (document.hidden) return;
+    if (controls && focusActive && selectedBody) {
+        const target = selectedBody.position;
+        controls.target.lerp(target, 0.055);
+        const desired = target.clone().add(new THREE.Vector3(0, Math.max(12, selectedBody.geometry.boundingSphere ? selectedBody.geometry.boundingSphere.radius * 2 : 18), Math.max(32, (selectedBody.userData.distance || 50) * 0.13)));
+        camera.position.lerp(desired, 0.045);
+    }
     if (controls) controls.update();
 
     const time = Date.now() * 0.005;

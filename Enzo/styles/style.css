@@ -241,3 +241,10 @@ canvas {
 button:focus-visible,.enzo-back:focus-visible{outline:3px solid #73ffbb;outline-offset:3px;}
 @media(max-width:600px){.game-hud{top:64px;right:8px;padding:8px;font-size:11px}.game-intro{font-size:12px}}
 @media(prefers-reduced-motion:reduce){#splashLogo{animation:none!important}.pause-screen,#splashScreen{transition:none!important}}
+
+/* Enzo 2.0 feedback effects */
+.game-hud strong{font-variant-numeric:tabular-nums}
+body.player-hit::after{content:'';position:fixed;inset:0;background:#e1193b45;z-index:6;pointer-events:none;animation:hit-flash .32s ease-out forwards}
+body.enemy-hit #crosshair{filter:drop-shadow(0 0 9px #ffdc74)}
+@keyframes hit-flash{to{opacity:0}}
+@media(prefers-reduced-motion:reduce){body.player-hit::after{animation:none;opacity:.15}}
