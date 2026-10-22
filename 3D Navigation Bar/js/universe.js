@@ -147,16 +147,16 @@ if (typeof THREE.OrbitControls === 'function') {
 // distance cutoff, so outer planets (Uranus/Neptune) are no longer left unlit.
 const sunLight = new THREE.PointLight(0xfff4e0, 3.2, 0, 1.6);
 sunLight.position.set(0, 0, 0);
-sunLight.castShadow = true;
+sunLight.castShadow = false; // The Sun's surface lighting is directional; avoid expensive point-light cube shadows.
 sunLight.shadow.mapSize.set(2048, 2048);
 sunLight.shadow.bias = -0.0005;
 scene.add(sunLight);
 
 // Soft fill light so the night-side of planets isn't pure black
-const ambientLight = new THREE.AmbientLight(0x404060, 0.35);
+const ambientLight = new THREE.AmbientLight(0x29364a, 0.16);
 scene.add(ambientLight);
 
-const hemiLight = new THREE.HemisphereLight(0x3a4d7a, 0x0a0a12, 0.25);
+const hemiLight = new THREE.HemisphereLight(0x3a4d7a, 0x0a0a12, 0.15);
 scene.add(hemiLight);
 
 /* ---------------------------------------------------------------------- */
@@ -179,9 +179,39 @@ function createPlanet(name, size, texturePath, distance, orbitSpeed, phaseOffset
     const geometry = new THREE.SphereGeometry(size, 64, 64);
     const material = new THREE.MeshStandardMaterial({
         map: loadTexture(texturePath),
-        roughness: 0.9,
+        roughness: name === 'Earth' ? 0.72 : 0.96,
         metalness: 0.0,
+        bumpMap: null,
     });
+    // Derive subtle relief from the existing surface image without shipping large normal maps.
+    // Height is restrained to avoid exaggerating mountains at planetary scale.
+    if (name === 'Mercury' || name === 'Earth' || name === 'Mars') {
+        const surfaceMap = material.map;
+        const applyRelief = () => {
+            const image = surfaceMap.image;
+            if (!image || !image.width || !image.height) return;
+            const c = document.createElement('canvas');
+            c.width = Math.min(image.width, 1024); c.height = Math.min(image.height, 512);
+            const context = c.getContext('2d');
+            try {
+                context.drawImage(image, 0, 0, c.width, c.height);
+                const data = context.getImageData(0,0,c.width,c.height);
+                for(let i=0;i<data.data.length;i+=4){
+                    const lum=data.data[i]*.3+data.data[i+1]*.59+data.data[i+2]*.11;
+                    data.data[i]=data.data[i+1]=data.data[i+2]=lum;
+                }
+                context.putImageData(data,0,0);
+                const relief=new THREE.CanvasTexture(c);
+                material.bumpMap=relief;material.bumpScale=name==='Earth' ? .09 : .16;
+                material.needsUpdate=true;
+            } catch(error) { console.warn('Optional relief unavailable:',name,error); }
+        };
+        if(surfaceMap.image && surfaceMap.image.complete) applyRelief();
+        else surfaceMap.addEventListener?.('update', applyRelief);
+        // Three.js textures do not always emit update events: image loading is also checked below.
+        const checkRelief = setInterval(() => { if(surfaceMap.image && surfaceMap.image.width){clearInterval(checkRelief);applyRelief();} }, 400);
+        setTimeout(()=>clearInterval(checkRelief),12000);
+    }
     const planet = new THREE.Mesh(geometry, material);
     planet.name = name;
     planet.rotation.z = axialTilt;
@@ -274,6 +304,23 @@ const planets = [
 
 const [mercury, venus, earth, mars, jupiter, saturn, uranus, neptune] = planets;
 
+// Thin independent cloud shell: procedural cloud cover adds depth without new binary assets.
+function createCloudMap() {
+    const c=document.createElement('canvas');c.width=1024;c.height=512;
+    const ctx=c.getContext('2d'),img=ctx.createImageData(c.width,c.height);
+    const hash=(x,y)=>{const v=Math.sin(x*127.1+y*311.7)*43758.5453;return v-Math.floor(v);};
+    const sample=(x,y,scale)=>{const xx=x/scale,yy=y/scale,ix=Math.floor(xx),iy=Math.floor(yy),fx=xx-ix,fy=yy-iy;
+      const u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy);
+      return ((hash(ix,iy)*(1-u)+hash(ix+1,iy)*u)*(1-v)+(hash(ix,iy+1)*(1-u)+hash(ix+1,iy+1)*u)*v);};
+    for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++){
+      const cloud=sample(x,y,100)*.55+sample(x,y,38)*.3+sample(x,y,14)*.15;
+      const a=Math.max(0,Math.min(195,(cloud-.46)*700));const i=(y*c.width+x)*4;
+      img.data[i]=235;img.data[i+1]=242;img.data[i+2]=250;img.data[i+3]=a;
+    }
+    ctx.putImageData(img,0,0);const tex=new THREE.CanvasTexture(c);tex.encoding=THREE.sRGBEncoding;return tex;
+}
+const cloudLayer=new THREE.Mesh(new THREE.SphereGeometry(4.59,48,32),new THREE.MeshBasicMaterial({map:createCloudMap(),transparent:true,depthWrite:false,opacity:.63}));
+earth.add(cloudLayer);
 createAtmosphere(earth, 4.75, 0x88ccff, 0.25);
 createAtmosphere(venus, 4.35, 0xffcc88, 0.28);
 createAtmosphere(mars, 3.65, 0xff5533, 0.15);
@@ -579,6 +626,7 @@ function animate() {
             Math.sin(time * orbitSpeed + phaseOffset) * distance
         );
         planet.rotation.y += rotationSpeed;
+        if (planet === earth) cloudLayer.rotation.y += 0.00025;
 
         // Gentle "breathe" highlight while hovered so the clickable target reads clearly
         const targetScale = (hoveredObject === planet) ? 1.08 : 1.0;

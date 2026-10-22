@@ -17,6 +17,8 @@ setupShootingEvents(camera, scene, gunOffset); // Set up shooting events once
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
 renderer.shadowMap.enabled = true;
@@ -25,10 +27,10 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
 // Lighting setup
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+const ambientLight = new THREE.AmbientLight(0x9ab6d0, 0.42);
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+const directionalLight = new THREE.DirectionalLight(0xffe2b4, 1.4);
 directionalLight.castShadow = true;
 directionalLight.shadow.mapSize.width = 2048;
 directionalLight.shadow.mapSize.height = 2048;
@@ -42,31 +44,60 @@ directionalLight.shadow.camera.top = 50;
 directionalLight.shadow.camera.bottom = -50;
 scene.add(directionalLight);
 
-// Ground textures setup (Color and Normal Maps)
-const textureLoader = new THREE.TextureLoader();
-const groundColorMap = textureLoader.load('assets/textures/Ground037_2K-PNG_Color.png');
-const groundNormalMap = textureLoader.load('assets/textures/Ground037_2K-PNG_NormalGL.png');
-
-// Apply wrapping and repeat settings
-groundColorMap.wrapS = groundColorMap.wrapT = THREE.RepeatWrapping;
-groundNormalMap.wrapS = groundNormalMap.wrapT = THREE.RepeatWrapping;
-
-groundColorMap.repeat.set(20, 20);
-groundNormalMap.repeat.set(20, 20);
-
-const floorMaterial = new THREE.MeshStandardMaterial({
-    map: groundColorMap,
-    normalMap: groundNormalMap,
-    roughness: 0.95,
-    metalness: 0.0,
-    displacementScale: 0
-});
-
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(175, 175, 175, 175), floorMaterial);
-floor.rotation.x = -Math.PI / 2;
-floor.position.y = 0;
-floor.receiveShadow = true;
-scene.add(floor);
+// Cinematic ground: procedural, tileable albedo and roughness/normal maps.
+// Generated in the browser to avoid heavy external texture downloads.
+function createGroundMaps(size = 512) {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    const image = ctx.createImageData(size, size);
+    const heights = new Float32Array(size * size);
+    const fract = n => n - Math.floor(n);
+    const hash = (x, y) => fract(Math.sin(x * 127.1 + y * 311.7) * 43758.5453);
+    const noise = (x, y, scale) => {
+        const gx = x / scale, gy = y / scale, ix = Math.floor(gx), iy = Math.floor(gy);
+        const fx = gx - ix, fy = gy - iy;
+        const u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
+        const h = (dx, dy) => hash((ix + dx + 4096) % 4096, (iy + dy + 4096) % 4096);
+        return (h(0,0)*(1-u)+h(1,0)*u)*(1-v)+(h(0,1)*(1-u)+h(1,1)*u)*v;
+    };
+    for (let y=0;y<size;y++) for(let x=0;x<size;x++) {
+        const i=y*size+x;
+        const coarse=noise(x,y,90), medium=noise(x,y,22), fine=noise(x,y,5);
+        const grit=hash(x,y);
+        const cracks=Math.min(x%128,128-x%128,y%128,128-y%128)<1.7 ? .33 : 0;
+        const h=coarse*.48+medium*.32+fine*.14+grit*.06-cracks;
+        heights[i]=h;
+        const shade=Math.max(0,Math.min(255, Math.round(34+h*61)));
+        const o=i*4;
+        image.data[o]=shade+7;image.data[o+1]=shade+5;image.data[o+2]=shade+1;image.data[o+3]=255;
+    }
+    ctx.putImageData(image,0,0);
+    const color = new THREE.CanvasTexture(canvas);
+    color.encoding=THREE.sRGBEncoding;
+    const normalCanvas=document.createElement('canvas');normalCanvas.width=normalCanvas.height=size;
+    const nctx=normalCanvas.getContext('2d');const normal=nctx.createImageData(size,size);
+    for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+        const i=y*size+x;
+        const left=heights[y*size+(x+size-1)%size],right=heights[y*size+(x+1)%size];
+        const up=heights[((y+size-1)%size)*size+x],down=heights[((y+1)%size)*size+x];
+        const nx=(left-right)*2.5,ny=(up-down)*2.5,nz=1;
+        const len=Math.hypot(nx,ny,nz);const o=i*4;
+        normal.data[o]=128+127*nx/len;normal.data[o+1]=128+127*ny/len;normal.data[o+2]=128+127*nz/len;normal.data[o+3]=255;
+    }
+    nctx.putImageData(normal,0,0);
+    const normalMap=new THREE.CanvasTexture(normalCanvas);
+    for(const texture of [color,normalMap]){
+        texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+        texture.repeat.set(22,22);
+        texture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+    }
+    return {color,normalMap};
+}
+const groundMaps=createGroundMaps();
+const floorMaterial=new THREE.MeshStandardMaterial({map:groundMaps.color,normalMap:groundMaps.normalMap,roughness:.97,metalness:.03});
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(175,175,1,1),floorMaterial);
+floor.rotation.x=-Math.PI/2;floor.position.y=0;floor.receiveShadow=true;scene.add(floor);
 
 // Sky setup
 const sky = new Sky();
