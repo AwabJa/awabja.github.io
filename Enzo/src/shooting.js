@@ -69,6 +69,7 @@ function handleProjectileHit(scene, hitObject) {
 
     // Apply damage to the enemy via enemies.js
     const enemyFound = damageEnemy(scene, hitObject, 25);
+    if (enemyFound) window.dispatchEvent(new Event('enzo:enemy-hit'));
 
     if (!enemyFound) {
         debugLog('Enemy not found or already marked for removal.');
