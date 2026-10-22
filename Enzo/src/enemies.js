@@ -10,9 +10,19 @@ const GROUND_LEVEL = 0.8;
 
 // Function to create an enemy and add it to the scene
 export function createEnemy(scene, position) {
-    const geometry = new THREE.DodecahedronGeometry(0.82, 0);
-    const material = new THREE.MeshStandardMaterial({ color: 0xe84856, emissive: 0x3b060d, roughness: 0.55, metalness: 0.25 });
+    // Layered armored drone with metallic panels and emissive optical core.
+    // The root mesh stays the hitbox, so gameplay/raycasting is unchanged.
+    const geometry = new THREE.DodecahedronGeometry(0.82, 1);
+    const material = new THREE.MeshStandardMaterial({color:0x505961,metalness:.82,roughness:.36,flatShading:true});
     const enemy = new THREE.Mesh(geometry, material);
+    const plating = new THREE.Mesh(new THREE.IcosahedronGeometry(0.68, 1),
+        new THREE.MeshStandardMaterial({color:0x242e37,metalness:.9,roughness:.24,flatShading:true}));
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.25,16,12),
+        new THREE.MeshStandardMaterial({color:0xff3b31,emissive:0xff1809,emissiveIntensity:2.4,metalness:.2,roughness:.2}));
+    eye.position.set(0,0,0.69);
+    const eyeHalo = new THREE.PointLight(0xff3420,.35,3);
+    eyeHalo.position.copy(eye.position);
+    enemy.add(plating,eye,eyeHalo);
 
     // Ensure enemy is above the ground
     position.y = GROUND_LEVEL;  // Place the enemy at the ground level or above
@@ -33,7 +43,7 @@ export function createEnemy(scene, position) {
         patrolInterval: THREE.MathUtils.randFloat(1, 3), // More frequent patrol direction changes
         separationDistance: 4,  // Reduced minimum distance for tighter formations
         playerAvoidanceDistance: 3,  // Minimum distance to maintain from player
-        originalColor: new THREE.Color(0xff0000),
+        originalColor: new THREE.Color(0x505961),
         isHighlighted: false,
         highlightTime: 0, // Timer for how long the enemy stays highlighted
         stuckTime: 0,  // Timer to detect if enemy is stuck
