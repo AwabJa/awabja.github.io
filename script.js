@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!target) return;
       event.preventDefault();
       closeMenu();
-      target.scrollIntoView({ behavior: reducedMotion.matches ? "instant" : "smooth" });
+      target.scrollIntoView({ behavior: reducedMotion.matches ? "auto" : "smooth" });
       history.replaceState(null, "", link.hash);
       nav.classList.remove("hidden");
     });
@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const y = Math.max(window.scrollY, 0);
     const nearBottom = document.documentElement.scrollHeight - (y + window.innerHeight) < 50;
     nav.classList.toggle("scrolled", y > 50);
-    if (y < 100 || y < lastY || nearBottom || menu.classList.contains("is-open")) nav.classList.remove("hidden");
+    if (y < 100 || y < lastY || nearBottom || nav.contains(document.activeElement) || menu.classList.contains("is-open")) nav.classList.remove("hidden");
     else if (y > lastY + 3) nav.classList.add("hidden");
     lastY = y;
     scheduled = false;
