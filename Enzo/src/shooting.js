@@ -102,6 +102,7 @@ export function setupShootingEvents(camera,scene,hand,environment=[],surface=nul
       }
     }
     // Hit registration and projectiles must not depend on a cosmetic asset.
+    hand.cast();
     spellBolt(scene,start,end,camera);
   }
   window.addEventListener('mousedown',handle);
