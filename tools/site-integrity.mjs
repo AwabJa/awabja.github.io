@@ -108,8 +108,39 @@ check(world.includes('export function createArcaneWorld') &&
   world.includes('ShaderMaterial') && world.includes('InstancedMesh'),
   'Enzo must keep the procedural arena, storm sky and low-draw-call stones');
 check(hand.includes('export function createCastingHand') &&
-  hand.includes('muzzlePosition') && hand.includes('fingers'),
-  'First-person spellcaster must have a right hand, animation and cast origin');
+  hand.includes('muzzlePosition') && hand.includes('new GLTFLoader().load(MODEL_URL') &&
+  hand.includes('bones.set(obj.name,obj)') && hand.includes('BEND_AXIS') &&
+  !/new THREE\\.(CylinderGeometry|BoxGeometry|IcosahedronGeometry)/.test(hand),
+  'First-person model must use a real anatomical rig, not fake primitive fingers');
+const modelFile=join(root,'Enzo/assets/models/anatomical-right-hand.glb');
+const modelLicense=join(root,'Enzo/assets/models/RIGHT-HAND-LICENSE.md');
+check(existsSync(modelFile),'Skinned CC0 hand GLB must exist locally');
+check(existsSync(modelLicense) &&
+  readFileSync(modelLicense,'utf8').includes('Creative Commons Zero'),
+  'The GLB must retain its CC0 provenance');
+if(existsSync(modelFile)) {
+  const glb=readFileSync(modelFile);
+  check(glb.toString('ascii',0,4)==='glTF' &&
+      glb.readUInt32LE(4)===2 && glb.readUInt32LE(8)===glb.length,
+    'Hand GLB must have valid binary glTF 2.0 header');
+  try {
+    const length=glb.readUInt32LE(12);
+    const info=JSON.parse(glb.toString('utf8',20,20+length));
+    const skinned=(info.skins||[]).some(s=>(s.joints||[]).length>=16);
+    const position=(info.meshes||[]).flatMap(m=>m.primitives||[])
+      .map(p=>info.accessors[p.attributes.POSITION])
+      .some(p=>p&&p.count>=4000);
+    const names=new Set((info.nodes||[]).map(n=>n.name));
+    check(skinned&&position&&names.has('hand_r')&&
+      names.has('index_01_r')&&names.has('middle_03_r'),
+      'Hand model must contain anatomical mesh and usable finger skeleton');
+  } catch(error) {
+    check(false,'Hand GLB JSON inaccessible: '+error.message);
+  }
+}
+check(game.includes('hand.ready.then(') &&
+      game.includes('startButton.disabled = true;'),
+  'Enzo must not begin gameplay before its actual 3D hand loads');
 check(src.includes('hand.cast()') && src.includes('spellBolt(') && src.includes('impact('),
   'Spell projectiles, casting animation and impact effects must remain wired');
 check(!existsSync(join(root, 'Enzo/src/objects/Sky.js')),
