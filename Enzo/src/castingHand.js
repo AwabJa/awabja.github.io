@@ -195,7 +195,7 @@ export function createCastingHand(camera) {
     map:flareMap,color:0x70cdff,
     blending:THREE.AdditiveBlending,
     transparent:true,opacity:0,
-    depthTest:false,depthWrite:false
+    depthTest:true,depthWrite:false
   });
   const flash=new THREE.Sprite(flashMaterial);
   flash.scale.set(.15,.15,1);
@@ -217,7 +217,7 @@ export function createCastingHand(camera) {
   streakGeo.setAttribute('position',new THREE.Float32BufferAttribute(streakCoords,3));
   const streakMaterial=new THREE.LineBasicMaterial({
     color:0x58caff,transparent:true,opacity:0,
-    blending:THREE.AdditiveBlending,depthTest:false,depthWrite:false
+    blending:THREE.AdditiveBlending,depthTest:true,depthWrite:false
   });
   const streaks=new THREE.LineSegments(streakGeo,streakMaterial);
   streaks.renderOrder=919;
@@ -259,11 +259,13 @@ export function createCastingHand(camera) {
     palmAcross.copy(palmIndex).sub(palmPinky).normalize();
     palmNormal.crossVectors(palmAlong,palmAcross).normalize();
     camera.getWorldDirection(palmFacing).normalize();
-    if(palmNormal.dot(palmFacing)<0)palmNormal.negate();
+    // Keep the visible palm surface toward the camera. The projectile still
+    // travels outward along the exact center-screen aim vector.
+    if(palmNormal.dot(palmFacing)>0)palmNormal.negate();
     target.copy(palmIndex).add(palmPinky).multiplyScalar(.5)
       .lerp(palmWrist,.36)
-      .addScaledVector(palmNormal,.032)
-      .addScaledVector(palmFacing,.025);
+      .addScaledVector(palmNormal,.043)
+      .addScaledVector(palmFacing,.014);
     return target;
   }
   function alignPalmFx(){
@@ -321,7 +323,14 @@ export function createCastingHand(camera) {
         if(!Number.isFinite(dimension)||dimension<=.035)
           throw new Error('Anatomical hand bone span invalid');
         root.position.sub(wristPosition);
-        wrapper.quaternion.setFromUnitVectors(axis,desiredDirection);
+        // Roll the authored mesh around the finger axis so the PALM,
+        // not the dorsal knuckles, reads in first-person view. Using the
+        // same anatomical wrist-to-knuckle axis preserves the pose direction.
+        const aimAlignment=new THREE.Quaternion()
+          .setFromUnitVectors(axis,desiredDirection);
+        const palmRoll=new THREE.Quaternion()
+          .setFromAxisAngle(desiredDirection,Math.PI*.82);
+        wrapper.quaternion.copy(palmRoll.multiply(aimAlignment));
         defaultScale=Math.max(2,Math.min(5,.72/dimension));
         wrapper.scale.setScalar(defaultScale);
         wrapper.add(root);
