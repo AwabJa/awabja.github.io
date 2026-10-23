@@ -108,6 +108,7 @@ export function createEnemy(scene, position, roleName) {
   reticle.name='Targeting ring';
   const iris=createArmourPiece(shell,new THREE.SphereGeometry(.11,12,8),obsidian,0,.035,1.07);
   iris.name='Pupil';
+  iris.userData.weakPoint=true; // Center of the glowing target is a critical hit.
   if(role.name==='brute')reticle.scale.setScalar(1.16);
 
   // Lighting stays on the emissive eye material. Avoid one PointLight per enemy.
