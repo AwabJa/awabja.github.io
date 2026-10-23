@@ -24,49 +24,88 @@ function disposeEnemy(scene, enemyData) {
     if (i !== -1) shootableObjects.splice(i, 1);
 }
 
-// Function to create an enemy and add it to the scene
-export function createEnemy(scene, position) {
-    // Layered armored drone with metallic panels and emissive optical core.
-    // The root mesh stays the hitbox, so gameplay/raycasting is unchanged.
-    const geometry = new THREE.DodecahedronGeometry(0.82, 1);
-    const material = new THREE.MeshStandardMaterial({color:0x505961,metalness:.82,roughness:.36,flatShading:true});
-    const enemy = new THREE.Mesh(geometry, material);
-    const plating = new THREE.Mesh(new THREE.IcosahedronGeometry(0.68, 1),
-        new THREE.MeshStandardMaterial({color:0x242e37,metalness:.9,roughness:.24,flatShading:true}));
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.25,16,12),
-        new THREE.MeshStandardMaterial({color:0xff3b31,emissive:0xff1809,emissiveIntensity:2.4,metalness:.2,roughness:.2}));
-    eye.position.set(0,0,0.69);
-    const eyeHalo = new THREE.PointLight(0xff3420,.35,3);
-    eyeHalo.position.copy(eye.position);
-    enemy.add(plating,eye,eyeHalo);
+// Four corrupted sentinel silhouettes. All child meshes raycast back to
+// the registered root for damage; bright face cores are deliberate weak points.
+const TYPES=[
+  {name:'Scout',size:.70,health:85,patrol:2.35,chase:5.15,accent:0xff5677,shape:4},
+  {name:'Sentinel',size:.94,health:150,patrol:1.45,chase:3.55,accent:0xf13861,shape:6},
+  {name:'Brute',size:1.30,health:285,patrol:.85,chase:2.15,accent:0xff7350,shape:8},
+  {name:'Warden',size:.79,health:110,patrol:1.85,chase:3.65,accent:0xb870ff,shape:5}
+];
+export function createEnemy(scene, position, kind=0) {
+  const type=TYPES[((kind%TYPES.length)+TYPES.length)%TYPES.length];
+  const size=type.size;
+  const geometry=new THREE.IcosahedronGeometry(size,1);
+  const material=new THREE.MeshStandardMaterial({
+    color:0x35404e,metalness:.78,roughness:.33,flatShading:true,
+    emissive:0x111522,emissiveIntensity:.25
+  });
+  const enemy=new THREE.Mesh(geometry,material);
+  enemy.name=type.name+' / corrupted sentinel';
+  enemy.position.copy(position);
+  enemy.position.y=size+.15;
+  enemy.castShadow=true;
+  scene.add(enemy);
 
-    // Ensure enemy is above the ground
-    position.y = GROUND_LEVEL;  // Place the enemy at the ground level or above
-    enemy.position.copy(position);
-    enemy.castShadow = true;
-    scene.add(enemy);
-
-    shootableObjects.push(enemy);
-
-    enemies.push({
-        object: enemy,
-        health: 150,
-        isChasing: false,
-        isPatrolling: true, // Enemy will patrol by default
-        patrolDirection: getRandomDirection(), // Random patrol direction
-        patrolSpeed: 1.2,  // Patrol speed
-        patrolTime: 0,  // Timer for changing patrol direction
-        patrolInterval: THREE.MathUtils.randFloat(1, 3), // More frequent patrol direction changes
-        separationDistance: 4,  // Reduced minimum distance for tighter formations
-        playerAvoidanceDistance: 3,  // Minimum distance to maintain from player
-        originalColor: new THREE.Color(0x505961),
-        isHighlighted: false,
-        highlightTime: 0, // Timer for how long the enemy stays highlighted
-        stuckTime: 0,  // Timer to detect if enemy is stuck
-        strafeDirection: Math.random() > 0.5 ? 1 : -1, // Random initial strafe direction (1 for right, -1 for left)
-        isMarkedForRemoval: false, // Flag to prevent double removal
-        velocityY: 0 // Velocity in the Y direction for simulating gravity
-    });
+  function part(geometry,material,x=0,y=0,z=0){
+    const mesh=new THREE.Mesh(geometry,material);
+    mesh.position.set(x,y,z);
+    enemy.add(mesh);
+    return mesh;
+  }
+  const frameMat=new THREE.MeshStandardMaterial({
+    color:0x131b29,metalness:.91,roughness:.23,flatShading:true
+  });
+  const trimMat=new THREE.MeshStandardMaterial({
+    color:0x647183,metalness:.88,roughness:.28,emissive:0x110c18
+  });
+  const glowMat=new THREE.MeshBasicMaterial({color:type.accent});
+  const haloMat=new THREE.MeshBasicMaterial({
+    color:type.accent,transparent:true,opacity:.5,depthWrite:false,side:THREE.DoubleSide
+  });
+  const shell=part(new THREE.IcosahedronGeometry(size*.81,0),frameMat);
+  shell.rotation.y=.33;
+  for(let i=0;i<type.shape;i++){
+    const theta=i*Math.PI*2/type.shape;
+    const shard=part(new THREE.ConeGeometry(size*.27,size*.85,4),
+      i%2?trimMat:frameMat,
+      Math.sin(theta)*size*.89,Math.cos(theta)*size*.88,.05);
+    shard.rotation.z=-theta;
+    shard.rotation.x=.27;
+    shard.rotation.y=theta;
+  }
+  // Bright optical heart floats ahead of the armor, facing the player.
+  const eye=part(new THREE.IcosahedronGeometry(size*.30,2),glowMat,0,.03,size*1.01);
+  eye.name='Exposed arcane core';eye.userData.weakPoint=true;
+  const halo=part(new THREE.TorusGeometry(size*.41,size*.042,6,32),haloMat,0,.03,size*.89);
+  const rim=part(new THREE.TorusGeometry(size*.76,size*.047,6,32),trimMat,0,0,size*.16);
+  const rings=[];
+  if(type.name==='Warden'){
+    const satellite=part(new THREE.TorusGeometry(size*1.05,size*.045,6,40),haloMat);
+    satellite.rotation.x=.9;
+    rings.push(satellite);
+  }
+  if(type.name==='Brute'){
+    const plate=part(new THREE.DodecahedronGeometry(size*.7,0),frameMat,0,0,-size*.23);
+    plate.rotation.z=.3;
+    for(const side of [-1,1]){
+      const shoulder=part(new THREE.BoxGeometry(size*.66,size*.46,size*.59),
+        frameMat,side*size*.69,size*.33,-size*.10);
+      shoulder.rotation.z=side*.32;
+    }
+  }
+  shootableObjects.push(enemy);
+  const originalColor=material.color.clone();
+  enemies.push({
+    object:enemy,type,typeName:type.name,
+    core:eye,halo,rim,rings,
+    baseY:enemy.position.y,phase:Math.random()*Math.PI*2,health:type.health,maxHealth:type.health,
+    isChasing:false,isPatrolling:true,patrolDirection:getRandomDirection(),
+    patrolSpeed:type.patrol,patrolTime:0,patrolInterval:THREE.MathUtils.randFloat(1,3),
+    separationDistance:4,playerAvoidanceDistance:2.6+size*.35,
+    originalColor,isHighlighted:false,highlightTime:0,stuckTime:0,
+    strafeDirection:Math.random()>.5?1:-1,isMarkedForRemoval:false,velocityY:0
+  });
 }
 
 // Function to generate a random patrol direction
@@ -150,7 +189,7 @@ export function updateEnemies(scene, delta, playerPosition) {
             if (distanceToPlayer > enemyData.playerAvoidanceDistance) {
                 direction.x += THREE.MathUtils.randFloat(-0.1, 0.1);
                 direction.z += THREE.MathUtils.randFloat(-0.1, 0.1);
-                enemy.position.add(direction.multiplyScalar(3.5 * delta));
+                enemy.position.add(direction.multiplyScalar(enemyData.type.chase * delta));
             }
 
             // Handling enemy getting stuck
@@ -168,12 +207,22 @@ export function updateEnemies(scene, delta, playerPosition) {
             }
         }
 
-        // Apply gravity and ensure enemies stay above the ground
-        enemyData.velocityY -= 9.8 * delta; // Gravity effect
-        enemy.position.y += enemyData.velocityY * delta;
-        if (enemy.position.y < GROUND_LEVEL) {
-            enemy.position.y = GROUND_LEVEL;
-            enemyData.velocityY = 0; // Reset velocity when hitting the ground
+        // Hovering sentinels: motion is frame-rate independent and direction faces player.
+        enemyData.phase += delta * (enemyData.typeName === 'Scout' ? 2.35 : 1.45);
+        enemy.position.y = enemyData.baseY + Math.sin(enemyData.phase) * .15;
+        enemy.rotation.y = Math.atan2(playerPosition.x-enemy.position.x, playerPosition.z-enemy.position.z);
+        enemyData.core.scale.setScalar(1+.10*Math.sin(enemyData.phase*2.5));
+        enemyData.halo.rotation.z += delta*.55;
+        enemyData.rim.rotation.z -= delta*.10;
+        for(const ring of enemyData.rings)ring.rotation.y+=delta*.42;
+        // Support wardens slowly repair nearby allies.
+        if(enemyData.typeName==='Warden') {
+            for(const ally of enemies) {
+                if(ally===enemyData || ally.isMarkedForRemoval)continue;
+                if(ally.object.position.distanceToSquared(enemy.position)<144) {
+                    ally.health=Math.min(ally.maxHealth,ally.health+delta*1.5);
+                }
+            }
         }
 
         // Reset the enemy's color if highlighted for damage
@@ -263,12 +312,12 @@ export function getEnemyHitboxes() {
 // Initialize enemies (added function)
 export function initializeEnemies(scene, count) {
     for (let i = 0; i < count; i++) {
+        const angle = (i * 2.399963 + Math.random() * .8) % (Math.PI * 2);
+        const distance = 17 + Math.random() * 23;
         const position = new THREE.Vector3(
-            THREE.MathUtils.randFloatSpread(100),
-            GROUND_LEVEL,
-            THREE.MathUtils.randFloatSpread(100)
+            Math.cos(angle) * distance, GROUND_LEVEL, Math.sin(angle) * distance
         );
-        createEnemy(scene, position);
+        createEnemy(scene, position, i % TYPES.length);
     }
 }
 
