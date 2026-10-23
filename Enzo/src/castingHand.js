@@ -55,7 +55,7 @@ function makeFabric() {
 export function createCastingHand(camera) {
   const rig=new THREE.Group();
   rig.name='First-person anatomical right hand / CC0 skinned model';
-  rig.position.set(.32,-.27,-.68);
+  rig.position.set(.49,-.42,-.62);
   rig.rotation.set(-.13,.02,-.21);
   camera.add(rig);
 
@@ -66,20 +66,16 @@ export function createCastingHand(camera) {
   const gloveTexture=makeFabric();
   const leather=new THREE.MeshPhysicalMaterial({
     name:'Shattered Reach / graphite woven glove',
-    color:0x899bb7,
+    color:0x7f90a8,
     map:gloveTexture,
     bumpMap:gloveTexture,
-    bumpScale:.0023,
-    metalness:.14,roughness:.53,
-    clearcoat:.28,clearcoatRoughness:.46,
-    envMapIntensity:1.65,
+    bumpScale:.0016,
+    metalness:.08,roughness:.78,
+    clearcoat:.12,clearcoatRoughness:.78,
+    envMapIntensity:.86,
     side:THREE.DoubleSide,
-    depthTest:false,depthWrite:false,
+    depthTest:true,depthWrite:true,
     skinning:true
-  });
-  const steel=new THREE.MeshStandardMaterial({
-    color:0x46566e,metalness:.78,roughness:.33,
-    envMapIntensity:1.8,depthTest:false,depthWrite:false
   });
   const cyan=new THREE.MeshBasicMaterial({
     color:0x69d9ff,transparent:true,opacity:.75,
@@ -117,17 +113,8 @@ export function createCastingHand(camera) {
   halo.renderOrder=912;
   fx.add(halo);
 
-  // Wrist detail is one contoured cuff, not an entire hand made of primitives.
-  const bracelet=new THREE.Mesh(new THREE.TorusGeometry(.16,.021,10,64),steel);
-  bracelet.position.set(.025,-.10,.015);
-  bracelet.rotation.set(.12,.35,.08);
-  bracelet.renderOrder=905;
-  rig.add(bracelet);
-  const cuffGlow=new THREE.Mesh(new THREE.TorusGeometry(.165,.003,4,64),cyan);
-  cuffGlow.position.copy(bracelet.position);
-  cuffGlow.rotation.copy(bracelet.rotation);
-  cuffGlow.renderOrder=906;
-  rig.add(cuffGlow);
+  // The wrist stays naturally attached to the skinned mesh. No giant
+  // floating cuff ring that competes with the real anatomical model.
 
   const castLight=new THREE.PointLight(0x4abfff,0,.95,2);
   castLight.position.set(-.105,.185,-.39);
@@ -187,7 +174,7 @@ export function createCastingHand(camera) {
           throw new Error('Anatomical hand bone span invalid');
         root.position.sub(wristPosition);
         wrapper.quaternion.setFromUnitVectors(axis,desiredDirection);
-        defaultScale=Math.max(2,Math.min(5,.54/dimension));
+        defaultScale=Math.max(2,Math.min(5,.72/dimension));
         wrapper.scale.setScalar(defaultScale);
         wrapper.add(root);
         activeModel=root;
@@ -218,9 +205,9 @@ export function createCastingHand(camera) {
     const release=Math.max(0,1-shotTime/.11);
     const walk=moving?.016:.007;
     rig.position.set(
-      .32-.048*impulse+Math.sin(time*(moving?7.7:2.2))*.006,
-      -.27+Math.cos(time*(moving?9.0:2.6))*walk+.023*impulse,
-      -.68-.14*impulse
+      .49-.048*impulse+Math.sin(time*(moving?7.7:2.2))*.006,
+      -.42+Math.cos(time*(moving?9.0:2.6))*walk+.023*impulse,
+      -.62-.14*impulse
     );
     rig.rotation.set(
       -.13-.22*impulse,
@@ -268,7 +255,7 @@ export function createCastingHand(camera) {
 
   function reset(){
     time=0;shotTime=10;
-    rig.position.set(.32,-.35,-.72);
+    rig.position.set(.49,-.42,-.62);
     rig.rotation.set(-.13,.02,-.21);
     for(const [name,bone] of bones)bone.quaternion.copy(bind.get(name));
     castLight.intensity=0;pulseMaterial.opacity=0;
