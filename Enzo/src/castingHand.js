@@ -88,6 +88,65 @@ export function createCastingHand(camera) {
   const pulseMaterial=cyan.clone();
   pulseMaterial.opacity=0;
 
+  // The source anatomical asset ends at the wrist. Extend it into the camera
+  // edge with a smoothly lofted, fabric-covered forearm sleeve (not fingers
+  // built from cylinders or block meshes). The anatomical hand stays authored.
+  const backAxis=new THREE.Vector3(.38,-.50,.78).normalize();
+  const across=new THREE.Vector3().crossVectors(Y_AXIS,backAxis).normalize();
+  const vertical=new THREE.Vector3().crossVectors(backAxis,across).normalize();
+  const armVertices=[],armUV=[],armFaces=[];
+  const sides=28,sections=20;
+  for(let i=0;i<=sections;i++){
+    const t=i/sections;
+    const center=backAxis.clone().multiplyScalar(.032+.82*t);
+    center.x+=.065*t*t;
+    center.y-=.060*t*t;
+    const radius=.118+.085*t;
+    const ellipse=.94+.04*Math.sin(t*Math.PI);
+    for(let j=0;j<=sides;j++){
+      const a=j/sides*Math.PI*2;
+      const point=center.clone()
+        .addScaledVector(across,Math.cos(a)*radius)
+        .addScaledVector(vertical,Math.sin(a)*radius*ellipse);
+      armVertices.push(point.x,point.y,point.z);
+      armUV.push(j/sides*1.5,t*2.6);
+    }
+  }
+  for(let i=0;i<sections;i++)for(let j=0;j<sides;j++){
+    const a=i*(sides+1)+j,b=a+1,c=(i+1)*(sides+1)+j,d=c+1;
+    armFaces.push(a,b,c,b,d,c);
+  }
+  const sleeveGeometry=new THREE.BufferGeometry();
+  sleeveGeometry.setAttribute('position',
+    new THREE.Float32BufferAttribute(armVertices,3));
+  sleeveGeometry.setAttribute('uv',
+    new THREE.Float32BufferAttribute(armUV,2));
+  sleeveGeometry.setIndex(armFaces);
+  sleeveGeometry.computeVertexNormals();
+  const sleeveFabric=new THREE.MeshPhysicalMaterial({
+    color:0x3f5068,map:gloveTexture,bumpMap:gloveTexture,
+    bumpScale:.0012,metalness:.08,roughness:.80,
+    clearcoat:.08,clearcoatRoughness:.77,
+    side:THREE.DoubleSide,depthTest:true,depthWrite:true
+  });
+  const sleeve=new THREE.Mesh(sleeveGeometry,sleeveFabric);
+  sleeve.name='Continuous woven forearm sleeve';
+  sleeve.renderOrder=890;
+  rig.add(sleeve);
+  // A fitted cuff hides the seam where the source hand meets the sleeve.
+  const cuff=new THREE.Mesh(
+    new THREE.TorusGeometry(.120,.008,8,48),
+    new THREE.MeshStandardMaterial({
+      color:0x43546b,metalness:.45,roughness:.50,
+      depthTest:true,depthWrite:true
+    })
+  );
+  cuff.name='Fitted gauntlet wrist seam';
+  cuff.position.copy(backAxis).multiplyScalar(.036);
+  cuff.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),backAxis);
+  cuff.renderOrder=900;
+  rig.add(cuff);
+
   const fx=new THREE.Group();
   fx.name='Palm sigil / not a finger mesh';
   rig.add(fx);
