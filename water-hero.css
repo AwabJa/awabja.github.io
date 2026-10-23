@@ -2,7 +2,7 @@
    A photographic liquid surface, restrained studio annotations, and no extra UI chrome. */
 .hero-visual.water-stage{
   position:relative;
-  isolation:isolate;
+  isolation:auto;
   width:min(730px,55vw);
   max-width:none;
   aspect-ratio:1;
@@ -54,6 +54,7 @@
   inset:0;
   z-index:2;
   pointer-events:none;
+  mix-blend-mode:screen;
   -webkit-mask-image:radial-gradient(ellipse 69% 66% at 51% 50%,black 49%,rgba(0,0,0,.89) 72%,transparent 99%);
   mask-image:radial-gradient(ellipse 69% 66% at 51% 50%,black 49%,rgba(0,0,0,.89) 72%,transparent 99%);
   filter:drop-shadow(0 25px 48px rgba(6,38,35,.22));
@@ -66,7 +67,7 @@
   height:100%;
   max-width:none;
   object-fit:contain;
-  mix-blend-mode:screen;
+  mix-blend-mode:normal;
 }
 .water-art-fallback{
   z-index:1;
