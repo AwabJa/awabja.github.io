@@ -124,6 +124,7 @@ jobs:
           JS
           file Enzo/assets/hand-qa-preview.png
           echo "Screenshot bytes: $(stat -c%s Enzo/assets/hand-qa-preview.png)"
+          test "$(stat -c%s Enzo/assets/hand-qa-preview.png)" -gt 20000
       - name: Save temporary screenshot for visual review
         shell: bash
         run: |
