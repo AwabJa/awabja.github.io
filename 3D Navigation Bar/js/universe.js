@@ -531,15 +531,29 @@ const overviewPosition = camera.position.clone();
 const overviewTarget = controls ? controls.target.clone() : new THREE.Vector3();
 
 let selectedBody = null;
-let focusActive = false;
-let focusTransition = false;
 let trackedPosition = null;
+let cameraFlight = null;
+let simulationTime = 0;
+let motionPaused = prefersReducedMotion;
+let motionSpeed = 1;
+let lastFrameTime = null;
+const speeds = [0.5, 1, 2];
+const statusText = document.getElementById('scene-status');
+const motionButton = document.getElementById('motion-toggle');
+const motionLabel = document.getElementById('motion-label');
+const motionGlyph = document.getElementById('motion-glyph');
+const speedButton = document.getElementById('speed-toggle');
 
 const ALL_BODIES = new Map([
     ['Sun', sun], ['Mercury', mercury], ['Venus', venus], ['Earth', earth],
     ['Moon', moon], ['Mars', mars], ['Jupiter', jupiter], ['Saturn', saturn],
     ['Uranus', uranus], ['Neptune', neptune]
 ]);
+
+const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
+// Quintic easing provides zero velocity and acceleration at each end of a flight.
+const easeCamera = t => t * t * t * (t * (t * 6 - 15) + 10);
+const lerpResponse = (lambda, dt) => 1 - Math.exp(-lambda * dt);
 
 function setGuideOpen(open) {
     guidePanel.hidden = !open;
@@ -552,29 +566,121 @@ function markSelectedBody(name) {
         button.setAttribute('aria-pressed', String(button.dataset.body === name));
     }
 }
+
+// Reusable camera director for both fly-to selection and returning home.
+function startCameraFlight(body) {
+    const point = body ? body.position.clone() : overviewTarget.clone();
+    const radius = body ? (body.geometry.parameters.radius || 2) : 0;
+    const offset = body
+        ? new THREE.Vector3(0, Math.max(4, radius * 0.85), Math.max(12, radius * (body.name === 'Saturn' ? 5.2 : 3.8)))
+        : null;
+    const destination = body ? point.clone().add(offset) : overviewPosition;
+    const distance = camera.position.distanceTo(destination);
+    const duration = prefersReducedMotion ? 0 : clamp(1.45 + distance * 0.0022, 1.45, 3.05);
+
+    cameraFlight = {
+        body,
+        fromPosition: camera.position.clone(),
+        fromTarget: controls ? controls.target.clone() : point.clone(),
+        offset,
+        duration,
+        elapsed: 0,
+        arcHeight: Math.min(75, distance * 0.13)
+    };
+    trackedPosition = point.clone();
+    if (controls) {
+        controls.enabled = false;
+        controls.enableDamping = false; // Do not let orbit inertia fight the cinematic tween.
+        controls.autoRotate = false;
+        controls.minDistance = body ? Math.max(7, radius * 1.35) : 12;
+    }
+}
+
+function endFlight() {
+    cameraFlight = null;
+    if (controls) {
+        controls.enabled = true;
+        controls.enableDamping = true;
+        controls.update();
+    }
+}
+
+// Fly-to uses elapsed real seconds, not number of frames, so 30/60/120 Hz
+// devices see the same duration and near-identical movement.
+function updateCamera(dt) {
+    if (cameraFlight) {
+        const flight = cameraFlight;
+        flight.elapsed += dt;
+        const t = flight.duration === 0 ? 1 : Math.min(1, flight.elapsed / flight.duration);
+        const eased = easeCamera(t);
+        const target = flight.body ? flight.body.position : overviewTarget;
+        const destination = flight.body ? target.clone().add(flight.offset) : overviewPosition;
+
+        camera.position.copy(flight.fromPosition).lerp(destination, eased);
+        camera.position.y += Math.sin(Math.PI * t) * flight.arcHeight;
+        if (controls) {
+            controls.target.copy(flight.fromTarget).lerp(target, eased);
+            controls.update();
+        } else {
+            camera.lookAt(controls ? controls.target : target);
+        }
+        if (t >= 1) {
+            if (flight.body) trackedPosition.copy(target);
+            endFlight();
+        }
+        return;
+    }
+
+    // Once a flight finishes, match the orbital translation of the selected
+    // body while preserving user-chosen drag, pan and zoom relative to it.
+    if (selectedBody && trackedPosition) {
+        const move = selectedBody.position.clone().sub(trackedPosition);
+        camera.position.add(move);
+        if (controls) controls.target.add(move);
+        else camera.lookAt(selectedBody.position);
+        trackedPosition.copy(selectedBody.position);
+    }
+    if (controls) controls.update();
+}
+
 function closeInspector() {
     inspector.hidden = true;
-    focusActive = false;
-    focusTransition = false;
     selectedBody = null;
     trackedPosition = null;
     markSelectedBody(null);
+    endFlight();
+    infoBar.textContent = 'Explore the Sun, eight planets and Earth’s Moon · Not to scale';
 }
 function resetOverview() {
     closeInspector();
     setGuideOpen(false);
-    camera.position.copy(overviewPosition);
-    if (controls) {
-        controls.target.copy(overviewTarget);
-        controls.autoRotate = !prefersReducedMotion;
-        controls.update();
-    } else {
-        camera.lookAt(overviewTarget);
-    }
-    infoBar.textContent = 'Explore the Sun, eight planets and Earth’s Moon · Not to scale';
+    startCameraFlight(null);
 }
 document.getElementById('inspector-close').addEventListener('click', closeInspector);
 document.getElementById('inspector-reset').addEventListener('click', resetOverview);
+document.getElementById('camera-home').addEventListener('click', resetOverview);
+
+function updateMotionButtons() {
+    motionButton.setAttribute('aria-pressed', String(motionPaused));
+    motionButton.title = motionPaused ? 'Resume planetary motion' : 'Pause planetary motion';
+    motionLabel.textContent = motionPaused ? 'Resume' : 'Pause';
+    motionGlyph.textContent = motionPaused ? '▶' : 'Ⅱ';
+    speedButton.textContent = motionSpeed + '× speed';
+    speedButton.setAttribute('aria-label', 'Orbit speed ' + motionSpeed + ' times. Activate to change');
+}
+motionButton.addEventListener('click', () => {
+    motionPaused = !motionPaused;
+    updateMotionButtons();
+    statusText.textContent = motionPaused ? 'Planetary motion paused' : 'Planetary motion resumed';
+});
+speedButton.addEventListener('click', () => {
+    const idx = speeds.indexOf(motionSpeed);
+    motionSpeed = speeds[(idx + 1) % speeds.length];
+    updateMotionButtons();
+    statusText.textContent = 'Orbit speed set to ' + motionSpeed + ' times';
+});
+updateMotionButtons();
+
 document.addEventListener('keydown', event => {
     if (event.key === 'Escape') {
         if (!guidePanel.hidden) setGuideOpen(false);
@@ -602,10 +708,7 @@ function inspectBody(body, keyboardSelected = false) {
     const data = BODY_DATA[body.name];
     if (!data) return;
     selectedBody = body;
-    focusActive = true;
-    focusTransition = true;
-    trackedPosition = body.position.clone();
-    if (controls) controls.autoRotate = false;
+    startCameraFlight(body);
 
     inspectorTitle.textContent = body.name;
     document.getElementById('inspector-subtitle').textContent = data.subtitle;
