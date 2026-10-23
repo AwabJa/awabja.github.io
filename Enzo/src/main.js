@@ -14,7 +14,7 @@ const camera = setupCamera();
 const movement = setupMovement(camera);
 scene.add(camera); // Camera-space casting hand must belong to the rendered scene.
 const hand = createCastingHand(camera);
-const shooting = setupShootingEvents(camera, scene, hand);
+
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.outputEncoding = THREE.sRGBEncoding;
@@ -29,6 +29,7 @@ document.body.appendChild(renderer.domElement);
 
 // Phase 2: a custom arcane sky, volcanic runes, floating ruins and a portal.
 const world = createArcaneWorld(scene, renderer);
+const shooting = setupShootingEvents(camera, scene, hand, world.colliders, renderer.domElement);
 
 // Camera and mouse control
 let yaw = 0;
@@ -359,6 +360,9 @@ document.getElementById('resumeButton').addEventListener('click', () => {
 // Event listener to handle click on the exit button
 document.getElementById('exitButton').addEventListener('click', () => {
     hidePauseScreen();
+    shooting.reset();
+    hand.reset();
+    movement.reset();
     isExitingToMenu = true; // Indicate that the user is exiting to menu
     // Exit pointer lock and fullscreen, then show splash screen
     if (document.exitPointerLock) {
