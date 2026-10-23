@@ -109,6 +109,16 @@ for (const key of ['flow.tasks.v1', 'flow.projects.v1', 'flow.activity.v1']) {
   check(flowApp.includes(key) && flowExport.includes(key),
     'FLOW must preserve existing storage key: ' + key);
 }
+check(flowApp.includes('if(raw===null)return fallback') &&
+      flowApp.includes('damagedKeys.push(key)') &&
+      flowApp.includes('if(damagedKeys.length){if(!storageWarned)'),
+  'FLOW must detect malformed storage and block overwriting original data');
+check(flowApp.includes("type:'raw-recovery'") &&
+      flowApp.includes("a.download='flow-recovery-backup.json'") &&
+      flowApp.includes('raw[key]=localStorage.getItem(key)'),
+  'FLOW must provide an export-only raw recovery backup for damaged data');
+check(flowHtml.includes('app.js?v=20'),
+  'FLOW must load the latest corruption-protection JavaScript');
 check(flowHtml.includes('id="exportData"') && flowExport.includes('flow-workspace.json'),
   'FLOW must retain the JSON export control');
 check(!/(?<!\\$)\\$\\([^)]*\\)\\.forEach/.test(flowApp),
