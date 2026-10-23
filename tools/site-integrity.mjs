@@ -116,9 +116,9 @@ check(hand.includes('export function createCastingHand') &&
 // hovering above the fingers. Flash VFX belong to short-lived casts only.
 check(!/new THREE\.(RingGeometry|TorusGeometry)/.test(hand) &&
   hand.includes("fx.visible=false") &&
-  hand.includes("const activeFlash=loaded&&shotTime<.22") &&
-  hand.includes("fx.visible=activeFlash") &&
-  hand.includes("fx.position.copy(rig.worldToLocal(palmWorld))"),
+  hand.includes("const visible=loaded&&shotTime<.18") &&
+  hand.includes("fx.visible=visible") &&
+  hand.includes("fx.position.copy(rig.worldToLocal(palmCurrent.clone()))"),
   'No persistent floating white ring; palm flash must be bone-aligned and temporary');
 // Hand inertia may affect the viewmodel, never the aim or raycaster.
 const casting = readFileSync(join(root,'Enzo/src/castingHand.js'),'utf8');
