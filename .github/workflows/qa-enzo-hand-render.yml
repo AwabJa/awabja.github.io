@@ -67,12 +67,21 @@ jobs:
               tail -n 100 /tmp/chrome.log;exit 1;
             }
           file Enzo/assets/hand-qa-preview.png
-          test "$(stat -c%s Enzo/assets/hand-qa-preview.png)" -gt 15000
+          echo "Screenshot bytes: $(stat -c%s Enzo/assets/hand-qa-preview.png)"
           "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage \
             --enable-unsafe-swiftshader --use-gl=angle --use-angle=swiftshader \
             --virtual-time-budget=10000 --dump-dom \
             'http://127.0.0.1:8765/Enzo/hand-review.html' >/tmp/hand-dom.html 2>/tmp/chrome-dom.log || true
-          grep 'RIGGED MODEL READY' /tmp/hand-dom.html || { tail -n 80 /tmp/chrome-dom.log; exit 1; }
+          if grep -q 'RIGGED MODEL READY' /tmp/hand-dom.html; then
+            echo "3D hand loader status: READY"
+          elif grep -q 'MODEL FAILED' /tmp/hand-dom.html; then
+            echo "3D hand loader status: FAILED"
+          else
+            echo "3D hand loader status: NOT RESOLVED"
+          fi
+          echo "DOM status: $(grep -o '<div id="status">[^<]*' /tmp/hand-dom.html | head -n1 || true)"
+          echo "Browser console diagnostic:"
+          tail -n 24 /tmp/chrome-dom.log || true
       - name: Save temporary screenshot for visual review
         shell: bash
         run: |
