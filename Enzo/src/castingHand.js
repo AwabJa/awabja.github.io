@@ -1,118 +1,280 @@
 import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
+import { GLTFLoader } from 'https://unpkg.com/three@0.128.0/examples/jsm/loaders/GLTFLoader.js';
 
 /**
- * First-person right-hand spellcaster. No gun meshes or downloaded models.
- * Model is built in camera space so the glove stays responsive at any FOV.
- * Stage 2: idle -> palm impulse -> recoil -> recovery.
+ * ENZO / The Shattered Reach — FIRST-PERSON HAND 2.0
+ *
+ * An actual authored, weight-painted, 8,120-vertex, 16-bone right-hand GLB
+ * (CC0, Innerscene / MakeHuman). No cylinders, boxes, or generated fingers.
+ * We retarget the original finger bones for cast -> follow-through -> recovery.
+ *
+ * The model is owned by the game locally, with provenance in
+ * ../assets/models/RIGHT-HAND-LICENSE.md.
  */
+const MODEL_URL = new URL('../assets/models/anatomical-right-hand.glb', import.meta.url).href;
+const HAND_NAMES = ['hand_r','index_01_r','index_02_r','index_03_r',
+  'middle_01_r','middle_02_r','middle_03_r','ring_01_r',
+  'ring_02_r','ring_03_r','pinky_01_r','pinky_02_r',
+  'pinky_03_r','thumb_01_r','thumb_02_r','thumb_03_r'];
+
+const Y_AXIS = new THREE.Vector3(0,1,0);
+const BEND_AXIS = new THREE.Vector3(0,0,1);
+
+function makeFabric() {
+  // Deterministic, baked micro-grain texture. This is a fabric material,
+  // not fake anatomy; the hand silhouette comes exclusively from the GLB.
+  const canvas=document.createElement('canvas');
+  canvas.width=canvas.height=512;
+  const ctx=canvas.getContext('2d');
+  if(!ctx)throw new Error('Unable to prepare gauntlet material');
+  const pixels=ctx.createImageData(512,512);
+  let seed=0x5a17c3;
+  function random() {
+    seed ^=seed<<13;seed ^=seed>>>17;seed ^=seed<<5;
+    return (seed>>>0)/4294967296;
+  }
+  for(let y=0;y<512;y++)for(let x=0;x<512;x++){
+    const k=(y*512+x)*4;
+    const weave=Math.sin(x*2.8+y*.64)*4.2+Math.sin(y*2.3-x*.42)*3.0;
+    const thread=((x+y)%7===0?5:0);
+    const noise=(random()-.5)*17;
+    const shade=Math.max(28,Math.min(150,80+weave+thread+noise));
+    pixels.data[k]=Math.round(shade*.57);
+    pixels.data[k+1]=Math.round(shade*.71);
+    pixels.data[k+2]=Math.round(shade*.87);
+    pixels.data[k+3]=255;
+  }
+  ctx.putImageData(pixels,0,0);
+  const tex=new THREE.CanvasTexture(canvas);
+  tex.encoding=THREE.sRGBEncoding;
+  tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
+  tex.anisotropy=4;
+  return tex;
+}
+
 export function createCastingHand(camera) {
   const rig=new THREE.Group();
-  rig.name='Right-hand arcane gauntlet';
-  rig.position.set(.33,-.35,-.69);
-  rig.rotation.set(-.19,-.22,-.21);
+  rig.name='First-person anatomical right hand / CC0 skinned model';
+  rig.position.set(.32,-.35,-.72);
+  rig.rotation.set(-.13,.02,-.21);
   camera.add(rig);
 
-  const armor=new THREE.MeshStandardMaterial({
-    color:0x17243a,roughness:.36,metalness:.84,
-    emissive:0x080e25,emissiveIntensity:.15,depthTest:false,depthWrite:false
+  const wrapper=new THREE.Group();
+  wrapper.name='Anatomical model orientation';
+  rig.add(wrapper);
+
+  const gloveTexture=makeFabric();
+  const leather=new THREE.MeshPhysicalMaterial({
+    name:'Shattered Reach / graphite woven glove',
+    color:0x899bb7,
+    map:gloveTexture,
+    bumpMap:gloveTexture,
+    bumpScale:.0023,
+    metalness:.14,roughness:.53,
+    clearcoat:.28,clearcoatRoughness:.46,
+    envMapIntensity:1.65,
+    side:THREE.DoubleSide,
+    depthTest:false,depthWrite:false,
+    skinning:true
   });
-  const plate=new THREE.MeshStandardMaterial({
-    color:0x4f6485,roughness:.28,metalness:.86,
-    emissive:0x081322,emissiveIntensity:.22,depthTest:false,depthWrite:false
+  const steel=new THREE.MeshStandardMaterial({
+    color:0x46566e,metalness:.78,roughness:.33,
+    envMapIntensity:1.8,depthTest:false,depthWrite:false
   });
-  const seam=new THREE.MeshBasicMaterial({
-    color:0x19bfff,transparent:true,opacity:.88,depthTest:false,depthWrite:false
+  const cyan=new THREE.MeshBasicMaterial({
+    color:0x69d9ff,transparent:true,opacity:.75,
+    blending:THREE.AdditiveBlending,depthTest:false,depthWrite:false
   });
   const energy=new THREE.MeshBasicMaterial({
-    color:0x7feaff,transparent:true,opacity:.94,depthTest:false,depthWrite:false
+    color:0xb4faff,transparent:true,opacity:.92,
+    blending:THREE.AdditiveBlending,depthTest:false,depthWrite:false
   });
-  function attach(geometry,material,x,y,z,parent=rig){
-    const m=new THREE.Mesh(geometry,material);
-    m.position.set(x,y,z);m.renderOrder=900;
-    m.frustumCulled=false;parent.add(m);return m;
-  }
-  function segment(a,b,r1,r2,material,parent=rig){
-    const av=new THREE.Vector3(...a),bv=new THREE.Vector3(...b);
-    const d=bv.clone().sub(av),len=d.length();
-    const m=attach(new THREE.CylinderGeometry(r2,r1,len,8,1),material,
-      (a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2,parent);
-    m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());
-    return m;
-  }
-  const forearm=segment([.12,-.34,.12],[.02,-.095,-.10],.125,.105,armor);
-  const cuff=attach(new THREE.CylinderGeometry(.133,.139,.105,10),plate,.085,-.21,-.02);
-  cuff.rotation.x=-.30;
-  // Layered gauntlet palm and angular backplate.
-  const palm=attach(new THREE.BoxGeometry(.26,.19,.105),armor,-.035,.025,-.185);
-  palm.rotation.z=-.1;
-  const back=attach(new THREE.IcosahedronGeometry(.125,0),plate,-.03,.038,-.236);
-  back.scale.set(1.08,.68,.45);
+  const pulseMaterial=cyan.clone();
+  pulseMaterial.opacity=0;
 
-  // Four independently jointed fingers, fanned into an open casting pose.
-  const fingers=[];
-  for(let i=0;i<4;i++){
-    const x=-.144+i*.078;
-    const tipx=x+(i-1.5)*.031;
-    const base=[x,.10,-.205];
-    const mid=[x+(i-1.5)*.013,.193-(Math.abs(i-1.5)*.008),-.265];
-    const tip=[tipx,.254-(Math.abs(i-1.5)*.024),-.338];
-    const group=new THREE.Group();rig.add(group);
-    segment(base,mid,.029,.024,armor,group);
-    segment(mid,tip,.023,.012,plate,group);
-    attach(new THREE.SphereGeometry(.024,8,6),seam,...mid,group);
-    fingers.push(group);
-  }
-  // Thumb curves inward toward an illuminated rune floating above the palm.
-  segment([.098,-.018,-.16],[.172,.075,-.24],.041,.030,armor);
-  segment([.172,.075,-.24],[.106,.134,-.305],.030,.014,plate);
+  const fx=new THREE.Group();
+  fx.name='Palm sigil / not a finger mesh';
+  rig.add(fx);
 
-  // Wrist circuitry: layered rings and bright channels, all camera-facing.
-  const cuffRune=attach(new THREE.TorusGeometry(.095,.007,6,32),seam,.067,-.20,-.13);
-  cuffRune.rotation.y=.13;
-  const glyph=attach(new THREE.TorusGeometry(.070,.007,6,40),seam,-.038,.056,-.317);
-  const glyph2=attach(new THREE.TorusGeometry(.045,.004,5,4),energy,-.038,.056,-.320);
-  glyph2.rotation.z=Math.PI/4;
-  const core=attach(new THREE.SphereGeometry(.025,12,8),energy,-.038,.056,-.341);
-  const flare=attach(new THREE.RingGeometry(.075,.09,40),energy,-.038,.056,-.35);
-  flare.material=energy.clone();flare.material.opacity=0;
-  flare.scale.setScalar(.4);
+  const rune=new THREE.Mesh(new THREE.RingGeometry(.076,.083,56),cyan);
+  rune.position.set(-.105,.185,-.38);
+  rune.rotation.x=-.20;
+  rune.renderOrder=910;
+  fx.add(rune);
+  const rune2=new THREE.Mesh(new THREE.TorusGeometry(.046,.0035,6,44),energy);
+  rune2.position.set(-.105,.185,-.384);
+  rune2.rotation.x=-.20;
+  rune2.renderOrder=911;
+  fx.add(rune2);
+  const symbol=new THREE.Mesh(new THREE.RingGeometry(.025,.029,4),energy);
+  symbol.position.set(-.105,.185,-.39);
+  symbol.rotation.set(0,0,Math.PI/4);
+  symbol.renderOrder=912;
+  fx.add(symbol);
+  const halo=new THREE.Mesh(new THREE.RingGeometry(.07,.10,56),pulseMaterial);
+  halo.position.copy(rune.position);
+  halo.position.z-=.006;
+  halo.renderOrder=912;
+  fx.add(halo);
 
-  let time=0,castTime=10;
-  const base=rig.position.clone(),baseRot=rig.rotation.clone();
-  const palmWorld=new THREE.Vector3();
-  function cast() {
-    castTime=0;
-    return true;
+  // Wrist detail is one contoured cuff, not an entire hand made of primitives.
+  const bracelet=new THREE.Mesh(new THREE.TorusGeometry(.16,.021,10,64),steel);
+  bracelet.position.set(.065,-.24,.025);
+  bracelet.rotation.set(.12,.35,.08);
+  bracelet.renderOrder=905;
+  rig.add(bracelet);
+  const cuffGlow=new THREE.Mesh(new THREE.TorusGeometry(.165,.003,4,64),cyan);
+  cuffGlow.position.copy(bracelet.position);
+  cuffGlow.rotation.copy(bracelet.rotation);
+  cuffGlow.renderOrder=906;
+  rig.add(cuffGlow);
+
+  const castLight=new THREE.PointLight(0x4abfff,0,.95,2);
+  castLight.position.set(-.105,.185,-.39);
+  rig.add(castLight);
+
+  const bones=new Map();
+  const bind=new Map();
+  const curlQuaternion=new THREE.Quaternion();
+  const wristPosition=new THREE.Vector3();
+  const fingerPosition=new THREE.Vector3();
+  const desiredDirection=new THREE.Vector3(-.24,.28,-.93).normalize();
+  const castOrigin=new THREE.Vector3(-.105,.16,-.44);
+
+  let time=0,shotTime=10,loaded=false;
+  let defaultScale=1,activeModel=null,distalBone=null;
+
+  const ready=new Promise((resolve,reject)=>{
+    new GLTFLoader().load(MODEL_URL,gltf=>{
+      try {
+        const root=gltf.scene;
+        if(!root)throw new Error('Anatomical hand mesh missing');
+        let handMeshes=0;
+        root.traverse(obj=>{
+          if(obj.isSkinnedMesh) {
+            handMeshes++;
+            obj.material=leather;
+            obj.material.skinning=true;
+            obj.frustumCulled=false;
+            obj.renderOrder=900;
+            obj.castShadow=false;
+            obj.receiveShadow=false;
+          }
+          if(obj.isBone&&HAND_NAMES.includes(obj.name)) {
+            bones.set(obj.name,obj);
+            bind.set(obj.name,obj.quaternion.clone());
+          }
+        });
+        if(!handMeshes||bones.size<13||!bones.has('hand_r')||
+           !bones.has('middle_01_r'))
+          throw new Error('The GLB is not the expected 16-bone right hand');
+
+        // Calculate the actual bone forward axis rather than guessing which
+        // Blender export orientation the file used.
+        root.updateMatrixWorld(true);
+        bones.get('hand_r').getWorldPosition(wristPosition);
+        bones.get('middle_01_r').getWorldPosition(fingerPosition);
+        const axis=fingerPosition.clone().sub(wristPosition).normalize();
+        if(axis.lengthSq()<.01)throw new Error('Unusable anatomical hand rig');
+
+        const bounds=new THREE.Box3().setFromObject(root);
+        const center=bounds.getCenter(new THREE.Vector3());
+        const extent=bounds.getSize(new THREE.Vector3());
+        const dimension=Math.max(extent.x,extent.y,extent.z);
+        if(!Number.isFinite(dimension)||dimension<=.01)
+          throw new Error('Anatomical hand bounds invalid');
+
+        // Center the *loaded* artwork and fit its real dimensions to the
+        // viewmodel. This leaves the imported skinned skeleton intact.
+        root.position.sub(center);
+        wrapper.quaternion.setFromUnitVectors(axis,desiredDirection);
+        defaultScale=.61/dimension;
+        wrapper.scale.setScalar(defaultScale);
+        wrapper.add(root);
+        activeModel=root;
+        distalBone=bones.get('middle_03_r')||bones.get('middle_02_r');
+        loaded=true;
+        rig.updateMatrixWorld(true);
+        resolve({meshCount:handMeshes,bones:bones.size,dimension});
+      }catch(error){
+        reject(error);
+      }
+    },undefined,error=>reject(error));
+  });
+
+  function cast(){
+    shotTime=0;
+    return loaded;
   }
-  function update(delta, moving=false, active=true) {
+
+  function update(delta,moving=false,active=true){
     if(!active)return;
-    time+=Math.min(delta,.06);
-    castTime+=Math.min(delta,.06);
-    const impact=Math.max(0,1-castTime/.33);
-    const snap=Math.sin(Math.min(1,castTime/.33)*Math.PI);
-    const bob=moving?.013:.006;
-    rig.position.copy(base);
-    rig.position.y+=Math.sin(time*(moving?10:2.7))*bob;
-    rig.position.z-=snap*.105;
-    rig.position.x-=snap*.04;
-    rig.rotation.set(baseRot.x-snap*.21,baseRot.y+snap*.075,baseRot.z+snap*.12);
-    // Fingers naturally tuck inward as a shot forms, then open to release.
-    fingers.forEach((finger,i)=>{
-      finger.rotation.x=-snap*(.23+i*.024);
-      finger.rotation.y=(i-1.5)*snap*.085;
-    });
-    glyph.rotation.z=time*.7;
-    glyph2.rotation.z=-time*.9;
-    glyph.scale.setScalar(1+snap*.43);
-    core.scale.setScalar(.85+snap*1.75+.08*Math.sin(time*5));
-    energy.opacity=.78+snap*.22;
-    flare.scale.setScalar(.2+snap*4.0);
-    flare.material.opacity=.55*impact;
+    const dt=Math.max(0,Math.min(.06,delta));
+    time+=dt;
+    shotTime+=dt;
+    const t=Math.max(0,Math.min(1,shotTime/.32));
+    const impulse=Math.sin(Math.min(1,t)*Math.PI);
+    const release=Math.max(0,1-shotTime/.11);
+    const walk=moving?.016:.007;
+    rig.position.set(
+      .32-.048*impulse+Math.sin(time*(moving?7.7:2.2))*.006,
+      -.35+Math.cos(time*(moving?9.0:2.6))*walk+.023*impulse,
+      -.72-.14*impulse
+    );
+    rig.rotation.set(
+      -.13-.22*impulse,
+      .02+.09*impulse,
+      -.21-.105*impulse+Math.sin(time*1.3)*.009
+    );
+
+    if(loaded) {
+      // Bone-space finger rotations preserve skinning and original anatomy.
+      // Release: fan open -> brief follow-through -> settle to curved rest.
+      for(const [name,bone] of bones){
+        if(name==='hand_r')continue;
+        const factor=name.startsWith('thumb')?.70:
+          name.startsWith('index')?.84:
+          name.startsWith('middle')?1.0:
+          name.startsWith('ring')?.88:.80;
+        const segment=name.includes('_01_')?.57:name.includes('_02_')?.91:1.15;
+        const spring=(Math.sin(time*1.45+factor*2)*.012);
+        const curl=(.08+impulse*.24-release*.37+spring)*factor*segment;
+        curlQuaternion.setFromAxisAngle(BEND_AXIS,curl);
+        bone.quaternion.copy(bind.get(name)).multiply(curlQuaternion);
+      }
+    }
+    rune.rotation.z=time*.53;
+    rune2.rotation.z=-time*1.15;
+    symbol.rotation.z=Math.PI/4+time*.8;
+    rune.scale.setScalar(1+impulse*.85);
+    halo.scale.setScalar(.3+impulse*3.3);
+    pulseMaterial.opacity=impulse*.46;
+    castLight.intensity=impulse*1.9;
+    const quiet=.68+.08*Math.sin(time*3.1);
+    cyan.opacity=Math.min(.98,quiet+impulse*.3);
+    energy.opacity=Math.min(1,.83+impulse*.18);
   }
-  function muzzlePosition() {
+
+  function muzzlePosition(){
     camera.updateMatrixWorld(true);
-    return rig.localToWorld(palmWorld.set(-.038,.066,-.42));
+    if(loaded&&distalBone) {
+      const point=distalBone.getWorldPosition(new THREE.Vector3());
+      const forward=camera.getWorldDirection(new THREE.Vector3());
+      return point.addScaledVector(forward,.075);
+    }
+    return rig.localToWorld(castOrigin.clone());
   }
-  function reset(){castTime=10;rig.position.copy(base);rig.rotation.copy(baseRot);}
-  return {rig,cast,update,muzzlePosition,reset};
+
+  function reset(){
+    time=0;shotTime=10;
+    rig.position.set(.32,-.35,-.72);
+    rig.rotation.set(-.13,.02,-.21);
+    for(const [name,bone] of bones)bone.quaternion.copy(bind.get(name));
+    castLight.intensity=0;pulseMaterial.opacity=0;
+  }
+
+  return {
+    rig,ready,cast,update,muzzlePosition,reset,
+    isReady:()=>loaded
+  };
 }
