@@ -195,19 +195,3 @@
 }
 
 
-/* Enzo card: keep the illustrated title clear of overlay labels on small screens. */
-.enzo-preview{position:relative;isolation:isolate}
-.enzo-card-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;transition:transform .75s ease}
-.enzo-preview:hover .enzo-card-art{transform:scale(1.045)}
-.enzo-preview .enzo-grid,.enzo-preview .enzo-structure,.enzo-preview .enzo-figure,.enzo-preview .enzo-crosshair,.enzo-preview .enzo-glow{display:none}
-.enzo-preview .preview-index,.enzo-preview .preview-large-index,.enzo-preview .preview-corner,.enzo-preview .preview-bottom{z-index:2}
-.enzo-preview .preview-large-index{display:none}
-.enzo-preview .preview-bottom{display:none}
-.enzo-preview .preview-index{max-width:calc(100% - 86px);line-height:1.5;white-space:normal;text-wrap:balance}
-.enzo-preview .preview-corner{flex-shrink:0}
-@media(max-width:600px){
- .enzo-preview .preview-index{top:14px;left:16px;font-size:8px;letter-spacing:.08em;max-width:calc(100% - 78px)}
- .enzo-preview .preview-corner{top:13px;right:14px}
- .enzo-card-art{object-position:center center}
-}
-@media(prefers-reduced-motion:reduce){.enzo-card-art{transition:none}}
