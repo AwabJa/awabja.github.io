@@ -134,8 +134,9 @@ check(casting.includes('function settle(s,target,omega,dt)') &&
       casting.includes('settle(fingerSpring,target') &&
       casting.includes('secondary.kick.v+=3.75'),
   'Hand must retain frame-rate-stable wrist inertia and delayed finger recovery');
-check(game.includes('hand.addLookImpulse(event.movementX,event.movementY)') &&
-      game.includes('hand.update(delta, motion, true)') &&
+const gameMotionCode=readFileSync(join(root,'Enzo/src/main.js'),'utf8');
+check(gameMotionCode.includes('hand.addLookImpulse(event.movementX,event.movementY)') &&
+      gameMotionCode.includes('hand.update(delta, motion, true)') &&
       locomotion.includes('strafe:velocity.dot(right)') &&
       shootSource.includes('if(!hand.isReady())return;') &&
       shootSource.includes('if(hand.cast())spellBolt(scene,start,end,camera)'),
