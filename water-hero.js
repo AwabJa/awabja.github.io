@@ -82,8 +82,9 @@
     if (ready && !motion.matches) render(0);
   }
 
-  // A refractive motion field: gently displaces horizontal bands of the
-  // photographic surface, so the curved water continuously undulates.
+  // A lightweight two-vortex flow field. Small image patches drift around
+  // the curling wave inside the A and the J, with interference ripples.
+  // Unlike a whole-image wobble, currents turn in different directions.
   function drawWater(t) {
     const naturalW = image.naturalWidth;
     const naturalH = image.naturalHeight;
@@ -93,28 +94,58 @@
     const destWidth = destHeight * naturalW / naturalH;
     const ox = (width - destWidth) * .5;
     const oy = (height - destHeight) * .5;
-    const strips = compact.matches ? 68 : 114;
 
+    const columns = compact.matches ? 17 : 29;
+    const rows = compact.matches ? 21 : 31;
+    const srcTileW = naturalW / columns;
+    const srcTileH = naturalH / rows;
+    const destTileW = destWidth / columns;
+    const destTileH = destHeight / rows;
     ctx.clearRect(0, 0, width, height);
-    const stripSource = naturalH / strips;
-    const stripDest = destHeight / strips;
-    const pointerBias = (pointerX - .5) * width * .012 * pointerStrength;
 
-    for (let i = 0; i < strips; i++) {
-      const sy = i * stripSource;
-      const p = (i + .5) / strips;
-      const envelope = Math.sin(p * Math.PI);
-      const slow = Math.sin(t * 1.02 + p * 12.3);
-      const fine = Math.sin(t * 1.84 - p * 25.5);
-      const current = Math.sin(t * .72 + p * 6.2);
-      const dx = (slow * .006 + fine * .0025 + current * .0019) * width *
-                 (.32 + envelope * .68) + pointerBias * envelope;
+    const vortices = [
+      { x: .36, y: .43, radius: .25, strength: 1.0, direction: 1 },
+      { x: .68, y: .76, radius: .25, strength: .86, direction: -1 }
+    ];
 
-      ctx.drawImage(
-        image,
-        0, sy, naturalW, stripSource + .8,
-        ox + dx, oy + i * stripDest, destWidth, stripDest + 1.4
-      );
+    for (let j = 0; j < rows; j++) {
+      const v = (j + .5) / rows;
+      for (let i = 0; i < columns; i++) {
+        const u = (i + .5) / columns;
+        const ripple = Math.sin(v * 24 - t * 1.6 + u * 5.2);
+        const finer = Math.sin(u * 27 + v * 18 + t * 1.25);
+        let shiftX = (ripple * .0036 + finer * .0012) * destWidth;
+        let shiftY = Math.cos(u * 15 + v * 8 - t * 1.0) * .0024 * destHeight;
+
+        for (const vortex of vortices) {
+          const rx = u - vortex.x;
+          const ry = v - vortex.y;
+          const influence = Math.exp(-(rx * rx + ry * ry) /
+                            (2 * vortex.radius * vortex.radius));
+          const strength = Math.sin(t * .92 + vortex.direction * 1.4) *
+                           vortex.strength * influence * .043;
+          shiftX -= ry * strength * destWidth * vortex.direction;
+          shiftY += rx * strength * destHeight * vortex.direction;
+        }
+
+        if (pointerStrength > .02) {
+          const rx = u - pointerX;
+          const ry = v - pointerY;
+          const proximity = Math.exp(-(rx * rx + ry * ry) / .019);
+          shiftX -= ry * proximity * pointerStrength * destWidth * .092;
+          shiftY += rx * proximity * pointerStrength * destHeight * .092;
+        }
+
+        // Overlap each patch slightly to prevent visible seams from motion.
+        ctx.drawImage(
+          image,
+          i * srcTileW, j * srcTileH,
+          srcTileW + .55, srcTileH + .55,
+          ox + i * destTileW + shiftX,
+          oy + j * destTileH + shiftY,
+          destTileW + 1.2, destTileH + 1.2
+        );
+      }
     }
   }
 
