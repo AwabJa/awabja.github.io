@@ -4,7 +4,7 @@ import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
 import { enemies, createEnemy, updateEnemies, initializeEnemies, clearEnemies } from './enemies.js';
 import { createArcaneWorld } from './arcaneWorld.js';
 import { createWorldPolish } from './worldPolish.js';
-import { createCastingHand } from './castingHand.js';
+import { createSciFiGlove } from './sciFiGlove.js';
 import { setupCamera } from './fpsCamera.js';
 import { setupMovement } from './movement.js';
 import { setupShootingEvents } from './shooting.js';
@@ -14,9 +14,7 @@ const scene = new THREE.Scene();
 const camera = setupCamera();
 const movement = setupMovement(camera);
 scene.add(camera); // Camera-space casting hand must belong to the rendered scene.
-const hand = createCastingHand(camera);
-// Temporarily suppress the distorted gauntlet until the asset is rebuilt.
-hand.rig.visible = false;
+const hand = createSciFiGlove(camera);
 
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -82,7 +80,7 @@ function animate() {
         const motion = movement.updateMovement(delta, world.colliders);
         updateEnemies(scene, delta, camera.position);
         shooting.update(delta);
-        // The hand rig is intentionally hidden pending a proper model rebuild.
+        hand.update(delta, motion, true);
         world.update(delta);
         worldPolish.update(delta);
         updateSurvival(delta);
@@ -376,7 +374,7 @@ document.addEventListener('visibilitychange', () => {
 // Never block the whole game on a cosmetic hand model. If the asset fails,
 // gameplay and mouse capture still work; the model can be repaired separately.
 startButton.disabled = false;
-setMenuStatus('READY TO PLAY / LOADING GAUNTLET IN BACKGROUND…');
+setMenuStatus('SCI-FI GAUNTLET ONLINE / READY TO PLAY');
 window.dispatchEvent(new Event('enzo:boot-ready'));
 Promise.race([
     hand.ready,
