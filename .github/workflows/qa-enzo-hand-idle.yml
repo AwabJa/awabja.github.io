@@ -145,3 +145,5 @@ jobs:
           git push origin HEAD:fix/enzo-gauntlet-idle-sigil-material-20261023
 
 # Second visual pass: expose the hand and place the casting pulse at the knuckles.
+
+# Third pass: reconnect the cloth sleeve at the anatomical wrist cap.
