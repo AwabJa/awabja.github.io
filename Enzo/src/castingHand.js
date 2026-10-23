@@ -7,6 +7,8 @@ import { GLTFLoader } from './vendor/GLTFLoader.js';
  * An actual authored, weight-painted, 8,120-vertex, 16-bone right-hand GLB
  * (CC0, Innerscene / MakeHuman). No cylinders, boxes, or generated fingers.
  * We retarget the original finger bones for cast -> follow-through -> recovery.
+ * Wrist inertia, gaze lag and landing weight are spring-damped secondary
+ * animation, not a physics solver that modifies camera aiming or collisions.
  *
  * The model is owned by the game locally, with provenance in
  * ../assets/models/RIGHT-HAND-LICENSE.md.
@@ -278,7 +280,7 @@ export function createCastingHand(camera) {
   }
 
   let time=0,shotTime=10,loaded=false;
-  let defaultScale=1,activeModel=null,distalBone=null;
+  let defaultScale=1;
 
   const ready=new Promise((resolve,reject)=>{
     new GLTFLoader().load(MODEL_URL,gltf=>{
@@ -334,8 +336,6 @@ export function createCastingHand(camera) {
         defaultScale=Math.max(2,Math.min(5,.72/dimension));
         wrapper.scale.setScalar(defaultScale);
         wrapper.add(root);
-        activeModel=root;
-        distalBone=bones.get('middle_03_r')||bones.get('middle_02_r');
         loaded=true;
         rig.updateMatrixWorld(true);
         // Recompute from the actual palm bones on every update.
