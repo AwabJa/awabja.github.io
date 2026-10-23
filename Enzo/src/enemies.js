@@ -48,14 +48,14 @@ export function createEnemy(scene, position, roleName) {
   const role=ROLES.find(x=>x.name===roleName)||ROLES[nextId%ROLES.length];
   nextId++;
   const armor=new THREE.MeshStandardMaterial({
-    color:role.armor,metalness:.79,roughness:.38,flatShading:true,
+    color:role.armor,metalness:.64,roughness:.36,flatShading:false,
     emissive:0x10131e,emissiveIntensity:.25
   });
   const steel=new THREE.MeshStandardMaterial({
-    color:0x68738b,metalness:.87,roughness:.29,flatShading:true
+    color:0x8495ae,metalness:.78,roughness:.31,flatShading:false
   });
   const obsidian=new THREE.MeshStandardMaterial({
-    color:0x121927,metalness:.67,roughness:.45,flatShading:true
+    color:0x18253c,metalness:.58,roughness:.4,flatShading:false
   });
   const glow=new THREE.MeshStandardMaterial({
     color:role.glow,emissive:role.glow,emissiveIntensity:2.8,
@@ -65,7 +65,7 @@ export function createEnemy(scene, position, roleName) {
     color:role.glow,transparent:true,opacity:.63,
     side:THREE.DoubleSide,depthWrite:false
   });
-  const shell=new THREE.Mesh(new THREE.IcosahedronGeometry(.78,1),armor);
+  const shell=new THREE.Mesh(new THREE.SphereGeometry(.80,22,16),armor);
   shell.name=role.name+' sentinel';
   shell.userData.role=role.name;
   shell.scale.setScalar(role.scale);
@@ -77,7 +77,7 @@ export function createEnemy(scene, position, roleName) {
   for(let i=0;i<4;i++){
     const a=i*Math.PI/2+.25;
     const x=Math.cos(a),y=Math.sin(a);
-    const fin=createArmourPiece(shell,new THREE.ConeGeometry(.24,1.03,4),steel,
+    const fin=createArmourPiece(shell,new THREE.ConeGeometry(.24,1.03,7),steel,
       x*1.01,y*1.01,-.16);
     fin.rotation.z=-a+Math.PI/2;
     fin.rotation.x=.15;
@@ -101,7 +101,7 @@ export function createEnemy(scene, position, roleName) {
       wing.rotation.z=dir*.49;
     }
   }
-  const optic=createArmourPiece(shell,new THREE.SphereGeometry(.28,18,12),glow,0,.035,.815);
+  const optic=createArmourPiece(shell,new THREE.SphereGeometry(.28,24,16),glow,0,.035,.815);
   optic.name='Exposed energy weakpoint';
   optic.userData.weakPoint=true;
   const reticle=createArmourPiece(shell,new THREE.TorusGeometry(.36,.035,6,30),aura,0,.035,.83);
