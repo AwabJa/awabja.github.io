@@ -74,140 +74,7 @@ section[id]{scroll-margin-top:95px}
 .hero-actions .button-primary:hover{
   box-shadow:0 0 0 1px #b9edcb60,0 16px 45px rgba(53,162,113,.19);
 }
-/* GENERATIVE STUDIO / 001
-   A floating kinetic metal ribbon; no planet, logo slab, or stock illustration. */
-.hero-visual.kinetic-stage{
-  position:relative;
-  width:min(720px,55vw);
-  margin-right:-23%;
-  margin-left:-19%;
-  max-width:none;
-  aspect-ratio:1;
-  justify-self:end;
-  isolation:isolate;
-  overflow:visible;
-  transform:perspective(1050px) rotateX(var(--hero-tilt-y,0deg)) rotateY(var(--hero-tilt-x,0deg));
-  transform-style:preserve-3d;
-  transition:transform .7s cubic-bezier(.2,.72,.2,1);
-  animation:none;
-}
-.kinetic-stage::before{
-  content:"";
-  position:absolute;
-  inset:6% 5% 9%;
-  border:1px solid rgba(185,237,203,.11);
-  clip-path:polygon(0 0,100% 0,100% 95%,95% 100%,0 100%);
-  pointer-events:none;
-}
-.kinetic-stage::after{
-  content:"";
-  position:absolute;inset:5%;
-  background:
-    linear-gradient(to right,rgba(172,240,206,.12),rgba(172,240,206,.12)) left 0 top 0 / 31px 1px no-repeat,
-    linear-gradient(to bottom,rgba(172,240,206,.12),rgba(172,240,206,.12)) left 0 top 0 / 1px 31px no-repeat,
-    linear-gradient(to left,rgba(172,240,206,.12),rgba(172,240,206,.12)) right 0 bottom 0 / 31px 1px no-repeat,
-    linear-gradient(to top,rgba(172,240,206,.12),rgba(172,240,206,.12)) right 0 bottom 0 / 1px 31px no-repeat;
-  pointer-events:none;
-}
-.kinetic-backdrop{
-  position:absolute;
-  inset:-9%;
-  z-index:-1;
-  pointer-events:none;
-  background:
-    radial-gradient(ellipse 45% 42% at 50% 54%,rgba(102,208,151,.24),transparent 76%),
-    radial-gradient(ellipse 29% 36% at 63% 40%,rgba(86,154,148,.13),transparent 89%);
-  filter:blur(29px);
-  transform:rotate(-12deg);
-}
-.kinetic-canvas-wrap{
-  position:absolute;
-  inset:-5%;
-  display:grid;
-  place-items:center;
-  filter:drop-shadow(0 29px 29px rgba(2,20,19,.28));
-}
-.kinetic-canvas,.kinetic-fallback{
-  display:block;
-  position:absolute;
-  width:100%;
-  height:100%;
-  max-width:none;
-  object-fit:contain;
-}
-.kinetic-canvas{
-  z-index:3;
-  opacity:0;
-  cursor:grab;
-  touch-action:pan-y;
-  transition:opacity .7s ease;
-}
-.kinetic-canvas:active{cursor:grabbing}
-.kinetic-canvas.is-ready{opacity:1}
-.has-kinetic-art .kinetic-fallback{display:none}
-.kinetic-fallback{
-  z-index:1;
-  filter:drop-shadow(0 34px 30px rgba(0,10,11,.38));
-  transform:rotate(-12deg) scale(.91);
-}
-.kinetic-crosshair{
-  position:absolute;
-  width:18px;height:18px;
-  pointer-events:none;
-  opacity:.37;
-  background:
-    linear-gradient(#b5edcb,#b5edcb) center / 1px 100% no-repeat,
-    linear-gradient(#b5edcb,#b5edcb) center / 100% 1px no-repeat;
-}
-.kinetic-crosshair-one{top:20%;right:22%}
-.kinetic-crosshair-two{left:16%;bottom:30%;transform:scale(.65)}
-.kinetic-top,.kinetic-bottom{
-  position:absolute;left:8%;right:8%;
-  z-index:5;
-  display:flex;align-items:center;justify-content:space-between;
-  gap:12px;
-  pointer-events:none;
-  font:500 clamp(8px,.77vw,11px)/1.5 var(--font-mono);
-  letter-spacing:.13em;
-  color:#abcabe;
-}
-.kinetic-top{top:10%;padding-bottom:14px;border-bottom:1px solid rgba(178,231,202,.16)}
-.kinetic-top>span:first-child{display:flex;align-items:center;gap:9px}
-.kinetic-live{
-  width:5px;height:5px;border-radius:50%;
-  background:#b7edc6;box-shadow:0 0 13px rgba(175,243,200,.9);
-}
-.kinetic-top>span:last-child{color:#719287}
-.kinetic-bottom{
-  bottom:9%;
-  align-items:flex-end;
-  color:#d1ebe0;
-  font-size:clamp(8px,.85vw,12px);
-}
-.kinetic-interaction{
-  display:flex;gap:10px;align-items:center;
-  color:#779c91;font-size:9px;
-}
-.kinetic-drag-indicator{
-  display:block;width:29px;height:16px;position:relative;
-  border-left:1px solid #88c3a6;border-right:1px solid #88c3a6;
-  opacity:.7;
-}
-.kinetic-drag-indicator::after{
-  content:"";position:absolute;top:8px;left:4px;right:4px;
-  height:1px;background:#88c3a6;
-}
-.kinetic-edge-label{
-  position:absolute;right:1%;top:32%;
-  writing-mode:vertical-rl;
-  font:400 9px/1.5 var(--font-mono);
-  letter-spacing:.19em;
-  color:#6a9185;
-  pointer-events:none;
-}
-.kinetic-stage.is-dragging{transform:none!important}
-.kinetic-stage.is-dragging .kinetic-interaction{color:#cbf3d7}
-
+/* The water artwork and animation are styled in water-hero.css. */
 .hero-bottom{
   bottom:33px;padding-top:18px;border-top:1px solid #e0ffec1b;
   font-size:10px;
@@ -435,7 +302,6 @@ section[id]{scroll-margin-top:95px}
 /* ---------- Tablet ---------- */
 @media(max-width:1100px){
   .hero h1{font-size:clamp(66px,7.4vw,94px)}
-  .hero-visual.kinetic-stage{margin-right:-12%;width:min(650px,55vw)}
   .project-card,.project-card:nth-child(2){grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
   .project-info{padding:clamp(31px,3.3vw,51px)}
   .project-info h3{font-size:clamp(39px,4.9vw,60px)}
@@ -445,7 +311,6 @@ section[id]{scroll-margin-top:95px}
   .hero{min-height:0;padding-bottom:103px}
   .hero-layout{grid-template-columns:1fr}
   .hero h1{font-size:clamp(66px,9.5vw,100px)}
-  .hero-visual.kinetic-stage{margin:0 auto -20px;width:min(560px,78vw);justify-self:center}
   .section-header h2{font-size:clamp(63px,7.7vw,85px)}
   .project-card,.project-card:nth-child(2){grid-template-columns:1fr}
   .project-card:nth-child(2) .project-preview{order:0}
@@ -467,7 +332,6 @@ section[id]{scroll-margin-top:95px}
 @media(max-width:600px){
   .hero h1{font-size:clamp(51px,10.9vw,73px)}
   .hero-layout{gap:0}
-  .hero-visual.kinetic-stage{width:min(100%,445px);margin:18px auto 0}
   .hero-description{max-width:440px}
   .hero-bottom{bottom:17px}
   .section-header h2{font-size:clamp(50px,10.6vw,68px)}
@@ -494,14 +358,12 @@ section[id]{scroll-margin-top:95px}
   .project-actions{flex-direction:column;align-items:flex-start}
 }
 @media(hover:none),(pointer:coarse){
-  .hero-visual.kinetic-stage{transform:none!important;transition:none!important}
   .project-card:hover,.project-card:focus-within{transform:none}
   .project-preview:hover .solar-sun{transform:translate(-50%,-50%)}
   .project-preview:hover .enzo-figure{transform:translateX(-50%) perspective(100px) rotateY(-8deg)}
 }
 @media(prefers-reduced-motion:reduce){
   
-  .hero-visual.kinetic-stage{transition:none;transform:none!important}
   .has-visual-js .soft-reveal{opacity:1!important;transform:none!important}
   .project-card,.solar-sun,.enzo-figure{transition:none!important}
 }
@@ -552,30 +414,10 @@ section[id]{scroll-margin-top:95px}
 .footer-bottom .ui-icon{width:16px;height:16px}
 /* The sculpture adapts to small screens without hiding the headline. */
 @media(max-width:940px){
-  .hero-visual.kinetic-stage{
-    width:min(600px,85vw);
-    margin:8px auto -16px;
-    justify-self:center;
-  }
-  .kinetic-interaction{display:none}
 }
 @media(max-width:600px){
-  .hero-visual.kinetic-stage{
-    width:min(100%,440px);
-    margin:12px auto -6px;
-  }
-  .kinetic-top,.kinetic-bottom{left:8%;right:8%;font-size:8px}
-  .kinetic-top{top:9%}
-  .kinetic-bottom{bottom:8%}
-  .kinetic-edge-label{right:0;font-size:7px}
-  .kinetic-crosshair-one{top:22%}
 }
 @media(hover:none),(pointer:coarse){
-  .kinetic-canvas{cursor:default}
-  .kinetic-stage{transform:none!important;transition:none!important}
-  .kinetic-interaction{display:none}
 }
 @media(prefers-reduced-motion:reduce){
-  .kinetic-canvas{transition:none!important}
-  .hero-visual.kinetic-stage{animation:none!important;transition:none!important;transform:none!important}
 }
