@@ -183,9 +183,10 @@ function onPointerLockChange() {
     }
 }
 function onPointerLockError() {
-    isGamePaused = true;
-    if (gameStarted) showPauseScreen();
-    else enterGameplay();
+    // Some browsers reject mouse capture; keyboard movement and click-to-cast
+    // must remain available instead of trapping the player in a pause screen.
+    if (!gameStarted) enterGameplay();
+    setMenuStatus('MOUSE LOCK UNAVAILABLE — CLICK TO CAST');
 }
 
 // Function to reset the game (including enemies)
