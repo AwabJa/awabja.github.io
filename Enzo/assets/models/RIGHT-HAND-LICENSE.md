@@ -1,7 +1,7 @@
 # Anatomical right-hand model
 
-- Asset: \`anatomical-right-hand.glb\`
-- Original filename: \`hand-posable.glb\`
+- Asset: `anatomical-right-hand.glb`
+- Original filename: `hand-posable.glb`
 - Creator: Innerscene, derived from MakeHuman/MPFB CC0 assets
 - License: Creative Commons Zero 1.0 Universal (CC0; public domain)
 - Source: https://www.innerscene.com/tools/library/3d-parts/posable-anatomical-right-hand-f6098b4f
