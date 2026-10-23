@@ -464,3 +464,9 @@ section[id]{scroll-margin-top:95px}
   .has-visual-js .soft-reveal{opacity:1!important;transform:none!important}
   .project-card,.solar-sun,.enzo-figure{transition:none!important}
 }
+
+/* Protect the two-line editorial headline from narrow grid columns on desktop. */
+@media(min-width:941px){
+  .hero-copy{width:min(900px,calc(100vw - 110px))}
+  .hero h1{font-size:clamp(66px,6.45vw,102px)}
+}
