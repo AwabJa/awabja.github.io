@@ -1,85 +1,40 @@
-/* Portfolio project showcase — one source of truth for card layout and interaction. */
-.projects{position:relative;background:radial-gradient(circle at 92% 0,rgba(39,80,71,.12),transparent 41%),#0e1517}
-.projects::before{content:"";position:absolute;inset:0 0 auto;height:1px;background:linear-gradient(90deg,transparent,#d8ffee2b,transparent)}
+/* Minimal editorial project collection — deliberately shared visual system. */
+.projects{position:relative;background:#101716}
+.projects::before{content:"";position:absolute;inset:0 0 auto;height:1px;background:#a9c4b42b}
 .projects .section-header{max-width:none}
-.projects .section-header h2{font-size:clamp(54px,7vw,105px)}
-.projects .section-intro{max-width:365px}
-.project-grid{display:grid;grid-template-columns:1fr;gap:clamp(25px,4vw,54px)}
-.project-card,.project-card:nth-child(2){position:relative;display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);min-height:480px;overflow:hidden;isolation:isolate;border:1px solid rgba(171,219,213,.21);border-radius:12px;background:linear-gradient(135deg,#101b22,#0a1117);box-shadow:0 24px 80px rgba(0,0,0,.15);transition:border-color .35s,box-shadow .35s,transform .35s}
-.project-card:nth-child(2){grid-template-columns:minmax(0,.88fr) minmax(0,1.12fr)}
-.project-card:nth-child(2) .project-info{order:0}
-.project-card:nth-child(2) .project-preview{order:1}
-.project-card:hover,.project-card:focus-within{transform:translateY(-3px);border-color:rgba(157,229,215,.5);box-shadow:0 32px 90px rgba(0,0,0,.3)}
-.project-preview{position:relative;display:block;min-width:0;width:100%;height:100%;min-height:480px;overflow:hidden;isolation:isolate;aspect-ratio:auto;border:0;border-radius:0;background:#08121e}
-.project-preview::before{content:none}
-.project-preview::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(3,11,20,.72),transparent 30%,transparent 70%,rgba(3,11,20,.14))}
-.solar-card-art,.enzo-card-art{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;z-index:0;transition:transform .85s cubic-bezier(.2,.7,.2,1)}
-.project-preview:hover .solar-card-art,.project-preview:hover .enzo-card-art{transform:scale(1.045)}
-.project-preview .preview-index{position:absolute;top:25px;left:27px;right:85px;max-width:calc(100% - 112px);z-index:3;color:#d9e9e9;font-size:10px;line-height:1.55;letter-spacing:.11em;white-space:normal;text-wrap:balance;text-shadow:0 2px 10px #000}
-.project-preview .preview-corner{position:absolute;top:20px;right:24px;z-index:3;display:grid;place-items:center;width:44px;height:44px;border:1px solid rgba(225,251,246,.4);border-radius:50%;color:#ecfffb;background:rgba(5,20,27,.3);backdrop-filter:blur(8px);transition:transform .3s,background .3s}
-.project-preview:hover .preview-corner{transform:translate(3px,-3px);background:rgba(66,127,127,.42)}
-.project-info{position:relative;display:flex;flex-direction:column;justify-content:center;min-width:0;padding:clamp(34px,4vw,70px)}
-.project-topline{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:clamp(22px,3vw,40px)}
-.project-info h3{max-width:440px;margin-bottom:24px;font-size:clamp(43px,4.7vw,74px);line-height:1.02;letter-spacing:-.075em}
-.project-info h3 span{display:block;line-height:1.05}
-.project-info>p:not(.project-note){max-width:46ch;min-height:0;margin-bottom:23px;font-size:clamp(15px,1.2vw,17px);line-height:1.7}
+.projects .section-header h2{font-size:clamp(52px,7vw,100px)}
+.projects .section-intro{max-width:420px}
+.project-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:22px}
+.project-card,.project-card:nth-child(2){position:relative;display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);min-height:440px;overflow:hidden;isolation:isolate;background:#141c1d;border:1px solid #b7c9bd29;border-radius:4px;box-shadow:none;transition:border-color .25s ease,background .25s ease}
+.project-card:hover,.project-card:focus-within{border-color:#b8d3c16b;background:#172021}
+.project-preview,.project-card:nth-child(2) .project-preview{position:relative;order:0;display:block;min-width:0;width:100%;height:100%;min-height:440px;overflow:hidden;isolation:isolate;background:#10191d}
+.project-info,.project-card:nth-child(2) .project-info{position:relative;order:1;display:flex;flex-direction:column;justify-content:center;min-width:0;padding:clamp(35px,4.8vw,76px);border-left:1px solid #b7c9bd21}
+.project-preview::before{content:"";position:absolute;inset:24px;z-index:2;border:1px solid #e8f4e318;pointer-events:none}
+.project-preview::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,#07101138,transparent 28%,transparent 78%,#07101128)}
+.solar-card-art,.enzo-card-art,.flow-card-art{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;object-position:center;z-index:0;transition:transform .7s cubic-bezier(.2,.7,.2,1)}
+.project-preview:hover .solar-card-art,.project-preview:hover .enzo-card-art,.project-preview:hover .flow-card-art{transform:scale(1.025)}
+.solar-preview{background:#07111c}
+.enzo-preview{background:#081520}
+.flow-preview{background:#171720}
+.project-preview .preview-index{position:absolute;top:43px;left:44px;right:100px;z-index:3;max-width:calc(100% - 144px);color:#e5e9e5;font-family:inherit;font-size:10px;font-weight:500;letter-spacing:.14em;line-height:1.6;text-shadow:0 1px 8px #0008}
+.project-preview .preview-corner{position:absolute;top:34px;right:35px;z-index:3;display:grid;place-items:center;width:36px;height:36px;border:1px solid #d7e6e475;border-radius:50%;color:#eaf5ee;background:#101a1a44;transition:transform .25s ease,border-color .25s ease}
+.project-preview:hover .preview-corner{transform:translate(2px,-2px);border-color:#e6f6ef}
+.project-topline{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:clamp(28px,4vw,50px);font-size:10px;letter-spacing:.13em}
+.project-state{font-size:10px}
+.project-info h3{max-width:520px;margin:0 0 24px;font-size:clamp(44px,4.5vw,69px);font-weight:500;line-height:1.06;letter-spacing:-.065em}
+.project-info h3 span{display:block;line-height:1.08}
+.project-info>p:not(.project-note){max-width:49ch;min-height:0;margin:0 0 26px;color:#b9c7c1;font-size:clamp(14px,1.13vw,16px);line-height:1.75}
 .project-tech{display:flex;flex-wrap:wrap;gap:8px}
-.project-tech span{color:#c1d2ce;border-color:#56716d66}
-.project-actions{display:flex;align-items:center;flex-wrap:wrap;gap:22px;margin-top:clamp(24px,3vw,45px);padding-top:23px;border-top:1px solid rgba(177,216,204,.16)}
-.project-main-link{display:inline-flex;align-items:center;justify-content:space-between;gap:20px;min-height:44px;font-weight:600;font-size:15px}
+.project-tech span{padding:7px 11px;border:1px solid #b7c9bd36;border-radius:2px;color:#bdcdc5;background:transparent;font-size:10px;letter-spacing:.03em}
+.project-actions{display:flex;align-items:center;flex-wrap:wrap;gap:23px;margin-top:clamp(25px,3vw,42px);padding-top:22px;border-top:1px solid #b7c9bd2b}
+.project-main-link{display:inline-flex;align-items:center;justify-content:space-between;gap:18px;min-height:42px;font-size:14px;font-weight:600}
 .project-code-link{font-size:11px}
-.project-note{margin-top:15px}
-.work-footnote{margin-top:36px}
+.project-note{margin-top:16px;color:#9bada4;font-size:11px}
+.work-footnote{margin-top:38px}
 .project-preview:focus-visible,.project-main-link:focus-visible,.project-code-link:focus-visible{outline:2px solid #a7f2dc;outline-offset:4px}
-@media(max-width:1100px){
- .project-card,.project-card:nth-child(2){grid-template-columns:1fr 1fr}
- .project-info{padding:clamp(30px,3.5vw,48px)}
- .project-info h3{font-size:clamp(40px,5vw,60px)}
-}
-@media(max-width:940px){
- .project-card,.project-card:nth-child(2){grid-template-columns:minmax(0,1fr);min-height:0}
- .project-card:nth-child(2) .project-preview{order:0}
- .project-card:nth-child(2) .project-info{order:1}
- .project-preview{height:auto;min-height:0;aspect-ratio:1.65}
- .project-info{padding:clamp(32px,5vw,56px)}
- .project-info h3{font-size:clamp(44px,7vw,68px)}
- .project-info h3 span{display:inline}
-}
-@media(max-width:600px){
- .project-card,.project-card:nth-child(2){border-radius:10px}
- .project-preview{aspect-ratio:1.45}
- .project-preview .preview-index{top:15px;left:16px;right:73px;max-width:calc(100% - 89px);font-size:9px;letter-spacing:.07em}
- .project-preview .preview-corner{top:13px;right:14px;width:38px;height:38px}
- .project-info{padding:29px 23px 32px}
- .project-info h3{font-size:clamp(38px,9vw,49px)}
- .project-info h3 span{display:block}
- .project-info>p:not(.project-note){font-size:14px}
- .project-topline{margin-bottom:24px}
- .project-actions{margin-top:26px}
-}
-@media(max-width:390px){
- .project-preview{aspect-ratio:1.36}
- .project-preview .preview-index{font-size:8px}
- .project-actions{gap:16px}
-}
-@media(hover:none),(pointer:coarse){.project-card:hover{transform:none}.project-preview:hover .solar-card-art,.project-preview:hover .enzo-card-art{transform:none}}
-@media(prefers-reduced-motion:reduce){.project-card,.solar-card-art,.enzo-card-art,.preview-corner{transition:none!important}}
-
-/* FLOW preview and alternating layout for three editorial features. */
-.flow-card-art{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;z-index:0;transition:transform .85s cubic-bezier(.2,.7,.2,1)}
-.flow-preview:hover .flow-card-art{transform:scale(1.045)}
-@media(max-width:940px){.flow-preview .flow-card-art{object-position:center}}
-@media(hover:none),(pointer:coarse){.flow-preview:hover .flow-card-art{transform:none}}
-@media(prefers-reduced-motion:reduce){.flow-card-art{transition:none!important}}
-
-/* Keep the full 1200×750 Solar System composition visible at every card size.
-   The shared cover rule was cropping the title and planets in narrower cards. */
-.solar-preview{background:#050913}
-.solar-preview .solar-card-art{object-fit:contain;object-position:center center}
-
-/* Consistent desktop project layout: preview left, details right for every card. */
-@media(min-width:941px){
- .project-card:nth-child(2){grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr)}
- .project-card:nth-child(2) .project-preview{order:0}
- .project-card:nth-child(2) .project-info{order:1}
-}
+@media(max-width:1100px){.project-card,.project-card:nth-child(2){grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.project-info,.project-card:nth-child(2) .project-info{padding:clamp(28px,3.6vw,48px)}.project-info h3{font-size:clamp(39px,5vw,58px)}}
+@media(max-width:940px){.project-card,.project-card:nth-child(2){grid-template-columns:minmax(0,1fr);min-height:0}.project-preview,.project-card:nth-child(2) .project-preview{height:auto;min-height:0;aspect-ratio:1.6}.project-info,.project-card:nth-child(2) .project-info{border-left:0;border-top:1px solid #b7c9bd21;padding:clamp(32px,5vw,55px)}.project-info h3{font-size:clamp(43px,7vw,66px)}.project-info h3 span{display:inline}}
+@media(max-width:600px){.project-grid{gap:18px}.project-card,.project-card:nth-child(2){border-radius:3px}.project-preview,.project-card:nth-child(2) .project-preview{aspect-ratio:1.48}.project-preview::before{inset:12px}.project-preview .preview-index{top:24px;left:25px;right:75px;max-width:calc(100% - 100px);font-size:9px;letter-spacing:.08em}.project-preview .preview-corner{top:18px;right:20px;width:34px;height:34px}.project-info,.project-card:nth-child(2) .project-info{padding:30px 24px 34px}.project-info h3{font-size:clamp(37px,9vw,49px)}.project-info h3 span{display:block}.project-info>p:not(.project-note){font-size:14px}.project-topline{margin-bottom:24px}.project-actions{margin-top:27px}}
+@media(max-width:390px){.project-preview,.project-card:nth-child(2) .project-preview{aspect-ratio:1.35}.project-preview .preview-index{font-size:8px}.project-actions{gap:16px}}
+@media(hover:none),(pointer:coarse){.project-preview:hover .solar-card-art,.project-preview:hover .enzo-card-art,.project-preview:hover .flow-card-art{transform:none}}
+@media(prefers-reduced-motion:reduce){.project-card,.solar-card-art,.enzo-card-art,.flow-card-art,.preview-corner{transition:none!important}}
