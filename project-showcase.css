@@ -64,3 +64,10 @@
 }
 @media(hover:none),(pointer:coarse){.project-card:hover{transform:none}.project-preview:hover .solar-card-art,.project-preview:hover .enzo-card-art{transform:none}}
 @media(prefers-reduced-motion:reduce){.project-card,.solar-card-art,.enzo-card-art,.preview-corner{transition:none!important}}
+
+/* FLOW preview and alternating layout for three editorial features. */
+.flow-card-art{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;z-index:0;transition:transform .85s cubic-bezier(.2,.7,.2,1)}
+.flow-preview:hover .flow-card-art{transform:scale(1.045)}
+@media(max-width:940px){.flow-preview .flow-card-art{object-position:center}}
+@media(hover:none),(pointer:coarse){.flow-preview:hover .flow-card-art{transform:none}}
+@media(prefers-reduced-motion:reduce){.flow-card-art{transition:none!important}}
