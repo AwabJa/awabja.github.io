@@ -114,7 +114,7 @@ check(hand.includes('export function createCastingHand') &&
   'First-person model must use a real anatomical rig, not fake primitive fingers');
 // The casting gauntlet must not have a bright circular ornament permanently
 // hovering above the fingers. Flash VFX belong to short-lived casts only.
-check(!/new THREE\\.(RingGeometry|TorusGeometry)/.test(hand) &&
+check(!/new THREE\.(RingGeometry|TorusGeometry)/.test(hand) &&
   hand.includes("fx.visible=false") &&
   hand.includes("const activeFlash=loaded&&shotTime<.22") &&
   hand.includes("fx.visible=activeFlash") &&
