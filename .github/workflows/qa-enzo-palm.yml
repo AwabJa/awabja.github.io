@@ -164,3 +164,5 @@ jobs:
           git add .github/previews/palm-physics-idle.png .github/previews/palm-physics-casting.png
           git commit -m 'Temporary verified palm origin and spring-viewmodel screenshot'
           git push origin HEAD:feature/enzo-palm-casting-hand-inertia-20261023
+
+# Recheck palm-facing anatomy after correcting the dorsal pose and render depth.
