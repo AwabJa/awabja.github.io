@@ -99,7 +99,7 @@ for (const path of [
 }
 
 const src = readFileSync(join(root, 'Enzo/src/shooting.js'), 'utf8');
-check(src.includes('while(root && !roots.includes(root))') && src.includes('hit.object.userData.weakPoint'),
+check(/while\s*\(\s*hitObject\s*&&\s*!roots\.has\(hitObject\)\s*\)/.test(src) && src.includes('hit.object.userData.weakPoint'),
   'Enzo must resolve child hits to their registered roots and detect the exposed core');
 // Phase-two world/weapon wiring must remain connected to the FPS loop.
 const world = readFileSync(join(root, 'Enzo/src/arcaneWorld.js'), 'utf8');
