@@ -19,6 +19,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=3">
   <link rel="stylesheet" href="design-upgrade.css?v=3">
+  <link rel="stylesheet" href="water-hero.css?v=1">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -56,36 +57,17 @@
             <a class="text-link" href="#about">A little about me <span aria-hidden="true"><svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M8 5h11v11"/></svg></span></a>
           </div>
         </div>
-        <div class="hero-visual kinetic-stage" role="img" aria-label="An abstract folded metal ribbon sculpture, generated with code">
-          <div class="kinetic-backdrop" aria-hidden="true"></div>
-          <div class="kinetic-crosshair kinetic-crosshair-one" aria-hidden="true"></div>
-          <div class="kinetic-crosshair kinetic-crosshair-two" aria-hidden="true"></div>
-          <div class="kinetic-canvas-wrap" aria-hidden="true">
-            <canvas id="kinetic-form" class="kinetic-canvas" width="640" height="640"></canvas>
-            <svg class="kinetic-fallback" viewBox="0 0 640 640" xmlns="http://www.w3.org/2000/svg" fill="none" aria-hidden="true" focusable="false">
-              <defs>
-                <linearGradient id="ribbon-studio" x1="130" y1="115" x2="512" y2="500" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#edfff1"/>
-                  <stop offset=".23" stop-color="#bdeed0"/>
-                  <stop offset=".49" stop-color="#4b8e80"/>
-                  <stop offset=".69" stop-color="#d5ffe6"/>
-                  <stop offset="1" stop-color="#296d66"/>
-                </linearGradient>
-                <linearGradient id="ribbon-shade" x1="156" y1="450" x2="482" y2="214" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#214d4e"/>
-                  <stop offset=".48" stop-color="#72af9d"/>
-                  <stop offset="1" stop-color="#e1fbe9"/>
-                </linearGradient>
-              </defs>
-              <path d="M181 408C78 246 232 108 361 161c105 43 150 177 71 267-64 73-187 46-205-36-14-65 42-137 120-149 84-13 138 45 114 100" stroke="#112c2e" stroke-width="94" stroke-linecap="round"/>
-              <path d="M181 408C78 246 232 108 361 161c105 43 150 177 71 267-64 73-187 46-205-36-14-65 42-137 120-149 84-13 138 45 114 100" stroke="url(#ribbon-studio)" stroke-width="78" stroke-linecap="round"/>
-              <path d="M182 394C90 251 233 119 357 172c98 41 142 168 67 250-63 69-176 43-187-31-10-60 43-130 115-141" stroke="#f1fff5" stroke-opacity=".42" stroke-width="2.5" stroke-linecap="round"/>
-              <path d="M146 356c18 87 90 139 170 146 85 6 160-51 178-118" stroke="url(#ribbon-shade)" stroke-width="37" stroke-linecap="round" opacity=".72"/>
-            </svg>
+        <div class="hero-visual water-stage" role="img" aria-label="Ocean-water splashes flowing into the letters A and J">
+          <div class="water-ambient" aria-hidden="true"></div>
+          <div class="water-coordinate water-coordinate-top" aria-hidden="true">STUDY 001 / LIQUID TYPE</div>
+          <div class="water-coordinate water-coordinate-side" aria-hidden="true">FLUID FORM / CREATIVE CODE</div>
+          <div class="water-artwork" aria-hidden="true">
+            <img class="water-art-fallback" src="assets/water-aj.webp" width="320" height="326" alt="" decoding="async" fetchpriority="high">
+            <canvas id="water-canvas" class="water-canvas" width="640" height="652"></canvas>
           </div>
-          <div class="kinetic-top"><span><span class="kinetic-live" aria-hidden="true"></span> LIVE / GENERATIVE FORM</span><span>001 — 001</span></div>
-          <div class="kinetic-bottom"><span>BUILT FROM CURVES<br>NOT TEMPLATES</span><span class="kinetic-interaction">DRAG TO ROTATE <span class="kinetic-drag-indicator" aria-hidden="true"></span></span></div>
-          <div class="kinetic-edge-label" aria-hidden="true">CONTINUOUS EXPERIMENT</div>
+          <div class="water-cross water-cross-a" aria-hidden="true"></div>
+          <div class="water-cross water-cross-b" aria-hidden="true"></div>
+          <div class="water-stage-footer" aria-hidden="true"><span><span class="water-live"></span>GENERATIVE / WATER</span><span>01—AJ</span></div>
         </div>
       </div>
       <div class="hero-bottom container">
@@ -209,6 +191,6 @@
   </footer>
   <script src="script.js?v=2" defer></script>
   <script src="visual-details.js?v=1" defer></script>
-  <script src="kinetic-form.js?v=1" defer></script>
+  <script src="water-hero.js?v=1" defer></script>
 </body>
 </html>
