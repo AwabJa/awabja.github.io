@@ -1,10 +1,4 @@
-/* =========================================================================
-   3D SOLAR SYSTEM NAV BAR
-   -------------------------------------------------------------------------
-   Each planet is a clickable nav item. Hover shows its name in a tooltip,
-   click opens its configured URL. Edit PLANET_LINKS below to point every
-   body at a different page on your site.
-   ========================================================================= */
+/* 3D SOLAR SYSTEM EXPLORER — select a world to inspect it in the scene. */
 
 // Global safety net: if anything throws anywhere in this file (e.g. a CDN
 // script failed to load and a "is not a constructor" error is thrown), make
@@ -19,12 +13,6 @@ window.addEventListener('error', (event) => {
     }
 });
 
-const PLANET_LINKS = {
-    Mercury: '/', Venus: '/#projects', Earth: '/#about', Mars: '/Enzo/index.html',
-    Jupiter: '/3D%20Navigation%20Bar/index.html', Saturn: '/#contact',
-    Uranus: 'https://github.com/AwabJa', Neptune: 'https://www.linkedin.com/in/awabjahmed/',
-    Sun: 'https://www.codecademy.com/profiles/BB99a', Moon: 'https://science.nasa.gov/moon/'
-};
 
 /* ---------------------------------------------------------------------- */
 /* Loading Manager + Texture Loader                                        */
@@ -472,42 +460,185 @@ try {
 }
 
 
-// Planet inspector: select a body to discover it, then follow its project destination.
-const PLANET_FACTS = {
-  Mercury: ['The smallest planet and closest to the Sun.', 'A year lasts just 88 Earth days.'],
-  Venus: ['Our hottest planet, wrapped in dense clouds.', 'Its surface is hot enough to melt lead.'],
-  Earth: ['Our ocean-covered home in the habitable zone.', 'The only known world with life.'],
-  Mars: ['The red planet, home to giant volcanoes.', 'Olympus Mons is the tallest known volcano in the solar system.'],
-  Jupiter: ['The largest planet, with powerful storms.', 'Its Great Red Spot is a long-lived storm.'],
-  Saturn: ['A gas giant surrounded by spectacular rings.', 'Its rings are mostly icy fragments.'],
-  Uranus: ['An ice giant rotating almost on its side.', 'Its axial tilt is about 98 degrees.'],
-  Neptune: ['A distant blue world with supersonic winds.', 'It takes about 165 Earth years to orbit the Sun.'],
-  Sun: ['The star powering our solar system.', 'Sunlight reaches Earth in about 8 minutes.'],
-  Moon: ['Earth’s only natural satellite, with a cratered rocky surface.', 'The Moon orbits Earth in roughly 27.3 days.']
+// Science-led explorer: every body remains in the 3D scene when selected.
+// NASA links have been checked against their individual NASA Science pages.
+const BODY_DATA = {
+    Sun: {
+        subtitle: 'The star at the center of our solar system', type: 'G-type star',
+        period: '~230 million years around the galaxy',
+        description: 'The Sun is a huge, hot sphere of plasma. Its gravity holds the solar system together and its energy powers life on Earth.',
+        fact: 'Sunlight takes about eight minutes to travel to Earth.',
+        nasa: 'https://science.nasa.gov/sun/'
+    },
+    Mercury: {
+        subtitle: 'Closest planet to the Sun', type: 'Terrestrial planet', period: '88 Earth days',
+        description: 'A small, rocky world covered in impact craters, with almost no atmosphere to protect its surface.',
+        fact: 'Mercury has extreme temperature swings between day and night.',
+        nasa: 'https://science.nasa.gov/mercury/'
+    },
+    Venus: {
+        subtitle: 'A world hidden beneath thick clouds', type: 'Terrestrial planet', period: '225 Earth days',
+        description: 'Venus is wrapped in a dense carbon-dioxide atmosphere that traps heat through an intense greenhouse effect.',
+        fact: 'Venus has the hottest planetary surface in our solar system.',
+        nasa: 'https://science.nasa.gov/venus/'
+    },
+    Earth: {
+        subtitle: 'Our home, the ocean planet', type: 'Terrestrial planet', period: '365.25 days',
+        description: 'Earth has liquid oceans, a protective atmosphere and active geology, making it the only world known to support life.',
+        fact: 'About 71% of Earth’s surface is covered by water.',
+        nasa: 'https://science.nasa.gov/earth/'
+    },
+    Moon: {
+        subtitle: 'Earth’s natural satellite', type: 'Rocky moon', period: '27.3 days around Earth',
+        description: 'The Moon is a cratered rocky world held in orbit by Earth’s gravity. It moves with Earth as our planet travels around the Sun.',
+        fact: 'The Moon’s gravity is the primary cause of Earth’s ocean tides.',
+        nasa: 'https://science.nasa.gov/moon/'
+    },
+    Mars: {
+        subtitle: 'The rusty-red desert planet', type: 'Terrestrial planet', period: '687 Earth days',
+        description: 'Mars is a cold, dusty world with ancient riverbeds, polar ice, enormous volcanoes and a thin atmosphere.',
+        fact: 'Olympus Mons on Mars is the largest known volcano in the solar system.',
+        nasa: 'https://science.nasa.gov/mars/'
+    },
+    Jupiter: {
+        subtitle: 'King of the planets', type: 'Gas giant', period: '11.86 Earth years',
+        description: 'Jupiter is the largest planet. Its swirling cloud bands reveal an atmosphere shaped by fierce winds and storms.',
+        fact: 'The Great Red Spot is a giant storm larger than Earth.',
+        nasa: 'https://science.nasa.gov/jupiter/'
+    },
+    Saturn: {
+        subtitle: 'The ringed gas giant', type: 'Gas giant', period: '29.45 Earth years',
+        description: 'Saturn is a gas giant best known for its extensive ring system made mainly of countless icy particles.',
+        fact: 'Saturn’s average density is lower than that of water.',
+        nasa: 'https://science.nasa.gov/saturn/'
+    },
+    Uranus: {
+        subtitle: 'The sideways ice giant', type: 'Ice giant', period: '84 Earth years',
+        description: 'Uranus is a pale blue-green ice giant whose atmosphere contains methane and whose rotation axis is strongly tilted.',
+        fact: 'Uranus spins at an angle of about 98 degrees relative to its orbit.',
+        nasa: 'https://science.nasa.gov/uranus/'
+    },
+    Neptune: {
+        subtitle: 'The most distant major planet', type: 'Ice giant', period: '164.8 Earth years',
+        description: 'Neptune is a dark, cold ice giant with deep blue hues and powerful atmospheric winds.',
+        fact: 'Neptune was the first planet discovered using mathematical predictions.',
+        nasa: 'https://science.nasa.gov/neptune/'
+    }
 };
+
 const inspector = document.getElementById('planet-inspector');
+const inspectorTitle = document.getElementById('inspector-name');
 const inspectorLink = document.getElementById('inspector-link');
-let selectedBody = null;
-let focusActive = false;
+const inspectorWorld = document.getElementById('inspector-world');
+const guideToggle = document.getElementById('guide-toggle');
+const guidePanel = document.getElementById('planet-links');
+const bodyButtons = [...document.querySelectorAll('[data-body]')];
+const texturePreviews = new Map();
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const overviewPosition = camera.position.clone();
 const overviewTarget = controls ? controls.target.clone() : new THREE.Vector3();
-function closeInspector() { inspector.hidden = true; selectedBody = null; focusActive = false; }
+
+let selectedBody = null;
+let focusActive = false;
+let focusTransition = false;
+let trackedPosition = null;
+
+const ALL_BODIES = new Map([
+    ['Sun', sun], ['Mercury', mercury], ['Venus', venus], ['Earth', earth],
+    ['Moon', moon], ['Mars', mars], ['Jupiter', jupiter], ['Saturn', saturn],
+    ['Uranus', uranus], ['Neptune', neptune]
+]);
+
+function setGuideOpen(open) {
+    guidePanel.hidden = !open;
+    guideToggle.setAttribute('aria-expanded', String(open));
+}
+guideToggle.addEventListener('click', () => setGuideOpen(guidePanel.hidden));
+
+function markSelectedBody(name) {
+    for (const button of bodyButtons) {
+        button.setAttribute('aria-pressed', String(button.dataset.body === name));
+    }
+}
+function closeInspector() {
+    inspector.hidden = true;
+    focusActive = false;
+    focusTransition = false;
+    selectedBody = null;
+    trackedPosition = null;
+    markSelectedBody(null);
+}
+function resetOverview() {
+    closeInspector();
+    setGuideOpen(false);
+    camera.position.copy(overviewPosition);
+    if (controls) {
+        controls.target.copy(overviewTarget);
+        controls.autoRotate = !prefersReducedMotion;
+        controls.update();
+    } else {
+        camera.lookAt(overviewTarget);
+    }
+    infoBar.textContent = 'Explore the Sun, eight planets and Earth’s Moon · Not to scale';
+}
 document.getElementById('inspector-close').addEventListener('click', closeInspector);
-document.getElementById('select-moon').addEventListener('click', () => { inspectBody(moon); document.getElementById('planet-links').hidden = true; document.getElementById('guide-toggle').setAttribute('aria-expanded','false'); });
-document.getElementById('inspector-reset').addEventListener('click', () => { closeInspector(); if (controls) controls.target.copy(overviewTarget); camera.position.copy(overviewPosition); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !inspector.hidden) closeInspector(); });
-function inspectBody(body) {
-  selectedBody = body;
-  focusActive = true;
-  if (controls) controls.autoRotate = false;
-  document.getElementById('inspector-name').textContent = body.name;
-  document.getElementById('inspector-description').textContent = PLANET_FACTS[body.name][0];
-  document.getElementById('inspector-fact').textContent = PLANET_FACTS[body.name][1];
-  inspectorLink.href = PLANET_LINKS[body.name] || '/';
-  inspectorLink.textContent = 'Explore ' + body.name + ' destination ↗';
-  if (!inspectorLink.href.startsWith(location.origin)) { inspectorLink.target = '_blank'; inspectorLink.rel = 'noopener noreferrer'; }
-  else { inspectorLink.removeAttribute('target'); inspectorLink.removeAttribute('rel'); }
-  inspector.hidden = false;
+document.getElementById('inspector-reset').addEventListener('click', resetOverview);
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+        if (!guidePanel.hidden) setGuideOpen(false);
+        else if (!inspector.hidden) closeInspector();
+    }
+});
+
+function inspectorTexture(body) {
+    if (texturePreviews.has(body.name)) return texturePreviews.get(body.name);
+    let preview = '';
+    try {
+        const canvas = body.material.map && body.material.map.image;
+        if (canvas && typeof canvas.toDataURL === 'function') {
+            preview = canvas.toDataURL('image/png');
+        }
+    } catch (error) {
+        console.warn('Preview unavailable for', body.name, error);
+    }
+    texturePreviews.set(body.name, preview);
+    return preview;
+}
+
+function inspectBody(body, keyboardSelected = false) {
+    if (!body) return;
+    const data = BODY_DATA[body.name];
+    if (!data) return;
+    selectedBody = body;
+    focusActive = true;
+    focusTransition = true;
+    trackedPosition = body.position.clone();
+    if (controls) controls.autoRotate = false;
+
+    inspectorTitle.textContent = body.name;
+    document.getElementById('inspector-subtitle').textContent = data.subtitle;
+    document.getElementById('inspector-description').textContent = data.description;
+    document.getElementById('inspector-type').textContent = data.type;
+    document.getElementById('inspector-period').textContent = data.period;
+    document.getElementById('inspector-fact').textContent = data.fact;
+    inspectorLink.href = data.nasa;
+    inspectorLink.textContent = 'Learn more about ' + body.name + ' at NASA ↗';
+
+    const image = inspectorTexture(body);
+    inspectorWorld.style.backgroundImage = image
+        ? 'radial-gradient(circle at 32% 26%,rgba(255,255,255,.24),transparent 44%,rgba(0,0,0,.78) 100%),url("' + image + '")'
+        : 'radial-gradient(circle at 32% 26%,#799fb3,#182d48 72%,#030b13)';
+    inspectorWorld.style.backgroundSize = image ? '100% 100%,auto 100%' : '100% 100%';
+
+    markSelectedBody(body.name);
+    setGuideOpen(false);
+    inspector.hidden = false;
+    infoBar.textContent = body.name + ' · ' + data.subtitle;
+    if (keyboardSelected) inspectorTitle.focus({preventScroll:true});
+}
+
+for (const button of bodyButtons) {
+    button.addEventListener('click', () => inspectBody(ALL_BODIES.get(button.dataset.body), true));
 }
 
 /* ---------------------------------------------------------------------- */
@@ -554,7 +685,7 @@ renderer.domElement.addEventListener('mouseleave', () => {
     hoveredObject = null;
     tooltip.classList.remove('visible');
     renderer.domElement.classList.remove('hovering');
-    infoBar.textContent = 'Click a planet to explore';
+    infoBar.textContent = 'Explore the Sun, eight planets and Earth’s Moon · Not to scale';
 });
 
 function handleInteraction(event) {
@@ -597,15 +728,6 @@ function animate() {
     requestAnimationFrame(animate);
 
     if (document.hidden) return;
-    if (controls && focusActive && selectedBody) {
-        const target = selectedBody.position;
-        controls.target.lerp(target, 0.055);
-        const radius = selectedBody.geometry.parameters.radius || 2;
-        const desired = target.clone().add(new THREE.Vector3(0, Math.max(3, radius * 1.2), Math.max(9, radius * 3.2)));
-        camera.position.lerp(desired, 0.045);
-    }
-    if (controls) controls.update();
-
     const time = Date.now() * 0.005;
 
     planets.forEach(planet => {
@@ -637,6 +759,35 @@ function animate() {
     sun.rotation.y += sun.userData.rotationSpeed;
     const sunTargetScale = (hoveredObject === sun) ? 1.05 : 1.0;
     sun.scale.lerp(new THREE.Vector3(sunTargetScale, sunTargetScale, sunTargetScale), 0.15);
+
+    // Follow the selected world without fighting the user's own drag/zoom after arrival.
+    // First fly to it; afterwards move the camera and orbit target with its orbit.
+    if (focusActive && selectedBody) {
+        const target = selectedBody.position;
+        if (trackedPosition && !focusTransition && controls) {
+            const movement = target.clone().sub(trackedPosition);
+            controls.target.add(movement);
+            camera.position.add(movement);
+        }
+        if (!trackedPosition) trackedPosition = target.clone();
+        else trackedPosition.copy(target);
+
+        if (focusTransition) {
+            const radius = selectedBody.geometry.parameters.radius || 2;
+            const desired = target.clone().add(new THREE.Vector3(
+                0, Math.max(3, radius * 0.75), Math.max(9, radius * 3.3)
+            ));
+            const speed = prefersReducedMotion ? 1 : 0.065;
+            if (controls) controls.target.lerp(target, speed);
+            else camera.lookAt(target);
+            camera.position.lerp(desired, speed);
+            if (camera.position.distanceTo(desired) < 0.9 &&
+                (!controls || controls.target.distanceTo(target) < 0.9)) {
+                focusTransition = false;
+            }
+        }
+    }
+    if (controls) controls.update();
 
     if (composer) {
         composer.render();
