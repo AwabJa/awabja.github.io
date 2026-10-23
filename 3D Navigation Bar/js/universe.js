@@ -766,11 +766,14 @@ renderer.domElement.addEventListener('mouseleave', () => {
 const activePointers = new Set();
 let pointerStart = null;
 renderer.domElement.addEventListener('pointerdown', e => {
+    // Let the user take the camera immediately instead of fighting the fly-to.
+    cancelCameraFlight();
     activePointers.add(e.pointerId);
     if (activePointers.size === 1 && e.button === 0) {
         pointerStart = {id:e.pointerId,x:e.clientX,y:e.clientY,time:performance.now()};
     } else pointerStart = null;
 });
+renderer.domElement.addEventListener('wheel', () => cancelCameraFlight(), {passive:true});
 renderer.domElement.addEventListener('pointercancel', e => {
     activePointers.delete(e.pointerId);
     pointerStart = null;
