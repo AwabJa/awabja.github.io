@@ -1,55 +1,119 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; form-action 'self'; script-src 'self' https://unpkg.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://unpkg.com; upgrade-insecure-requests;">
     <meta name="referrer" content="no-referrer">
-    <meta name="theme-color" content="#0b1012">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enzo — Arcane Survival FPS | A.J. Ahmed</title>
-    <meta name="description" content="Enzo is an arcane sci-fi survival FPS: cast energy bolts from your hand and survive corrupted sentinels in a storm-lit arena. Keyboard and mouse required.">
-    
-    <!-- Load only the font actually used by the game UI. -->
+    <meta name="theme-color" content="#090d1b">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ENZO — The Shattered Reach | Arcane Survival FPS</title>
+    <meta name="description" content="Enter the Shattered Reach: a browser-based arcane survival FPS. Cast energy bolts, survive the sentinels, and explore the storm-lit ruins.">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-
-    <!-- External Stylesheet -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" href="assets/shattered-reach-splash.webp" as="image" type="image/webp">
     <link rel="stylesheet" href="styles/style.css?v=2">
-    
-    <!-- Shared portfolio favicon -->
-    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
-
+    <link rel="stylesheet" href="styles/splash.css?v=1">
 </head>
 <body>
-
-    <a class="enzo-back" href="/">← Back to portfolio</a>
-    <div id="gameHUD" class="game-hud" aria-live="off" hidden><span>HEALTH <strong id="healthValue">100</strong></span><span>WAVE <strong id="waveValue">1</strong></span><span>ELIMINATIONS <strong id="killCount">0</strong></span><span>GOAL <strong id="killGoal">5</strong></span><span id="objectiveText">Eliminate 5 enemies</span></div>
+    <div id="gameHUD" class="game-hud" aria-live="off" hidden>
+        <span>HEALTH <strong id="healthValue">100</strong></span>
+        <span>WAVE <strong id="waveValue">1</strong></span>
+        <span>ELIMINATIONS <strong id="killCount">0</strong></span>
+        <span>GOAL <strong id="killGoal">5</strong></span>
+        <span id="objectiveText">Eliminate 5 enemies</span>
+    </div>
     <div id="gameToast" class="game-toast" role="status" aria-live="polite"></div>
-    <!-- Splash Screen -->
-    <div id="splashScreen">
-        <img src="logo.png" alt="Enzo Game Logo" id="splashLogo">
-        <!-- Removed the loadingMessage div -->
-        <!-- Dedicated Start Button -->
-        <p class="game-intro">Enter the Shattered Reach. Cast arcane bolts from your right hand and survive waves of corrupted sentinels.<br>WASD move · Mouse aim/cast · Space jump · Shift sprint · Esc pause.<br>Desktop keyboard and mouse recommended.</p>
-        <button id="startButton" aria-label="Start Game">Start Game</button>
+
+    <!-- The scenery is artwork only: all title, buttons, and controls are actual HTML. -->
+    <section id="splashScreen" class="enzo-splash" aria-labelledby="splashTitle">
+        <img class="splash-art" src="assets/shattered-reach-splash.webp" width="1600" height="900" alt="" decoding="async" fetchpriority="high">
+        <div class="splash-shade" aria-hidden="true"></div>
+        <div class="splash-mist" aria-hidden="true"></div>
+
+        <div class="splash-shell">
+            <header class="splash-top">
+                <div class="splash-signature">
+                    <svg viewBox="0 0 30 30" width="30" height="30" fill="none" aria-hidden="true">
+                        <path d="M15 2 20 12 28 15 20 18 15 28 10 18 2 15 10 12Z" stroke="currentColor" stroke-width="1.4"/>
+                        <path d="M15 9v12M9 15h12" stroke="currentColor" stroke-width="1"/>
+                    </svg>
+                    <span>THE SHATTERED REACH</span>
+                </div>
+                <span class="splash-top-mark"><span class="signal-dot"></span> ARCANE SYSTEM / ONLINE</span>
+            </header>
+
+            <div class="splash-main">
+                <div class="splash-copy">
+                    <p class="splash-eyebrow"><span class="eyebrow-line"></span> THE WORLD IS WAITING</p>
+                    <h1 id="splashTitle" class="splash-title">ENZO</h1>
+                    <div class="splash-rule" aria-hidden="true"><span></span></div>
+                    <p class="splash-subtitle">ARCANE SURVIVAL FPS</p>
+                    <p class="splash-description">Enter the Shattered Reach. Cast energy bolts. Survive the sentinels.</p>
+
+                    <nav class="splash-actions" aria-label="Main game menu">
+                        <button id="startButton" class="splash-action splash-action-primary" type="button" disabled>
+                            <span>START GAME</span>
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                        <button id="howToPlayButton" class="splash-action splash-action-secondary" type="button">
+                            <span>HOW TO PLAY</span><span class="action-mark" aria-hidden="true">+</span>
+                        </button>
+                        <a class="splash-action splash-action-secondary" href="/">
+                            <span>BACK TO PORTFOLIO</span>
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 5H5v14h14v-9m-7 2 8-8m-5 0h5v5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </a>
+                    </nav>
+                    <p id="menuStatus" class="splash-status" role="status" aria-live="polite"><span class="status-dot"></span> PREPARING THE SHATTERED REACH…</p>
+                </div>
+                <div class="splash-side-label" aria-hidden="true">RUINS OF THE FORGOTTEN REALM / 001</div>
+            </div>
+
+            <footer class="splash-footer">
+                <div class="splash-footer-line" aria-hidden="true"></div>
+                <div class="control-legend" aria-label="Game controls">
+                    <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> MOVE</span>
+                    <span><svg viewBox="0 0 20 24" fill="none" aria-hidden="true"><rect x="4" y="2" width="12" height="20" rx="6" stroke="currentColor"/><path d="M10 3v9m-6 0h12" stroke="currentColor"/></svg> AIM / CAST</span>
+                    <span><kbd>SPACE</kbd> JUMP</span>
+                    <span><kbd>SHIFT</kbd> SPRINT</span>
+                    <span><kbd>ESC</kbd> PAUSE</span>
+                </div>
+                <span class="splash-footer-note">BUILT TO BE PLAYED / DESKTOP RECOMMENDED</span>
+            </footer>
+        </div>
+    </section>
+
+    <dialog id="howToPlayDialog" class="howto-dialog" aria-labelledby="howtoTitle">
+        <div class="dialog-header">
+            <span>FIELD MANUAL / 01</span>
+            <button id="closeHowToPlay" class="dialog-close" type="button" aria-label="Close How to Play">×</button>
+        </div>
+        <h2 id="howtoTitle">HOW TO <em>SURVIVE</em></h2>
+        <p class="dialog-intro">Your hand is your weapon. Cast energy bolts, aim for glowing enemy cores, and survive as the arena grows more dangerous.</p>
+        <dl class="controls-list">
+            <div><dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>Move around the arena</dd></div>
+            <div><dt>MOUSE + CLICK</dt><dd>Look around and cast a bolt</dd></div>
+            <div><dt><kbd>SPACE</kbd></dt><dd>Jump</dd></div>
+            <div><dt><kbd>SHIFT</kbd></dt><dd>Sprint</dd></div>
+            <div><dt><kbd>C</kbd></dt><dd>Crouch</dd></div>
+            <div><dt><kbd>ESC</kbd></dt><dd>Pause or unlock the cursor</dd></div>
+        </dl>
+        <p class="dialog-hint">TIP: The glowing cores are weak points. Use a desktop computer with a keyboard and mouse.</p>
+        <button id="returnToMenu" type="button" class="splash-action splash-action-primary dialog-return">RETURN TO MENU <span aria-hidden="true">↗</span></button>
+    </dialog>
+
+    <!-- Pause screen is retained; a full HUD/menu redesign can follow separately. -->
+    <div id="pauseScreen" class="pause-screen" aria-labelledby="pauseTitle" role="dialog" aria-modal="true" aria-hidden="true">
+        <h2 id="pauseTitle">GAME PAUSED</h2>
+        <button id="resumeButton" type="button">Resume Game</button>
+        <button id="exitButton" type="button">Exit to Menu</button>
     </div>
 
-    <!-- Pause Screen (Initially Hidden) -->
-    <div id="pauseScreen" class="pause-screen">
-        <h1>Game Paused</h1>
-        <button id="resumeButton" aria-label="Resume Game">Resume Game</button>
-        <button id="exitButton" aria-label="Exit to Menu">Exit to Menu</button>
-    </div>
-
-    <!-- Crosshair (Initially Hidden) -->
-    <div id="crosshair" class="crosshair">
+    <div id="crosshair" class="crosshair" aria-hidden="true">
         <div class="horizontal"></div>
         <div class="vertical"></div>
     </div>
-
-    <!-- Include the main.js script -->
-    <script type="module" src="./src/main.js?v=2"></script>  <!-- Reference to your external JS file -->
-    
+    <script type="module" src="./src/main.js?v=3"></script>
 </body>
 </html>
