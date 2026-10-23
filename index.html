@@ -18,9 +18,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="design-upgrade.css?v=1">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
+  <div class="scroll-progress" aria-hidden="true"></div>
   <nav class="site-nav" aria-label="Main navigation">
     <div class="nav-inner">
       <a class="brand" href="#home" aria-label="A.J. Ahmed, back to the top">
@@ -55,6 +57,9 @@
           </div>
         </div>
         <div class="hero-visual" aria-hidden="true">
+          <div class="visual-ambient"></div>
+          <div class="visual-orbital-coordinate visual-orbital-coordinate-a"></div>
+          <div class="visual-orbital-coordinate visual-orbital-coordinate-b"></div>
           <div class="hero-visual-grid"></div>
           <div class="visual-orbit visual-orbit-outer"></div>
           <div class="visual-orbit visual-orbit-middle"></div>
@@ -62,6 +67,8 @@
           <div class="visual-core"><span></span></div>
           <div class="visual-satellite visual-satellite-one"></div>
           <div class="visual-satellite visual-satellite-two"></div>
+          <div class="visual-beacon visual-beacon-one"></div>
+          <div class="visual-beacon visual-beacon-two"></div>
           <div class="visual-caption visual-caption-top"><span class="caption-marker"></span> FORM / FUNCTION</div>
           <div class="visual-caption visual-caption-bottom">DESIGN IN MOTION <span>↗</span></div>
           <div class="visual-coordinate visual-coordinate-left">00° / 360°</div>
@@ -87,6 +94,8 @@
           <article class="project-card">
             <a class="project-preview solar-preview" href="/3D%20Navigation%20Bar/index.html" aria-label="Open the Solar System Explorer">
               <div class="solar-stars" aria-hidden="true"></div>
+              <div class="solar-planet-orbit solar-planet-orbit-one" aria-hidden="true"></div>
+              <div class="solar-planet-orbit solar-planet-orbit-two" aria-hidden="true"></div>
               <div class="solar-orbit solar-orbit-one" aria-hidden="true"></div>
               <div class="solar-orbit solar-orbit-two" aria-hidden="true"></div>
               <div class="solar-orbit solar-orbit-three" aria-hidden="true"></div>
@@ -94,6 +103,7 @@
               <div class="solar-planet solar-planet-one" aria-hidden="true"></div>
               <div class="solar-planet solar-planet-two" aria-hidden="true"></div>
               <span class="preview-index">PROJECT 001 / INTERACTIVE WEBGL</span>
+              <span class="preview-large-index" aria-hidden="true">01</span>
               <span class="preview-corner" aria-hidden="true">↗</span>
               <span class="preview-bottom">A WORLD TO GET LOST IN</span>
             </a>
@@ -117,6 +127,7 @@
               <div class="enzo-figure" aria-hidden="true"><span></span></div>
               <div class="enzo-crosshair" aria-hidden="true"></div>
               <span class="preview-index">PROJECT 002 / GAME EXPERIMENT</span>
+              <span class="preview-large-index" aria-hidden="true">02</span>
               <span class="preview-corner" aria-hidden="true">↗</span>
               <span class="preview-bottom">ENTER THE ARENA</span>
             </a>
@@ -184,5 +195,6 @@
     </div>
   </footer>
   <script src="script.js?v=2" defer></script>
+  <script src="visual-details.js?v=1" defer></script>
 </body>
 </html>
