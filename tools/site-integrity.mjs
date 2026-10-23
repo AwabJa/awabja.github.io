@@ -112,6 +112,14 @@ check(hand.includes('export function createCastingHand') &&
   hand.includes('bones.set(obj.name,obj)') && hand.includes('BEND_AXIS') &&
   !/new THREE\.(CylinderGeometry|BoxGeometry|IcosahedronGeometry)/.test(hand),
   'First-person model must use a real anatomical rig, not fake primitive fingers');
+// The casting gauntlet must not have a bright circular ornament permanently
+// hovering above the fingers. Flash VFX belong to short-lived casts only.
+check(!/new THREE\.(RingGeometry|TorusGeometry)/.test(hand) &&
+  hand.includes("fx.visible=false") &&
+  hand.includes("const activeFlash=loaded&&shotTime<.22") &&
+  hand.includes("fx.visible=activeFlash") &&
+  hand.includes("fx.position.copy(rig.worldToLocal(palmWorld))"),
+  'No persistent floating white ring; palm flash must be bone-aligned and temporary');
 const modelFile=join(root,'Enzo/assets/models/anatomical-right-hand.glb');
 const modelLicense=join(root,'Enzo/assets/models/RIGHT-HAND-LICENSE.md');
 check(existsSync(modelFile),'Skinned CC0 hand GLB must exist locally');

@@ -66,27 +66,30 @@ export function createCastingHand(camera) {
   const gloveTexture=makeFabric();
   const leather=new THREE.MeshPhysicalMaterial({
     name:'Shattered Reach / graphite woven glove',
-    color:0x7f90a8,
+    color:0x48505a,
     map:gloveTexture,
     bumpMap:gloveTexture,
-    bumpScale:.0016,
-    metalness:.08,roughness:.78,
-    clearcoat:.12,clearcoatRoughness:.78,
-    envMapIntensity:.86,
+    bumpScale:.0018,
+    metalness:.03,roughness:.88,
+    clearcoat:.04,clearcoatRoughness:.89,
+    envMapIntensity:.35,
     side:THREE.DoubleSide,
     depthTest:true,depthWrite:true,
     skinning:true
   });
-  const cyan=new THREE.MeshBasicMaterial({
-    color:0x69d9ff,transparent:true,opacity:.75,
-    blending:THREE.AdditiveBlending,depthTest:false,depthWrite:false
-  });
-  const energy=new THREE.MeshBasicMaterial({
-    color:0xb4faff,transparent:true,opacity:.92,
-    blending:THREE.AdditiveBlending,depthTest:false,depthWrite:false
-  });
-  const pulseMaterial=cyan.clone();
-  pulseMaterial.opacity=0;
+  // Casting energy is a short blue-white flash, never a permanent circular
+  // HUD-like ring floating in front of the player's hand.
+  const flareCanvas=document.createElement('canvas');
+  flareCanvas.width=flareCanvas.height=64;
+  const fctx=flareCanvas.getContext('2d');
+  const radial=fctx.createRadialGradient(32,32,0,32,32,32);
+  radial.addColorStop(0,'rgba(210,248,255,1)');
+  radial.addColorStop(.14,'rgba(95,206,255,.9)');
+  radial.addColorStop(.45,'rgba(34,120,255,.28)');
+  radial.addColorStop(1,'rgba(27,105,255,0)');
+  fctx.fillStyle=radial;
+  fctx.fillRect(0,0,64,64);
+  const flareMap=new THREE.CanvasTexture(flareCanvas);
 
   // The source anatomical asset ends at the wrist. Extend it into the camera
   // edge with a smoothly lofted, fabric-covered forearm sleeve (not fingers
@@ -98,10 +101,10 @@ export function createCastingHand(camera) {
   const sides=28,sections=20;
   for(let i=0;i<=sections;i++){
     const t=i/sections;
-    const center=backAxis.clone().multiplyScalar(.032+.82*t);
+    const center=backAxis.clone().multiplyScalar(.12+.66*t);
     center.x+=.065*t*t;
     center.y-=.060*t*t;
-    const radius=.118+.085*t;
+    const radius=.105+.042*t;
     const ellipse=.94+.04*Math.sin(t*Math.PI);
     for(let j=0;j<=sides;j++){
       const a=j/sides*Math.PI*2;
@@ -124,50 +127,60 @@ export function createCastingHand(camera) {
   sleeveGeometry.setIndex(armFaces);
   sleeveGeometry.computeVertexNormals();
   const sleeveFabric=new THREE.MeshPhysicalMaterial({
-    color:0x5a6880,map:gloveTexture,bumpMap:gloveTexture,
-    bumpScale:.0012,metalness:.08,roughness:.80,
-    clearcoat:.08,clearcoatRoughness:.77,
+    color:0x414954,map:gloveTexture,bumpMap:gloveTexture,
+    bumpScale:.0015,metalness:.025,roughness:.91,
+    clearcoat:.02,clearcoatRoughness:.9,
     side:THREE.DoubleSide,depthTest:true,depthWrite:true
   });
   const sleeve=new THREE.Mesh(sleeveGeometry,sleeveFabric);
   sleeve.name='Continuous woven forearm sleeve';
   // Align to the *visible* skinned wrist cap, which is offset from the
   // exported skeleton's wrist joint. Overlap slightly for a natural seam.
-  sleeve.position.set(-.18,.065,-.10);
+  // Tuck the cloth sleeve directly behind the anatomical wrist opening.
+  // It should enter from the camera edge, not hide fingers or float detached.
+  sleeve.position.set(-.195,.035,0);
   sleeve.renderOrder=890;
   rig.add(sleeve);
 
+  // The pulse is placed relative to the loaded palm instead of an arbitrary
+  // fixed HUD coordinate. It stays completely hidden between shots.
   const fx=new THREE.Group();
-  fx.name='Palm sigil / not a finger mesh';
+  fx.name='Short-lived palm energy flash';
+  fx.visible=false;
   rig.add(fx);
-
-  const rune=new THREE.Mesh(new THREE.RingGeometry(.076,.083,56),cyan);
-  rune.position.set(-.105,.185,-.38);
-  rune.rotation.x=-.20;
-  rune.renderOrder=910;
-  fx.add(rune);
-  const rune2=new THREE.Mesh(new THREE.TorusGeometry(.046,.0035,6,44),energy);
-  rune2.position.set(-.105,.185,-.384);
-  rune2.rotation.x=-.20;
-  rune2.renderOrder=911;
-  fx.add(rune2);
-  const symbol=new THREE.Mesh(new THREE.RingGeometry(.025,.029,4),energy);
-  symbol.position.set(-.105,.185,-.39);
-  symbol.rotation.set(0,0,Math.PI/4);
-  symbol.renderOrder=912;
-  fx.add(symbol);
-  const halo=new THREE.Mesh(new THREE.RingGeometry(.07,.10,56),pulseMaterial);
-  halo.position.copy(rune.position);
-  halo.position.z-=.006;
-  halo.renderOrder=912;
-  fx.add(halo);
-
-  // The wrist stays naturally attached to the skinned mesh. No giant
-  // floating cuff ring that competes with the real anatomical model.
-
-  const castLight=new THREE.PointLight(0x4abfff,0,.95,2);
-  castLight.position.set(-.105,.185,-.39);
-  rig.add(castLight);
+  const flashMaterial=new THREE.SpriteMaterial({
+    map:flareMap,color:0x70cdff,
+    blending:THREE.AdditiveBlending,
+    transparent:true,opacity:0,
+    depthTest:false,depthWrite:false
+  });
+  const flash=new THREE.Sprite(flashMaterial);
+  flash.scale.set(.15,.15,1);
+  flash.renderOrder=920;
+  fx.add(flash);
+  // Tiny energy filaments: straight streaks, no floating circles or white
+  // reticle. Visible only for the casting impulse and fading immediately.
+  const streakCoords=[];
+  for(let i=0;i<12;i++){
+    const a=i*Math.PI*2/12+.17;
+    const inner=.012+(i%3)*.003;
+    const outer=.06+(i%4)*.009;
+    streakCoords.push(
+      Math.cos(a)*inner,Math.sin(a)*inner,0,
+      Math.cos(a)*outer,Math.sin(a)*outer,-.015
+    );
+  }
+  const streakGeo=new THREE.BufferGeometry();
+  streakGeo.setAttribute('position',new THREE.Float32BufferAttribute(streakCoords,3));
+  const streakMaterial=new THREE.LineBasicMaterial({
+    color:0x58caff,transparent:true,opacity:0,
+    blending:THREE.AdditiveBlending,depthTest:false,depthWrite:false
+  });
+  const streaks=new THREE.LineSegments(streakGeo,streakMaterial);
+  streaks.renderOrder=919;
+  fx.add(streaks);
+  const castLight=new THREE.PointLight(0x2eaeff,0,1.25,2);
+  fx.add(castLight);
 
   const bones=new Map();
   const bind=new Map();
@@ -230,6 +243,13 @@ export function createCastingHand(camera) {
         distalBone=bones.get('middle_03_r')||bones.get('middle_02_r');
         loaded=true;
         rig.updateMatrixWorld(true);
+        // Anchor at the fingers' base rather than on the forearm.
+        const palmWorld=bones.get('middle_01_r').getWorldPosition(new THREE.Vector3())
+          .lerp(bones.get('middle_02_r').getWorldPosition(new THREE.Vector3()),.32);
+        const normal=camera.getWorldDirection(new THREE.Vector3());
+        palmWorld.addScaledVector(normal,-.035);
+        fx.position.copy(rig.worldToLocal(palmWorld));
+        castLight.position.set(0,0,-.018);
         resolve({meshCount:handMeshes,bones:bones.size,dimension,
           wrist:[wristPosition.x,wristPosition.y,wristPosition.z],
           boneScale:defaultScale});
@@ -280,16 +300,22 @@ export function createCastingHand(camera) {
         bone.quaternion.copy(bind.get(name)).multiply(curlQuaternion);
       }
     }
-    rune.rotation.z=time*.53;
-    rune2.rotation.z=-time*1.15;
-    symbol.rotation.z=Math.PI/4+time*.8;
-    rune.scale.setScalar(1+impulse*.85);
-    halo.scale.setScalar(.3+impulse*3.3);
-    pulseMaterial.opacity=impulse*.46;
-    castLight.intensity=impulse*1.9;
-    const quiet=.68+.08*Math.sin(time*3.1);
-    cyan.opacity=Math.min(.98,quiet+impulse*.3);
-    energy.opacity=Math.min(1,.83+impulse*.18);
+    const activeFlash=loaded&&shotTime<.22;
+    fx.visible=activeFlash;
+    if(activeFlash){
+      const flashAge=Math.max(0,Math.min(1,shotTime/.22));
+      const flicker=Math.sin(flashAge*Math.PI);
+      flash.scale.setScalar(.10+flashAge*.24);
+      flashMaterial.opacity=.72*flicker;
+      streaks.rotation.z+=dt*9;
+      streaks.scale.setScalar(.55+flashAge*1.6);
+      streakMaterial.opacity=.68*flicker;
+      castLight.intensity=1.35*flicker;
+    }else{
+      flashMaterial.opacity=0;
+      streakMaterial.opacity=0;
+      castLight.intensity=0;
+    }
   }
 
   function muzzlePosition(){
@@ -307,7 +333,10 @@ export function createCastingHand(camera) {
     rig.position.set(.49,-.42,-.62);
     rig.rotation.set(-.13,.02,-.21);
     for(const [name,bone] of bones)bone.quaternion.copy(bind.get(name));
-    castLight.intensity=0;pulseMaterial.opacity=0;
+    castLight.intensity=0;
+    fx.visible=false;
+    flashMaterial.opacity=0;
+    streakMaterial.opacity=0;
   }
 
   return {
