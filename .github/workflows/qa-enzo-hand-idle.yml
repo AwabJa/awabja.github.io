@@ -143,3 +143,5 @@ jobs:
           git add .github/previews/enzo-hand-idle.png .github/previews/enzo-hand-casting.png
           git commit -m 'Temporary screenshot of fixed idle hand and actual casting flash'
           git push origin HEAD:fix/enzo-gauntlet-idle-sigil-material-20261023
+
+# Second visual pass: expose the hand and place the casting pulse at the knuckles.
