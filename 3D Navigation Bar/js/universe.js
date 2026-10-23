@@ -761,48 +761,32 @@ renderer.domElement.addEventListener('mouseleave', () => {
     infoBar.textContent = 'Explore the Sun, eight planets and Earth’s Moon · Not to scale';
 });
 
-function handleInteraction(event) {
-    if (event.type === 'touchend') event.preventDefault();
-
-    let clientX, clientY;
-    if (event.type === 'click') {
-        clientX = event.clientX;
-        clientY = event.clientY;
-    } else if (event.type === 'touchend') {
-        if (event.changedTouches && event.changedTouches.length > 0) {
-            clientX = event.changedTouches[0].clientX;
-            clientY = event.changedTouches[0].clientY;
-        } else {
-            return;
-        }
-    } else {
-        return;
-    }
-
-    setPointerFromEvent(clientX, clientY);
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(clickableObjects, false);
-
-    if (intersects.length > 0) {
-        const clickedObject = intersects[0].object;
-        console.log(`You clicked on ${clickedObject.name}`);
-        inspectBody(clickedObject);
-    }
-}
-
-// Only treat a genuine tap/click as selection, not the end of a camera drag.
+// A tap is not a drag: no selection after camera rotation, pan or pinch.
+// Pointer Events cover both mouse and touch without a duplicate touchend/click.
+const activePointers = new Set();
 let pointerStart = null;
-renderer.domElement.addEventListener('pointerdown', e => { pointerStart = {x:e.clientX,y:e.clientY}; });
-renderer.domElement.addEventListener('pointermove', e => {
-    if (pointerStart && Math.hypot(e.clientX-pointerStart.x,e.clientY-pointerStart.y)>8) pointerStart.dragged=true;
+renderer.domElement.addEventListener('pointerdown', e => {
+    activePointers.add(e.pointerId);
+    if (activePointers.size === 1 && e.button === 0) {
+        pointerStart = {id:e.pointerId,x:e.clientX,y:e.clientY,time:performance.now()};
+    } else pointerStart = null;
 });
-const selectWithoutDrag = e => {
-    const dragging = pointerStart && pointerStart.dragged;
+renderer.domElement.addEventListener('pointercancel', e => {
+    activePointers.delete(e.pointerId);
     pointerStart = null;
-    if (!dragging) handleInteraction(e);
-};
-renderer.domElement.addEventListener('click', selectWithoutDrag, false);
-// Pointer/click events also cover taps; a touchend listener caused double selection.
+});
+renderer.domElement.addEventListener('pointerup', e => {
+    activePointers.delete(e.pointerId);
+    const initial = pointerStart;
+    pointerStart = null;
+    if (!initial || initial.id !== e.pointerId || e.button !== 0) return;
+    if (Math.hypot(e.clientX-initial.x,e.clientY-initial.y) > 8) return;
+    if (performance.now()-initial.time > 650) return;
+    setPointerFromEvent(e.clientX,e.clientY);
+    raycaster.setFromCamera(mouse,camera);
+    const hit = raycaster.intersectObjects(clickableObjects,false)[0];
+    if (hit) inspectBody(hit.object);
+});
 
 /* ---------------------------------------------------------------------- */
 /* Main Animation Loop                                                     */
@@ -816,7 +800,7 @@ function animate(frameTimestamp) {
     if (document.hidden) return;
 
     // Simulation uses elapsed time, not frame count; speed controls stay smooth on 60/120 Hz screens.
-    if (simulationPlaying) simulationTime += frameDelta * 5 * speedMultiplier;
+    if (simulationPlaying) simulationTime += frameDelta * 2.6 * speedMultiplier;
     const time = simulationTime;
 
     planets.forEach(planet => {
@@ -826,23 +810,20 @@ function animate(frameTimestamp) {
             0,
             Math.sin(time * orbitSpeed + phaseOffset) * distance
         );
-        if (simulationPlaying) planet.rotation.y += rotationSpeed * frameDelta * 60 * speedMultiplier;
-        const scale = hoveredObject === planet ? 1.04 : 1.0;
-        planet.scale.setScalar(THREE.MathUtils.lerp(planet.scale.x, scale, Math.min(1, frameDelta * 8)));
+        if (simulationPlaying) planet.rotation.y += rotationSpeed * frameDelta * 12 * speedMultiplier;
+        // Planet sizes are stable: hovering never makes real-world bodies inflate.
     });
 
     const lunarAngle = time * 0.078 + 1.7;
     moon.position.copy(earth.position).add(new THREE.Vector3(
         Math.cos(lunarAngle) * 12, Math.sin(lunarAngle) * 1.08, Math.sin(lunarAngle) * 12
     ));
-    moon.rotation.y = -lunarAngle;
+    moon.rotation.y = -lunarAngle - Math.PI / 2; // same hemisphere faces Earth
     moonOrbit.position.copy(earth.position);
     if (simulationPlaying) {
-        cloudLayer.rotation.y += 0.0003 * frameDelta * 60 * speedMultiplier;
-        sun.rotation.y += sun.userData.rotationSpeed * frameDelta * 60 * speedMultiplier;
+        cloudLayer.rotation.y += 0.018 * frameDelta * speedMultiplier;
+        sun.rotation.y += sun.userData.rotationSpeed * frameDelta * 12 * speedMultiplier;
     }
-    const sunScale = hoveredObject === sun ? 1.025 : 1;
-    sun.scale.setScalar(THREE.MathUtils.lerp(sun.scale.x, sunScale, Math.min(1, frameDelta * 8)));
 
     // Track the orbiting target without pulling the user back after they rotate/zoom.
     if (focusActive && selectedBody && trackedPosition) {
@@ -857,18 +838,20 @@ function animate(frameTimestamp) {
     if (cameraFlight) {
         const flight = cameraFlight;
         flight.elapsed += frameDelta;
-        const t = flight.duration ? EASE(Math.min(1, flight.elapsed / flight.duration)) : 1;
+        const rawT = flight.duration ? Math.min(1, flight.elapsed / flight.duration) : 1;
+        const eased = EASE(rawT);
         const target = selectedBody ? selectedBody.position : flight.targetPosition;
         const destination = flight.destinationOffset
             ? target.clone().add(flight.destinationOffset)
             : flight.destinationPosition;
-        camera.position.lerpVectors(flight.positionStart, destination, t);
-        if (controls) controls.target.lerpVectors(flight.targetStart, target, t);
+        camera.position.lerpVectors(flight.positionStart, destination, eased);
+        camera.position.y += Math.sin(Math.PI * eased) * (flight.arcHeight || 0);
+        if (controls) controls.target.lerpVectors(flight.targetStart, target, eased);
         else camera.lookAt(target);
-        if (t >= 1) {
+        if (rawT >= 1) {
             cameraFlight = null;
             focusTransition = false;
-            if (!selectedBody && controls && !prefersReducedMotion) controls.autoRotate = true;
+            if (controls) controls.enableDamping = true;
         }
     }
 
