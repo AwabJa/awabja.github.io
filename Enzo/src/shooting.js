@@ -77,14 +77,15 @@ export function setupShootingEvents(camera,scene,hand,environment=[],surface=nul
   installed=true;
   function handle(event) {
     if(event.button!==0 || !surface || document.pointerLockElement!==surface) return;
-    if(!hand.isReady())return;
     const now=performance.now();
     if(now-lastShot<135)return;  // maximum ~7 casts/second
     lastShot=now;
     const forward=new THREE.Vector3();
     camera.getWorldDirection(forward);
     forward.normalize();
-    const start=hand.muzzlePosition();
+    // Fall back to a stable camera-space palm position if the hand GLB fails.
+    const start=hand.isReady() ? hand.muzzlePosition() :
+      camera.localToWorld(new THREE.Vector3(.30,-.27,-.68));
     const roots=new Set(getEnemyHitboxes());
     raycaster.set(camera.position,forward);
     raycaster.near=0;
@@ -101,9 +102,9 @@ export function setupShootingEvents(camera,scene,hand,environment=[],surface=nul
         if(damageEnemy(scene,hitObject,damage))window.dispatchEvent(new Event('enzo:enemy-hit'));
       }
     }
-    // The energy effect and bolt share the current anatomical palm emitter.
-    // Always animate only after a successful skinned-hand cast.
-    if(hand.cast())spellBolt(scene,start,end,camera);
+    // Hit registration and projectiles must not depend on a cosmetic asset.
+    if(hand.isReady())hand.cast();
+    spellBolt(scene,start,end,camera);
   }
   window.addEventListener('mousedown',handle);
   return {update,reset};
