@@ -424,6 +424,8 @@ section[id]{scroll-margin-top:88px}
 /* Contact — one deliberate high-contrast moment. */
 .contact{background:#0e1517;padding-block:clamp(80px,9vw,140px)}
 .contact-shell{
+  width:calc(100% - clamp(44px,10.4vw,164px));
+  max-width:calc(var(--container) - clamp(44px,10.4vw,164px));
   background:#bfe7d4;color:#0b2421;
   padding:clamp(29px,5vw,76px);border-radius:8px;
   position:relative;overflow:hidden;
@@ -595,4 +597,18 @@ section[id]{scroll-margin-top:88px}
 }
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+
+/* Quiet first-impression motion: typography enters once, then gets out of the way. */
+@keyframes enter-softly{
+  from{opacity:0;transform:translateY(15px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.hero-copy .eyebrow{animation:enter-softly .7s .08s both}
+.hero h1{animation:enter-softly .85s .16s both}
+.hero-description{animation:enter-softly .85s .28s both}
+.hero-actions{animation:enter-softly .85s .4s both}
+.hero-visual{animation:enter-softly 1s .35s both}
+@media(prefers-reduced-motion:reduce){
+  .hero-copy .eyebrow,.hero h1,.hero-description,.hero-actions,.hero-visual{animation:none}
 }
