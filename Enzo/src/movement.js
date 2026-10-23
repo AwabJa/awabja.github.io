@@ -76,7 +76,20 @@ export function setupMovement(camera) {
       if(jump<=0){jump=0;vertical=0;grounded=true;}
     }
     camera.position.y=height+jump;
-    return {moving:velocity.lengthSq()>.35,sprinting:sprint,grounded};
+    // Feed viewmodel secondary motion with actual movement state. The hand
+    // uses these values for acceleration, strafing, landing and breathing;
+    // the camera itself remains authoritative for collision/hit registration.
+    return {
+      moving:velocity.lengthSq()>.35,
+      sprinting:sprint,
+      grounded,
+      crouching:crouch,
+      speed:velocity.length(),
+      strafe:velocity.dot(right)/Math.max(speed,.01),
+      forward:velocity.dot(forward)/Math.max(speed,.01),
+      jumpHeight:jump,
+      verticalSpeed:vertical
+    };
   }
   function reset(){
     keys.clear();velocity.set(0,0,0);
