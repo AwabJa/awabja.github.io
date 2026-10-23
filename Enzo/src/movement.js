@@ -1,112 +1,87 @@
 import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
 
-const baseMovementSpeed = 3.8;
-const crouchSpeed = 0.95;
-const sprintSpeed = 6.0;
-const acceleration = 15.0;
-const deceleration = 7.0;
-const jumpSpeed = 4;
-const gravity = 4.0;
-const maxFallSpeed = -15.0;
-
-let currentSpeed = 0;
-let isJumping = false;
-let isCrouching = false;
-let isSprinting = false;
-let verticalVelocity = 0;
-const moveDirection = new THREE.Vector3();
-const targetDirection = new THREE.Vector3();
-
-const keyStates = {};
-
-let targetHeight = 1.7;
-let currentHeight = 1.7;
-
+// Arcane FPS movement: horizontal aim-relative locomotion, predictable jumping,
+// acceleration/deceleration and clean input state across restarts/pause.
 export function setupMovement(camera) {
-    document.addEventListener('keydown', handleKeyDown, { passive: false });
-    document.addEventListener('keyup', handleKeyUp, { passive: false });
+  const keys=new Set();
+  const velocity=new THREE.Vector3();
+  const wish=new THREE.Vector3();
+  const forward=new THREE.Vector3();
+  const right=new THREE.Vector3();
+  const worldUp=new THREE.Vector3(0,1,0);
+  let currentHeight=1.7;
+  let verticalSpeed=0;
+  let onGround=true;
+  let moving=false;
+  const maxDelta=.05;
 
-    function handleKeyDown(event) {
-        keyStates[event.code] = true;
+  const controlled=new Set([
+    'KeyW','KeyA','KeyS','KeyD','Space','ShiftLeft','ShiftRight','KeyC'
+  ]);
+  const handleDown=event=>{
+    if(!controlled.has(event.code))return;
+    if(event.code==='Space')event.preventDefault();
+    keys.add(event.code);
+  };
+  const handleUp=event=>keys.delete(event.code);
+  document.addEventListener('keydown',handleDown,{passive:false});
+  document.addEventListener('keyup',handleUp);
+  window.addEventListener('blur',()=>keys.clear());
 
-        // Prevent default behavior for keys (e.g., space to prevent scroll)
-        if (event.code === 'Space') event.preventDefault();
+  function updateMovement(dt) {
+    const delta=Math.min(maxDelta,Math.max(0,dt));
+    const crouch=keys.has('KeyC');
+    const sprint=!crouch&&(keys.has('ShiftLeft')||keys.has('ShiftRight'));
+    const speed=crouch?2.15:sprint?8.2:5.25;
+    const desiredHeight=crouch?1.05:1.7;
+    currentHeight+= (desiredHeight-currentHeight)*Math.min(1,delta*13);
+
+    camera.getWorldDirection(forward);
+    forward.y=0;
+    if(forward.lengthSq()<.001)forward.set(0,0,-1);
+    else forward.normalize();
+    right.crossVectors(forward,worldUp).normalize();
+    wish.set(0,0,0);
+    if(keys.has('KeyW'))wish.add(forward);
+    if(keys.has('KeyS'))wish.sub(forward);
+    if(keys.has('KeyD'))wish.add(right);
+    if(keys.has('KeyA'))wish.sub(right);
+    if(wish.lengthSq()>0)wish.normalize().multiplyScalar(speed);
+
+    const easing=1-Math.exp(-(wish.lengthSq()>0?13:10)*delta);
+    velocity.lerp(wish,easing);
+    if(velocity.lengthSq()<.00001)velocity.set(0,0,0);
+    moving=velocity.lengthSq()>.08;
+    camera.position.x=THREE.MathUtils.clamp(camera.position.x+velocity.x*delta,-86,86);
+    camera.position.z=THREE.MathUtils.clamp(camera.position.z+velocity.z*delta,-86,86);
+
+    if(onGround && keys.has('Space') && !crouch) {
+      verticalSpeed=7.0;
+      onGround=false;
+      keys.delete('Space');
     }
-
-    function handleKeyUp(event) {
-        keyStates[event.code] = false;
+    if(!onGround) {
+      verticalSpeed-=16.5*delta;
+      camera.position.y+=verticalSpeed*delta;
+      if(camera.position.y<=currentHeight) {
+        camera.position.y=currentHeight;
+        verticalSpeed=0;
+        onGround=true;
+      }
+    }else{
+      camera.position.y=THREE.MathUtils.lerp(camera.position.y,currentHeight,Math.min(1,delta*18));
     }
-
-    function updateMovement(delta) {
-        let movementSpeed = baseMovementSpeed;
-
-        // Reset target direction each frame to avoid accumulation
-        targetDirection.set(0, 0, 0);
-
-        // Handle crouch (C key)
-        if (keyStates['KeyC']) {
-            targetHeight = 1.0;
-            movementSpeed = crouchSpeed;
-            isCrouching = true;
-        } else {
-            targetHeight = 1.7;
-            isCrouching = false;
-        }
-
-        // Handle sprint (Shift key)
-        isSprinting = (keyStates['ShiftLeft'] || keyStates['ShiftRight']);
-        if (!isCrouching) {  // Sprinting should not work while crouching
-            movementSpeed = isSprinting ? sprintSpeed : movementSpeed;
-        }
-
-        // Smooth height transitions (crouch/stand)
-        currentHeight += (targetHeight - currentHeight) * delta * 10;
-        camera.position.y = currentHeight;
-
-        // Handle movement directions (WASD keys)
-        if (keyStates['KeyW']) targetDirection.z -= 1;
-        if (keyStates['KeyS']) targetDirection.z += 1;
-        if (keyStates['KeyA']) targetDirection.x -= 1;
-        if (keyStates['KeyD']) targetDirection.x += 1;
-
-        // Normalize direction if movement is detected
-        if (targetDirection.lengthSq() > 0) {
-            targetDirection.normalize();
-
-            // Accelerate towards max allowed speed
-            currentSpeed = Math.min(currentSpeed + acceleration * delta, movementSpeed);
-        } else {
-            // Decelerate if no input is detected
-            currentSpeed = Math.max(currentSpeed - deceleration * delta, 0);
-        }
-
-        // Apply movement
-        if (currentSpeed > 0) {
-            moveDirection.copy(targetDirection).multiplyScalar(currentSpeed * delta);
-            moveDirection.applyQuaternion(camera.quaternion);
-            camera.position.add(moveDirection);
-        }
-
-        // Handle jumping (Space key)
-        if (!isJumping && keyStates['Space'] && !isCrouching) {  // Can't jump while crouching
-            isJumping = true;
-            verticalVelocity = jumpSpeed;
-        }
-
-        // Apply gravity and jumping logic
-        if (isJumping) {
-            verticalVelocity -= gravity * delta;
-            verticalVelocity = Math.max(verticalVelocity, maxFallSpeed);
-            camera.position.y += verticalVelocity * delta;
-
-            // Landing detection
-            if (camera.position.y <= currentHeight + 0.01) {
-                camera.position.y = currentHeight;
-                isJumping = false;
-                verticalVelocity = 0;
-            }
-        }
+    const targetFov=sprint&&moving?79:74;
+    const newFov=THREE.MathUtils.lerp(camera.fov,targetFov,Math.min(1,delta*8));
+    if(Math.abs(camera.fov-newFov)>.002) {
+      camera.fov=newFov;
+      camera.updateProjectionMatrix();
     }
-
-    return { updateMovement };
+  }
+  function reset() {
+    keys.clear();velocity.set(0,0,0);wish.set(0,0,0);
+    verticalSpeed=0;currentHeight=1.7;onGround=true;moving=false;
+    camera.fov=74;camera.updateProjectionMatrix();
+  }
+  return {updateMovement,reset,isMoving:()=>moving};
 }
