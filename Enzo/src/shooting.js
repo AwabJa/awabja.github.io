@@ -58,7 +58,8 @@ function impact(scene,point,camera) {
   const group=new THREE.Group();
   group.position.copy(point);
   const ring=new THREE.Mesh(burstGeo,burstMat);
-  ring.lookAt(camera.position);
+  ring.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),
+    camera.position.clone().sub(point).normalize());
   group.add(ring);
   for(let i=0;i<8;i++) {
     const spark=new THREE.Mesh(sparkGeo,sparkMat);
@@ -71,11 +72,11 @@ function impact(scene,point,camera) {
   scene.add(group);blasts.push({group,ring,age:0,life:.28});
 }
 
-export function setupShootingEvents(camera,scene,hand) {
+export function setupShootingEvents(camera,scene,hand,environment=[],surface=null) {
   if(installed) return {update,reset};
   installed=true;
   function handle(event) {
-    if(event.button!==0 || document.pointerLockElement===null) return;
+    if(event.button!==0 || !surface || document.pointerLockElement!==surface) return;
     const now=performance.now();
     if(now-lastShot<135)return;  // maximum ~7 casts/second
     lastShot=now;
@@ -83,20 +84,20 @@ export function setupShootingEvents(camera,scene,hand) {
     camera.getWorldDirection(forward);
     forward.normalize();
     const start=hand.muzzlePosition();
-    const roots=getEnemyHitboxes();
+    const roots=new Set(getEnemyHitboxes());
     raycaster.set(camera.position,forward);
     raycaster.near=0;
     raycaster.far=125;
-    const hits=raycaster.intersectObjects(roots,true);
+    const hits=raycaster.intersectObjects([...roots,...environment],true);
     let end=camera.position.clone().addScaledVector(forward,90);
     if(hits.length){
       const hit=hits[0];
       end=hit.point.clone();
-      let root=hit.object;
-      while(root && !roots.includes(root))root=root.parent;
-      if(root){
-        const damage=hit.object.userData.weakPoint?70:35;
-        if(damageEnemy(scene,root,damage))window.dispatchEvent(new Event('enzo:enemy-hit'));
+      let hitObject=hit.object;
+      while (hitObject && !roots.has(hitObject)) hitObject=hitObject.parent;
+      if(hitObject){
+        const damage=hit.object.userData.weakPoint?80:36;
+        if(damageEnemy(scene,hitObject,damage))window.dispatchEvent(new Event('enzo:enemy-hit'));
       }
     }
     hand.cast();
