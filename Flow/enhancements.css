@@ -1,1 +1,20 @@
 /* Reference-inspired controls, denser panels and working board. */.sidebar{background:#1e1e23}.main{background:#19191d}.nav button.active{box-shadow:0 7px 20px #6259ee33}.topbar{border-bottom:1px solid #ffffff0a;padding-bottom:24px}.project-card{box-shadow:none}.kanban{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;min-height:330px}.kanban-lane{background:#222228;border:1px solid #36343e;border-radius:15px;padding:15px;display:flex;flex-direction:column;align-items:stretch;gap:12px}.kanban-lane h3{font-size:13px;color:#bbb8c9;font-weight:500;margin:0 0 8px}.kanban-lane .task{min-height:70px}.import-label{display:block;text-align:center;font-size:12px;cursor:pointer}.sidebar .new-project{font-size:12px}.task:focus-visible{outline:2px solid #fff;outline-offset:2px}@media(max-width:600px){.kanban{grid-template-columns:1fr}.topbar{gap:8px}.top-actions .primary{white-space:nowrap}}
+/* Layer two: interaction feedback and task detail */
+[hidden]{display:none!important}
+.day-body.drag-target{background:#252b36;outline:2px dashed #8176ff;outline-offset:-3px}
+.task[draggable="true"]{cursor:grab}
+.task[draggable="true"]:active{cursor:grabbing}
+.task-progress{font-size:10px;opacity:.75;border-top:1px solid #24233033;padding-top:7px}
+.activity-list{display:grid;gap:10px;min-height:260px;align-content:start}
+.activity-row{display:flex;gap:14px;align-items:center;background:#25252d;border:1px solid #383640;padding:15px 18px;border-radius:12px;font-size:13px}
+.activity-row small{margin-left:auto;color:#9693a6;font-size:11px}
+.activity-icon{color:#9b90ff}
+.checklist-panel{border:1px solid #3d3a49;background:#1e1d25;border-radius:12px;padding:15px}
+.checklist-head{display:flex;justify-content:space-between;color:#e4e0f3;font-size:13px;margin-bottom:12px}
+.checklist-head span{color:#a9a4bc}
+#checklistItems{display:grid;gap:10px}
+.dialog-form .checklist-item{display:flex;flex-direction:row;align-items:center;gap:10px;font-size:13px}
+.checklist-item input{accent-color:#756af7}
+.attachment-preview a{color:#aaa2ff;font-size:12px;text-decoration:none}
+.attachment-preview a:hover{text-decoration:underline}
+@media(max-width:600px){.activity-row{flex-wrap:wrap}.activity-row small{width:100%;margin-left:32px}}
