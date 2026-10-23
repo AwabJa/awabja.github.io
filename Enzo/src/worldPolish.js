@@ -5,6 +5,36 @@ import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
 export function createWorldPolish(scene,world,renderer){
   const compact=window.matchMedia('(max-width:850px), (pointer:coarse)').matches;
   const reduced=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  // A tiny painted studio-environment map gives the existing metallic gauntlet
+  // and sentinels actual reflections. Without one, high-metalness PBR surfaces
+  // render unnaturally dark and flat, even with bright arena lighting.
+  const environmentCanvas=document.createElement('canvas');
+  environmentCanvas.width=compact?256:512;
+  environmentCanvas.height=compact?128:256;
+  const ec=environmentCanvas.getContext('2d');
+  const gradientSky=ec.createLinearGradient(0,0,0,environmentCanvas.height);
+  gradientSky.addColorStop(0,'#0b142b');
+  gradientSky.addColorStop(.35,'#3c4867');
+  gradientSky.addColorStop(.50,'#86a1b8');
+  gradientSky.addColorStop(.57,'#51394a');
+  gradientSky.addColorStop(1,'#0a0c1c');
+  ec.fillStyle=gradientSky;
+  ec.fillRect(0,0,environmentCanvas.width,environmentCanvas.height);
+  for(const [x,y,radius,power] of [
+    [.19,.31,.18,.55],[.70,.39,.21,.49],[.94,.52,.11,.22]
+  ]){
+    const w=environmentCanvas.width,h=environmentCanvas.height;
+    const light=ec.createRadialGradient(x*w,y*h,0,x*w,y*h,radius*w);
+    light.addColorStop(0,'rgba(205,239,255,'+power+')');
+    light.addColorStop(.40,'rgba(113,186,232,'+(power*.48)+')');
+    light.addColorStop(1,'rgba(76,110,187,0)');
+    ec.fillStyle=light;
+    ec.fillRect(0,0,w,h);
+  }
+  const environment=new THREE.CanvasTexture(environmentCanvas);
+  environment.mapping=THREE.EquirectangularReflectionMapping;
+  environment.encoding=THREE.sRGBEncoding;
+  scene.environment=environment;
   const size=compact?256:512;
   const cvs=document.createElement('canvas');
   const cvsNormal=document.createElement('canvas');
