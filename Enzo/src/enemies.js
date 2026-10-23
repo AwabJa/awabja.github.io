@@ -1,281 +1,233 @@
-// enemies.js
-
 import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
 
+/*
+ * Shattered Reach sentinels:
+ * - Scout: light cyan fins, fast approach
+ * - Sentinel: armored crimson core, steady pressure
+ * - Brute: broad dark-metal body, slow and tough
+ * - Support drone: violet ring, flanks and circles
+ * The root is the registered raycast body; the luminous exposed eye
+ * is tagged as a weak point for the spell projectile system.
+ */
 export const enemies = [];
 export const shootableObjects = [];
 
-// Define the ground level (adjust this value based on your scene)
-const GROUND_LEVEL = 0.8;
+const ROLES = [
+  {name:'scout',scale:.74,health:75,speed:5.2,glow:0x4bdfff,armor:0x303c50,range:6,damage:8},
+  {name:'sentinel',scale:1,health:150,speed:3.3,glow:0xff4767,armor:0x242837,range:4,damage:12},
+  {name:'brute',scale:1.45,health:295,speed:1.7,glow:0xff8c47,armor:0x34333e,range:4.7,damage:19},
+  {name:'support',scale:.87,health:110,speed:3.6,glow:0xbb68ff,armor:0x343148,range:11,damage:10}
+];
+const roamLimit=79;
+const tmpForward=new THREE.Vector3();
 
-/* Every drone has armor, an eye and a light. Dispose descendant meshes too:
- * disposing only the root leaked GPU buffers/materials across survival waves. */
 function disposeEnemy(scene, enemyData) {
-    const enemy = enemyData.object;
-    scene.remove(enemy);
-    enemy.traverse(child => {
-        if (child.geometry) child.geometry.dispose();
-        if (child.material) {
-            const materials = Array.isArray(child.material) ? child.material : [child.material];
-            for (const material of materials) material.dispose();
-        }
-    });
-    const i = shootableObjects.indexOf(enemy);
-    if (i !== -1) shootableObjects.splice(i, 1);
-}
-
-// Function to create an enemy and add it to the scene
-export function createEnemy(scene, position) {
-    // Layered armored drone with metallic panels and emissive optical core.
-    // The root mesh stays the hitbox, so gameplay/raycasting is unchanged.
-    const geometry = new THREE.DodecahedronGeometry(0.82, 1);
-    const material = new THREE.MeshStandardMaterial({color:0x505961,metalness:.82,roughness:.36,flatShading:true});
-    const enemy = new THREE.Mesh(geometry, material);
-    const plating = new THREE.Mesh(new THREE.IcosahedronGeometry(0.68, 1),
-        new THREE.MeshStandardMaterial({color:0x242e37,metalness:.9,roughness:.24,flatShading:true}));
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.25,16,12),
-        new THREE.MeshStandardMaterial({color:0xff3b31,emissive:0xff1809,emissiveIntensity:2.4,metalness:.2,roughness:.2}));
-    eye.position.set(0,0,0.69);
-    const eyeHalo = new THREE.PointLight(0xff3420,.35,3);
-    eyeHalo.position.copy(eye.position);
-    enemy.add(plating,eye,eyeHalo);
-
-    // Ensure enemy is above the ground
-    position.y = GROUND_LEVEL;  // Place the enemy at the ground level or above
-    enemy.position.copy(position);
-    enemy.castShadow = true;
-    scene.add(enemy);
-
-    shootableObjects.push(enemy);
-
-    enemies.push({
-        object: enemy,
-        health: 150,
-        isChasing: false,
-        isPatrolling: true, // Enemy will patrol by default
-        patrolDirection: getRandomDirection(), // Random patrol direction
-        patrolSpeed: 1.2,  // Patrol speed
-        patrolTime: 0,  // Timer for changing patrol direction
-        patrolInterval: THREE.MathUtils.randFloat(1, 3), // More frequent patrol direction changes
-        separationDistance: 4,  // Reduced minimum distance for tighter formations
-        playerAvoidanceDistance: 3,  // Minimum distance to maintain from player
-        originalColor: new THREE.Color(0x505961),
-        isHighlighted: false,
-        highlightTime: 0, // Timer for how long the enemy stays highlighted
-        stuckTime: 0,  // Timer to detect if enemy is stuck
-        strafeDirection: Math.random() > 0.5 ? 1 : -1, // Random initial strafe direction (1 for right, -1 for left)
-        isMarkedForRemoval: false, // Flag to prevent double removal
-        velocityY: 0 // Velocity in the Y direction for simulating gravity
-    });
-}
-
-// Function to generate a random patrol direction
-function getRandomDirection() {
-    return new THREE.Vector3(Math.random() - 0.5, 0, Math.random() - 0.5).normalize();
-}
-
-// Function to spawn a group of enemies at a given position
-export function spawnEnemyGroup(scene, groupCenter, groupSize = 1) {
-    for (let i = 0; i < groupSize; i++) {
-        const offsetX = THREE.MathUtils.randFloat(-5, 5);
-        const offsetZ = THREE.MathUtils.randFloat(-5, 5);
-        const position = new THREE.Vector3(groupCenter.x + offsetX, GROUND_LEVEL, groupCenter.z + offsetZ);
-        createEnemy(scene, position);
+  const enemy=enemyData.object;
+  scene.remove(enemy);
+  enemy.traverse(child => {
+    if(child.geometry)child.geometry.dispose();
+    if(child.material){
+      const materials=Array.isArray(child.material)?child.material:[child.material];
+      for(const mat of materials)mat.dispose();
     }
+  });
+  const index=shootableObjects.indexOf(enemy);
+  if(index>=0)shootableObjects.splice(index,1);
 }
 
-// Function to spawn multiple groups of enemies at different positions
-export function spawnMultipleEnemyGroups(scene, playerSpawnPosition, safeDistance = 30) {
-    const groupCenters = [];
-    while (groupCenters.length < 2) {
-        const randomPosition = new THREE.Vector3(
-            THREE.MathUtils.randFloatSpread(100),
-            GROUND_LEVEL,
-            THREE.MathUtils.randFloatSpread(100)
-        );
-        if (randomPosition.distanceTo(playerSpawnPosition) > safeDistance) {
-            groupCenters.push(randomPosition);
-        }
+function createArmourPiece(root,geometry,material,x,y,z,rotation=null) {
+  const piece=new THREE.Mesh(geometry,material);
+  piece.position.set(x,y,z);
+  if(rotation)piece.rotation.set(...rotation);
+  root.add(piece);
+  return piece;
+}
+
+let nextId=0;
+export function createEnemy(scene, position, roleName) {
+  const role=ROLES.find(x=>x.name===roleName)||ROLES[nextId%ROLES.length];
+  nextId++;
+  const armor=new THREE.MeshStandardMaterial({
+    color:role.armor,metalness:.79,roughness:.38,flatShading:true,
+    emissive:0x10131e,emissiveIntensity:.25
+  });
+  const steel=new THREE.MeshStandardMaterial({
+    color:0x68738b,metalness:.87,roughness:.29,flatShading:true
+  });
+  const obsidian=new THREE.MeshStandardMaterial({
+    color:0x121927,metalness:.67,roughness:.45,flatShading:true
+  });
+  const glow=new THREE.MeshStandardMaterial({
+    color:role.glow,emissive:role.glow,emissiveIntensity:2.8,
+    metalness:.20,roughness:.14
+  });
+  const aura=new THREE.MeshBasicMaterial({
+    color:role.glow,transparent:true,opacity:.63,
+    side:THREE.DoubleSide,depthWrite:false
+  });
+  const shell=new THREE.Mesh(new THREE.IcosahedronGeometry(.78,1),armor);
+  shell.name=role.name+' sentinel';
+  shell.userData.role=role.name;
+  shell.scale.setScalar(role.scale);
+  const underShell=createArmourPiece(shell,new THREE.OctahedronGeometry(.71,1),obsidian,0,0,0);
+  underShell.rotation.y=Math.PI/4;
+  underShell.scale.set(.95,.95,.8);
+
+  // Distinctive fractured armor and a bright front-facing weak point.
+  for(let i=0;i<4;i++){
+    const a=i*Math.PI/2+.25;
+    const x=Math.cos(a),y=Math.sin(a);
+    const fin=createArmourPiece(shell,new THREE.ConeGeometry(.24,1.03,4),steel,
+      x*1.01,y*1.01,-.16);
+    fin.rotation.z=-a+Math.PI/2;
+    fin.rotation.x=.15;
+    const shard=createArmourPiece(shell,new THREE.OctahedronGeometry(.21,0),armor,x*.63,y*.63,.34);
+    shard.scale.set(.65,1.5,.75);
+  }
+  if(role.name==='brute') {
+    for(const dir of [-1,1]) {
+      const shoulder=createArmourPiece(shell,new THREE.DodecahedronGeometry(.46,0),armor,dir*.95,-.15,0);
+      shoulder.scale.set(1.3,.75,1.1);
     }
-    groupCenters.forEach(groupCenter => {
-        spawnEnemyGroup(scene, groupCenter, 1);
-    });
-}
-
-// Function to update enemies (chasing player, patrolling, respawning, etc.)
-export function updateEnemies(scene, delta, playerPosition) {
-    // Iterate in reverse order to safely remove enemies during iteration
-    for (let i = enemies.length - 1; i >= 0; i--) {
-        const enemyData = enemies[i];
-
-        if (enemyData.isMarkedForRemoval) {
-            // Remove the enemy from arrays and scene
-            enemies.splice(i, 1);
-            disposeEnemy(scene, enemyData);
-            continue;
-        }
-
-        const enemy = enemyData.object;
-        const distanceToPlayer = enemy.position.distanceTo(playerPosition);
-
-        // If player is close, the enemy starts chasing
-        if (distanceToPlayer < 25 && distanceToPlayer > enemyData.playerAvoidanceDistance) {
-            enemyData.isChasing = true;
-            enemyData.isPatrolling = false;
-        } else {
-            enemyData.isChasing = false;
-            enemyData.isPatrolling = true;
-        }
-
-        // Patrolling behavior
-        if (enemyData.isPatrolling) {
-            enemy.position.add(enemyData.patrolDirection.clone().multiplyScalar(enemyData.patrolSpeed * delta));
-
-            enemyData.patrolTime += delta;
-            if (enemyData.patrolTime > enemyData.patrolInterval) {
-                enemyData.patrolDirection = getRandomDirection();
-                enemyData.patrolTime = 0;
-                enemyData.patrolInterval = THREE.MathUtils.randFloat(1, 3);
-            }
-
-            if (isAtBoundary(enemy)) {
-                enemyData.patrolDirection = getRandomDirection();
-            }
-        }
-
-        // Chasing behavior
-        if (enemyData.isChasing) {
-            const direction = new THREE.Vector3().subVectors(playerPosition, enemy.position).normalize();
-
-            if (distanceToPlayer > enemyData.playerAvoidanceDistance) {
-                direction.x += THREE.MathUtils.randFloat(-0.1, 0.1);
-                direction.z += THREE.MathUtils.randFloat(-0.1, 0.1);
-                enemy.position.add(direction.multiplyScalar(3.5 * delta));
-            }
-
-            // Handling enemy getting stuck
-            if (direction.length() < 0.01) {
-                enemyData.stuckTime += delta;
-            } else {
-                enemyData.stuckTime = 0;
-            }
-
-            if (enemyData.stuckTime > 2) {
-                enemyData.patrolDirection = getRandomDirection();
-                enemyData.isChasing = false;
-                enemyData.isPatrolling = true;
-                enemyData.stuckTime = 0;
-            }
-        }
-
-        // Apply gravity and ensure enemies stay above the ground
-        enemyData.velocityY -= 9.8 * delta; // Gravity effect
-        enemy.position.y += enemyData.velocityY * delta;
-        if (enemy.position.y < GROUND_LEVEL) {
-            enemy.position.y = GROUND_LEVEL;
-            enemyData.velocityY = 0; // Reset velocity when hitting the ground
-        }
-
-        // Reset the enemy's color if highlighted for damage
-        if (enemyData.isHighlighted) {
-            enemyData.highlightTime -= delta;
-            if (enemyData.highlightTime <= 0) {
-                enemy.material.color.copy(enemyData.originalColor);
-                enemyData.isHighlighted = false;
-            }
-        }
-
-        // Remove the enemy if health is 0 or less
-        if (enemyData.health <= 0) {
-            removeEnemy(scene, enemyData);
-        }
+  }
+  if(role.name==='support') {
+    const arc=createArmourPiece(shell,new THREE.TorusGeometry(1.14,.045,6,40),aura,0,0,-.2);
+    arc.name='Control ring';
+    shell.userData.arc=arc;
+  }
+  if(role.name==='scout'){
+    for(const dir of [-1,1]){
+      const wing=createArmourPiece(shell,new THREE.ConeGeometry(.24,1.2,3),steel,dir*.93,.18,-.30);
+      wing.rotation.z=dir*.49;
     }
+  }
+  const optic=createArmourPiece(shell,new THREE.SphereGeometry(.28,18,12),glow,0,.035,.815);
+  optic.name='Exposed energy weakpoint';
+  optic.userData.weakPoint=true;
+  const reticle=createArmourPiece(shell,new THREE.TorusGeometry(.36,.035,6,30),aura,0,.035,.83);
+  reticle.name='Targeting ring';
+  const iris=createArmourPiece(shell,new THREE.SphereGeometry(.11,12,8),obsidian,0,.035,1.07);
+  iris.name='Pupil';
+  iris.userData.weakPoint=true; // Center of the glowing target is a critical hit.
+  if(role.name==='brute')reticle.scale.setScalar(1.16);
+
+  // Lighting stays on the emissive eye material. Avoid one PointLight per enemy.
+  const spawn=position.clone();
+  spawn.y=2.25+role.scale*.35;
+  shell.position.copy(spawn);
+  shell.castShadow=true;
+  scene.add(shell);
+  shootableObjects.push(shell);
+  enemies.push({
+    object:shell,role,optic,reticle,eyeMaterial:glow,
+    baseColor:new THREE.Color(role.armor),health:role.health,
+    phase:nextId*.91,patrolAngle:Math.random()*Math.PI*2,
+    patrolTime:1+Math.random()*3,
+    strafe:nextId%2?1:-1,
+    speed:role.speed, isMarkedForRemoval:false,
+    isHighlighted:false,highlightTime:0
+  });
+  return shell;
 }
-
-// Helper function to check if the enemy is at a boundary
-function isAtBoundary(enemy) {
-    const boundaryLimit = getDynamicBoundaryLimit();
-    return Math.abs(enemy.position.x) > boundaryLimit || Math.abs(enemy.position.z) > boundaryLimit;
+export function spawnEnemyGroup(scene,groupCenter,groupSize=1) {
+  for(let i=0;i<groupSize;i++) {
+    const pos=groupCenter.clone().add(new THREE.Vector3(
+      THREE.MathUtils.randFloat(-4,4),0,THREE.MathUtils.randFloat(-4,4)));
+    createEnemy(scene,pos);
+  }
 }
-
-// Get dynamic boundary limit based on canvas size
-function getDynamicBoundaryLimit() {
-    const canvas = document.querySelector('canvas');
-    if (!canvas) return 20;
-    const aspectRatio = canvas.width / canvas.height;
-    const boundaryLimit = 20 * aspectRatio;
-    return Math.min(boundaryLimit, 50); // Set a fixed maximum boundary limit to avoid unintended behavior on extreme aspect ratios
+export function spawnMultipleEnemyGroups(scene,playerSpawnPosition,safeDistance=30) {
+  for(let i=0;i<2;i++){
+    const a=Math.random()*Math.PI*2,dist=Math.max(safeDistance,32)+i*11;
+    const pos=new THREE.Vector3(Math.cos(a)*dist,0,Math.sin(a)*dist);
+    spawnEnemyGroup(scene,pos);
+  }
 }
-
-// Function to apply damage to the enemy
-export function damageEnemy(scene, enemy, amount) {
-    const enemyData = enemies.find(e => e.object === enemy);
-
-    if (enemyData && !enemyData.isMarkedForRemoval) {
-        // Apply damage and update health
-        enemyData.health = Math.max(0, enemyData.health - amount);
-        enemyData.isHighlighted = true;  // Highlight enemy when damaged
-        enemyData.highlightTime = 0.1;   // Highlight duration in seconds (e.g., 0.1 seconds)
-        enemyData.object.material.color.set(0xffff00);  // Change color to indicate hit
-
-        console.log(`Enemy damaged. Health: ${enemyData.health}`);
-
-        // If health is zero or below, mark for removal
-        if (enemyData.health <= 0) {
-            window.dispatchEvent(new Event('enzo:elimination'));
-            console.log(`Enemy killed, removing...`);
-
-            // Remove the enemy from shootableObjects array immediately
-            const objIndex = shootableObjects.indexOf(enemyData.object);
-            if (objIndex > -1) {
-                shootableObjects.splice(objIndex, 1);
-            }
-
-            // Mark the enemy for removal
-            removeEnemy(scene, enemyData);
-        }
-
-        return true;  // Return true if enemy was found and damaged
-    } else {
-        console.log("Enemy not found or already marked for removal.");
-        return false;  // Return false if enemy was not found or already marked for removal
+export function updateEnemies(scene,delta,playerPosition) {
+  const dt=Math.min(.05,Math.max(0,delta));
+  for(let i=enemies.length-1;i>=0;i--){
+    const data=enemies[i];
+    if(data.isMarkedForRemoval) {
+      enemies.splice(i,1);
+      disposeEnemy(scene,data);
+      continue;
     }
+    const enemy=data.object, role=data.role;
+    tmpForward.copy(playerPosition).sub(enemy.position);
+    tmpForward.y=0;
+    const distance=tmpForward.length();
+    const dir=distance>.001?tmpForward.divideScalar(distance):tmpForward.set(0,0,1);
+    const dx=dir.x,dz=dir.z;
+    let vx=0,vz=0;
+
+    if(distance<43) {
+      // A hovering tactical chase: ranged roles keep distance and strafe.
+      const approach=distance>role.range+1?1:distance<role.range-1?-.48:0;
+      vx=dx*role.speed*approach + (-dz)*role.speed*.29*data.strafe;
+      vz=dz*role.speed*approach + dx*role.speed*.29*data.strafe;
+      if(role.name==='brute'){vx=dx*role.speed;vz=dz*role.speed;}
+    }else{
+      data.patrolTime-=dt;
+      if(data.patrolTime<=0){
+        data.patrolAngle=Math.random()*Math.PI*2;
+        data.patrolTime=1.8+Math.random()*2.3;
+      }
+      vx=Math.cos(data.patrolAngle)*role.speed*.45;
+      vz=Math.sin(data.patrolAngle)*role.speed*.45;
+    }
+    enemy.position.x=THREE.MathUtils.clamp(enemy.position.x+vx*dt,-roamLimit,roamLimit);
+    enemy.position.z=THREE.MathUtils.clamp(enemy.position.z+vz*dt,-roamLimit,roamLimit);
+    data.phase+=dt*(1+role.speed*.12);
+    enemy.position.y=2.25+role.scale*.35+Math.sin(data.phase*1.9)*.19;
+    if(distance<85){
+      const targetAngle=Math.atan2(dx,dz);
+      const turn=Math.atan2(Math.sin(targetAngle-enemy.rotation.y),Math.cos(targetAngle-enemy.rotation.y));
+      enemy.rotation.y+=turn*Math.min(1,dt*3.5);
+    }
+    data.reticle.rotation.z+=dt*(role.name==='support'?2.3:.55);
+    data.eyeMaterial.emissiveIntensity=2.55+Math.sin(data.phase*2.7)*.6;
+    if(enemy.userData.arc)enemy.userData.arc.rotation.z+=dt*.8;
+    if(data.isHighlighted){
+      data.highlightTime-=dt;
+      if(data.highlightTime<=0){
+        enemy.material.color.copy(data.baseColor);
+        data.isHighlighted=false;
+      }
+    }
+  }
 }
-
-// Remove the enemy from the scene and handle respawn
-export function removeEnemy(scene, enemyData) {
-    if (enemyData.isMarkedForRemoval) return;  // If already marked, avoid double removal
-    enemyData.isMarkedForRemoval = true;  // Mark the enemy as ready for removal
-
-    console.log(`Removing enemy`);
-
-    // Enemy will be removed from arrays and scene in updateEnemies
-
-    // Wave spawning is coordinated by main.js, not per-enemy timers.
+export function damageEnemy(scene,enemy,amount) {
+  const data=enemies.find(e=>e.object===enemy);
+  if(!data||data.isMarkedForRemoval)return false;
+  data.health=Math.max(0,data.health-amount);
+  data.isHighlighted=true;
+  data.highlightTime=.13;
+  enemy.material.color.set(0xa5ffff);
+  if(data.health===0){
+    window.dispatchEvent(new Event('enzo:elimination'));
+    removeEnemy(scene,data);
+  }
+  return true;
 }
-
-// Function to get an array of enemy hitboxes for raycasting
+export function removeEnemy(scene,data) {
+  if(!data||data.isMarkedForRemoval)return;
+  data.isMarkedForRemoval=true;
+  const index=shootableObjects.indexOf(data.object);
+  if(index>=0)shootableObjects.splice(index,1);
+}
 export function getEnemyHitboxes() {
-    // Return only active enemies that are not marked for removal
-    return enemies.filter(e => !e.isMarkedForRemoval).map(e => e.object);
+  return enemies.filter(e=>!e.isMarkedForRemoval).map(e=>e.object);
 }
-
-// Initialize enemies (added function)
-export function initializeEnemies(scene, count) {
-    for (let i = 0; i < count; i++) {
-        const position = new THREE.Vector3(
-            THREE.MathUtils.randFloatSpread(100),
-            GROUND_LEVEL,
-            THREE.MathUtils.randFloatSpread(100)
-        );
-        createEnemy(scene, position);
-    }
+export function initializeEnemies(scene,count) {
+  for(let i=0;i<count;i++){
+    const a=(i/count)*Math.PI*2+(Math.random()-.5)*.35;
+    const radius=26+(i%5)*6;
+    const position=new THREE.Vector3(Math.cos(a)*radius,0,Math.sin(a)*radius);
+    createEnemy(scene,position);
+  }
 }
-
-// Clear all enemies from the scene and enemies array (added function)
 export function clearEnemies(scene) {
-    enemies.forEach(enemyData => disposeEnemy(scene, enemyData));
-    enemies.length = 0;  // Clear the array
-    shootableObjects.length = 0; // Clear shootableObjects if necessary
-    console.log("All enemies have been cleared from the scene.");
+  for(const enemy of enemies)disposeEnemy(scene,enemy);
+  enemies.length=0;
+  shootableObjects.length=0;
 }

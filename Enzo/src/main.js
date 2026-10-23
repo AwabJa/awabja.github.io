@@ -2,18 +2,19 @@
 
 import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
 import { enemies, createEnemy, updateEnemies, initializeEnemies, clearEnemies } from './enemies.js';
-import { Sky } from './objects/Sky.js';
+import { createArcaneWorld } from './arcaneWorld.js';
+import { createCastingHand } from './castingHand.js';
 import { setupCamera } from './fpsCamera.js';
 import { setupMovement } from './movement.js';
 import { setupShootingEvents } from './shooting.js';
-
-const gunOffset = new THREE.Vector3(0.2, -0.1, -0.5);
 
 // Set up the scene, camera, and renderer
 const scene = new THREE.Scene();
 const camera = setupCamera();
 const movement = setupMovement(camera);
-setupShootingEvents(camera, scene, gunOffset); // Set up shooting events once
+scene.add(camera); // Camera-space casting hand must belong to the rendered scene.
+const hand = createCastingHand(camera);
+
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.outputEncoding = THREE.sRGBEncoding;
@@ -26,105 +27,9 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 document.body.appendChild(renderer.domElement);
 
-// Lighting setup
-const ambientLight = new THREE.AmbientLight(0x9ab6d0, 0.42);
-scene.add(ambientLight);
-
-const directionalLight = new THREE.DirectionalLight(0xffe2b4, 1.4);
-directionalLight.castShadow = true;
-directionalLight.shadow.mapSize.width = window.innerWidth < 900 ? 1024 : 2048;
-directionalLight.shadow.mapSize.height = window.innerWidth < 900 ? 1024 : 2048;
-directionalLight.shadow.camera.near = 0.5;
-directionalLight.shadow.camera.far = 100;
-directionalLight.shadow.bias = -0.0005;
-
-directionalLight.shadow.camera.left = -50;
-directionalLight.shadow.camera.right = 50;
-directionalLight.shadow.camera.top = 50;
-directionalLight.shadow.camera.bottom = -50;
-scene.add(directionalLight);
-
-// Cinematic ground: procedural, tileable albedo and roughness/normal maps.
-// Generated in the browser to avoid heavy external texture downloads.
-function createGroundMaps(size = 512) {
-    const canvas = document.createElement('canvas');
-    canvas.width = canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    const image = ctx.createImageData(size, size);
-    const heights = new Float32Array(size * size);
-    const fract = n => n - Math.floor(n);
-    const hash = (x, y) => fract(Math.sin(x * 127.1 + y * 311.7) * 43758.5453);
-    const noise = (x, y, scale) => {
-        const gx = x / scale, gy = y / scale, ix = Math.floor(gx), iy = Math.floor(gy);
-        const fx = gx - ix, fy = gy - iy;
-        const u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
-        const h = (dx, dy) => hash((ix + dx + 4096) % 4096, (iy + dy + 4096) % 4096);
-        return (h(0,0)*(1-u)+h(1,0)*u)*(1-v)+(h(0,1)*(1-u)+h(1,1)*u)*v;
-    };
-    for (let y=0;y<size;y++) for(let x=0;x<size;x++) {
-        const i=y*size+x;
-        const coarse=noise(x,y,90), medium=noise(x,y,22), fine=noise(x,y,5);
-        const grit=hash(x,y);
-        const cracks=Math.min(x%128,128-x%128,y%128,128-y%128)<1.7 ? .33 : 0;
-        const h=coarse*.48+medium*.32+fine*.14+grit*.06-cracks;
-        heights[i]=h;
-        const shade=Math.max(0,Math.min(255, Math.round(34+h*61)));
-        const o=i*4;
-        image.data[o]=shade+7;image.data[o+1]=shade+5;image.data[o+2]=shade+1;image.data[o+3]=255;
-    }
-    ctx.putImageData(image,0,0);
-    const color = new THREE.CanvasTexture(canvas);
-    color.encoding=THREE.sRGBEncoding;
-    const normalCanvas=document.createElement('canvas');normalCanvas.width=normalCanvas.height=size;
-    const nctx=normalCanvas.getContext('2d');const normal=nctx.createImageData(size,size);
-    for(let y=0;y<size;y++)for(let x=0;x<size;x++){
-        const i=y*size+x;
-        const left=heights[y*size+(x+size-1)%size],right=heights[y*size+(x+1)%size];
-        const up=heights[((y+size-1)%size)*size+x],down=heights[((y+1)%size)*size+x];
-        const nx=(left-right)*2.5,ny=(up-down)*2.5,nz=1;
-        const len=Math.hypot(nx,ny,nz);const o=i*4;
-        normal.data[o]=128+127*nx/len;normal.data[o+1]=128+127*ny/len;normal.data[o+2]=128+127*nz/len;normal.data[o+3]=255;
-    }
-    nctx.putImageData(normal,0,0);
-    const normalMap=new THREE.CanvasTexture(normalCanvas);
-    for(const texture of [color,normalMap]){
-        texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
-        texture.repeat.set(22,22);
-        texture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
-    }
-    return {color,normalMap};
-}
-const groundMaps=createGroundMaps();
-const floorMaterial=new THREE.MeshStandardMaterial({map:groundMaps.color,normalMap:groundMaps.normalMap,roughness:.97,metalness:.03});
-const floor=new THREE.Mesh(new THREE.PlaneGeometry(175,175,1,1),floorMaterial);
-floor.rotation.x=-Math.PI/2;floor.position.y=0;floor.receiveShadow=true;scene.add(floor);
-
-// Sky setup
-const sky = new Sky();
-sky.scale.setScalar(450);
-scene.add(sky);
-
-const skyUniforms = sky.material.uniforms;
-skyUniforms['turbidity'].value = 12;
-skyUniforms['rayleigh'].value = 0.09;
-skyUniforms['mieCoefficient'].value = 0.0009;
-skyUniforms['mieDirectionalG'].value = 0.7;
-
-const sun = new THREE.Vector3();
-function updateSunPosition(timeOfDay) {
-    const theta = Math.PI * timeOfDay;
-    const phi = 0.5 * Math.PI;
-
-    sun.x = Math.cos(phi);
-    sun.y = Math.sin(theta);
-    sun.z = Math.sin(phi) * Math.cos(theta);
-
-    skyUniforms['sunPosition'].value.copy(sun);
-    directionalLight.position.copy(sun);
-    directionalLight.intensity = Math.max(0, sun.y * 0.8);
-}
-
-updateSunPosition(0.25);
+// Phase 2: a custom arcane sky, volcanic runes, floating ruins and a portal.
+const world = createArcaneWorld(scene, renderer);
+const shooting = setupShootingEvents(camera, scene, hand, world.colliders, renderer.domElement);
 
 // Camera and mouse control
 let yaw = 0;
@@ -158,7 +63,6 @@ window.addEventListener('resize', () => {
 // Spawn enemies only after the player presses Start (not behind the splash screen).
 
 // Animation loop
-const dayDurationInSeconds = 900;
 let previousTime = performance.now();
 let isGamePaused = true;
 let shouldRequestPointerLock = false; // Flag to manage pointer lock requests
@@ -172,12 +76,12 @@ function animate() {
     previousTime = currentTime;
     if (!isGamePaused && !document.hidden) {
 
-        movement.updateMovement(delta);
+        const motion = movement.updateMovement(delta, world.colliders);
         updateEnemies(scene, delta, camera.position);
+        shooting.update(delta);
+        hand.update(delta, motion.moving, true);
+        world.update(delta);
         updateSurvival(delta);
-
-        const currentTimeOfDay = (Date.now() % (dayDurationInSeconds * 1000)) / (dayDurationInSeconds * 1000);
-        updateSunPosition(currentTimeOfDay);
     }
 
     if (!document.hidden) renderer.render(scene, camera);
@@ -371,8 +275,10 @@ const waveDisplay = document.getElementById('waveValue');
 function updateSurvival(delta) {
     if (!document.pointerLockElement || health <= 0) return;
     hitCooldown = Math.max(0, hitCooldown - delta);
-    if (hitCooldown === 0 && enemies.some(e => !e.isMarkedForRemoval && e.object.position.distanceTo(camera.position) < 3.3)) {
-        health = Math.max(0, health - 12);
+    const attacker = enemies.find(e => !e.isMarkedForRemoval &&
+        e.object.position.distanceTo(camera.position) < 2.7 + e.role.scale * .6);
+    if (hitCooldown === 0 && attacker) {
+        health = Math.max(0, health - attacker.role.damage);
         healthDisplay.textContent = String(health);
         hitCooldown = 1.2;
         window.dispatchEvent(new Event('enzo:player-hit'));
@@ -387,6 +293,7 @@ function updateSurvival(delta) {
     if (!nextWavePending && enemies.every(e => e.isMarkedForRemoval)) {
         nextWavePending = true;
         wave++;
+        world.setMood(wave);
         waveDisplay.textContent = String(wave);
         announce('WAVE ' + wave + ' INCOMING');
         nextWaveTimer = setTimeout(() => {
@@ -415,6 +322,7 @@ function resetGame() {
     }
     health = 100;
     wave = 1;
+    world.setMood(1);
     hitCooldown = 0;
     nextWavePending = false;
     healthDisplay.textContent = '100';
@@ -424,10 +332,14 @@ function resetGame() {
     document.getElementById('objectiveText').textContent = 'Eliminate 5 enemies';
     toast.textContent = '';
     document.getElementById('resumeButton').textContent = 'Resume Game';
-    // Clear existing enemies
+    // Clear effects, inputs and enemies so a new run always starts cleanly.
+    shooting.reset();
+    hand.reset();
+    movement.reset();
+    camera.position.set(0, 1.7, 0);
+    camera.rotation.set(0, 0, 0);
+    yaw = pitch = 0;
     clearEnemies(scene);
-
-    // Re-initialize enemies
     initializeEnemies(scene, 5);
 
     // Reset other game states if necessary
@@ -452,6 +364,9 @@ document.getElementById('resumeButton').addEventListener('click', () => {
 // Event listener to handle click on the exit button
 document.getElementById('exitButton').addEventListener('click', () => {
     hidePauseScreen();
+    shooting.reset();
+    hand.reset();
+    movement.reset();
     isExitingToMenu = true; // Indicate that the user is exiting to menu
     // Exit pointer lock and fullscreen, then show splash screen
     if (document.exitPointerLock) {

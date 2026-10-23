@@ -248,3 +248,25 @@ body.player-hit::after{content:'';position:fixed;inset:0;background:#e1193b45;z-
 body.enemy-hit #crosshair{filter:drop-shadow(0 0 9px #ffdc74)}
 @keyframes hit-flash{to{opacity:0}}
 @media(prefers-reduced-motion:reduce){body.player-hit::after{animation:none;opacity:.15}}
+
+
+/* Phase 2 — gameplay color language. Full menus / HUD are Phase 3. */
+:root { --crosshair-color:#9eeeff; }
+#crosshair .horizontal,#crosshair .vertical {
+  box-shadow:0 0 9px #34b8ffb3,0 0 19px #52adff75;
+  background:linear-gradient(90deg,#c3ffff,#5fbaff);
+}
+#crosshair .horizontal {height:1.5px}
+#crosshair .vertical {width:1.5px}
+.game-hud {
+  background:linear-gradient(140deg,rgba(9,15,34,.88),rgba(13,21,43,.73));
+  border-color:rgba(119,157,225,.52);
+  box-shadow:0 0 30px rgba(25,55,100,.13);
+}
+.game-hud strong {color:#83deff}
+.game-toast {color:#b7eaff;text-shadow:0 0 22px #2f8de7a6}
+body.player-hit::after {background:#b9134a32}
+body.enemy-hit #crosshair{filter:drop-shadow(0 0 9px #ff76b4)}
+@media(prefers-reduced-motion:reduce){
+  #crosshair *{animation:none!important}
+}
