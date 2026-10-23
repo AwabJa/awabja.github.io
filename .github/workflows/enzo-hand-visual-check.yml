@@ -1,0 +1,95 @@
+name: Enzo hand visual acceptance (phase A)
+on:
+  push:
+    branches:
+      - feature/enzo-phase-a-rigged-hand-20261023
+    paths:
+      - .github/workflows/enzo-hand-visual-check.yml
+permissions:
+  contents: write
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install browser and test tooling
+        run: |
+          npm install --no-audit --no-fund --no-save playwright@1.56.1
+          npx playwright install chromium --with-deps
+      - name: Start static site
+        run: |
+          python3 -m http.server 8123 --bind 127.0.0.1 > /tmp/enzo-server.log 2>&1 &
+          echo $! > /tmp/enzo-server.pid
+      - name: Exercise WebGL asset loading and capture real gameplay
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import {chromium} from 'playwright';
+          import fs from 'node:fs';
+          const browser=await chromium.launch({
+            headless:true,
+            args:['--enable-webgl','--enable-unsafe-swiftshader',
+                  '--use-gl=angle','--use-angle=swiftshader',
+                  '--disable-web-security=false']
+          });
+          const page=await browser.newPage({
+            viewport:{width:1365,height:768}, deviceScaleFactor:1,
+            permissions:[],
+          });
+          const pageErrors=[];
+          page.on('pageerror',err=>pageErrors.push('PAGE: '+err.message));
+          page.on('console',msg=>{
+            if(msg.type()==='error')pageErrors.push('CONSOLE: '+msg.text());
+          });
+          const response=await page.goto('http://127.0.0.1:8123/Enzo/index.html',
+            {waitUntil:'domcontentloaded',timeout:35000});
+          console.log('status:',response.status());
+          await page.waitForTimeout(2300);
+          console.log('initial status:',await page.locator('#menuStatusText').innerText());
+          const handResponse=await page.request.get(
+            'http://127.0.0.1:8123/Enzo/assets/models/anatomical-right-hand.glb');
+          console.log('hand asset HTTP:',handResponse.status());
+          if(!handResponse.ok()) throw Error('Hand model not available');
+          await page.waitForFunction(
+            ()=>document.querySelector('#startButton')?.disabled===false,
+            {timeout:45000}
+          ).catch(async ()=>{
+            throw new Error('Start never enabled: '+await page.locator('#menuStatusText').innerText()
+              +' '+pageErrors.join(' / '));
+          });
+          console.log('hand ready, game start enabled');
+          await page.locator('#startButton').click();
+          await page.waitForTimeout(3200);
+          const state=await page.evaluate(()=>({
+            splashHidden:document.querySelector('#splashScreen')
+              ?.classList.contains('fade-out'),
+            hudVisible:!document.querySelector('#gameHUD')?.hidden,
+            pointerLocked:!!document.pointerLockElement,
+            wave:document.querySelector('#waveValue')?.textContent,
+            status:document.querySelector('#menuStatusText')?.textContent
+          }));
+          console.log('game state:',JSON.stringify(state));
+          if(!state.splashHidden||!state.hudVisible||!state.pointerLocked){
+            throw new Error('Pointerlock / game start failed: '+JSON.stringify(state));
+          }
+          if(pageErrors.length) {
+            throw new Error('Browser console errors: '+JSON.stringify(pageErrors));
+          }
+          fs.mkdirSync('.github/previews',{recursive:true});
+          await page.screenshot({
+            path:'.github/previews/enzo-phase-a-hand.png',
+            animations:'disabled'
+          });
+          console.log('Gameplay screenshot bytes:',
+            fs.statSync('.github/previews/enzo-phase-a-hand.png').size);
+          await browser.close();
+          JS
+      - name: Commit preview to feature branch for visual QA
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/previews/enzo-phase-a-hand.png
+          git commit -m 'Temporary screenshot from actual browser hand-viewmodel acceptance test'
+          git push origin HEAD:feature/enzo-phase-a-rigged-hand-20261023
