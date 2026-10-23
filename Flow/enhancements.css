@@ -42,3 +42,15 @@
 @media(max-width:800px){.nav{-webkit-overflow-scrolling:touch;overscroll-behavior-inline:contain}.nav button,.tabs button,.kanban-toggle,.inbox-organize,.quick-capture-add{touch-action:manipulation}.task,.kanban-card{transition:none}.main{overflow-wrap:break-word}}
 @media(max-width:540px){.week-grid{gap:10px}.day-body{min-height:72px}.dialog-form{padding:18px;gap:12px}.dialog-form input:not([type=checkbox]),.dialog-form textarea,.dialog-form select{font-size:16px}.quick-capture-input{font-size:16px}.nav button{min-height:42px}.sidebar .project-list button{min-height:38px}}
 @media(prefers-reduced-motion:reduce){.nav button,.list-row,.kanban-card,.task{transition:none!important;animation:none!important}}
+
+/* Accessible contrast and identifiable links; visual changes only. */
+:root{color-scheme:dark}
+.crumb,.subheading,.eyebrow,.sidebar-bottom,footer,.toolbar-right,.top-actions span,.capture-help{color:#b8b6c7}
+.identity small,.project-list button,.nav button,.tabs button,.activity-row small,.sidebar-search input,.project-summary small{color:#c5c2d3}
+.sidebar-bottom a,.attachment-preview a{color:#d3cbff;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+.sidebar-bottom a:hover,.attachment-preview a:hover{text-decoration-thickness:2px}
+.primary,.quick-capture-add{background:#6455dd;color:#fff}
+.primary:hover,.quick-capture-add:hover{background:#7668ec}
+.nav button.active{background:#584acb;color:#fff}
+.nav button:focus-visible,.tabs button:focus-visible,.new-project:focus-visible,.kanban-toggle:focus-visible{outline:2px solid #d1caff;outline-offset:2px}
+@media(max-width:800px){.sidebar-bottom a{display:inline-block;text-decoration:underline;text-underline-offset:3px}}
