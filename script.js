@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
       event.preventDefault();
       closeMenu();
       target.scrollIntoView({behavior: reducedMotion.matches ? 'auto' : 'smooth', block:'start'});
+      if (id === 'main') target.focus({preventScroll:true});
       history.replaceState(null, '', '#' + id);
     });
   });
