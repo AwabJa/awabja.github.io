@@ -57,9 +57,9 @@ export function createArcaneWorld(scene, renderer) {
     const i=y*size+x,o=i*4;
     const l=heights[y*size+(x+size-1)%size],r=heights[y*size+(x+1)%size];
     const u=heights[((y+size-1)%size)*size+x],d=heights[((y+1)%size)*size+x];
-    const n=new THREE.Vector3((l-r)*2.4,(u-d)*2.4,1).normalize();
-    normal.data[o]=128+n.x*127;normal.data[o+1]=128+n.y*127;
-    normal.data[o+2]=128+n.z*127;normal.data[o+3]=255;
+    const nx=(l-r)*2.4,ny=(u-d)*2.4,len=Math.hypot(nx,ny,1);
+    normal.data[o]=128+nx/len*127;normal.data[o+1]=128+ny/len*127;
+    normal.data[o+2]=128+127/len;normal.data[o+3]=255;
   }
   ctx.putImageData(pixels,0,0);nctx.putImageData(normal,0,0);
   const albedo=new THREE.CanvasTexture(canvas),bump=new THREE.CanvasTexture(normalCanvas);
@@ -72,6 +72,7 @@ export function createArcaneWorld(scene, renderer) {
     new THREE.MeshStandardMaterial({map:albedo,normalMap:bump,roughness:.98,metalness:.06}));
   ground.name='Obsidian ground';ground.rotation.x=-Math.PI/2;
   ground.receiveShadow=true;scene.add(ground);
+  const colliders=[ground];
 
   const stone=new THREE.MeshStandardMaterial({color:0x28313c,roughness:.81,metalness:.25,flatShading:true});
   const dark=new THREE.MeshStandardMaterial({color:0x131a27,roughness:.88,metalness:.28,flatShading:true});
@@ -82,6 +83,7 @@ export function createArcaneWorld(scene, renderer) {
   function block(x,y,z,w,h,d,mat=stone){
     const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
     m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;scene.add(m);
+    colliders.push(m);
     return m;
   }
   function ring(radius,tube,material,y,place=scene){
@@ -106,7 +108,9 @@ export function createArcaneWorld(scene, renderer) {
   // Far landmark: a monumental ancient portal with rotating cyan tracery.
   const gate=new THREE.Group();gate.position.set(0,0,-62);scene.add(gate);
   const gatePiece=(g,m,x,y,z)=>{
-    const obj=new THREE.Mesh(g,m);obj.position.set(x,y,z);gate.add(obj);return obj;
+    const obj=new THREE.Mesh(g,m);obj.position.set(x,y,z);gate.add(obj);
+    if(!m.transparent)colliders.push(obj);
+    return obj;
   };
   for(const side of [-1,1]){
     gatePiece(new THREE.BoxGeometry(5,25,5),stone,side*15,12,0);
@@ -160,5 +164,5 @@ export function createArcaneWorld(scene, renderer) {
       obj.mesh.rotation.y+=delta*.04;
     }
   }
-  return {update,ground,sky};
+  return {update,ground,sky,colliders};
 }
