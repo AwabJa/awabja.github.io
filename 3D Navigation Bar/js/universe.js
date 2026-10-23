@@ -82,8 +82,9 @@ const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerH
 camera.position.set(0, 220, 420);
 camera.lookAt(scene.position);
 
+const compactScreen = window.matchMedia('(max-width: 700px)').matches;
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, compactScreen ? 1.35 : 1.75));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -100,31 +101,22 @@ let controls = null;
 if (typeof THREE.OrbitControls === 'function') {
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.06;
-    controls.minDistance = 7; // Enable genuinely close inspection of the Moon and smaller planets
+    controls.dampingFactor = 0.075;
+    controls.rotateSpeed = 0.55;
+    controls.zoomSpeed = 0.72;
+    controls.panSpeed = 0.55;
+    controls.minDistance = 12;
     controls.maxDistance = 1400;
+    controls.minPolarAngle = 0.05;
+    controls.maxPolarAngle = Math.PI - 0.05;
     controls.enablePan = true;
+    controls.enableZoom = true;
     controls.target.set(0, 0, 0);
-    controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.25; // gentle idle drift; feels alive without being distracting
+    // Constant automatic rotation made the camera feel like it was fighting the user.
+    controls.autoRotate = false;
     controls.update();
-
-    // Pause auto-rotate while the user is actively interacting, resume after a short idle period
-    let idleTimer = null;
-    const pauseAutoRotate = () => {
-        controls.autoRotate = false;
-        clearTimeout(idleTimer);
-        idleTimer = setTimeout(() => { if (!focusActive) controls.autoRotate = true; }, 4000);
-    };
-    renderer.domElement.addEventListener('pointerdown', pauseAutoRotate);
-    renderer.domElement.addEventListener('wheel', pauseAutoRotate, { passive: true });
 } else {
-    console.error(
-        '[universe.js] THREE.OrbitControls was not found — the OrbitControls.js ' +
-        '<script> tag likely failed to load (check the Network tab for a 404 or ' +
-        'blocked request). Camera dragging/zoom will be disabled, but the rest ' +
-        'of the scene will still run.'
-    );
+    console.warn('[Solar System] OrbitControls unavailable; using a simple camera fallback.');
 }
 
 /* ---------------------------------------------------------------------- */
@@ -440,7 +432,7 @@ scene.add(nebulaPlane);
 
 let composer = null;
 try {
-    if (typeof THREE.EffectComposer === 'function' && typeof THREE.UnrealBloomPass === 'function') {
+    if (!compactScreen && typeof THREE.EffectComposer === 'function' && typeof THREE.UnrealBloomPass === 'function') {
         composer = new THREE.EffectComposer(renderer);
         composer.addPass(new THREE.RenderPass(scene, camera));
 
@@ -452,7 +444,7 @@ try {
         );
         composer.addPass(bloomPass);
     } else {
-        console.warn('[universe.js] Bloom post-processing unavailable (CDN script missing) — rendering without glow.');
+        console.info('[Solar System] Using lightweight direct rendering (mobile or bloom unavailable).');
     }
 } catch (e) {
     console.error('[universe.js] Failed to set up post-processing, falling back to plain render:', e);
