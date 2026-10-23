@@ -22,7 +22,7 @@ const HAND_NAMES = ['hand_r','index_01_r','index_02_r','index_03_r',
 const Y_AXIS = new THREE.Vector3(0,1,0);
 const BEND_AXIS = new THREE.Vector3(0,0,1);
 const Z_AXIS=new THREE.Vector3(0,0,1);
-const BASE={x:.49,y:-.42,z:-.62,rx:-.13,ry:.02,rz:-.21};
+const BASE={x:.49,y:-.42,z:-.62,rx:-.20,ry:.02,rz:-.21};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const smoothstep=(a,b,v)=>{const x=clamp((v-a)/(b-a),0,1);return x*x*(3-2*x)};
 const springState=()=>({p:0,v:0});
@@ -79,13 +79,13 @@ export function createCastingHand(camera) {
 
   const gloveTexture=makeFabric();
   const leather=new THREE.MeshPhysicalMaterial({
-    name:'Shattered Reach / graphite woven glove',
+    name:'Shattered Reach / armored graphite gauntlet',
     color:0x48505a,
     map:gloveTexture,
     bumpMap:gloveTexture,
     bumpScale:.0018,
-    metalness:.03,roughness:.88,
-    clearcoat:.04,clearcoatRoughness:.89,
+    metalness:.22,roughness:.63,
+    clearcoat:.22,clearcoatRoughness:.56,
     envMapIntensity:.35,
     side:THREE.DoubleSide,
     depthTest:true,depthWrite:true,
@@ -263,7 +263,9 @@ export function createCastingHand(camera) {
     camera.getWorldDirection(palmFacing).normalize();
     // Keep the visible palm surface toward the camera. The projectile still
     // travels outward along the exact center-screen aim vector.
-    if(palmNormal.dot(palmFacing)>0)palmNormal.negate();
+    // The emission surface faces downward, not back toward the camera.
+    const down=new THREE.Vector3(0,-1,0).applyQuaternion(camera.quaternion);
+    if(palmNormal.dot(down)<0)palmNormal.negate();
     target.copy(palmIndex).add(palmPinky).multiplyScalar(.5)
       .lerp(palmWrist,.36)
       .addScaledVector(palmNormal,.043)
@@ -331,7 +333,7 @@ export function createCastingHand(camera) {
         const aimAlignment=new THREE.Quaternion()
           .setFromUnitVectors(axis,desiredDirection);
         const palmRoll=new THREE.Quaternion()
-          .setFromAxisAngle(desiredDirection,Math.PI*.82);
+          .setFromAxisAngle(desiredDirection,-Math.PI*.18);
         wrapper.quaternion.copy(palmRoll.multiply(aimAlignment));
         defaultScale=Math.max(2,Math.min(5,.72/dimension));
         wrapper.scale.setScalar(defaultScale);
