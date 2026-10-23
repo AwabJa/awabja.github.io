@@ -8,6 +8,22 @@ export const shootableObjects = [];
 // Define the ground level (adjust this value based on your scene)
 const GROUND_LEVEL = 0.8;
 
+/* Every drone has armor, an eye and a light. Dispose descendant meshes too:
+ * disposing only the root leaked GPU buffers/materials across survival waves. */
+function disposeEnemy(scene, enemyData) {
+    const enemy = enemyData.object;
+    scene.remove(enemy);
+    enemy.traverse(child => {
+        if (child.geometry) child.geometry.dispose();
+        if (child.material) {
+            const materials = Array.isArray(child.material) ? child.material : [child.material];
+            for (const material of materials) material.dispose();
+        }
+    });
+    const i = shootableObjects.indexOf(enemy);
+    if (i !== -1) shootableObjects.splice(i, 1);
+}
+
 // Function to create an enemy and add it to the scene
 export function createEnemy(scene, position) {
     // Layered armored drone with metallic panels and emissive optical core.
@@ -95,10 +111,7 @@ export function updateEnemies(scene, delta, playerPosition) {
         if (enemyData.isMarkedForRemoval) {
             // Remove the enemy from arrays and scene
             enemies.splice(i, 1);
-            scene.remove(enemyData.object);
-            enemyData.object.geometry.dispose();
-            enemyData.object.material.dispose();
-            console.log(`Enemy fully removed from the scene.`);
+            disposeEnemy(scene, enemyData);
             continue;
         }
 
@@ -261,11 +274,7 @@ export function initializeEnemies(scene, count) {
 
 // Clear all enemies from the scene and enemies array (added function)
 export function clearEnemies(scene) {
-    enemies.forEach(enemyData => {
-        scene.remove(enemyData.object);
-        enemyData.object.geometry.dispose();
-        enemyData.object.material.dispose();
-    });
+    enemies.forEach(enemyData => disposeEnemy(scene, enemyData));
     enemies.length = 0;  // Clear the array
     shootableObjects.length = 0; // Clear shootableObjects if necessary
     console.log("All enemies have been cleared from the scene.");

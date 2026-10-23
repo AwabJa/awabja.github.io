@@ -20,7 +20,7 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.15;
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, window.innerWidth < 900 ? 1.1 : 1.5));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -32,8 +32,8 @@ scene.add(ambientLight);
 
 const directionalLight = new THREE.DirectionalLight(0xffe2b4, 1.4);
 directionalLight.castShadow = true;
-directionalLight.shadow.mapSize.width = 2048;
-directionalLight.shadow.mapSize.height = 2048;
+directionalLight.shadow.mapSize.width = window.innerWidth < 900 ? 1024 : 2048;
+directionalLight.shadow.mapSize.height = window.innerWidth < 900 ? 1024 : 2048;
 directionalLight.shadow.camera.near = 0.5;
 directionalLight.shadow.camera.far = 100;
 directionalLight.shadow.bias = -0.0005;
@@ -150,17 +150,17 @@ document.addEventListener('mousemove', (event) => {
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, window.innerWidth < 900 ? 1.1 : 1.5));
     renderer.setSize(window.innerWidth, window.innerHeight);
     adjustCrosshair(); // Ensure crosshair scales correctly
 });
 
-// Initialize enemies at game start
-initializeEnemies(scene, 5);
+// Spawn enemies only after the player presses Start (not behind the splash screen).
 
 // Animation loop
 const dayDurationInSeconds = 900;
 let previousTime = performance.now();
-let isGamePaused = false;
+let isGamePaused = true;
 let shouldRequestPointerLock = false; // Flag to manage pointer lock requests
 let isExitingToMenu = false; // Flag to indicate exiting to menu
 
@@ -284,10 +284,9 @@ function onPointerLockChange() {
         previousTime = performance.now();
         isGamePaused = false; // Ensure the game is active
     } else {
-        // Pointer lock lost
-        console.log("Pointer lock lost.");
-        isGamePaused = true; // Pause the game immediately
-        showPauseScreen();
+        // Pointer lock lost: stop all enemy movement immediately.
+        isGamePaused = true;
+        if (!isExitingToMenu) showPauseScreen();
     }
 }
 
@@ -305,9 +304,10 @@ function onFullscreenChange() {
         console.log("Exited fullscreen mode.");
         if (isExitingToMenu) {
             // User is exiting to menu; show splash screen
+            hidePauseScreen();
             showSplashScreen();
             isExitingToMenu = false;
-            isGamePaused = false;
+            isGamePaused = true;
         } else if (!isGamePaused) {
             // Only show splash screen if the game is not paused
             showSplashScreen();
@@ -362,6 +362,7 @@ let health = 100;
 let wave = 1;
 let hitCooldown = 0;
 let nextWavePending = false;
+let nextWaveTimer = null;
 let hitEffectTimer;
 window.addEventListener('enzo:player-hit', () => { document.body.classList.remove('player-hit'); void document.body.offsetWidth; document.body.classList.add('player-hit'); clearTimeout(hitEffectTimer); hitEffectTimer = setTimeout(() => document.body.classList.remove('player-hit'), 350); });
 window.addEventListener('enzo:enemy-hit', () => { document.body.classList.add('enemy-hit'); setTimeout(() => document.body.classList.remove('enemy-hit'), 130); });
@@ -377,6 +378,7 @@ function updateSurvival(delta) {
         window.dispatchEvent(new Event('enzo:player-hit'));
         announce(health ? 'Under attack! Health: ' + health : 'GAME OVER — Select Restart');
         if (health === 0) {
+            document.getElementById('resumeButton').textContent = 'Restart Game';
             isGamePaused = true;
             if (document.exitPointerLock) document.exitPointerLock();
             showPauseScreen();
@@ -387,7 +389,8 @@ function updateSurvival(delta) {
         wave++;
         waveDisplay.textContent = String(wave);
         announce('WAVE ' + wave + ' INCOMING');
-        setTimeout(() => {
+        nextWaveTimer = setTimeout(() => {
+            nextWaveTimer = null;
             if (!nextWavePending) return;
             initializeEnemies(scene, Math.min(4 + wave * 2, 14));
             nextWavePending = false;
@@ -406,6 +409,10 @@ window.addEventListener('enzo:elimination', () => {
     else if (eliminations < goal) announce('Enemy eliminated! ' + eliminations + '/' + goal);
 });
 function resetGame() {
+    if (nextWaveTimer !== null) {
+        clearTimeout(nextWaveTimer);
+        nextWaveTimer = null;
+    }
     health = 100;
     wave = 1;
     hitCooldown = 0;
@@ -416,6 +423,7 @@ function resetGame() {
     document.getElementById('killCount').textContent = '0';
     document.getElementById('objectiveText').textContent = 'Eliminate 5 enemies';
     toast.textContent = '';
+    document.getElementById('resumeButton').textContent = 'Resume Game';
     // Clear existing enemies
     clearEnemies(scene);
 
@@ -459,7 +467,7 @@ document.getElementById('exitButton').addEventListener('click', () => {
         // If not in fullscreen, still show splash screen
         showSplashScreen();
         isExitingToMenu = false;
-        isGamePaused = false;
+        isGamePaused = true;
     }
 });
 
