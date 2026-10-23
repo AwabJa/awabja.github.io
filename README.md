@@ -18,7 +18,7 @@ A 3D experience built with **Three.js, WebGL, and JavaScript**. Travel between t
 
 ### [Enzo FPS](https://awabja.github.io/Enzo/index.html)
 
-An in-progress **arcane sci-fi survival FPS** built with JavaScript and Three.js. Explore the Shattered Reach, a storm-lit arena of shattered obelisks, glowing runes, and a towering portal. Channel energy bolts from an animated right-hand gauntlet, aim for weak points, and survive waves of Scouts, Sentinels, Brutes, and Support drones. The sky progresses through twilight, aurora, and eclipse atmospheres as the waves advance.
+An in-progress **arcane sci-fi survival FPS** built with JavaScript and Three.js. Explore the Shattered Reach, a storm-lit arena of shattered obelisks, glowing runes, and a towering portal. Channel energy bolts from a rigged anatomical right-hand model (CC0) with finger-driven casting, aim for weak points, and survive waves of Scouts, Sentinels, Brutes, and Support drones. The sky progresses through twilight, aurora, and eclipse atmospheres as the waves advance.
 
 **Controls:** W/A/S/D to move · Mouse to look · Left-click to cast · Space to jump · Shift to sprint · C to crouch · Esc to pause.
 
