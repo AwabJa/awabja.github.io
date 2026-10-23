@@ -1,6 +1,21 @@
 import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
 
 // Lightweight first-person sci-fi glove. No network-loaded mesh or external assets.
+// Three.js r128 predates CapsuleGeometry. Build a compatible capsule from a cylinder and spheres.
+function capsuleGeometry(radius, length, capSegments=5, radialSegments=12) {
+  const r=Math.max(.001,radius), h=Math.max(0,length);
+  const points=[];
+  const steps=Math.max(4,capSegments*2);
+  for(let i=0;i<=steps;i++) {
+    const angle=-Math.PI/2+i*Math.PI/steps;
+    points.push(new THREE.Vector2(Math.max(.0001,r*Math.cos(angle)),h/2+r*Math.sin(angle)));
+  }
+  for(let i=1;i<=steps;i++) {
+    const angle=Math.PI/2+i*Math.PI/steps;
+    points.push(new THREE.Vector2(Math.max(.0001,r*Math.cos(angle)),-h/2+r*Math.sin(angle)));
+  }
+  return new THREE.CylinderGeometry(r,r,h+2*r,Math.max(8,radialSegments),1);
+}
 export function createSciFiGlove(camera) {
   const rig=new THREE.Group();
   rig.name='ENZO / sci-fi casting glove';
@@ -21,7 +36,7 @@ export function createSciFiGlove(camera) {
   }
   // Palm lies below the crosshair and faces forward.
   const wrist=new THREE.Group();rig.add(wrist);
-  part(wrist,new THREE.CapsuleGeometry(.105,.20,5,12),fabric,[0,-.17,.02],[0,0,-.18]);
+  part(wrist,capsuleGeometry(.105,.20,5,12),fabric,[0,-.17,.02],[0,0,-.18]);
   box(wrist,.23,.27,.095,fabric,[0,.015,-.015],[0,0,-.08]);
   box(wrist,.195,.18,.035,armor,[0,.045,.044],[0,0,-.08]);
   box(wrist,.15,.035,.048,edge,[0,.12,.065]);
@@ -36,16 +51,16 @@ export function createSciFiGlove(camera) {
     wrist.add(base);joints.push({node:base,index:i});
     const lean=(i-1.5)*-.055;
     base.rotation.z=lean;
-    part(base,new THREE.CapsuleGeometry(.024,lengths[i]*.55,4,8),fabric,[0,lengths[i]*.31,0]);
+    part(base,capsuleGeometry(.024,lengths[i]*.55,4,8),fabric,[0,lengths[i]*.31,0]);
     box(base,.046,lengths[i]*.48,.042,armor,[0,lengths[i]*.32,.029]);
     const tip=new THREE.Group();tip.position.y=lengths[i]*.69;base.add(tip);
-    part(tip,new THREE.CapsuleGeometry(.020,lengths[i]*.30,4,8),fabric,[0,.027,0]);
+    part(tip,capsuleGeometry(.020,lengths[i]*.30,4,8),fabric,[0,.027,0]);
     box(tip,.037,lengths[i]*.25,.038,armor,[0,.025,.023]);
     box(tip,.029,.012,.009,edge,[0,.067,.038]);
     joints.push({node:tip,index:i+4});
   }
   const thumb=new THREE.Group();thumb.position.set(-.13,-.045,-.012);thumb.rotation.z=.78;wrist.add(thumb);
-  part(thumb,new THREE.CapsuleGeometry(.035,.13,5,10),fabric,[0,.055,0]);
+  part(thumb,capsuleGeometry(.035,.13,5,10),fabric,[0,.055,0]);
   box(thumb,.06,.09,.052,armor,[0,.055,.027]);
   joints.push({node:thumb,index:8});
   // Forearm sleeve is broad enough to meet the camera edge.
