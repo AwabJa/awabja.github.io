@@ -100,21 +100,26 @@ let controls = null;
 if (typeof THREE.OrbitControls === 'function') {
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.06;
+    controls.dampingFactor = 0.09;
     controls.minDistance = 7; // Enable genuinely close inspection of the Moon and smaller planets
     controls.maxDistance = 1400;
-    controls.enablePan = true;
+    controls.enablePan = false;
+    controls.rotateSpeed = 0.48;
+    controls.zoomSpeed = 0.75;
+    controls.minPolarAngle = 0.09;
+    controls.maxPolarAngle = Math.PI - 0.09;
     controls.target.set(0, 0, 0);
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.25; // gentle idle drift; feels alive without being distracting
+    controls.autoRotateSpeed = 0.12; // gentle idle drift; feels alive without being distracting
     controls.update();
 
     // Pause auto-rotate while the user is actively interacting, resume after a short idle period
     let idleTimer = null;
     const pauseAutoRotate = () => {
+        if (typeof cancelCameraFlight === 'function') cancelCameraFlight();
         controls.autoRotate = false;
         clearTimeout(idleTimer);
-        idleTimer = setTimeout(() => { if (!focusActive) controls.autoRotate = true; }, 4000);
+        idleTimer = setTimeout(() => { if (!focusActive && !prefersReducedMotion) controls.autoRotate = true; }, 8000);
     };
     renderer.domElement.addEventListener('pointerdown', pauseAutoRotate);
     renderer.domElement.addEventListener('wheel', pauseAutoRotate, { passive: true });
@@ -542,7 +547,45 @@ let selectedBody = null;
 let focusActive = false;
 let focusTransition = false;
 let trackedPosition = null;
+let cameraFlight = null;
+let simulationTime = 0;
+let simulationPlaying = true;
+let speedMultiplier = 1;
+let previousFrameTime = null;
+const EASE = t => t * t * (3 - 2 * t);
+const flightDuration = prefersReducedMotion ? 0 : 2.0;
+const centerOffset = new THREE.Vector3(0, 0, 0);
+const tempMovement = new THREE.Vector3();
 
+function cancelCameraFlight() {
+    if (!cameraFlight) return;
+    cameraFlight = null;
+    focusTransition = false;
+}
+function startCameraFlight(targetPosition, radius, duration = flightDuration) {
+    const away = camera.position.clone().sub(targetPosition);
+    if (away.lengthSq() < 0.01) away.set(0, .3, 1);
+    away.normalize();
+    // Don't fly toward a world from behind its surface or through the Sun.
+    const distance = Math.max(radius * 3.8, 13);
+    const destinationOffset = away.multiplyScalar(distance);
+    destinationOffset.y += Math.max(1.5, radius * .35);
+    const absoluteDestination = targetPosition.clone().add(destinationOffset);
+    cameraFlight = {
+        elapsed: 0,
+        duration,
+        positionStart: camera.position.clone(),
+        targetStart: controls ? controls.target.clone() : new THREE.Vector3(),
+        destinationOffset,
+        targetPosition: targetPosition.clone()
+    };
+    if (duration === 0) {
+        camera.position.copy(absoluteDestination);
+        if (controls) controls.target.copy(targetPosition);
+        else camera.lookAt(targetPosition);
+        cameraFlight = null;
+    }
+}
 const ALL_BODIES = new Map([
     ['Sun', sun], ['Mercury', mercury], ['Venus', venus], ['Earth', earth],
     ['Moon', moon], ['Mars', mars], ['Jupiter', jupiter], ['Saturn', saturn],
@@ -564,6 +607,7 @@ function closeInspector() {
     inspector.hidden = true;
     focusActive = false;
     focusTransition = false;
+    cancelCameraFlight();
     selectedBody = null;
     trackedPosition = null;
     markSelectedBody(null);
@@ -571,16 +615,34 @@ function closeInspector() {
 function resetOverview() {
     closeInspector();
     setGuideOpen(false);
-    camera.position.copy(overviewPosition);
-    if (controls) {
-        controls.target.copy(overviewTarget);
-        controls.autoRotate = !prefersReducedMotion;
-        controls.update();
+    if (prefersReducedMotion) {
+        camera.position.copy(overviewPosition);
+        if (controls) controls.target.copy(overviewTarget);
+        else camera.lookAt(overviewTarget);
     } else {
-        camera.lookAt(overviewTarget);
+        cameraFlight = {
+            elapsed: 0, duration: 1.8,
+            positionStart: camera.position.clone(),
+            targetStart: controls ? controls.target.clone() : new THREE.Vector3(),
+            destinationPosition: overviewPosition.clone(),
+            targetPosition: overviewTarget.clone()
+        };
     }
+    if (controls) controls.autoRotate = false;
     infoBar.textContent = 'Explore the Sun, eight planets and Earth’s Moon · Not to scale';
 }
+const motionButton = document.getElementById('toggle-motion');
+motionButton.addEventListener('click', () => {
+    simulationPlaying = !simulationPlaying;
+    motionButton.setAttribute('aria-pressed', String(!simulationPlaying));
+    motionButton.textContent = simulationPlaying ? 'Ⅱ Pause' : '▶ Play';
+    motionButton.title = simulationPlaying ? 'Pause planet motion' : 'Resume planet motion';
+});
+document.getElementById('orbit-speed').addEventListener('change', event => {
+    const value = Number(event.target.value);
+    if ([.5, 1, 2, 4].includes(value)) speedMultiplier = value;
+});
+document.getElementById('reset-view').addEventListener('click', resetOverview);
 document.getElementById('inspector-close').addEventListener('click', closeInspector);
 document.getElementById('inspector-reset').addEventListener('click', resetOverview);
 document.addEventListener('keydown', event => {
@@ -614,6 +676,7 @@ function inspectBody(body, keyboardSelected = false) {
     focusTransition = true;
     trackedPosition = body.position.clone();
     if (controls) controls.autoRotate = false;
+    startCameraFlight(body.position, body.geometry.parameters.radius || 2);
 
     inspectorTitle.textContent = body.name;
     document.getElementById('inspector-subtitle').textContent = data.subtitle;
@@ -717,18 +780,34 @@ function handleInteraction(event) {
     }
 }
 
-renderer.domElement.addEventListener('click', handleInteraction, false);
-renderer.domElement.addEventListener('touchend', handleInteraction, false);
+// Only treat a genuine tap/click as selection, not the end of a camera drag.
+let pointerStart = null;
+renderer.domElement.addEventListener('pointerdown', e => { pointerStart = {x:e.clientX,y:e.clientY}; });
+renderer.domElement.addEventListener('pointermove', e => {
+    if (pointerStart && Math.hypot(e.clientX-pointerStart.x,e.clientY-pointerStart.y)>8) pointerStart.dragged=true;
+});
+const selectWithoutDrag = e => {
+    const dragging = pointerStart && pointerStart.dragged;
+    pointerStart = null;
+    if (!dragging) handleInteraction(e);
+};
+renderer.domElement.addEventListener('click', selectWithoutDrag, false);
+// Pointer/click events also cover taps; a touchend listener caused double selection.
 
 /* ---------------------------------------------------------------------- */
 /* Main Animation Loop                                                     */
 /* ---------------------------------------------------------------------- */
 
-function animate() {
+function animate(frameTimestamp) {
     requestAnimationFrame(animate);
-
+    if (previousFrameTime === null) previousFrameTime = frameTimestamp;
+    const frameDelta = Math.min(Math.max((frameTimestamp - previousFrameTime) / 1000, 0), .05);
+    previousFrameTime = frameTimestamp;
     if (document.hidden) return;
-    const time = Date.now() * 0.005;
+
+    // Simulation uses elapsed time, not frame count; speed controls stay smooth on 60/120 Hz screens.
+    if (simulationPlaying) simulationTime += frameDelta * 5 * speedMultiplier;
+    const time = simulationTime;
 
     planets.forEach(planet => {
         const { orbitSpeed, distance, phaseOffset, rotationSpeed } = planet.userData;
@@ -737,65 +816,57 @@ function animate() {
             0,
             Math.sin(time * orbitSpeed + phaseOffset) * distance
         );
-        planet.rotation.y += rotationSpeed;
-
-
-        // Gentle "breathe" highlight while hovered so the clickable target reads clearly
-        const targetScale = (hoveredObject === planet) ? 1.08 : 1.0;
-        planet.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.15);
+        if (simulationPlaying) planet.rotation.y += rotationSpeed * frameDelta * 60 * speedMultiplier;
+        const scale = hoveredObject === planet ? 1.04 : 1.0;
+        planet.scale.setScalar(THREE.MathUtils.lerp(planet.scale.x, scale, Math.min(1, frameDelta * 8)));
     });
 
-    // Lunar orbit is relative to Earth's current position, not the Sun's.
-    const lunarAngle = time * 0.078 + 1.7; // approximately 13 lunar orbits per Earth solar orbit
+    const lunarAngle = time * 0.078 + 1.7;
     moon.position.copy(earth.position).add(new THREE.Vector3(
-        Math.cos(lunarAngle) * 12,
-        Math.sin(lunarAngle) * 1.08,
-        Math.sin(lunarAngle) * 12
+        Math.cos(lunarAngle) * 12, Math.sin(lunarAngle) * 1.08, Math.sin(lunarAngle) * 12
     ));
     moon.rotation.y = -lunarAngle;
     moonOrbit.position.copy(earth.position);
-    cloudLayer.rotation.y += 0.0003;
+    if (simulationPlaying) {
+        cloudLayer.rotation.y += 0.0003 * frameDelta * 60 * speedMultiplier;
+        sun.rotation.y += sun.userData.rotationSpeed * frameDelta * 60 * speedMultiplier;
+    }
+    const sunScale = hoveredObject === sun ? 1.025 : 1;
+    sun.scale.setScalar(THREE.MathUtils.lerp(sun.scale.x, sunScale, Math.min(1, frameDelta * 8)));
 
-    sun.rotation.y += sun.userData.rotationSpeed;
-    const sunTargetScale = (hoveredObject === sun) ? 1.05 : 1.0;
-    sun.scale.lerp(new THREE.Vector3(sunTargetScale, sunTargetScale, sunTargetScale), 0.15);
-
-    // Follow the selected world without fighting the user's own drag/zoom after arrival.
-    // First fly to it; afterwards move the camera and orbit target with its orbit.
-    if (focusActive && selectedBody) {
-        const target = selectedBody.position;
-        if (trackedPosition && !focusTransition && controls) {
-            const movement = target.clone().sub(trackedPosition);
-            controls.target.add(movement);
-            camera.position.add(movement);
+    // Track the orbiting target without pulling the user back after they rotate/zoom.
+    if (focusActive && selectedBody && trackedPosition) {
+        tempMovement.copy(selectedBody.position).sub(trackedPosition);
+        if (!cameraFlight) {
+            camera.position.add(tempMovement);
+            if (controls) controls.target.add(tempMovement);
+            else camera.lookAt(selectedBody.position);
         }
-        if (!trackedPosition) trackedPosition = target.clone();
-        else trackedPosition.copy(target);
-
-        if (focusTransition) {
-            const radius = selectedBody.geometry.parameters.radius || 2;
-            const desired = target.clone().add(new THREE.Vector3(
-                0, Math.max(3, radius * 0.75), Math.max(9, radius * 3.3)
-            ));
-            const speed = prefersReducedMotion ? 1 : 0.065;
-            if (controls) controls.target.lerp(target, speed);
-            else camera.lookAt(target);
-            camera.position.lerp(desired, speed);
-            if (camera.position.distanceTo(desired) < 0.9 &&
-                (!controls || controls.target.distanceTo(target) < 0.9)) {
-                focusTransition = false;
-            }
+        trackedPosition.copy(selectedBody.position);
+    }
+    if (cameraFlight) {
+        const flight = cameraFlight;
+        flight.elapsed += frameDelta;
+        const t = flight.duration ? EASE(Math.min(1, flight.elapsed / flight.duration)) : 1;
+        const target = selectedBody ? selectedBody.position : flight.targetPosition;
+        const destination = flight.destinationOffset
+            ? target.clone().add(flight.destinationOffset)
+            : flight.destinationPosition;
+        camera.position.lerpVectors(flight.positionStart, destination, t);
+        if (controls) controls.target.lerpVectors(flight.targetStart, target, t);
+        else camera.lookAt(target);
+        if (t >= 1) {
+            cameraFlight = null;
+            focusTransition = false;
+            if (!selectedBody && controls && !prefersReducedMotion) controls.autoRotate = true;
         }
     }
+
     if (controls) controls.update();
-
-    if (composer) {
-        composer.render();
-    } else {
-        renderer.render(scene, camera);
-    }
+    if (composer) composer.render();
+    else renderer.render(scene, camera);
 }
-animate();
+requestAnimationFrame(animate);
 
 /* ---------------------------------------------------------------------- */
 /* Resize handling                                                         */

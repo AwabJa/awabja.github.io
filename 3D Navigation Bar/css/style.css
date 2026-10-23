@@ -218,3 +218,29 @@ a:focus-visible,button:focus-visible{outline:3px solid #00ffc6;outline-offset:3p
 @media(prefers-reduced-motion:reduce){
     .planet-choice{transition:none}
 }
+
+/* Cinematic exploration controls: small, unobtrusive and touch-friendly. */
+.simulation-toolbar{
+    position:fixed;left:18px;bottom:18px;z-index:22;
+    display:flex;align-items:center;gap:7px;
+    border:1px solid #416477;background:#071927ea;
+    padding:8px;border-radius:12px;box-shadow:0 16px 35px #0007;
+    color:#cbdce5;backdrop-filter:blur(9px);
+}
+.simulation-toolbar button,.simulation-toolbar select{
+    min-height:36px;border:1px solid #43677c;border-radius:7px;
+    background:#173244;color:#eaf8ff;font:inherit;font-size:12px;
+    padding:6px 10px;cursor:pointer;
+}
+.simulation-toolbar button:hover,.simulation-toolbar select:hover{background:#284f60}
+.simulation-toolbar button[aria-pressed="true"]{background:#1d5350;border-color:#6bc8b9}
+.simulation-toolbar label{font-size:11px;white-space:nowrap;color:#a9c1cc}
+@media(max-width:650px){
+    .simulation-toolbar{left:10px;right:10px;bottom:10px;gap:5px;padding:6px;justify-content:space-between}
+    .simulation-toolbar button,.simulation-toolbar select{font-size:11px;padding:5px 7px;min-height:38px}
+    .simulation-toolbar label{font-size:10px}
+    .planet-guide{bottom:66px}
+    .planet-inspector{bottom:124px;max-height:calc(100dvh - 205px)}
+}
+@media(max-width:390px){.simulation-toolbar label{display:none}}
+@media(prefers-reduced-motion:reduce){.simulation-toolbar{backdrop-filter:none}}
