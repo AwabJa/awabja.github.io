@@ -134,18 +134,18 @@
         <div class="pause-panel">
             <span class="pause-kicker"><span></span> ARCANE SYSTEM / STANDBY</span>
             <h2 id="pauseTitle">THE REACH <em>AWAITS.</em></h2>
-            <p class="pause-description">Your fight isn't over. Return to the arena when you're ready.</p>
+            <p id="pauseDescription" class="pause-description">Your fight isn't over. Return to the arena when you're ready.</p>
             <div class="pause-actions">
-                <button id="resumeButton" type="button" class="pause-primary">RESUME GAME <span aria-hidden="true">→</span></button>
-                <button id="exitButton" type="button" class="pause-secondary">RETURN TO TITLE <span aria-hidden="true">↗</span></button>
+                <button id="resumeButton" type="button" class="pause-primary">RESUME GAME <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                <button id="exitButton" type="button" class="pause-secondary">RETURN TO TITLE <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 18 18 6M8 6h10v10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             </div>
             <p class="pause-control-hint">ESC / RETURN TO GAME</p>
         </div>
     </section>
 
     <div id="crosshair" class="crosshair" aria-hidden="true">
-        <div class="horizontal"></div>
-        <div class="vertical"></div>
+        <span class="crosshair-sigil"></span>
+        <span class="crosshair-core"></span>
     </div>
     <script type="module" src="./src/main.js?v=4"></script>
 </body>
