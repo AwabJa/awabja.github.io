@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Solar System Explorer | A.J. Ahmed</title>
     <meta name="description" content="Explore the Sun, eight planets and Earth’s Moon in 3D, with generated planetary surfaces, educational facts and NASA references.">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=5">
     <link rel="icon" href="data:,"> <!-- This prevents the 404 favicon.ico error -->
 </head>
 <body>
@@ -19,11 +19,17 @@
 
     <a class="back-link" href="/">← Portfolio</a>
     <div id="info">Explore the Sun, eight planets and Earth’s Moon <span>· Not to scale</span></div>
+    <div class="flight-controls" role="group" aria-label="Motion and camera controls">
+      <button id="motion-toggle" type="button" aria-pressed="false" title="Pause planetary motion"><span id="motion-glyph" aria-hidden="true">Ⅱ</span> <span id="motion-label">Pause</span></button>
+      <button id="speed-toggle" type="button" title="Change animation speed" aria-label="Orbit speed 1×. Activate to change">1× speed</button>
+      <button id="camera-home" type="button" title="Fly back to the Solar System overview">↺ Overview</button>
+    </div>
+    <div id="scene-status" class="sr-only" role="status" aria-live="polite"></div>
     <aside class="planet-guide" aria-label="Choose a solar system body">
       <button id="guide-toggle" type="button" aria-expanded="false" aria-controls="planet-links">Explore the Solar System <span aria-hidden="true">☰</span></button>
       <div id="planet-links" class="planet-links" hidden>
         <h2>Choose a world</h2>
-        <p>Select a body to fly toward it, inspect its surface and discover real facts. Drag to orbit the camera; scroll or pinch to zoom.</p>
+        <p>Select a body to fly toward it, inspect its surface and discover real facts. Drag to orbit the camera; scroll or pinch to zoom. Use the playback controls to slow or pause the planets.</p>
         <div class="planet-choices" role="group" aria-label="Sun, planets and Earth's Moon">
           <button type="button" class="planet-choice" data-body="Sun" aria-pressed="false"><span class="planet-choice-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg></span><span class="planet-choice-name">Sun</span><span class="planet-choice-kind">Our star</span></button>
           <button type="button" class="planet-choice" data-body="Mercury" aria-pressed="false"><span class="planet-choice-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M6.5 3.5 Q12 9.5 17.5 3.5"/><circle cx="12" cy="11.5" r="4.5"/><path d="M12 16v6 M8.5 19h7"/></svg></span><span class="planet-choice-name">Mercury</span><span class="planet-choice-kind">Terrestrial planet</span></button>
@@ -74,6 +80,6 @@
 
     <!-- Main Script -->
     <script src="js/proceduralTextures.js?v=3"></script>
-    <script src="js/universe.js?v=4"></script>
+    <script src="js/universe.js?v=5"></script>
 </body>
 </html>
