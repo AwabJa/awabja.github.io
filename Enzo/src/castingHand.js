@@ -136,7 +136,9 @@ export function createCastingHand(camera) {
   sleeve.name='Continuous woven forearm sleeve';
   // Align to the *visible* skinned wrist cap, which is offset from the
   // exported skeleton's wrist joint. Overlap slightly for a natural seam.
-  sleeve.position.set(-.08,-.065,.10);
+  // Tuck the cloth sleeve directly behind the anatomical wrist opening.
+  // It should enter from the camera edge, not hide fingers or float detached.
+  sleeve.position.set(-.195,.035,0);
   sleeve.renderOrder=890;
   rig.add(sleeve);
 
