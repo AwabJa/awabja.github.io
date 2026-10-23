@@ -86,8 +86,8 @@ const compactScreen = window.matchMedia('(max-width: 700px)').matches;
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, compactScreen ? 1.35 : 1.75));
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+// No lights cast shadows in this scene; skip the unused shadow pass.
+renderer.shadowMap.enabled = false;
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.1;
@@ -127,8 +127,6 @@ if (typeof THREE.OrbitControls === 'function') {
 const sunLight = new THREE.PointLight(0xfff4e0, 3.2, 0, 1.6);
 sunLight.position.set(0, 0, 0);
 sunLight.castShadow = false; // The Sun's surface lighting is directional; avoid expensive point-light cube shadows.
-sunLight.shadow.mapSize.set(2048, 2048);
-sunLight.shadow.bias = -0.0005;
 scene.add(sunLight);
 
 // Soft fill light so the night-side of planets isn't pure black
@@ -539,8 +537,6 @@ let simulationPlaying = !prefersReducedMotion;
 let speedMultiplier = 1;
 let previousFrameTime = null;
 const EASE = t => t * t * t * (t * (t * 6 - 15) + 10); // smooth acceleration and deceleration
-const flightDuration = prefersReducedMotion ? 0 : 2.0;
-const centerOffset = new THREE.Vector3(0, 0, 0);
 const tempMovement = new THREE.Vector3();
 
 function cancelCameraFlight() {
