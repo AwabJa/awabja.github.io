@@ -101,10 +101,10 @@ export function createCastingHand(camera) {
   const sides=28,sections=20;
   for(let i=0;i<=sections;i++){
     const t=i/sections;
-    const center=backAxis.clone().multiplyScalar(.032+.82*t);
+    const center=backAxis.clone().multiplyScalar(.12+.66*t);
     center.x+=.065*t*t;
     center.y-=.060*t*t;
-    const radius=.118+.085*t;
+    const radius=.105+.042*t;
     const ellipse=.94+.04*Math.sin(t*Math.PI);
     for(let j=0;j<=sides;j++){
       const a=j/sides*Math.PI*2;
@@ -136,7 +136,7 @@ export function createCastingHand(camera) {
   sleeve.name='Continuous woven forearm sleeve';
   // Align to the *visible* skinned wrist cap, which is offset from the
   // exported skeleton's wrist joint. Overlap slightly for a natural seam.
-  sleeve.position.set(-.30,.13,-.10);
+  sleeve.position.set(-.08,-.065,.10);
   sleeve.renderOrder=890;
   rig.add(sleeve);
 
@@ -241,10 +241,9 @@ export function createCastingHand(camera) {
         distalBone=bones.get('middle_03_r')||bones.get('middle_02_r');
         loaded=true;
         rig.updateMatrixWorld(true);
-        // Anchor at the base of the metacarpals. Bone positions, not magic
-        // hard-coded screen coordinates, determine the palm's center.
-        const palmWorld=bones.get('hand_r').getWorldPosition(new THREE.Vector3())
-          .lerp(bones.get('middle_01_r').getWorldPosition(new THREE.Vector3()),.62);
+        // Anchor at the fingers' base rather than on the forearm.
+        const palmWorld=bones.get('middle_01_r').getWorldPosition(new THREE.Vector3())
+          .lerp(bones.get('middle_02_r').getWorldPosition(new THREE.Vector3()),.32);
         const normal=camera.getWorldDirection(new THREE.Vector3());
         palmWorld.addScaledVector(normal,-.035);
         fx.position.copy(rig.worldToLocal(palmWorld));
