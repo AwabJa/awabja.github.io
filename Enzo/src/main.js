@@ -275,8 +275,10 @@ const waveDisplay = document.getElementById('waveValue');
 function updateSurvival(delta) {
     if (!document.pointerLockElement || health <= 0) return;
     hitCooldown = Math.max(0, hitCooldown - delta);
-    if (hitCooldown === 0 && enemies.some(e => !e.isMarkedForRemoval && e.object.position.distanceTo(camera.position) < 3.3)) {
-        health = Math.max(0, health - 12);
+    const attacker = enemies.find(e => !e.isMarkedForRemoval &&
+        e.object.position.distanceTo(camera.position) < 2.7 + e.role.scale * .6);
+    if (hitCooldown === 0 && attacker) {
+        health = Math.max(0, health - attacker.role.damage);
         healthDisplay.textContent = String(health);
         hitCooldown = 1.2;
         window.dispatchEvent(new Event('enzo:player-hit'));
@@ -291,6 +293,7 @@ function updateSurvival(delta) {
     if (!nextWavePending && enemies.every(e => e.isMarkedForRemoval)) {
         nextWavePending = true;
         wave++;
+        world.setMood(wave);
         waveDisplay.textContent = String(wave);
         announce('WAVE ' + wave + ' INCOMING');
         nextWaveTimer = setTimeout(() => {
@@ -319,6 +322,7 @@ function resetGame() {
     }
     health = 100;
     wave = 1;
+    world.setMood(1);
     hitCooldown = 0;
     nextWavePending = false;
     healthDisplay.textContent = '100';
