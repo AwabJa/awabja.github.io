@@ -18,3 +18,13 @@
 .attachment-preview a{color:#aaa2ff;font-size:12px;text-decoration:none}
 .attachment-preview a:hover{text-decoration:underline}
 @media(max-width:600px){.activity-row{flex-wrap:wrap}.activity-row small{width:100%;margin-left:32px}}
+
+/* Board: draggable task cards and explicit completion actions. */
+.kanban-lane{transition:background .18s,border-color .18s;min-height:300px}
+.kanban-lane.drag-target{background:#302d43;border-color:#9b90ff;outline:2px dashed #9b90ff;outline-offset:-5px}
+.kanban-card{display:flex;flex-direction:column;border-radius:12px;overflow:hidden;background:#2c2a35;border:1px solid #454152}
+.kanban-card.dragging{opacity:.45}
+.kanban-card .task{border-radius:0;box-shadow:none;min-height:70px;width:100%;cursor:grab}
+.kanban-card .task:active{cursor:grabbing}
+.kanban-toggle{background:#2c2a35;color:#c7c2e8;border:0;border-top:1px solid #494555;padding:10px 12px;text-align:left;font-size:12px;font-weight:600}
+.kanban-toggle:hover,.kanban-toggle:focus-visible{background:#403a58;color:#fff}
