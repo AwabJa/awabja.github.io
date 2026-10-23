@@ -16,11 +16,11 @@ export function createArcaneWorld(scene, renderer) {
   scene.add(sun);
   const amber=new THREE.PointLight(0xff7143,1.5,70,2);
   amber.position.set(0,14,-40);scene.add(amber);
-  const uniforms={uTime:{value:0}};
+  const uniforms={uTime:{value:0},uMood:{value:0}};
   const sky=new THREE.Mesh(new THREE.SphereGeometry(450,40,28),
     new THREE.ShaderMaterial({
       side:THREE.BackSide,depthWrite:false,fog:false,
-      uniforms,vertexShader:"varying vec3 vDir; void main(){vDir=normalize(position); vec4 p=projectionMatrix*modelViewMatrix*vec4(position,1.);gl_Position=p.xyww;}",fragmentShader:"precision mediump float;\nvarying vec3 vDir;\nuniform float uTime;\nfloat hash(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}\nfloat noise(vec3 p) {\n vec3 i=floor(p), f=fract(p);f=f*f*(3.-2.*f);\n return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),\n mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);\n}\nvoid main(){\n vec3 d=normalize(vDir);\n float h=smoothstep(-.15,.78,d.y);\n vec3 dusk=mix(vec3(.34,.12,.19),vec3(.056,.066,.18),smoothstep(-.18,.30,d.y));\n vec3 c=mix(dusk,vec3(.012,.009,.052),h);\n float cloud=noise(d*6.+vec3(uTime*.009,uTime*.004,0.));\n cloud=.65*cloud+.35*noise(d*13.+vec3(-uTime*.012,0.,uTime*.003));\n float storm=smoothstep(.45,.72,cloud)*smoothstep(.05,.55,d.y);\n c+=vec3(.22,.06,.43)*storm;\n float horizon=exp(-pow((d.y-.045)*8.,2.));\n c+=vec3(.29,.095,.048)*horizon*(.5+.5*cloud);\n vec3 eclipse=normalize(vec3(.38,.63,-.68));\n float moon=dot(d,eclipse);\n c+=vec3(.46,.15,.77)*pow(max(0.,moon),45.)*.65;\n float disc=smoothstep(.9988,.9994,moon);\n c=mix(c,vec3(.009,.009,.022),disc);\n c+=vec3(.6,.29,.91)*smoothstep(.9979,.9994,moon)*(1.-disc);\n float star=step(.9982,hash(floor(d*780.)))*smoothstep(.16,.42,d.y);\n c+=star*vec3(.72,.83,1.);\n gl_FragColor=vec4(c,1.);\n}"
+      uniforms,vertexShader:"varying vec3 vDir; void main(){vDir=normalize(position); vec4 p=projectionMatrix*modelViewMatrix*vec4(position,1.);gl_Position=p.xyww;}",fragmentShader:"precision mediump float;\nvarying vec3 vDir;\nuniform float uTime;\nuniform float uMood;\nfloat hash(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}\nfloat noise(vec3 p) {\n vec3 i=floor(p), f=fract(p);f=f*f*(3.-2.*f);\n return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),\n mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);\n}\nvoid main(){\n vec3 d=normalize(vDir);\n float h=smoothstep(-.15,.78,d.y);\n vec3 dusk=mix(vec3(.34,.12,.19),vec3(.056,.066,.18),smoothstep(-.18,.30,d.y));\n vec3 c=mix(dusk,vec3(.012,.009,.052),h);\n float cloud=noise(d*6.+vec3(uTime*.009,uTime*.004,0.));\n cloud=.65*cloud+.35*noise(d*13.+vec3(-uTime*.012,0.,uTime*.003));\n float storm=smoothstep(.45,.72,cloud)*smoothstep(.05,.55,d.y);\n c+=vec3(.22,.06,.43)*storm;\n float aurora=clamp(1.-abs(uMood-1.),0.,1.);\n float eclipseGlow=smoothstep(1.,2.,uMood);\n c+=vec3(.07,.41,.36)*aurora*smoothstep(.34,.75,cloud)*smoothstep(.08,.45,d.y);\n c=mix(c,c*vec3(1.4,.75,.38)+vec3(.029,.009,.002),eclipseGlow*.75);\n float horizon=exp(-pow((d.y-.045)*8.,2.));\n c+=vec3(.29,.095,.048)*horizon*(.5+.5*cloud);\n vec3 eclipse=normalize(vec3(.38,.63,-.68));\n float moon=dot(d,eclipse);\n c+=vec3(.46,.15,.77)*pow(max(0.,moon),45.)*.65;\n float disc=smoothstep(.9988,.9994,moon);\n c=mix(c,vec3(.009,.009,.022),disc);\n c+=mix(vec3(.6,.29,.91),vec3(1.,.43,.14),eclipseGlow)*smoothstep(.9979,.9994,moon)*(1.-disc);\n float star=step(.9982,hash(floor(d*780.)))*smoothstep(.16,.42,d.y);\n c+=star*vec3(.72,.83,1.);\n gl_FragColor=vec4(c,1.);\n}"
     }));
   sky.frustumCulled=false;sky.renderOrder=-1000;scene.add(sky);
 
@@ -152,10 +152,15 @@ export function createArcaneWorld(scene, renderer) {
     dummy.updateMatrix();rocks.setMatrixAt(i,dummy.matrix);
   }
   rocks.instanceMatrix.needsUpdate=true;scene.add(rocks);
-  let time=0;
+  let time=0,moodTarget=0;
+  function setMood(wave){
+    moodTarget=Math.floor((Math.max(1,wave)-1)/2)%3;
+    if(reduced)uniforms.uMood.value=moodTarget;
+  }
   function update(delta){
     if(reduced)return;
     time+=Math.min(.05,delta);uniforms.uTime.value=time;
+    uniforms.uMood.value+= (moodTarget-uniforms.uMood.value)*Math.min(1,delta*.35);
     outer.rotation.z=time*.02;
     gateGlow.rotation.z=time*.06;
     portal.material.opacity=.16+Math.sin(time*.8)*.055;
@@ -164,5 +169,5 @@ export function createArcaneWorld(scene, renderer) {
       obj.mesh.rotation.y+=delta*.04;
     }
   }
-  return {update,ground,sky,colliders};
+  return {update,setMood,ground,sky,colliders};
 }
