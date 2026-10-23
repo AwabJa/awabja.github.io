@@ -200,41 +200,61 @@ export function createCastingHand(camera) {
     color:0x135b87,emissive:0x168dcc,emissiveIntensity:.65,
     metalness:.42,roughness:.34
   });
-  const armorPieces=[];
-  function attachArmor(root){
-    const fingerNames=['index','middle','ring','pinky'];
-    for(const finger of fingerNames){
+  // Tapered, bevelled armor shells are fitted in each bone's LOCAL frame.
+  // Unlike the old box plates, they follow the exported bone orientation.
+  function sculptPlate(length,width){
+    const shape=new THREE.Shape();
+    shape.moveTo(-width*.37,0);
+    shape.quadraticCurveTo(-width*.58,length*.16,-width*.45,length*.35);
+    shape.lineTo(-width*.31,length*.87);
+    shape.quadraticCurveTo(0,length*1.06,width*.31,length*.87);
+    shape.lineTo(width*.45,length*.35);
+    shape.quadraticCurveTo(width*.58,length*.16,width*.37,0);
+    shape.closePath();
+    const geo=new THREE.ExtrudeGeometry(shape,{
+      depth:width*.19,bevelEnabled:true,bevelSegments:2,
+      steps:1,bevelSize:width*.075,bevelThickness:width*.07,
+      curveSegments:6
+    });
+    geo.computeVertexNormals();
+    return geo;
+  }
+  function attachArmor(){
+    for(const finger of ['index','middle','ring','pinky','thumb']){
       for(let segment=1;segment<=3;segment++){
         const bone=bones.get(finger+'_0'+segment+'_r');
         if(!bone)continue;
         const next=segment<3?bones.get(finger+'_0'+(segment+1)+'_r'):null;
-        const start=bone.getWorldPosition(new THREE.Vector3());
-        const end=next?next.getWorldPosition(new THREE.Vector3()):
-          start.clone().add(new THREE.Vector3(0,.035,0));
-        const len=Math.max(.018,Math.min(.095,start.distanceTo(end)*.78));
-        const plate=new THREE.Mesh(new THREE.BoxGeometry(.032,len,.014),armorSteel);
-        plate.name=finger+' articulated armor '+segment;
-        // Finger bones carry their own local axes; keep plates small and offset
-        // from the skin to avoid rigid block fingers.
-        plate.position.set(0,len*.38,.013);
-        plate.geometry.translate(0,0,.001);
-        bone.add(plate);armorPieces.push(plate);
-        const edge=new THREE.Mesh(new THREE.BoxGeometry(.025,.006,.016),armorEdge);
-        edge.position.set(0,len*.62,.014);
-        bone.add(edge);armorPieces.push(edge);
+        // Local bone direction is authoritative even for rotated GLB skeletons.
+        const localEnd=next?bone.worldToLocal(
+          next.getWorldPosition(new THREE.Vector3())):new THREE.Vector3(0,.035,0);
+        const length=Math.max(.018,Math.min(.085,localEnd.length()*.8));
+        const width=(finger==='thumb'?.027:.029)*(1-(segment-1)*.16);
+        const plate=new THREE.Mesh(sculptPlate(length,width),armorSteel);
+        plate.name=finger+' sculpted phalanx '+segment;
+        plate.quaternion.setFromUnitVectors(
+          new THREE.Vector3(0,1,0),localEnd.normalize());
+        plate.position.set(0,0,width*.36);
+        bone.add(plate);
+        const seam=new THREE.Mesh(
+          new THREE.TorusGeometry(width*.32,.0018,5,12,Math.PI),
+          armorEdge
+        );
+        seam.position.set(0,length*.12,width*.58);
+        plate.add(seam);
       }
     }
+    // A contoured back-of-hand shell; avoid a flat rectangular crest.
     const wrist=bones.get('hand_r');
     if(wrist){
-      const crest=new THREE.Mesh(
-        new THREE.BoxGeometry(.115,.12,.016),armorSteel);
-      crest.name='Floating articulated dorsal armor';
-      crest.position.set(0,.095,.028);
-      wrist.add(crest);armorPieces.push(crest);
+      const crest=new THREE.Mesh(sculptPlate(.13,.105),armorSteel);
+      crest.name='Contoured dorsal gauntlet shell';
+      crest.position.set(0,.065,.034);
+      wrist.add(crest);
       const rune=new THREE.Mesh(
-        new THREE.BoxGeometry(.014,.07,.019),armorGlow);
-      rune.position.set(0,.095,.039);
-      wrist.add(rune);armorPieces.push(rune);
+        new THREE.CapsuleGeometry(.004,.064,4,8),armorGlow);
+      rune.position.set(0,.072,.025);
+      crest.add(rune);
     }
   }
 
@@ -389,7 +409,7 @@ export function createCastingHand(camera) {
         defaultScale=Math.max(2,Math.min(5,.72/dimension));
         wrapper.scale.setScalar(defaultScale);
         wrapper.add(root);
-        attachArmor(root);
+        attachArmor();
         loaded=true;
         rig.updateMatrixWorld(true);
         // Recompute from the actual palm bones on every update.
