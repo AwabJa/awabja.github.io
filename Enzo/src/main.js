@@ -15,6 +15,8 @@ const camera = setupCamera();
 const movement = setupMovement(camera);
 scene.add(camera); // Camera-space casting hand must belong to the rendered scene.
 const hand = createCastingHand(camera);
+// Temporarily suppress the distorted gauntlet until the asset is rebuilt.
+hand.rig.visible = false;
 
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -31,7 +33,7 @@ document.body.appendChild(renderer.domElement);
 // Phase 2: a custom arcane sky, volcanic runes, floating ruins and a portal.
 const world = createArcaneWorld(scene, renderer);
 const worldPolish = createWorldPolish(scene, world, renderer);
-const shooting = setupShootingEvents(camera, scene, hand, world.colliders, renderer.domElement);
+const shooting = setupShootingEvents(camera, scene, hand, world.colliders, renderer.domElement, () => !isGamePaused);
 
 // Camera and mouse control
 let yaw = 0;
@@ -80,7 +82,7 @@ function animate() {
         const motion = movement.updateMovement(delta, world.colliders);
         updateEnemies(scene, delta, camera.position);
         shooting.update(delta);
-        hand.update(delta, motion, true);
+        // The hand rig is intentionally hidden pending a proper model rebuild.
         world.update(delta);
         worldPolish.update(delta);
         updateSurvival(delta);
@@ -135,7 +137,7 @@ function hidePauseScreen() {
 function requestGameplayLock() {
     const canvas = renderer.domElement;
     if (typeof canvas.requestPointerLock !== 'function') {
-        setMenuStatus('DESKTOP BROWSER WITH MOUSE CONTROL REQUIRED');
+        enterGameplay();
         return;
     }
     try {
@@ -151,16 +153,19 @@ function requestGameplayLock() {
         onPointerLockError();
     }
 }
+function enterGameplay() {
+    const firstEntry = !gameStarted;
+    gameStarted = true;
+    isExitingToMenu = false;
+    removeSplashScreen();
+    hidePauseScreen();
+    previousTime = performance.now();
+    isGamePaused = false;
+    if(firstEntry) showWaveBanner(wave, 'THE TRIAL BEGINS');
+}
 function onPointerLockChange() {
     if (document.pointerLockElement === renderer.domElement) {
-        const firstEntry = !gameStarted;
-        gameStarted = true;
-        isExitingToMenu = false;
-        removeSplashScreen();
-        hidePauseScreen();
-        previousTime = performance.now();
-        isGamePaused = false;
-        if(firstEntry) showWaveBanner(wave, 'THE TRIAL BEGINS');
+        enterGameplay();
         return;
     }
     isGamePaused = true;
@@ -180,11 +185,7 @@ function onPointerLockChange() {
 function onPointerLockError() {
     isGamePaused = true;
     if (gameStarted) showPauseScreen();
-    else {
-        hidePauseScreen();
-        showSplashScreen();
-        setMenuStatus('MOUSE CAPTURE BLOCKED — CLICK START AGAIN');
-    }
+    else enterGameplay();
 }
 
 // Function to reset the game (including enemies)
@@ -201,7 +202,7 @@ window.addEventListener('enzo:enemy-hit', () => { document.body.classList.add('e
 const healthDisplay = document.getElementById('healthValue');
 const waveDisplay = document.getElementById('waveValue');
 function updateSurvival(delta) {
-    if (!document.pointerLockElement || health <= 0) return;
+    if (isGamePaused || health <= 0) return;
     hitCooldown = Math.max(0, hitCooldown - delta);
     const attacker = enemies.find(e => !e.isMarkedForRemoval &&
         e.object.position.distanceTo(camera.position) < 2.7 + e.role.scale * .6);
@@ -273,7 +274,7 @@ function showWaveBanner(number,subtitle) {
     bannerTimer=setTimeout(hideWaveBanner,2100);
 }
 window.addEventListener('enzo:elimination', () => {
-    if (isGamePaused || !document.pointerLockElement) return;
+    if (isGamePaused) return;
     eliminations++;
     document.getElementById('killCount').textContent = String(eliminations);
     document.getElementById('killFill').style.width = Math.min(100,eliminations/goal*100)+'%';
@@ -320,10 +321,12 @@ function resetGame() {
 startButton.addEventListener('click', () => {
     if (startButton.disabled) return;
     resetGame();
+    enterGameplay();
     requestGameplayLock();
 });
 document.getElementById('resumeButton').addEventListener('click', () => {
     if (health === 0) resetGame();
+    enterGameplay();
     requestGameplayLock();
 });
 document.getElementById('exitButton').addEventListener('click', () => {
