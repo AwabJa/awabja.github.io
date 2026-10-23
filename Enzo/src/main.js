@@ -92,13 +92,13 @@ animate();
 // Fullscreen is not required for pointer lock (and requesting fullscreen first
 // can consume the activation needed for pointer lock on some browsers).
 const splashScreen = document.getElementById('splashScreen');
-const menuStatus = document.getElementById('menuStatus');
+const menuStatusText = document.getElementById('menuStatusText');
 const startButton = document.getElementById('startButton');
 const pauseScreen = document.getElementById('pauseScreen');
 let gameStarted = false;
 
 function setMenuStatus(message) {
-    menuStatus.lastChild.textContent = ' ' + message;
+    menuStatusText.textContent = message;
 }
 function removeSplashScreen() {
     splashScreen.classList.add('fade-out');
