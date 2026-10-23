@@ -1,119 +1,139 @@
 import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
-import { damageEnemy, getEnemyHitboxes } from './enemies.js';
+import {damageEnemy, getEnemyHitboxes} from './enemies.js';
 
-// Set this to `true` to enable debug mode or `false` to disable it
-const debugMode = false;
+/**
+ * Spell bullets: instant, accurate FPS hit registration + high-visibility
+ * traveling bolts from the palm. Impact bursts / trails use shared GPU assets.
+ * No fake gun, no per-shot geometry allocation or per-shot RAF loops.
+ */
+const boltGeo=new THREE.IcosahedronGeometry(1,1);
+const trailGeo=new THREE.CylinderGeometry(.014,.075,1,8,1);
+const burstGeo=new THREE.TorusGeometry(.35,.038,5,20);
+const sparkGeo=new THREE.TetrahedronGeometry(.075,0);
+const boltMat=new THREE.MeshBasicMaterial({color:0xd9ffff,depthWrite:false});
+const auraMat=new THREE.MeshBasicMaterial({
+  color:0x26aaff,transparent:true,opacity:.36,blending:THREE.AdditiveBlending,depthWrite:false
+});
+const trailMat=new THREE.MeshBasicMaterial({
+  color:0x3cbbff,transparent:true,opacity:.75,blending:THREE.AdditiveBlending,depthWrite:false
+});
+const burstMat=new THREE.MeshBasicMaterial({
+  color:0x9beeff,transparent:true,opacity:.87,blending:THREE.AdditiveBlending,
+  depthWrite:false,side:THREE.DoubleSide
+});
+const sparkMat=new THREE.MeshBasicMaterial({
+  color:0x7abfff,transparent:true,opacity:.8,blending:THREE.AdditiveBlending,depthWrite:false
+});
+const UP=new THREE.Vector3(0,1,0);
+const blasts=[];
+const bolts=[];
+const raycaster=new THREE.Raycaster();
+let lastShot=-Infinity;
+let installed=false;
 
-// Helper function for logging when debug mode is enabled
-function debugLog(message, ...optionalParams) {
-    if (debugMode) {
-        console.log(message, ...optionalParams);
-    }
+function spellBolt(scene,origin,destination,camera) {
+  const start=origin.clone(),end=destination.clone();
+  const length=start.distanceTo(end);
+  const dir=end.clone().sub(start).normalize();
+  const group=new THREE.Group();
+  group.position.copy(start);
+  const core=new THREE.Mesh(boltGeo,boltMat);
+  core.scale.set(.065,.065,.21);
+  core.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),dir);
+  const aura=new THREE.Mesh(boltGeo,auraMat);
+  aura.scale.set(.145,.145,.28);
+  aura.quaternion.copy(core.quaternion);
+  const trail=new THREE.Mesh(trailGeo,trailMat);
+  trail.quaternion.setFromUnitVectors(UP,dir);
+  trail.scale.y=1.25;
+  trail.position.copy(dir).multiplyScalar(-.52);
+  group.add(core,aura,trail);scene.add(group);
+  bolts.push({
+    group,start,end,dir,age:0,duration:Math.max(.10,Math.min(.75,length/105)),
+    onImpact:()=>impact(scene,end,camera)
+  });
 }
 
-// Flag to prevent multiple event listeners
-let shootingEventsSetup = false;
-
-// Set up shooting events (listens for mouse click)
-export function setupShootingEvents(camera, scene, gunOffset) {
-    if (!shootingEventsSetup) {
-        window.addEventListener('mousedown', (event) =>
-            handleShooting(event, camera, scene, gunOffset)
-        );
-        shootingEventsSetup = true;
-    }
+function impact(scene,point,camera) {
+  const group=new THREE.Group();
+  group.position.copy(point);
+  const ring=new THREE.Mesh(burstGeo,burstMat);
+  ring.lookAt(camera.position);
+  group.add(ring);
+  for(let i=0;i<8;i++) {
+    const spark=new THREE.Mesh(sparkGeo,sparkMat);
+    const theta=i*Math.PI/4,phi=.2+.3*Math.sin(i*5);
+    spark.userData.velocity=new THREE.Vector3(
+      Math.cos(theta)*Math.cos(phi),Math.sin(phi),Math.sin(theta)*Math.cos(phi)
+    ).multiplyScalar(4+(i%3)*1.4);
+    group.add(spark);
+  }
+  scene.add(group);blasts.push({group,ring,age:0,life:.28});
 }
 
-// Handle shooting
-function handleShooting(event, camera, scene, gunOffset) {
-    if (event.isTrusted && document.pointerLockElement) {
-        const gunPosition = camera.position
-            .clone()
-            .add(gunOffset.clone().applyQuaternion(camera.quaternion));
-        const bulletDirection = new THREE.Vector3();
-        camera.getWorldDirection(bulletDirection);
-        bulletDirection.normalize();
-
-        // Perform hitscan shooting and create a visual bullet
-        performRaycastShooting(scene, gunPosition, bulletDirection);
+export function setupShootingEvents(camera,scene,hand) {
+  if(installed) return {update,reset};
+  installed=true;
+  function handle(event) {
+    if(event.button!==0 || document.pointerLockElement===null) return;
+    const now=performance.now();
+    if(now-lastShot<135)return;  // maximum ~7 casts/second
+    lastShot=now;
+    const forward=new THREE.Vector3();
+    camera.getWorldDirection(forward);
+    forward.normalize();
+    const start=hand.muzzlePosition();
+    const roots=getEnemyHitboxes();
+    raycaster.set(camera.position,forward);
+    raycaster.near=0;
+    raycaster.far=125;
+    const hits=raycaster.intersectObjects(roots,true);
+    let end=camera.position.clone().addScaledVector(forward,90);
+    if(hits.length){
+      const hit=hits[0];
+      end=hit.point.clone();
+      let root=hit.object;
+      while(root && !roots.includes(root))root=root.parent;
+      if(root){
+        const damage=hit.object.userData.weakPoint?70:35;
+        if(damageEnemy(scene,root,damage))window.dispatchEvent(new Event('enzo:enemy-hit'));
+      }
     }
+    hand.cast();
+    spellBolt(scene,start,end,camera);
+  }
+  window.addEventListener('mousedown',handle);
+  return {update,reset};
 }
 
-// Perform hitscan shooting
-function performRaycastShooting(scene, origin, direction) {
-    const raycaster = new THREE.Raycaster(origin, direction, 0, 1000);
-    const shootableObjects = getEnemyHitboxes();
-
-    const intersects = raycaster.intersectObjects(shootableObjects, true);
-
-    if (intersects.length > 0) {
-        const hitPoint = intersects[0].point;
-        // The red eye and armor are child meshes. Resolve every child hit
-        // back to its registered enemy root before applying damage.
-        const roots = new Set(shootableObjects);
-        let hitObject = intersects[0].object;
-        while (hitObject && !roots.has(hitObject)) hitObject = hitObject.parent;
-
-        if (hitObject) handleProjectileHit(scene, hitObject);
-
-        // Create a visual bullet that stops at the hit point
-        createVisualBullet(scene, origin, direction, hitPoint);
-    } else {
-        debugLog('Shot missed.');
-
-        // Create a visual bullet that goes the full distance
-        createVisualBullet(scene, origin, direction);
+function update(delta) {
+  const dt=Math.min(.05,delta);
+  for(let i=bolts.length-1;i>=0;i--){
+    const bolt=bolts[i];
+    bolt.age+=dt;
+    const t=Math.min(1,bolt.age/bolt.duration);
+    bolt.group.position.lerpVectors(bolt.start,bolt.end,t);
+    bolt.group.scale.setScalar(.85+Math.sin(t*Math.PI)*.22);
+    if(t>=1){
+      bolt.onImpact();
+      bolt.group.parent?.remove(bolt.group);
+      bolts.splice(i,1);
     }
+  }
+  for(let i=blasts.length-1;i>=0;i--){
+    const flash=blasts[i];flash.age+=dt;
+    const t=Math.min(1,flash.age/flash.life);
+    flash.ring.scale.setScalar(.3+t*3.8);
+    for(let j=1;j<flash.group.children.length;j++){
+      const spark=flash.group.children[j];
+      spark.position.copy(spark.userData.velocity).multiplyScalar(flash.age);
+      spark.scale.setScalar(1-t);
+    }
+    if(t>=1){flash.group.parent?.remove(flash.group);blasts.splice(i,1);}
+  }
 }
-
-// Function to handle projectile hits and damage
-function handleProjectileHit(scene, hitObject) {
-    debugLog('Projectile hit enemy');
-
-    // Apply damage to the enemy via enemies.js
-    const enemyFound = damageEnemy(scene, hitObject, 25);
-    if (enemyFound) window.dispatchEvent(new Event('enzo:enemy-hit'));
-
-    if (!enemyFound) {
-        debugLog('Enemy not found or already marked for removal.');
-    }
-}
-
-// Share GPU resources between shots instead of allocating new sphere meshes
-// and materials for every bullet. Each shot still has its own object/position.
-const bulletGeometry = new THREE.SphereGeometry(0.04, 8, 6);
-const bulletMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-function createVisualBullet(scene, origin, direction, hitPoint = null) {
-    const visualBullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
-
-    visualBullet.position.copy(origin);
-    scene.add(visualBullet);
-
-    const bulletSpeed = 500; // Adjust speed as needed (units per second)
-    let travelDistance = 1000;
-    let travelTime = travelDistance / bulletSpeed;
-    let targetPosition = origin.clone().add(direction.clone().multiplyScalar(travelDistance));
-
-    if (hitPoint) {
-        targetPosition.copy(hitPoint);
-        const actualDistance = origin.distanceTo(hitPoint);
-        travelTime = actualDistance / bulletSpeed;
-    }
-
-    const startTime = performance.now();
-
-    function animateBullet() {
-        const elapsedTime = (performance.now() - startTime) / 1000; // Convert to seconds
-        const t = elapsedTime / travelTime;
-
-        if (t >= 1) {
-            scene.remove(visualBullet);
-            return;
-        }
-
-        visualBullet.position.lerpVectors(origin, targetPosition, t);
-        requestAnimationFrame(animateBullet);
-    }
-
-    animateBullet();
+function reset() {
+  for(const p of bolts)p.group.parent?.remove(p.group);
+  for(const p of blasts)p.group.parent?.remove(p.group);
+  bolts.length=0;blasts.length=0;lastShot=-Infinity;
 }
