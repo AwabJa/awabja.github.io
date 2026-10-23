@@ -1,0 +1,139 @@
+name: QA rigged hand render (temporary)
+# Inspect integrated anatomical hand + continuous smooth forearm sleeve.
+on:
+  push:
+    branches:
+      - feature/enzo-phase-a-rigged-hand-20261023
+    paths:
+      - .github/workflows/qa-enzo-hand-render.yml
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Create ephemeral hand preview
+        shell: bash
+        run: |
+          set -eu
+          cat > Enzo/hand-review.html <<'HTML'
+          <!doctype html><html><head><meta charset="utf-8">
+          <style>html,body{margin:0;background:#0c1424;height:100%;overflow:hidden;color:#dae8fb;font-family:Arial}#status{position:absolute;left:26px;top:26px;letter-spacing:2px;z-index:2}</style>
+          </head><body><div id="status">LOADING REAL GLB</div><script type="module">
+          import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
+          import {createCastingHand} from './src/castingHand.js';
+          const r=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+          r.setSize(innerWidth,innerHeight);r.setPixelRatio(1);
+          r.outputEncoding=THREE.sRGBEncoding;
+          r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.4;
+          document.body.append(r.domElement);
+          const scene=new THREE.Scene();scene.background=new THREE.Color(0x0c1424);
+          scene.add(new THREE.HemisphereLight(0xc1d8ff,0x2c3855,2.2));
+          const key=new THREE.DirectionalLight(0xc6e8ff,3);key.position.set(-1,2,2);scene.add(key);
+          const rim=new THREE.DirectionalLight(0x75aeff,2.3);rim.position.set(3,1,-3);scene.add(rim);
+          const camera=new THREE.PerspectiveCamera(74,innerWidth/innerHeight,.05,100);
+          camera.position.set(0,0,0);scene.add(camera);
+          const hand=createCastingHand(camera);
+          let ready=false;
+          hand.ready.then(details=>{
+             document.querySelector('#status').textContent='RIGGED MODEL READY / '+details.bones+' BONES';
+             window.__handDebug=details;
+             ready=true;
+          }).catch(err=>{document.querySelector('#status').textContent='MODEL FAILED / '+err.message;});
+          function draw(){
+            if(ready)hand.update(.016,false,true);
+            r.render(scene,camera);
+            requestAnimationFrame(draw);
+          }
+          draw();
+          </script></body></html>
+          HTML
+      - name: Run headless WebGL GLB preview
+        shell: bash
+        run: |
+          set -eu
+          # GitHub runner Chrome cannot always import CDN modules because of
+          # its proxy settings. Mirror the SAME pinned Three.js files for this
+          # isolated visual test, without changing production game imports.
+          mkdir -p Enzo/local-test/build Enzo/local-test/examples/jsm/loaders
+          curl --fail --location --retry 3 --max-time 45 --silent --show-error \
+            'https://unpkg.com/three@0.128.0/build/three.module.js' \
+            -o Enzo/local-test/build/three.module.js
+          curl --fail --location --retry 3 --max-time 45 --silent --show-error \
+            'https://unpkg.com/three@0.128.0/examples/jsm/loaders/GLTFLoader.js' \
+            -o Enzo/local-test/examples/jsm/loaders/GLTFLoader.js
+          python3 - <<'PY'
+          from pathlib import Path
+          src=Path('Enzo/src/castingHand.js').read_text()
+          src=src.replace(
+            'https://unpkg.com/three@0.128.0/build/three.module.js',
+            '../local-test/build/three.module.js')
+          src=src.replace("from './vendor/GLTFLoader.js'",
+            "from './vendor/GLTFLoader.js'")
+          vendor=Path('Enzo/src/vendor/GLTFLoader.js')
+          vendor.write_text(vendor.read_text().replace(
+            'https://unpkg.com/three@0.128.0/build/three.module.js',
+            '../../local-test/build/three.module.js'))
+          Path('Enzo/src/castingHand-preview.js').write_text(src)
+          p=Path('Enzo/hand-review.html')
+          text=p.read_text().replace(
+            'https://unpkg.com/three@0.128.0/build/three.module.js',
+            './local-test/build/three.module.js').replace(
+            './src/castingHand.js','./src/castingHand-preview.js')
+          p.write_text(text)
+          PY
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/enzo-http.log 2>&1 &
+          sleep 2
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright-core@1.56.1
+          node --input-type=module <<'JS'
+          import {chromium} from 'playwright-core';
+          const browser=await chromium.launch({
+            executablePath:'/usr/bin/google-chrome',headless:true,
+            args:['--no-sandbox','--disable-dev-shm-usage',
+              '--enable-unsafe-swiftshader','--use-gl=angle','--use-angle=swiftshader']
+          });
+          const page=await browser.newPage({viewport:{width:1360,height:820},deviceScaleFactor:1});
+          page.on('pageerror',err=>console.log('PAGE ERROR:',err.message));
+          page.on('console',msg=>{
+            if(msg.type()==='error')console.log('CONSOLE ERROR:',msg.text());
+          });
+          page.on('requestfailed',req=>console.log('REQUEST FAILED:',req.url(),req.failure()?.errorText));
+          page.on('response',r=>{
+            if(r.status()>=400)console.log('HTTP:',r.status(),r.url());
+          });
+          await page.goto('http://127.0.0.1:8765/Enzo/hand-review.html',
+            {waitUntil:'domcontentloaded',timeout:30000});
+          try {
+            await page.waitForFunction(()=>{
+              const t=document.getElementById('status')?.textContent||'';
+              return t.startsWith('RIGGED MODEL READY')||t.startsWith('MODEL FAILED');
+            },{timeout:35000});
+          } catch(error){console.log('LOADER WAIT:',error.message);}
+          const status=await page.locator('#status').textContent();
+          await page.waitForTimeout(600);
+          await page.screenshot({path:'Enzo/assets/hand-qa-preview.png'});
+          console.log('MODEL FINAL STATUS:',status);
+          console.log('MODEL BONE METRICS:',JSON.stringify(await page.evaluate(()=>window.__handDebug||null)));
+          await browser.close();
+          if(!status.startsWith('RIGGED MODEL READY')) {
+            throw new Error('Failed to show actual skinned hand: '+status);
+          }
+          JS
+          file Enzo/assets/hand-qa-preview.png
+          echo "Screenshot bytes: $(stat -c%s Enzo/assets/hand-qa-preview.png)"
+          test "$(stat -c%s Enzo/assets/hand-qa-preview.png)" -gt 20000
+      - name: Save temporary screenshot for visual review
+        shell: bash
+        run: |
+          set -eu
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add Enzo/assets/hand-qa-preview.png
+          if ! git diff --cached --quiet; then
+            git commit -m 'Temporary GLB browser screenshot for viewmodel inspection'
+            git push origin HEAD:feature/enzo-phase-a-rigged-hand-20261023
+          fi
