@@ -59,7 +59,6 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, window.innerWidth < 900 ? 1.1 : 1.5));
     renderer.setSize(window.innerWidth, window.innerHeight);
-    adjustCrosshair(); // Ensure crosshair scales correctly
 });
 
 // Spawn enemies only after the player presses Start (not behind the splash screen).
@@ -86,7 +85,9 @@ function animate() {
         updateSurvival(delta);
     }
 
-    if (!document.hidden) renderer.render(scene, camera);
+    // Menus and pause screens do not need a continuously rendered 3D frame.
+    // Keep the last gameplay frame frozen rather than burning GPU behind overlays.
+    if (!document.hidden && !isGamePaused) renderer.render(scene, camera);
 }
 
 animate();
@@ -184,9 +185,6 @@ function onPointerLockError() {
         setMenuStatus('MOUSE CAPTURE BLOCKED — CLICK START AGAIN');
     }
 }
-
-// Reticle dimensions are controlled by responsive CSS, not inline viewport sizing.
-function adjustCrosshair() {}
 
 // Function to reset the game (including enemies)
 let eliminations = 0;
