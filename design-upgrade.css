@@ -550,14 +550,6 @@ section[id]{scroll-margin-top:95px}
 .footer-socials a,.footer-bottom a{display:inline-flex;align-items:center;gap:5px}
 .footer-socials .ui-icon{width:14px;height:14px}
 .footer-bottom .ui-icon{width:16px;height:16px}
-@media(hover:none),(pointer:coarse){
-  .hero-visual.hero-identity{transform:none!important;transition:none!important}
-}
-@media(prefers-reduced-motion:reduce){
-  
-  
-}
-
 /* The sculpture adapts to small screens without hiding the headline. */
 @media(max-width:940px){
   .hero-visual.kinetic-stage{
