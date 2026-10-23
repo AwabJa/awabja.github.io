@@ -65,7 +65,6 @@ window.addEventListener('resize', () => {
 // Animation loop
 let previousTime = performance.now();
 let isGamePaused = true;
-let shouldRequestPointerLock = false; // Flag to manage pointer lock requests
 let isExitingToMenu = false; // Flag to indicate exiting to menu
 
 function animate() {
@@ -89,152 +88,90 @@ function animate() {
 
 animate();
 
-// Function to check if the document is in fullscreen
-function isFullscreen() {
-    return document.fullscreenElement ||
-           document.webkitFullscreenElement ||
-           document.mozFullScreenElement ||
-           document.msFullscreenElement ||
-           null;
-}
+// The splash menu stays interactive until the browser confirms mouse capture.
+// Fullscreen is not required for pointer lock (and requesting fullscreen first
+// can consume the activation needed for pointer lock on some browsers).
+const splashScreen = document.getElementById('splashScreen');
+const menuStatus = document.getElementById('menuStatus');
+const startButton = document.getElementById('startButton');
+const pauseScreen = document.getElementById('pauseScreen');
+let gameStarted = false;
 
-// Function to request fullscreen
-function requestFullscreen() {
-    // Check if already in fullscreen
-    if (isFullscreen()) {
-        console.log("Already in fullscreen mode.");
-        if (shouldRequestPointerLock) {
-            requestPointerLock();
-            shouldRequestPointerLock = false;
-        }
+function setMenuStatus(message) {
+    menuStatus.lastChild.textContent = ' ' + message;
+}
+function removeSplashScreen() {
+    splashScreen.classList.add('fade-out');
+    splashScreen.setAttribute('aria-hidden', 'true');
+    hud.hidden = false;
+    document.getElementById('crosshair').classList.add('show');
+}
+function showSplashScreen() {
+    splashScreen.classList.remove('fade-out');
+    splashScreen.removeAttribute('aria-hidden');
+    hud.hidden = true;
+    document.getElementById('crosshair').classList.remove('show');
+    setMenuStatus('THE SHATTERED REACH IS READY');
+}
+function showPauseScreen() {
+    pauseScreen.classList.add('active');
+    pauseScreen.setAttribute('aria-hidden', 'false');
+    document.getElementById('resumeButton').focus({preventScroll:true});
+}
+function hidePauseScreen() {
+    pauseScreen.classList.remove('active');
+    pauseScreen.setAttribute('aria-hidden', 'true');
+}
+function requestGameplayLock() {
+    const canvas = renderer.domElement;
+    if (typeof canvas.requestPointerLock !== 'function') {
+        setMenuStatus('DESKTOP BROWSER WITH MOUSE CONTROL REQUIRED');
         return;
     }
-
-    const requestFullscreenMethod = document.body.requestFullscreen ||
-                                    document.body.webkitRequestFullscreen ||
-                                    document.body.mozRequestFullScreen ||
-                                    document.body.msRequestFullscreen;
-    if (requestFullscreenMethod) {
-        requestFullscreenMethod.call(document.body).then(() => {
-            // Fullscreen entered successfully
-            console.log("Fullscreen mode activated.");
-            if (shouldRequestPointerLock) {
-                requestPointerLock();
-                shouldRequestPointerLock = false;
-            }
-        }).catch(err => {
-            console.error(`Error attempting fullscreen: ${err.message}`);
-            alert("Unable to enter fullscreen mode. Please try again.");
-        });
-    } else {
-        console.error("Fullscreen API is not supported.");
-        alert("Fullscreen mode is not supported by your browser.");
+    try {
+        const result = canvas.requestPointerLock();
+        if (result && typeof result.catch === 'function') {
+            result.catch(error => {
+                console.warn('Unable to capture mouse:', error);
+                onPointerLockError();
+            });
+        }
+    } catch (error) {
+        console.warn('Unable to capture mouse:', error);
+        onPointerLockError();
     }
 }
-
-// Function to request pointer lock
-function requestPointerLock() {
-    const canvas = renderer.domElement;
-    if (canvas && canvas.requestPointerLock) {
-        canvas.requestPointerLock();
-    } else {
-        console.error("Pointer Lock API is not supported by this browser.");
-    }
-}
-
-// Function to remove the splash screen and show the crosshair
-function removeSplashScreen() {
-    const splashScreen = document.getElementById('splashScreen');
-    const crosshair = document.getElementById('crosshair');
-
-    if (splashScreen) {
-        splashScreen.classList.add('fade-out'); // Add fade-out class
-    }
-
-    hud.hidden = false;
-    if (crosshair) {
-        crosshair.classList.add('show'); // Show crosshair
-    }
-}
-
-// Function to show the splash screen again
-function showSplashScreen() {
-    const splashScreen = document.getElementById('splashScreen');
-    const crosshair = document.getElementById('crosshair');
-
-    if (splashScreen) {
-        splashScreen.classList.remove('fade-out');
-    }
-
-    hud.hidden = true;
-    if (crosshair) {
-        crosshair.classList.remove('show'); // Hide crosshair
-    }
-
-    // Remove pointer lock message if present
-    const message = document.getElementById('pointerLockMessage');
-    if (message && splashScreen.contains(message)) {
-        splashScreen.removeChild(message);
-    }
-}
-
-// Function to handle pointer lock changes
 function onPointerLockChange() {
     if (document.pointerLockElement === renderer.domElement) {
-        // Pointer lock acquired
-        console.log("Pointer lock acquired.");
+        gameStarted = true;
+        isExitingToMenu = false;
         removeSplashScreen();
         hidePauseScreen();
         previousTime = performance.now();
-        isGamePaused = false; // Ensure the game is active
+        isGamePaused = false;
+        return;
+    }
+    isGamePaused = true;
+    if (isExitingToMenu) {
+        isExitingToMenu = false;
+        gameStarted = false;
+        hidePauseScreen();
+        showSplashScreen();
+        startButton.focus({preventScroll:true});
+    } else if (gameStarted) {
+        showPauseScreen();
     } else {
-        // Pointer lock lost: stop all enemy movement immediately.
-        isGamePaused = true;
-        if (!isExitingToMenu) showPauseScreen();
+        hidePauseScreen();
+        showSplashScreen();
     }
 }
-
-// Function to handle fullscreen changes
-function onFullscreenChange() {
-    if (isFullscreen()) {
-        // Fullscreen mode has been entered
-        console.log("Entered fullscreen mode.");
-        if (shouldRequestPointerLock) {
-            requestPointerLock();
-            shouldRequestPointerLock = false;
-        }
-    } else {
-        // Exited fullscreen mode
-        console.log("Exited fullscreen mode.");
-        if (isExitingToMenu) {
-            // User is exiting to menu; show splash screen
-            hidePauseScreen();
-            showSplashScreen();
-            isExitingToMenu = false;
-            isGamePaused = true;
-        } else if (!isGamePaused) {
-            // Only show splash screen if the game is not paused
-            showSplashScreen();
-        }
-        // If the game is paused, do not show splash screen
-    }
-}
-
-// Function to show the pause screen
-function showPauseScreen() {
-    const pauseScreen = document.getElementById('pauseScreen');
-    if (pauseScreen) {
-        pauseScreen.classList.add('active'); // Show pause screen
-        // isGamePaused is already set to true in onPointerLockChange()
-    }
-}
-
-// Function to hide the pause screen
-function hidePauseScreen() {
-    const pauseScreen = document.getElementById('pauseScreen');
-    if (pauseScreen) {
-        pauseScreen.classList.remove('active'); // Hide pause screen
-        // isGamePaused is set to false in onPointerLockChange() when pointer lock is re-acquired
+function onPointerLockError() {
+    isGamePaused = true;
+    if (gameStarted) showPauseScreen();
+    else {
+        hidePauseScreen();
+        showSplashScreen();
+        setMenuStatus('MOUSE CAPTURE BLOCKED — CLICK START AGAIN');
     }
 }
 
@@ -346,51 +283,62 @@ function resetGame() {
     // For example, reset player position, score, etc.
 }
 
-// Event listener to handle click on the start button
-document.getElementById('startButton').addEventListener('click', () => {
-    resetGame(); // Reset the game when starting
-    shouldRequestPointerLock = true; // Flag to request pointer lock after fullscreen
-    requestFullscreen();
+// Start and resume run from a direct user click. No fake loading percentage.
+startButton.addEventListener('click', () => {
+    if (startButton.disabled) return;
+    resetGame();
+    requestGameplayLock();
 });
-
-// Event listener to handle click on the resume button
 document.getElementById('resumeButton').addEventListener('click', () => {
-    hidePauseScreen();
-    if (health === 0) resetGame(); // Restart after defeat; ordinary pause preserves progress.
-    shouldRequestPointerLock = true; // Flag to request pointer lock after fullscreen
-    requestFullscreen();
+    if (health === 0) resetGame();
+    requestGameplayLock();
 });
-
-// Event listener to handle click on the exit button
 document.getElementById('exitButton').addEventListener('click', () => {
+    isExitingToMenu = true;
+    gameStarted = false;
+    isGamePaused = true;
     hidePauseScreen();
     shooting.reset();
     hand.reset();
     movement.reset();
-    isExitingToMenu = true; // Indicate that the user is exiting to menu
-    // Exit pointer lock and fullscreen, then show splash screen
-    if (document.exitPointerLock) {
+    if (document.pointerLockElement === renderer.domElement && document.exitPointerLock) {
         document.exitPointerLock();
-    }
-    if (isFullscreen()) {
-        document.exitFullscreen().catch(err => {
-            console.error(`Error exiting fullscreen: ${err.message}`);
-            alert("Unable to exit fullscreen mode. Please try again.");
-        });
     } else {
-        console.log("Not in fullscreen mode. No need to exit fullscreen.");
-        // If not in fullscreen, still show splash screen
-        showSplashScreen();
         isExitingToMenu = false;
+        showSplashScreen();
+    }
+    // Exit fullscreen if the player enabled it independently of the game.
+    if (document.fullscreenElement && document.exitFullscreen) {
+        const result = document.exitFullscreen();
+        if (result && typeof result.catch === 'function') result.catch(() => {});
+    }
+});
+
+// Native dialog gives keyboard users proper focus management and Esc-to-close.
+const helpDialog = document.getElementById('howToPlayDialog');
+const helpButton = document.getElementById('howToPlayButton');
+helpButton.addEventListener('click', () => helpDialog.showModal());
+function closeHelp() {
+    if (helpDialog.open) helpDialog.close();
+}
+document.getElementById('closeHowToPlay').addEventListener('click', closeHelp);
+document.getElementById('returnToMenu').addEventListener('click', closeHelp);
+helpDialog.addEventListener('click', event => {
+    if (event.target === helpDialog) closeHelp();
+});
+helpDialog.addEventListener('close', () => helpButton.focus({preventScroll:true}));
+
+document.addEventListener('pointerlockchange', onPointerLockChange);
+document.addEventListener('pointerlockerror', onPointerLockError);
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden && document.pointerLockElement !== renderer.domElement) {
         isGamePaused = true;
     }
 });
 
-// Attach the event listeners for fullscreen changes across different browsers
-document.addEventListener('fullscreenchange', onFullscreenChange);
-document.addEventListener('webkitfullscreenchange', onFullscreenChange);
-document.addEventListener('mozfullscreenchange', onFullscreenChange);
-document.addEventListener('MSFullscreenChange', onFullscreenChange);
-
-// Pointer lock change listener remains standard
-document.addEventListener('pointerlockchange', onPointerLockChange);
+// If modules or WebGL initialization fails, Start remains disabled and
+// the status message truthfully says the world is being prepared.
+startButton.disabled = typeof renderer.domElement.requestPointerLock !== 'function';
+setMenuStatus(startButton.disabled
+    ? 'DESKTOP BROWSER WITH MOUSE CONTROL REQUIRED'
+    : 'THE SHATTERED REACH IS READY');
