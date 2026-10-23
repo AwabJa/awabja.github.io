@@ -1,187 +1,35 @@
-:root {
-    --crosshair-color: rgb(50, 250, 50);
-    --message-color: #ffffff;
-    --background-opacity: rgba(0, 0, 0, 0.8);
-    --font-family: Arial, sans-serif;
-    --shadow-color-dark: rgba(0, 0, 0, 0.5);
-    --shadow-color-light: rgba(255, 255, 255, 0.4);
+/* ENZO / core browser and visibility rules.
+   All cinematic splash styles live in splash.css; the combat HUD, crosshair
+   and pause treatment live in gameplay.css. */
+html,body{
+  margin:0;padding:0;
+  width:100%;height:100%;
+  overflow:hidden;
+  background:#060b18;
 }
-
-/* Reset and base styles */
-html, body {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    height: 100%;
-    width: 100%;
-    background-color: #000; /* Ensure a black background for better contrast */
+canvas{display:block;width:100%;height:100%}
+.pause-screen{
+  position:fixed;inset:0;z-index:15;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  visibility:hidden;opacity:0;
+  pointer-events:none;
+  transition:opacity .28s ease,visibility .28s ease;
 }
-
-canvas {
-    display: block; /* Removes unwanted margins/padding */
-    width: 100%;
-    height: 100%;
+.pause-screen.active{visibility:visible;opacity:1;pointer-events:auto}
+#crosshair{
+  position:fixed;top:50%;left:50%;z-index:5;
+  pointer-events:none;display:none;
 }
-
-/* Cinematic splash styles live in splash.css. */
-
-/* Pause Screen Styling */
-.pause-screen {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.85); /* Semi-transparent background */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 15; /* Above splash screen and crosshair */
-    color: var(--message-color);
-    font-family: var(--font-family);
-    visibility: hidden; /* Initially hidden */
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+#crosshair.show{display:grid}
+body.player-hit::after{
+  content:"";position:fixed;inset:0;z-index:6;
+  pointer-events:none;
+  animation:hit-flash .4s ease-out forwards;
 }
-
-.pause-screen.active {
-    visibility: visible;
-    opacity: 1; /* Show with fade-in effect */
-}
-
-.pause-screen h1 {
-    font-size: 2rem;
-    margin-bottom: 20px;
-    text-align: center;
-}
-
-.pause-screen button {
-    padding: 1rem 3rem; /* Using rem units for scalability */
-    font-size: 1rem;
-    font-family: var(--font-family);
-    color: var(--message-color);
-    background-color: transparent;
-    border: 2px solid var(--message-color);
-    cursor: pointer;
-    transition: background-color 0.3s, color 0.3s, transform 0.2s;
-    margin: 10px;
-    border-radius: 5px;
-    outline: none;
-}
-
-.pause-screen button:hover {
-    background-color: var(--message-color);
-    color: black;
-    transform: scale(1.05); /* Slightly enlarge on hover */
-}
-
-.pause-screen button:active {
-    transform: scale(0.95); /* Slightly shrink on click */
-}
-
-/* Crosshair styling */
-#crosshair {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 20px;
-    height: 20px;
-    transform: translate(-50%, -50%); /* Center the crosshair */
-    z-index: 5; /* Ensure crosshair appears below the splash screen */
-    pointer-events: none;
-    display: none; /* Initially hidden */
-    justify-content: center;
-    align-items: center;
-}
-
-#crosshair.show {
-    display: flex;
-}
-
-/* Crosshair elements */
-#crosshair .horizontal {
-    width: 20px;
-    height: 2px;
-    background-color: var(--crosshair-color);
-    border-radius: 1px;
-    position: absolute;
-    top: 50%;
-    left: 0;
-    transform: translateY(-50%);
-}
-
-#crosshair .vertical {
-    width: 2px;
-    height: 20px;
-    background-color: var(--crosshair-color);
-    border-radius: 1px;
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-/* Responsive Design Enhancements */
-@media (max-width: 600px) {
-    /* Adjust pause screen headings */
-    .pause-screen h1 {
-        font-size: 1.5rem;
-    }
-
-    /* Adjust buttons for smaller screens */
-    .pause-screen button {
-        padding: 0.8rem 2rem;
-        font-size: 0.9rem;
-    }
-
-    /* Adjust crosshair size */
-    #crosshair {
-        width: 15px;
-        height: 15px;
-    }
-
-    #crosshair .horizontal {
-        width: 15px;
-        height: 2px;
-    }
-
-    #crosshair .vertical {
-        width: 2px;
-        height: 15px;
-    }
-}
-
-.game-hud{position:fixed;top:18px;right:18px;z-index:7;color:#e9fff5;background:#061610c9;border:1px solid #42a882;border-radius:10px;padding:14px 18px;display:flex;flex-direction:column;gap:6px;font:13px/1.5 Arial,sans-serif;pointer-events:none;}.game-hud[hidden]{display:none}.game-hud strong{color:#70ffb3;font-size:18px;margin-left:8px;}.game-toast{position:fixed;left:50%;top:20%;transform:translateX(-50%);z-index:9;color:#b5ffcf;text-align:center;text-shadow:0 2px 9px black;font:bold 19px Arial,sans-serif;pointer-events:none;}
-button:focus-visible{outline:3px solid #73ffbb;outline-offset:3px;}
-@media(max-width:600px){.game-hud{top:64px;right:8px;padding:8px;font-size:11px}}
-@media(prefers-reduced-motion:reduce){.pause-screen{transition:none!important}}
-
-/* Enzo 2.0 feedback effects */
-.game-hud strong{font-variant-numeric:tabular-nums}
-body.player-hit::after{content:'';position:fixed;inset:0;background:#e1193b45;z-index:6;pointer-events:none;animation:hit-flash .32s ease-out forwards}
-body.enemy-hit #crosshair{filter:drop-shadow(0 0 9px #ffdc74)}
 @keyframes hit-flash{to{opacity:0}}
-@media(prefers-reduced-motion:reduce){body.player-hit::after{animation:none;opacity:.15}}
-
-
-/* Phase 2 — gameplay color language. Full menus / HUD are Phase 3. */
-:root { --crosshair-color:#9eeeff; }
-#crosshair .horizontal,#crosshair .vertical {
-  box-shadow:0 0 9px #34b8ffb3,0 0 19px #52adff75;
-  background:linear-gradient(90deg,#c3ffff,#5fbaff);
-}
-#crosshair .horizontal {height:1.5px}
-#crosshair .vertical {width:1.5px}
-.game-hud {
-  background:linear-gradient(140deg,rgba(9,15,34,.88),rgba(13,21,43,.73));
-  border-color:rgba(119,157,225,.52);
-  box-shadow:0 0 30px rgba(25,55,100,.13);
-}
-.game-hud strong {color:#83deff}
-.game-toast {color:#b7eaff;text-shadow:0 0 22px #2f8de7a6}
-body.player-hit::after {background:#b9134a32}
-body.enemy-hit #crosshair{filter:drop-shadow(0 0 9px #ff76b4)}
+body.enemy-hit #crosshair{filter:drop-shadow(0 0 10px rgba(255,185,96,.72))}
+button:focus-visible,a:focus-visible{outline:2px solid #a5deff;outline-offset:4px}
 @media(prefers-reduced-motion:reduce){
-  #crosshair *{animation:none!important}
+  .pause-screen{transition:none!important}
+  body.player-hit::after{animation:none!important;opacity:.13}
 }

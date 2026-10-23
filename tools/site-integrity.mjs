@@ -135,6 +135,32 @@ check(splashCss.includes('prefers-reduced-motion:reduce') &&
   splashCss.includes('.enzo-splash .splash-art') &&
   splashCss.includes('.howto-dialog'),
   'New splash needs its responsive artwork and reduced-motion menu styles');
+// The in-game art and combat HUD must stay connected to actual gameplay.
+const polish = readFileSync(join(root, 'Enzo/src/worldPolish.js'), 'utf8');
+const gameplayCss = readFileSync(join(root, 'Enzo/styles/gameplay.css'), 'utf8');
+for(const id of ['healthMeter','healthFill','killFill','waveState','waveBanner',
+                 'pauseDescription','healthState','crosshair']) {
+  check(enzoHtml.includes('id="' + id + '"'),
+    'Cinematic Enzo HUD missing #' + id);
+}
+check(enzoHtml.includes('styles/gameplay.css?v=1') &&
+      game.includes("import { createWorldPolish } from './worldPolish.js'") &&
+      game.includes('worldPolish.update(delta)') &&
+      game.includes('worldPolish.setMood(wave)'),
+  'Enzo must load the cinematic HUD and update world effects with survival waves');
+check(polish.includes('scene.environment=environment') &&
+      polish.includes('new THREE.ShaderMaterial(') &&
+      polish.includes('new THREE.Points('),
+  'In-game visual polish requires reflective materials, living portal and atmosphere');
+check(gameplayCss.includes('.hud-health-fill') &&
+      gameplayCss.includes('.hud-kill-fill') &&
+      gameplayCss.includes('.pause-panel') &&
+      gameplayCss.includes('prefers-reduced-motion:reduce'),
+  'Cinematic HUD must retain meter, pause and low-motion styles');
+check(game.includes("healthMeter.setAttribute('aria-valuenow'") &&
+      game.includes("healthFill.style.width=hp+'%'") &&
+      game.includes('showWaveBanner('),
+  'Cinematic health, mission and wave HUD must reflect gameplay state');
 const enzoEnemies = readFileSync(join(root, 'Enzo/src/enemies.js'), 'utf8');
 check(enzoEnemies.includes('enemy.traverse(child =>'),
   'Enzo must dispose meshes in enemy subtrees');
