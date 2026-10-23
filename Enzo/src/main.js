@@ -368,9 +368,18 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-// If modules or WebGL initialization fails, Start remains disabled and
-// the status message truthfully says the world is being prepared.
-startButton.disabled = typeof renderer.domElement.requestPointerLock !== 'function';
-setMenuStatus(startButton.disabled
-    ? 'DESKTOP BROWSER WITH MOUSE CONTROL REQUIRED'
-    : 'THE SHATTERED REACH IS READY');
+// Do not enter an FPS with an invisible hand or pretend a missing 3D model
+// is ready. The actual CC0 skinned hand must load before Start becomes active.
+startButton.disabled = true;
+setMenuStatus('LOADING ANATOMICAL GAUNTLET…');
+hand.ready.then(info=>{
+    const supported=typeof renderer.domElement.requestPointerLock === 'function';
+    startButton.disabled=!supported;
+    setMenuStatus(supported
+      ? 'GAUNTLET ONLINE / THE SHATTERED REACH IS READY'
+      : 'DESKTOP BROWSER WITH MOUSE CONTROL REQUIRED');
+}).catch(error=>{
+    console.error('The anatomical hand could not load:',error);
+    startButton.disabled=true;
+    setMenuStatus('HAND ASSET FAILED TO LOAD — RELOAD TO TRY AGAIN');
+});
