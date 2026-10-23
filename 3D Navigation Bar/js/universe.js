@@ -783,112 +783,74 @@ renderer.domElement.addEventListener('mouseleave', () => {
     infoBar.textContent = 'Explore the Sun, eight planets and Earth’s Moon · Not to scale';
 });
 
-function handleInteraction(event) {
-    if (event.type === 'touchend') event.preventDefault();
-
-    let clientX, clientY;
-    if (event.type === 'click') {
-        clientX = event.clientX;
-        clientY = event.clientY;
-    } else if (event.type === 'touchend') {
-        if (event.changedTouches && event.changedTouches.length > 0) {
-            clientX = event.changedTouches[0].clientX;
-            clientY = event.changedTouches[0].clientY;
-        } else {
-            return;
-        }
+// A tap is not a drag: ignore orbit gestures, pinch/zoom, and mouse drags
+// when deciding whether to select a planet. Pointer Events unify touch and mouse.
+const activePointers = new Set();
+let pointerStart = null;
+renderer.domElement.addEventListener('pointerdown', event => {
+    activePointers.add(event.pointerId);
+    if (activePointers.size === 1 && event.button === 0) {
+        pointerStart = {id:event.pointerId, x:event.clientX, y:event.clientY, started:performance.now()};
     } else {
-        return;
+        pointerStart = null;
     }
-
-    setPointerFromEvent(clientX, clientY);
+});
+renderer.domElement.addEventListener('pointercancel', event => {
+    activePointers.delete(event.pointerId);
+    pointerStart = null;
+});
+renderer.domElement.addEventListener('pointerup', event => {
+    activePointers.delete(event.pointerId);
+    const began = pointerStart;
+    pointerStart = null;
+    if (!began || began.id !== event.pointerId || event.button !== 0) return;
+    if (Math.hypot(event.clientX - began.x, event.clientY - began.y) > 8) return;
+    if (performance.now() - began.started > 650) return;
+    setPointerFromEvent(event.clientX, event.clientY);
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(clickableObjects, false);
-
-    if (intersects.length > 0) {
-        const clickedObject = intersects[0].object;
-        console.log(`You clicked on ${clickedObject.name}`);
-        inspectBody(clickedObject);
-    }
-}
-
-renderer.domElement.addEventListener('click', handleInteraction, false);
-renderer.domElement.addEventListener('touchend', handleInteraction, false);
+    const hits = raycaster.intersectObjects(clickableObjects, false);
+    if (hits.length) inspectBody(hits[0].object);
+});
 
 /* ---------------------------------------------------------------------- */
 /* Main Animation Loop                                                     */
 /* ---------------------------------------------------------------------- */
 
-function animate() {
+function animate(now) {
     requestAnimationFrame(animate);
-
+    const dt = lastFrameTime === null ? 0 : clamp((now - lastFrameTime) / 1000, 0, 0.05);
+    lastFrameTime = now;
     if (document.hidden) return;
-    const time = Date.now() * 0.005;
 
-    planets.forEach(planet => {
-        const { orbitSpeed, distance, phaseOffset, rotationSpeed } = planet.userData;
-        planet.position.set(
-            Math.cos(time * orbitSpeed + phaseOffset) * distance,
-            0,
-            Math.sin(time * orbitSpeed + phaseOffset) * distance
-        );
-        planet.rotation.y += rotationSpeed;
+    // A monotonic simulated clock prevents time-of-day jumps and keeps orbit
+    // positions stable when a phone sleeps, a tab is hidden, or playback is paused.
+    const step = motionPaused ? 0 : dt * motionSpeed;
+    simulationTime += step * 2.6;
 
+    // All orbital positions are derived from the same simulation time.
+    for (const planet of planets) {
+        const {orbitSpeed, distance, phaseOffset, rotationSpeed} = planet.userData;
+        const angle = simulationTime * orbitSpeed + phaseOffset;
+        planet.position.set(Math.cos(angle) * distance, 0, Math.sin(angle) * distance);
+        planet.rotation.y += rotationSpeed * step * 12;
+    }
 
-        // Gentle "breathe" highlight while hovered so the clickable target reads clearly
-        const targetScale = (hoveredObject === planet) ? 1.08 : 1.0;
-        planet.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.15);
-    });
-
-    // Lunar orbit is relative to Earth's current position, not the Sun's.
-    const lunarAngle = time * 0.078 + 1.7; // approximately 13 lunar orbits per Earth solar orbit
-    moon.position.copy(earth.position).add(new THREE.Vector3(
-        Math.cos(lunarAngle) * 12,
-        Math.sin(lunarAngle) * 1.08,
-        Math.sin(lunarAngle) * 12
-    ));
-    moon.rotation.y = -lunarAngle;
+    // The Moon follows Earth and keeps roughly the same side facing our planet.
+    const lunarAngle = simulationTime * 0.078 + 1.7;
+    moon.position.set(
+        earth.position.x + Math.cos(lunarAngle) * 12,
+        earth.position.y + Math.sin(lunarAngle) * 1.08,
+        earth.position.z + Math.sin(lunarAngle) * 12
+    );
+    moon.rotation.y = -lunarAngle - Math.PI / 2;
     moonOrbit.position.copy(earth.position);
-    cloudLayer.rotation.y += 0.0003;
+    cloudLayer.rotation.y += step * 0.018;
+    sun.rotation.y += sun.userData.rotationSpeed * step * 12;
 
-    sun.rotation.y += sun.userData.rotationSpeed;
-    const sunTargetScale = (hoveredObject === sun) ? 1.05 : 1.0;
-    sun.scale.lerp(new THREE.Vector3(sunTargetScale, sunTargetScale, sunTargetScale), 0.15);
+    updateCamera(dt);
 
-    // Follow the selected world without fighting the user's own drag/zoom after arrival.
-    // First fly to it; afterwards move the camera and orbit target with its orbit.
-    if (focusActive && selectedBody) {
-        const target = selectedBody.position;
-        if (trackedPosition && !focusTransition && controls) {
-            const movement = target.clone().sub(trackedPosition);
-            controls.target.add(movement);
-            camera.position.add(movement);
-        }
-        if (!trackedPosition) trackedPosition = target.clone();
-        else trackedPosition.copy(target);
-
-        if (focusTransition) {
-            const radius = selectedBody.geometry.parameters.radius || 2;
-            const desired = target.clone().add(new THREE.Vector3(
-                0, Math.max(3, radius * 0.75), Math.max(9, radius * 3.3)
-            ));
-            const speed = prefersReducedMotion ? 1 : 0.065;
-            if (controls) controls.target.lerp(target, speed);
-            else camera.lookAt(target);
-            camera.position.lerp(desired, speed);
-            if (camera.position.distanceTo(desired) < 0.9 &&
-                (!controls || controls.target.distanceTo(target) < 0.9)) {
-                focusTransition = false;
-            }
-        }
-    }
-    if (controls) controls.update();
-
-    if (composer) {
-        composer.render();
-    } else {
-        renderer.render(scene, camera);
-    }
+    if (composer) composer.render();
+    else renderer.render(scene, camera);
 }
 animate();
 
