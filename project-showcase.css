@@ -38,3 +38,67 @@
 @media(max-width:390px){.project-preview,.project-card:nth-child(2) .project-preview{aspect-ratio:1.35}.project-preview .preview-index{font-size:8px}.project-actions{gap:16px}}
 @media(hover:none),(pointer:coarse){.project-preview:hover .solar-card-art,.project-preview:hover .enzo-card-art,.project-preview:hover .flow-card-art{transform:none}}
 @media(prefers-reduced-motion:reduce){.project-card,.solar-card-art,.enzo-card-art,.flow-card-art,.preview-corner{transition:none!important}}
+
+/* Premium project-card refinement: consistent cinematic art direction. */
+.projects .project-grid{gap:26px}
+.projects .project-card,.projects .project-card:nth-child(2){
+  grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);
+  min-height:400px;border-radius:18px;
+  background:#111b1e;border:1px solid rgba(184,210,207,.17);
+  box-shadow:0 16px 45px rgba(0,0,0,.14);
+  transition:transform .35s ease,border-color .35s ease,box-shadow .35s ease;
+}
+.projects .project-card:hover,.projects .project-card:focus-within{
+  transform:translateY(-4px);border-color:rgba(185,225,220,.4);
+  box-shadow:0 24px 60px rgba(0,0,0,.28);
+}
+.projects .project-preview,.projects .project-card:nth-child(2) .project-preview{
+  min-height:400px;aspect-ratio:auto;
+}
+.projects .project-preview::before{inset:17px;border-radius:8px;border-color:rgba(235,247,249,.16)}
+.projects .project-preview::after{background:linear-gradient(180deg,rgba(2,8,13,.35),transparent 32%,transparent 65%,rgba(2,8,13,.28))}
+.projects .solar-card-art,.projects .enzo-card-art,.projects .flow-card-art{
+  object-fit:cover;object-position:center center;
+  transform:scale(1.015);
+  transition:transform .7s cubic-bezier(.2,.7,.2,1);
+}
+.projects .project-preview:hover .solar-card-art,
+.projects .project-preview:hover .enzo-card-art,
+.projects .project-preview:hover .flow-card-art{transform:scale(1.065)}
+.projects .project-info,.projects .project-card:nth-child(2) .project-info{
+  padding:clamp(30px,4vw,62px);
+}
+.projects .project-info h3{font-size:clamp(38px,4vw,61px);letter-spacing:-.055em;margin-bottom:20px}
+.projects .project-topline{margin-bottom:32px}
+.projects .project-preview .preview-index{top:35px;left:35px;max-width:calc(100% - 125px)}
+.projects .project-preview .preview-corner{top:28px;right:28px}
+.projects .project-tech span{border-radius:5px;background:rgba(205,235,232,.035)}
+.projects .project-main-link{color:#e7f5f1}
+@media(max-width:1100px){
+  .projects .project-card,.projects .project-card:nth-child(2){grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .projects .project-info,.projects .project-card:nth-child(2) .project-info{padding:34px}
+}
+@media(max-width:940px){
+  .projects .project-card,.projects .project-card:nth-child(2){grid-template-columns:minmax(0,1fr);min-height:0}
+  .projects .project-preview,.projects .project-card:nth-child(2) .project-preview{
+    min-height:0;height:auto;aspect-ratio:16/9;
+  }
+  .projects .project-info,.projects .project-card:nth-child(2) .project-info{padding:35px 38px}
+}
+@media(max-width:600px){
+  .projects .project-grid{gap:19px}
+  .projects .project-card,.projects .project-card:nth-child(2){border-radius:13px}
+  .projects .project-preview,.projects .project-card:nth-child(2) .project-preview{aspect-ratio:1.48}
+  .projects .project-preview::before{inset:12px;border-radius:5px}
+  .projects .project-info,.projects .project-card:nth-child(2) .project-info{padding:28px 24px 30px}
+  .projects .project-info h3{font-size:clamp(36px,9vw,47px)}
+  .projects .project-topline{margin-bottom:23px}
+  .projects .project-preview .preview-index{top:24px;left:24px;max-width:calc(100% - 100px)}
+  .projects .project-preview .preview-corner{top:18px;right:18px}
+}
+@media(hover:none),(pointer:coarse),(prefers-reduced-motion:reduce){
+  .projects .project-card:hover{transform:none}
+  .projects .project-preview:hover .solar-card-art,
+  .projects .project-preview:hover .enzo-card-art,
+  .projects .project-preview:hover .flow-card-art{transform:scale(1.015)}
+}
