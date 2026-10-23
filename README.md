@@ -1,104 +1,43 @@
-**A.J. Ahmed** | **Portfolio**
+# A.J. Ahmed — Creative Development
 
-Welcome to my personal portfolio, where I showcase my journey in design and development through creativity and code. Each project here represents my effort to bring concepts to life, from the initial design to the final development. Along the way, I’ve continued learning and refining my skills in both design and technology, aiming to create experiences that are both visually appealing and functional. I invite you to explore my work and see how I strive to balance aesthetics with thoughtful development.
+**Design-minded. Code-driven. Always curious.**
 
-✨ **About Me**
+This is my personal portfolio and creative-development playground. I explore the space between design and code—building responsive interfaces, interactive 3D scenes, and browser-based game experiments.
 
-Passionate about integrating advanced technology to create sleek and functional designs, I leverage my understanding of development and UX/UI principles to contribute innovation and aesthetic appeal to each project I work on.
+**[Visit the portfolio →](https://awabja.github.io/)**
 
----
+## Selected work
 
-📁 **Featured Projects**:
+### [Solar System Explorer](https://awabja.github.io/3D%20Navigation%20Bar/index.html)
 
-The homepage includes a dedicated [Projects gallery](https://awabja.github.io/#projects) with demos and source links.
+A 3D experience built with **Three.js, WebGL, and JavaScript**. Travel between the Sun, all eight planets, and Earth's Moon, learn about each body, and take control of a cinematic camera. The textures are procedurally generated, and the experience includes playback controls, adjustable orbital speed, and links to NASA Science.
 
+*Designed for exploration: planetary sizes, distances, and orbital speeds are illustrative, not physically to scale.*
 
-Featured Project: **Landing Page**
+[Explore the source](https://github.com/AwabJa/awabja.github.io/tree/main/3D%20Navigation%20Bar)
 
-A thoughtfully designed and coded landing page created from scratch.
+### [Enzo FPS](https://awabja.github.io/Enzo/index.html)
 
-🛠️ Technologies Used:
+An in-progress first-person shooter experiment built for the browser with **JavaScript and Three.js**. It combines first-person movement, shooting, enemy behaviors, a health display, and survival waves in an evolving 3D arena.
 
-- HTML5
-- CSS3
-- JavaScript
+**Controls:** W/A/S/D to move · Mouse to look · Click to shoot · Space to jump · Shift to sprint · C to crouch.
 
-Key Features:
+*Best played on desktop with a keyboard and mouse. This is a prototype in active development.*
 
-- Clean Design: Focus on simplicity with a modern aesthetic.
-- Responsive Layout: Ensures seamless experience across devices with specific optimizations for mobile screens.
-- Sticky Navigation Bar: A fixed navigation bar that becomes semi-transparent when scrolling, ensuring accessibility.
-- Hero Section with Animated Background: Centralized welcome text, accompanied by an animated background and call-to-action button.
-- Social Media Integration: Direct links to LinkedIn, GitHub, and other platforms with custom SVG icons for branding consistency.
-- Interactive Hover Effects: Links and buttons include hover animations and smooth transitions for a more engaging user experience.
-- Custom Fonts: Use of 'Roboto Mono' for a modern, technical look.
-- Content Security Policy (CSP): Ensures security by limiting external content sources.
-- Optimized for SEO and Accessibility: Features like alt text for links and proper aria-labels for better web accessibility.
+[Explore the source](https://github.com/AwabJa/awabja.github.io/tree/main/Enzo)
 
-Explore the project [Landing Page](https://awabja.github.io/).
+## About this website
 
----
+The portfolio is a responsive, hand-built site using **HTML, CSS, and JavaScript**. It uses a deliberately minimal visual system: considered typography, purposeful motion, lightweight CSS illustrations, accessible navigation, and layouts built for small and large screens.
 
-Featured Project: **3D Navigation Bar**
+It's a living portfolio. I update the projects and refine the experience as I learn.
 
-A dynamic navigation bar featuring clickable, rotating planets, a destination guide, and HTML navigation links for keyboard and touch users.
+## Say hello
 
-🛠️ Technologies Used
+For ideas, projects, or conversations, reach me at **[awabjahmed@gmail.com](mailto:awabjahmed@gmail.com)**.
 
-- JavaScript
-- Three.js
-- HTML/CSS
-- WebGL
-
-Key Features:
-
-- Responsive 3D Design: Smooth, animated transitions with dynamic, clickable elements (planets) that provide intuitive navigation across devices.
-- Interactive User Experience: Each planet in the 3D space is clickable, redirecting users to specific content or external links for a seamless interactive journey.
-- Modern Aesthetics: Visually impactful, leveraging the latest design trends, advanced lighting, and sleek animations.
-
-Explore the project [3D Navigation Bar](https://awabja.github.io/3D%20Navigation%20Bar/index.html)
+You can also find me on [GitHub](https://github.com/AwabJa), [LinkedIn](https://www.linkedin.com/in/awabjahmed/), or [Codecademy](https://www.codecademy.com/profiles/BB99a).
 
 ---
 
-Featured Project: Enzo 3D FPS
-
-This is my first attempt at building a 3D game, currently in its alpha state. The latest build includes a five-elimination challenge, progress HUD, and performance optimizations. Enzo 3D FPS is a simple first-person shooter where I'm learning the basics of movement, shooting, and enemy interactions. I'm growing along with the project, and thought I'd share these early stages.
-
-🛠️ Technologies Used
-
-- JavaScript
-- Three.js
-- HTML/CSS
-- WebGL
-
-Key Features:
-
-- Basic first-person movement controls
-- Shooting mechanics with simple projectiles
-- Enemy AI with surround behaviors
-- 3D environment with interactive elements
-
-🎮 Controls
-
-- C: Crouch
-- W/A/S/D: Move forward/left/backward/right
-- Mouse: Look around
-- Mouse Click: Shoot
-- Spacebar: Jump
-- Shift: Sprint
-
-Explore the project [Enzo FPS](https://awabja.github.io/Enzo/index.html)
-
----
-
-📞 **Get in Touch**
-
-I am always open to discussing new opportunities and projects. If you're looking for someone with a strong background in Information Technology, modern web development, and a passion for elegant design solutions, feel free to reach out!
-
-- Landing Page: [Contact](https://awabja.github.io/)
-
----
-
-📜 **License**
-
-This portfolio and all its contents are All Rights Reserved. It is hosted on GitHub for viewing purposes only and not available for download or reproduction without permission.
+**© A.J. Ahmed. All rights reserved.**
