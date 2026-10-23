@@ -110,7 +110,7 @@ check(world.includes('export function createArcaneWorld') &&
 check(hand.includes('export function createCastingHand') &&
   hand.includes('muzzlePosition') && hand.includes('new GLTFLoader().load(MODEL_URL') &&
   hand.includes('bones.set(obj.name,obj)') && hand.includes('BEND_AXIS') &&
-  !/new THREE\\.(CylinderGeometry|BoxGeometry|IcosahedronGeometry)/.test(hand),
+  !/new THREE\.(CylinderGeometry|BoxGeometry|IcosahedronGeometry)/.test(hand),
   'First-person model must use a real anatomical rig, not fake primitive fingers');
 const modelFile=join(root,'Enzo/assets/models/anatomical-right-hand.glb');
 const modelLicense=join(root,'Enzo/assets/models/RIGHT-HAND-LICENSE.md');
