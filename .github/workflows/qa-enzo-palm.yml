@@ -48,7 +48,7 @@ jobs:
           window.__setMotion=x=>Object.assign(motion,x);
           function animate(now) {
             const delta=Math.min(.05,(now-last)/1000);last=now;
-            hand.update(delta,motion,true);
+            if(!window.__freeze)hand.update(delta,motion,true);
             world.update(delta);
             polish.update(delta);
             renderer.render(scene,camera);
@@ -132,8 +132,9 @@ jobs:
             fs.mkdirSync('.github/previews',{recursive:true});
             const idle=await call('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
             fs.writeFileSync('.github/previews/palm-physics-idle.png',Buffer.from(idle.data,'base64'));
-            await evalJS("window.__setMotion({speed:5.2,strafe:.5,forward:.85,moving:true});window.__hand.addLookImpulse(55,-25);window.__hand.cast();'cast triggered'");
-            await wait(65);
+            // Advance the wrist/finger physics exactly one known simulation frame
+            // and freeze it for visual capture, avoiding variable SwiftShader FPS.
+            await evalJS("window.__freeze=true;window.__setMotion({speed:5.2,strafe:.5,forward:.85,moving:true});window.__hand.addLookImpulse(55,-25);window.__hand.cast();window.__hand.update(.045,{speed:5.2,strafe:.5,forward:.85,moving:true,grounded:true,jumpHeight:0},true);'cast frame';");
             const casting=await evalJS("(()=>{let h=window.__hand,f=h.rig.getObjectByName('Short-lived palm energy flash');return {visible:f.visible,distance:f.getWorldPosition(new h.rig.position.constructor()).distanceTo(h.muzzlePosition()),position:[h.rig.position.x,h.rig.position.y,h.rig.position.z]}})()");
             console.log('PALM WHILE CASTING',JSON.stringify(casting));
             if(!casting.visible||casting.distance>.13||casting.position.some(x=>!Number.isFinite(x)))
@@ -144,7 +145,7 @@ jobs:
             console.log('CAST PNG BYTES:',fs.statSync('.github/previews/palm-physics-casting.png').size);
             console.log('Page exceptions:',JSON.stringify(exceptions));
             await wait(420);
-            const after=await evalJS("(()=>{let h=window.__hand,f=h.rig.getObjectByName('Short-lived palm energy flash');h.reset();return{flashHidden:!f.visible,homeX:h.rig.position.x,homeY:h.rig.position.y}})()");
+            const after=await evalJS("(()=>{let h=window.__hand,f=h.rig.getObjectByName('Short-lived palm energy flash');h.reset();window.__freeze=false;return{flashHidden:!f.visible,homeX:h.rig.position.x,homeY:h.rig.position.y}})()");
             console.log('RESET',JSON.stringify(after));
             if(!after.flashHidden||Math.abs(after.homeX-.49)>.001||Math.abs(after.homeY+.42)>.001)
               throw Error('Springs did not reset '+JSON.stringify(after));
