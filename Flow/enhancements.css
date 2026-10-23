@@ -28,3 +28,6 @@
 .kanban-card .task:active{cursor:grabbing}
 .kanban-toggle{background:#2c2a35;color:#c7c2e8;border:0;border-top:1px solid #494555;padding:10px 12px;text-align:left;font-size:12px;font-weight:600}
 .kanban-toggle:hover,.kanban-toggle:focus-visible{background:#403a58;color:#fff}
+
+/* Hide view controls outside task collections; keep Inbox actions legible. */
+.tabs[hidden],.toolbar-right[hidden]{display:none!important}.inbox-organize{margin-left:auto;border:1px solid #625c79;border-radius:8px;background:#302c3c;color:#d9d4ff;padding:7px 10px;white-space:nowrap}.inbox-organize:hover{background:#433b5c}
