@@ -119,6 +119,22 @@ check(game.includes('createArcaneWorld(scene, renderer)') && game.includes('crea
   'Enzo main loop must load the new world and casting viewmodel');
 check(game.includes('let isGamePaused = true;'), 'Enzo must not simulate behind its start menu');
 check(game.includes('clearTimeout(nextWaveTimer)'), 'Enzo must cancel old wave timers on reset');
+const enzoHtml = readFileSync(join(root, 'Enzo/index.html'), 'utf8');
+const splashCss = readFileSync(join(root, 'Enzo/styles/splash.css'), 'utf8');
+check(existsSync(join(root, 'Enzo/assets/shattered-reach-splash.webp')),
+  'Cinematic Enzo title artwork must exist locally');
+check(!existsSync(join(root, 'Enzo/logo.png')),
+  'The obsolete Enzo splash logo must not return');
+check(enzoHtml.includes('id="howToPlayDialog"') && enzoHtml.includes('id="startButton"') &&
+  enzoHtml.includes('id="menuStatusText"') && enzoHtml.includes('id="howToPlayButton"'),
+  'Splash must retain working Start and How to Play controls');
+check(game.includes("document.addEventListener('pointerlockerror'") &&
+  game.includes('function requestGameplayLock()') && game.includes("helpDialog.showModal()"),
+  'Splash needs working pointer-lock start and accessible How to Play modal');
+check(splashCss.includes('prefers-reduced-motion:reduce') &&
+  splashCss.includes('.enzo-splash .splash-art') &&
+  splashCss.includes('.howto-dialog'),
+  'New splash needs its responsive artwork and reduced-motion menu styles');
 const enzoEnemies = readFileSync(join(root, 'Enzo/src/enemies.js'), 'utf8');
 check(enzoEnemies.includes('enemy.traverse(child =>'),
   'Enzo must dispose meshes in enemy subtrees');
