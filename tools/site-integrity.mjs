@@ -16,7 +16,7 @@ const check = (ok, label) => {
   assertions++;
   if (!ok) problems.push(label);
 };
-const htmlPaths = ['index.html', 'Enzo/index.html', '3D Navigation Bar/index.html'];
+const htmlPaths = ['index.html', 'Enzo/index.html', '3D Navigation Bar/index.html', 'Flow/index.html'];
 
 const scripts = [];
 function walk(dir) {
@@ -87,6 +87,32 @@ for (const path of htmlPaths) {
   }
   seen.add(path);
 }
+
+// FLOW security and data-preservation regression checks.
+const flowHtml = readFileSync(join(root, 'Flow/index.html'), 'utf8');
+const flowApp = readFileSync(join(root, 'Flow/app.js'), 'utf8');
+const flowExport = readFileSync(join(root, 'Flow/enhancements.js'), 'utf8');
+const flowCsp = flowHtml.match(/<meta[^>]*http-equiv="Content-Security-Policy"[^>]*content="([^"]+)"/i)?.[1] || '';
+for (const directive of ["default-src 'self'", "script-src 'self'", "style-src 'self'",
+                         "connect-src 'self'", "object-src 'none'", "base-uri 'self'",
+                         "frame-src 'none'", "form-action 'self'"]) {
+  check(flowCsp.split(';').map(s => s.trim()).includes(directive),
+    'FLOW security policy missing exact directive: ' + directive);
+}
+check(!/<script\\b(?![^>]*\\bsrc=)[^>]*>/i.test(flowHtml),
+  'FLOW must not introduce inline executable scripts');
+check(!/\\b(?:eval|Function)\\s*\\(|\\.innerHTML\\s*=|insertAdjacentHTML|document\\.write/i.test(flowApp + flowExport),
+  'FLOW must not introduce dynamic code execution or HTML injection sinks');
+check(!/FileReader|readAsText|type=["']file|\\.files\\s*\\[/i.test(flowHtml + flowApp + flowExport),
+  'FLOW must remain export-only without file import');
+for (const key of ['flow.tasks.v1', 'flow.projects.v1', 'flow.activity.v1']) {
+  check(flowApp.includes(key) && flowExport.includes(key),
+    'FLOW must preserve existing storage key: ' + key);
+}
+check(flowHtml.includes('id="exportData"') && flowExport.includes('flow-workspace.json'),
+  'FLOW must retain the JSON export control');
+check(!/(?<!\\$)\\$\\([^)]*\\)\\.forEach/.test(flowApp),
+  'FLOW must use querySelectorAll for multi-element iteration');
 
 // The game only generates its ground maps in JS; the original ~35 MB
 // texture pair and the obsolete Moon photo must not silently return.
