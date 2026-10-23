@@ -22,7 +22,7 @@ const HAND_NAMES = ['hand_r','index_01_r','index_02_r','index_03_r',
 const Y_AXIS = new THREE.Vector3(0,1,0);
 const BEND_AXIS = new THREE.Vector3(0,0,1);
 const Z_AXIS=new THREE.Vector3(0,0,1);
-const BASE={x:.49,y:-.42,z:-.62,rx:-.20,ry:.02,rz:-.21};
+const BASE={x:.43,y:-.44,z:-.77,rx:-.12,ry:.02,rz:-.18};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const smoothstep=(a,b,v)=>{const x=clamp((v-a)/(b-a),0,1);return x*x*(3-2*x)};
 const springState=()=>({p:0,v:0});
@@ -407,7 +407,8 @@ export function createCastingHand(camera) {
           .setFromAxisAngle(desiredDirection,-Math.PI*.18);
         wrapper.quaternion.copy(palmRoll.multiply(aimAlignment));
         defaultScale=Math.max(2,Math.min(5,.72/dimension));
-        wrapper.scale.setScalar(defaultScale);
+        // Keep the hand at a restrained first-person scale, not an oversized close-up.
+        wrapper.scale.setScalar(defaultScale*.70);
         wrapper.add(root);
         attachArmor();
         loaded=true;
