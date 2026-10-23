@@ -19,6 +19,17 @@
 
     <a class="back-link" href="/">← Portfolio</a>
     <div id="info">Explore the Sun, eight planets and Earth’s Moon <span>· Not to scale</span></div>
+    <div class="simulation-toolbar" role="group" aria-label="Solar System animation controls">
+      <button id="toggle-motion" type="button" aria-pressed="false" title="Pause planet motion">Ⅱ Pause</button>
+      <label for="orbit-speed">Orbit speed</label>
+      <select id="orbit-speed" aria-label="Orbit animation speed">
+        <option value="0.5">0.5×</option>
+        <option value="1" selected>1×</option>
+        <option value="2">2×</option>
+        <option value="4">4×</option>
+      </select>
+      <button id="reset-view" type="button" title="Return to the full solar system">↶ Overview</button>
+    </div>
     <aside class="planet-guide" aria-label="Choose a solar system body">
       <button id="guide-toggle" type="button" aria-expanded="false" aria-controls="planet-links">Explore the Solar System <span aria-hidden="true">☰</span></button>
       <div id="planet-links" class="planet-links" hidden>
@@ -74,6 +85,6 @@
 
     <!-- Main Script -->
     <script src="js/proceduralTextures.js?v=3"></script>
-    <script src="js/universe.js?v=4"></script>
+    <script src="js/universe.js?v=5"></script>
 </body>
 </html>
