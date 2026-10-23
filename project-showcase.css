@@ -59,3 +59,10 @@
 @media(max-width:940px){.projects .project-card,.projects .project-card:nth-child(2){grid-template-columns:minmax(0,1fr);min-height:0}.projects .project-preview,.projects .project-card:nth-child(2) .project-preview{height:auto;min-height:0;aspect-ratio:16/9}.projects .project-info h3{min-height:0;font-size:clamp(40px,6vw,56px)}.projects .project-info>p:not(.project-note){min-height:0}.projects .project-actions{margin-top:28px}}
 @media(max-width:600px){.projects .project-grid{gap:18px}.projects .project-card,.projects .project-card:nth-child(2){border-radius:12px}.projects .project-preview,.projects .project-card:nth-child(2) .project-preview{aspect-ratio:1.48}.projects .project-info,.projects .project-card:nth-child(2) .project-info{padding:28px 24px 30px}.projects .project-info h3{font-size:clamp(36px,9vw,47px)}.projects .project-preview::before{inset:12px}}
 @media(hover:none),(pointer:coarse),(prefers-reduced-motion:reduce){.projects .project-card:hover{transform:none}.projects .project-preview:hover .solar-card-art,.projects .project-preview:hover .enzo-card-art,.projects .project-preview:hover .flow-card-art{transform:scale(1.01)}}
+
+/* Enzo: match the same clean media window used by Solar and FLOW.
+   Neutralize legacy decorative scene overlays from styles.css. */
+.projects .enzo-preview::before{top:17px;left:17px;right:17px;bottom:17px;height:auto;box-shadow:none;background:transparent;border:1px solid #e8f4e318;border-radius:8px}
+.projects .enzo-preview::after{inset:0;background:linear-gradient(180deg,#07101138,transparent 28%,transparent 78%,#07101128)}
+.projects .enzo-preview .enzo-card-art{inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;transform:scale(1.01)}
+@media(max-width:600px){.projects .enzo-preview::before{inset:12px}}
