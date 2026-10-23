@@ -76,3 +76,10 @@
    The shared cover rule was cropping the title and planets in narrower cards. */
 .solar-preview{background:#050913}
 .solar-preview .solar-card-art{object-fit:contain;object-position:center center}
+
+/* Consistent desktop project layout: preview left, details right for every card. */
+@media(min-width:941px){
+ .project-card:nth-child(2){grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr)}
+ .project-card:nth-child(2) .project-preview{order:0}
+ .project-card:nth-child(2) .project-info{order:1}
+}
