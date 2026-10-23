@@ -75,10 +75,10 @@ function animate() {
     previousTime = currentTime;
     if (!isGamePaused && !document.hidden) {
 
-        movement.updateMovement(delta);
+        const motion = movement.updateMovement(delta);
         updateEnemies(scene, delta, camera.position);
         shooting.update(delta);
-        hand.update(delta, movement.isMoving(), true);
+        hand.update(delta, motion.moving, true);
         world.update(delta);
         updateSurvival(delta);
     }
