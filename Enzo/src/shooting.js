@@ -48,10 +48,13 @@ function performRaycastShooting(scene, origin, direction) {
 
     if (intersects.length > 0) {
         const hitPoint = intersects[0].point;
-        const hitObject = intersects[0].object;
+        // The red eye and armor are child meshes. Resolve every child hit
+        // back to its registered enemy root before applying damage.
+        const roots = new Set(shootableObjects);
+        let hitObject = intersects[0].object;
+        while (hitObject && !roots.has(hitObject)) hitObject = hitObject.parent;
 
-        // Handle the hit
-        handleProjectileHit(scene, hitObject);
+        if (hitObject) handleProjectileHit(scene, hitObject);
 
         // Create a visual bullet that stops at the hit point
         createVisualBullet(scene, origin, direction, hitPoint);
@@ -73,16 +76,15 @@ function handleProjectileHit(scene, hitObject) {
 
     if (!enemyFound) {
         debugLog('Enemy not found or already marked for removal.');
-    } else if (enemyFound.health <= 0) {
-        debugLog('Enemy fully removed.');
     }
 }
 
-// Create a visual bullet (green sphere)
+// Share GPU resources between shots instead of allocating new sphere meshes
+// and materials for every bullet. Each shot still has its own object/position.
+const bulletGeometry = new THREE.SphereGeometry(0.04, 8, 6);
+const bulletMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
 function createVisualBullet(scene, origin, direction, hitPoint = null) {
-    const geometry = new THREE.SphereGeometry(0.04, 16, 16); // Green sphere
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // Green color
-    const visualBullet = new THREE.Mesh(geometry, material);
+    const visualBullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
 
     visualBullet.position.copy(origin);
     scene.add(visualBullet);
