@@ -369,20 +369,17 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-// Do not enter an FPS with an invisible hand or pretend a missing 3D model
-// is ready. The actual CC0 skinned hand must load before Start becomes active.
-startButton.disabled = true;
-setMenuStatus('LOADING ANATOMICAL GAUNTLET…');
-hand.ready.then(info=>{
-    const supported=typeof renderer.domElement.requestPointerLock === 'function';
-    startButton.disabled=!supported;
-    window.dispatchEvent(new Event('enzo:boot-ready'));
-    setMenuStatus(supported
-      ? 'GAUNTLET ONLINE / THE SHATTERED REACH IS READY'
-      : 'DESKTOP BROWSER WITH MOUSE CONTROL REQUIRED');
-}).catch(error=>{
-    window.dispatchEvent(new CustomEvent('enzo:boot-error',{detail:'HAND ASSET FAILED — RELOAD OR CHECK CONNECTION'}));
-    console.error('The anatomical hand could not load:',error);
-    startButton.disabled=true;
-    setMenuStatus('HAND ASSET FAILED TO LOAD — RELOAD TO TRY AGAIN');
+// Never block the whole game on a cosmetic hand model. If the asset fails,
+// gameplay and mouse capture still work; the model can be repaired separately.
+startButton.disabled = false;
+setMenuStatus('READY TO PLAY / LOADING GAUNTLET IN BACKGROUND…');
+window.dispatchEvent(new Event('enzo:boot-ready'));
+Promise.race([
+    hand.ready,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Hand load timed out')), 10000))
+]).then(() => {
+    if (!gameStarted) setMenuStatus('GAUNTLET ONLINE / READY TO PLAY');
+}).catch(error => {
+    console.error('Optional hand model failed to load:', error);
+    if (!gameStarted) setMenuStatus('READY TO PLAY / GAUNTLET UNAVAILABLE');
 });
