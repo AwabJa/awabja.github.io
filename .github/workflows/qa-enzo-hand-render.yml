@@ -40,6 +40,7 @@ jobs:
           let ready=false;
           hand.ready.then(details=>{
              document.querySelector('#status').textContent='RIGGED MODEL READY / '+details.bones+' BONES';
+             window.__handDebug=details;
              ready=true;
           }).catch(err=>{document.querySelector('#status').textContent='MODEL FAILED / '+err.message;});
           function draw(){
@@ -115,6 +116,7 @@ jobs:
           await page.waitForTimeout(600);
           await page.screenshot({path:'Enzo/assets/hand-qa-preview.png'});
           console.log('MODEL FINAL STATUS:',status);
+          console.log('MODEL BONE METRICS:',JSON.stringify(await page.evaluate(()=>window.__handDebug||null)));
           await browser.close();
           if(!status.startsWith('RIGGED MODEL READY')) {
             throw new Error('Failed to show actual skinned hand: '+status);
