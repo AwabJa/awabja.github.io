@@ -92,33 +92,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  for (const card of document.querySelectorAll('.project-card')) {
-    const preview = card.querySelector('.project-preview');
-    if (!preview) continue;
-
-    let pointerRaf = 0;
-    let pointX = 0, pointY = 0;
-    const updateHighlight = () => {
-      const cardRect = card.getBoundingClientRect();
-      const previewRect = preview.getBoundingClientRect();
-      card.style.setProperty('--spot-x', Math.round(pointX - cardRect.left) + 'px');
-      card.style.setProperty('--spot-y', Math.round(pointY - cardRect.top) + 'px');
-      preview.style.setProperty('--preview-x', Math.round(pointX - previewRect.left) + 'px');
-      preview.style.setProperty('--preview-y', Math.round(pointY - previewRect.top) + 'px');
-      pointerRaf = 0;
-    };
-    card.addEventListener('pointermove', event => {
-      pointX = event.clientX;
-      pointY = event.clientY;
-      if (!pointerRaf) pointerRaf = requestAnimationFrame(updateHighlight);
-    }, {passive: true});
-    card.addEventListener('pointerleave', () => {
-      cancelAnimationFrame(pointerRaf);
-      pointerRaf = 0;
-      card.style.removeProperty('--spot-x');
-      card.style.removeProperty('--spot-y');
-      preview.style.removeProperty('--preview-x');
-      preview.style.removeProperty('--preview-y');
-    });
-  }
 });
