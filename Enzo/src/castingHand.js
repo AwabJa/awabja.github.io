@@ -341,58 +341,111 @@ export function createCastingHand(camera) {
     },undefined,error=>reject(error));
   });
 
-  function cast(){
-    shotTime=0;
-    return loaded;
+  function addLookImpulse(dx,dy){
+    if(!loaded)return;
+    // Mouse controls the aim directly; only the hand responds with inertia.
+    secondary.lookX.v+=clamp(dx,-75,75)*-.031;
+    secondary.lookY.v+=clamp(dy,-75,75)*.023;
+    secondary.lookRoll.v+=clamp(dx,-75,75)*.055;
+    secondary.lookX.v=clamp(secondary.lookX.v,-4,4);
+    secondary.lookY.v=clamp(secondary.lookY.v,-3,3);
+    secondary.lookRoll.v=clamp(secondary.lookRoll.v,-6,6);
   }
 
-  function update(delta,moving=false,active=true){
+  function cast(){
+    if(!loaded)return false;
+    shotTime=0;
+    // Impulse first affects the wrist; finger joints follow in sequence.
+    secondary.kick.v+=3.75;
+    secondary.strike.v+=5.8;
+    return true;
+  }
+
+  function update(delta,movement=false,active=true){
     if(!active)return;
-    const dt=Math.max(0,Math.min(.06,delta));
+    const dt=clamp(delta,0,.05);
     time+=dt;
     shotTime+=dt;
-    const t=Math.max(0,Math.min(1,shotTime/.32));
-    const impulse=Math.sin(Math.min(1,t)*Math.PI);
-    const release=Math.max(0,1-shotTime/.11);
-    const walk=moving?.016:.007;
+    const state=movement&&typeof movement==='object'?movement:{
+      moving:Boolean(movement),speed:movement?4:0,sprinting:false,
+      grounded:true,strafe:0,forward:0,jumpHeight:0,verticalSpeed:0
+    };
+    const speed=clamp(state.speed||0,0,8);
+    const locomotion=clamp(speed/7,0,1);
+    const moving=speed>.4;
+    const pacing=state.sprinting?11.8:8.3;
+    const gait=Math.sin(time*pacing);
+    const stride=Math.sin(time*pacing*2);
+    const bob=moving?locomotion:0;
+
+    // Landing is a delayed weight shift. No camera shake or altered aim.
+    if(!previousGrounded&&state.grounded){
+      secondary.height.v-=1.0;
+      secondary.pitch.v+=.70;
+    }
+    if(previousGrounded&&!state.grounded)secondary.height.v+=.38;
+    previousGrounded=Boolean(state.grounded);
+
+    settle(secondary.lookX,0,16,dt);
+    settle(secondary.lookY,0,17,dt);
+    settle(secondary.lookRoll,0,15,dt);
+    settle(secondary.side,clamp(state.strafe||0,-1,1)*-.018+gait*bob*.006,13,dt);
+    settle(secondary.height,(moving?Math.abs(stride)*bob*.015:0)-
+      (state.jumpHeight||0)*.018,13,dt);
+    settle(secondary.tilt,clamp(state.strafe||0,-1,1)*-.046,11,dt);
+    settle(secondary.pitch,(state.sprinting?-.06:0)+
+      clamp(state.forward||0,-1,1)*-.025,12,dt);
+    settle(secondary.kick,0,23,dt);
+    settle(secondary.strike,0,28,dt);
+
     rig.position.set(
-      .49-.048*impulse+Math.sin(time*(moving?7.7:2.2))*.006,
-      -.42+Math.cos(time*(moving?9.0:2.6))*walk+.023*impulse,
-      -.62-.14*impulse
+      BASE.x+secondary.side.p+secondary.lookX.p,
+      BASE.y+secondary.height.p+secondary.lookY.p+
+        (moving?gait*bob*.005:Math.sin(time*1.35)*.004),
+      BASE.z-secondary.kick.p*.85-(state.sprinting&&moving?.055:0)
     );
     rig.rotation.set(
-      -.13-.22*impulse,
-      .02+.09*impulse,
-      -.21-.105*impulse+Math.sin(time*1.3)*.009
+      BASE.rx+secondary.pitch.p-secondary.strike.p*.90-secondary.lookY.p*.8,
+      BASE.ry+secondary.lookX.p*.9+Math.sin(time*.8)*.006,
+      BASE.rz+secondary.tilt.p+secondary.lookRoll.p*.9+
+        secondary.strike.p*.19
     );
 
-    if(loaded) {
-      // Bone-space finger rotations preserve skinning and original anatomy.
-      // Release: fan open -> brief follow-through -> settle to curved rest.
+    if(loaded){
+      // Proximal finger joints lead; middle and distal joints follow later.
+      // The open palm leads the energy release, then the fingers curl back.
       for(const [name,bone] of bones){
         if(name==='hand_r')continue;
-        const factor=name.startsWith('thumb')?.70:
-          name.startsWith('index')?.84:
-          name.startsWith('middle')?1.0:
-          name.startsWith('ring')?.88:.80;
-        const segment=name.includes('_01_')?.57:name.includes('_02_')?.91:1.15;
-        const spring=(Math.sin(time*1.45+factor*2)*.012);
-        const curl=(.08+impulse*.24-release*.37+spring)*factor*segment;
-        curlQuaternion.setFromAxisAngle(BEND_AXIS,curl);
+        const finger=name.split('_')[0];
+        const part=name.includes('_01_')?1:name.includes('_02_')?2:3;
+        const delay=(part-1)*.017+(finger==='pinky'?.025:finger==='ring'?.015:0);
+        const age=shotTime-delay;
+        const open=age>=0?1-smoothstep(.015,.13,age):0;
+        const follow=age>=0?
+          smoothstep(.09,.17,age)*(1-smoothstep(.19,.34,age)):0;
+        const strength=finger==='thumb'?.65:finger==='pinky'?.79:1;
+        const joint=part===1?.59:part===2?.91:1.16;
+        const target=(.12-open*.26+follow*.13+
+          .014*Math.sin(time*1.4+part*.45))*strength*joint;
+        const fingerSpring=fingerSprings.get(name);
+        settle(fingerSpring,target,part===1?24:part===2?21:18,dt);
+        curlQuaternion.setFromAxisAngle(BEND_AXIS,fingerSpring.p);
         bone.quaternion.copy(bind.get(name)).multiply(curlQuaternion);
       }
+      // The muzzle and FX follow the current wrist/finger pose every frame.
+      alignPalmFx();
     }
-    const activeFlash=loaded&&shotTime<.22;
-    fx.visible=activeFlash;
-    if(activeFlash){
-      const flashAge=Math.max(0,Math.min(1,shotTime/.22));
-      const flicker=Math.sin(flashAge*Math.PI);
-      flash.scale.setScalar(.10+flashAge*.24);
-      flashMaterial.opacity=.72*flicker;
-      streaks.rotation.z+=dt*9;
-      streaks.scale.setScalar(.55+flashAge*1.6);
-      streakMaterial.opacity=.68*flicker;
-      castLight.intensity=1.35*flicker;
+
+    const visible=loaded&&shotTime<.18;
+    fx.visible=visible;
+    if(visible){
+      const u=clamp(shotTime/.18,0,1),brightness=Math.sin(u*Math.PI);
+      flash.scale.setScalar(.12+u*.19);
+      flashMaterial.opacity=.62*brightness;
+      streaks.rotation.z+=dt*8;
+      streaks.scale.setScalar(.60+u*.98);
+      streakMaterial.opacity=.48*brightness;
+      castLight.intensity=.95*brightness;
     }else{
       flashMaterial.opacity=0;
       streakMaterial.opacity=0;
@@ -402,27 +455,25 @@ export function createCastingHand(camera) {
 
   function muzzlePosition(){
     camera.updateMatrixWorld(true);
-    if(loaded&&distalBone) {
-      const point=distalBone.getWorldPosition(new THREE.Vector3());
-      const forward=camera.getWorldDirection(new THREE.Vector3());
-      return point.addScaledVector(forward,.075);
-    }
-    return rig.localToWorld(castOrigin.clone());
+    const origin=palmWorldPosition(new THREE.Vector3());
+    const forward=camera.getWorldDirection(new THREE.Vector3());
+    return origin.addScaledVector(forward,.045);
   }
 
   function reset(){
-    time=0;shotTime=10;
-    rig.position.set(.49,-.42,-.62);
-    rig.rotation.set(-.13,.02,-.21);
+    time=0;shotTime=10;previousGrounded=true;
+    rig.position.set(BASE.x,BASE.y,BASE.z);
+    rig.rotation.set(BASE.rx,BASE.ry,BASE.rz);
+    for(const spring of Object.values(secondary)){spring.p=0;spring.v=0;}
+    for(const spring of fingerSprings.values()){spring.p=0;spring.v=0;}
     for(const [name,bone] of bones)bone.quaternion.copy(bind.get(name));
-    castLight.intensity=0;
-    fx.visible=false;
-    flashMaterial.opacity=0;
-    streakMaterial.opacity=0;
+    castLight.intensity=0;fx.visible=false;
+    flashMaterial.opacity=0;streakMaterial.opacity=0;
+    if(loaded)alignPalmFx();
   }
 
   return {
-    rig,ready,cast,update,muzzlePosition,reset,
+    rig,ready,cast,update,muzzlePosition,reset,addLookImpulse,
     isReady:()=>loaded
   };
 }
