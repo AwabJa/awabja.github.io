@@ -70,9 +70,12 @@ jobs:
           src=src.replace(
             'https://unpkg.com/three@0.128.0/build/three.module.js',
             '../local-test/build/three.module.js')
-          src=src.replace(
-            'https://unpkg.com/three@0.128.0/examples/jsm/loaders/GLTFLoader.js',
-            '../local-test/examples/jsm/loaders/GLTFLoader.js')
+          src=src.replace("from './vendor/GLTFLoader.js'",
+            "from './vendor/GLTFLoader.js'")
+          vendor=Path('Enzo/src/vendor/GLTFLoader.js')
+          vendor.write_text(vendor.read_text().replace(
+            'https://unpkg.com/three@0.128.0/build/three.module.js',
+            '../../local-test/build/three.module.js'))
           Path('Enzo/src/castingHand-preview.js').write_text(src)
           p=Path('Enzo/hand-review.html')
           text=p.read_text().replace(
