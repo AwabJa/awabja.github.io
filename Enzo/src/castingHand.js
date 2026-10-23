@@ -187,6 +187,57 @@ export function createCastingHand(camera) {
     sleeve.add(strip);
   }
 
+  // Layered articulated armor follows the actual anatomical finger bones.
+  // Each plate is parented to its finger segment so casting stays articulated.
+  const armorSteel=new THREE.MeshPhysicalMaterial({
+    color:0x283541,metalness:.78,roughness:.3,clearcoat:.24,
+    clearcoatRoughness:.22,side:THREE.DoubleSide
+  });
+  const armorEdge=new THREE.MeshStandardMaterial({
+    color:0x8398a8,metalness:.85,roughness:.26,side:THREE.DoubleSide
+  });
+  const armorGlow=new THREE.MeshStandardMaterial({
+    color:0x135b87,emissive:0x168dcc,emissiveIntensity:.65,
+    metalness:.42,roughness:.34
+  });
+  const armorPieces=[];
+  function attachArmor(root){
+    const fingerNames=['index','middle','ring','pinky'];
+    for(const finger of fingerNames){
+      for(let segment=1;segment<=3;segment++){
+        const bone=bones.get(finger+'_0'+segment+'_r');
+        if(!bone)continue;
+        const next=segment<3?bones.get(finger+'_0'+(segment+1)+'_r'):null;
+        const start=bone.getWorldPosition(new THREE.Vector3());
+        const end=next?next.getWorldPosition(new THREE.Vector3()):
+          start.clone().add(new THREE.Vector3(0,.035,0));
+        const len=Math.max(.018,Math.min(.095,start.distanceTo(end)*.78));
+        const plate=new THREE.Mesh(new THREE.BoxGeometry(.032,len,.014),armorSteel);
+        plate.name=finger+' articulated armor '+segment;
+        // Finger bones carry their own local axes; keep plates small and offset
+        // from the skin to avoid rigid block fingers.
+        plate.position.set(0,len*.38,.013);
+        plate.geometry.translate(0,0,.001);
+        bone.add(plate);armorPieces.push(plate);
+        const edge=new THREE.Mesh(new THREE.BoxGeometry(.025,.006,.016),armorEdge);
+        edge.position.set(0,len*.62,.014);
+        bone.add(edge);armorPieces.push(edge);
+      }
+    }
+    const wrist=bones.get('hand_r');
+    if(wrist){
+      const crest=new THREE.Mesh(
+        new THREE.BoxGeometry(.115,.12,.016),armorSteel);
+      crest.name='Floating articulated dorsal armor';
+      crest.position.set(0,.095,.028);
+      wrist.add(crest);armorPieces.push(crest);
+      const rune=new THREE.Mesh(
+        new THREE.BoxGeometry(.014,.07,.019),armorGlow);
+      rune.position.set(0,.095,.039);
+      wrist.add(rune);armorPieces.push(rune);
+    }
+  }
+
   // The pulse is placed relative to the loaded palm instead of an arbitrary
   // fixed HUD coordinate. It stays completely hidden between shots.
   const fx=new THREE.Group();
@@ -338,6 +389,7 @@ export function createCastingHand(camera) {
         defaultScale=Math.max(2,Math.min(5,.72/dimension));
         wrapper.scale.setScalar(defaultScale);
         wrapper.add(root);
+        attachArmor(root);
         loaded=true;
         rig.updateMatrixWorld(true);
         // Recompute from the actual palm bones on every update.
