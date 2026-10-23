@@ -1,5 +1,5 @@
 import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
-import { GLTFLoader } from 'https://unpkg.com/three@0.128.0/examples/jsm/loaders/GLTFLoader.js';
+import { GLTFLoader } from './vendor/GLTFLoader.js';
 
 /**
  * ENZO / The Shattered Reach — FIRST-PERSON HAND 2.0
