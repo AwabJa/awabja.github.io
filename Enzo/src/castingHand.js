@@ -55,7 +55,7 @@ function makeFabric() {
 export function createCastingHand(camera) {
   const rig=new THREE.Group();
   rig.name='First-person anatomical right hand / CC0 skinned model';
-  rig.position.set(.32,-.35,-.72);
+  rig.position.set(.32,-.27,-.68);
   rig.rotation.set(-.13,.02,-.21);
   camera.add(rig);
 
@@ -119,7 +119,7 @@ export function createCastingHand(camera) {
 
   // Wrist detail is one contoured cuff, not an entire hand made of primitives.
   const bracelet=new THREE.Mesh(new THREE.TorusGeometry(.16,.021,10,64),steel);
-  bracelet.position.set(.065,-.24,.025);
+  bracelet.position.set(.025,-.10,.015);
   bracelet.rotation.set(.12,.35,.08);
   bracelet.renderOrder=905;
   rig.add(bracelet);
@@ -177,25 +177,26 @@ export function createCastingHand(camera) {
         const axis=fingerPosition.clone().sub(wristPosition).normalize();
         if(axis.lengthSq()<.01)throw new Error('Unusable anatomical hand rig');
 
-        const bounds=new THREE.Box3().setFromObject(root);
-        const center=bounds.getCenter(new THREE.Vector3());
-        const extent=bounds.getSize(new THREE.Vector3());
-        const dimension=Math.max(extent.x,extent.y,extent.z);
-        if(!Number.isFinite(dimension)||dimension<=.01)
-          throw new Error('Anatomical hand bounds invalid');
-
-        // Center the *loaded* artwork and fit its real dimensions to the
-        // viewmodel. This leaves the imported skinned skeleton intact.
-        root.position.sub(center);
+        // A SkinnedMesh's unanimated geometry bounding box is NOT a reliable
+        // location for posed/skinned geometry. The authored GLB has negative
+        // scale on the skeleton root; using the geometry center pushed the
+        // visible hand out of the camera frustum. Anchor to actual wrist bone.
+        const tip=bones.get('middle_03_r').getWorldPosition(new THREE.Vector3());
+        const dimension=tip.distanceTo(wristPosition);
+        if(!Number.isFinite(dimension)||dimension<=.035)
+          throw new Error('Anatomical hand bone span invalid');
+        root.position.sub(wristPosition);
         wrapper.quaternion.setFromUnitVectors(axis,desiredDirection);
-        defaultScale=.61/dimension;
+        defaultScale=Math.max(2,Math.min(5,.54/dimension));
         wrapper.scale.setScalar(defaultScale);
         wrapper.add(root);
         activeModel=root;
         distalBone=bones.get('middle_03_r')||bones.get('middle_02_r');
         loaded=true;
         rig.updateMatrixWorld(true);
-        resolve({meshCount:handMeshes,bones:bones.size,dimension});
+        resolve({meshCount:handMeshes,bones:bones.size,dimension,
+          wrist:[wristPosition.x,wristPosition.y,wristPosition.z],
+          boneScale:defaultScale});
       }catch(error){
         reject(error);
       }
@@ -218,8 +219,8 @@ export function createCastingHand(camera) {
     const walk=moving?.016:.007;
     rig.position.set(
       .32-.048*impulse+Math.sin(time*(moving?7.7:2.2))*.006,
-      -.35+Math.cos(time*(moving?9.0:2.6))*walk+.023*impulse,
-      -.72-.14*impulse
+      -.27+Math.cos(time*(moving?9.0:2.6))*walk+.023*impulse,
+      -.68-.14*impulse
     );
     rig.rotation.set(
       -.13-.22*impulse,
