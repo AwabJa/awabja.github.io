@@ -82,8 +82,9 @@ const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerH
 camera.position.set(0, 220, 420);
 camera.lookAt(scene.position);
 
+const compactScreen = window.matchMedia('(max-width: 700px)').matches;
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, compactScreen ? 1.35 : 1.75));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -100,36 +101,21 @@ let controls = null;
 if (typeof THREE.OrbitControls === 'function') {
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.09;
-    controls.minDistance = 7; // Enable genuinely close inspection of the Moon and smaller planets
+    controls.dampingFactor = 0.075;
+    controls.rotateSpeed = 0.55;
+    controls.zoomSpeed = 0.72;
+    controls.panSpeed = 0.55;
+    controls.minDistance = 12;
     controls.maxDistance = 1400;
-    controls.enablePan = false;
-    controls.rotateSpeed = 0.48;
-    controls.zoomSpeed = 0.75;
-    controls.minPolarAngle = 0.09;
-    controls.maxPolarAngle = Math.PI - 0.09;
+    controls.minPolarAngle = 0.05;
+    controls.maxPolarAngle = Math.PI - 0.05;
+    controls.enablePan = true;
     controls.target.set(0, 0, 0);
-    controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.12; // gentle idle drift; feels alive without being distracting
+    // Never resume autonomous camera rotation after the user has taken control.
+    controls.autoRotate = false;
     controls.update();
-
-    // Pause auto-rotate while the user is actively interacting, resume after a short idle period
-    let idleTimer = null;
-    const pauseAutoRotate = () => {
-        if (typeof cancelCameraFlight === 'function') cancelCameraFlight();
-        controls.autoRotate = false;
-        clearTimeout(idleTimer);
-        idleTimer = setTimeout(() => { if (!focusActive && !prefersReducedMotion) controls.autoRotate = true; }, 8000);
-    };
-    renderer.domElement.addEventListener('pointerdown', pauseAutoRotate);
-    renderer.domElement.addEventListener('wheel', pauseAutoRotate, { passive: true });
 } else {
-    console.error(
-        '[universe.js] THREE.OrbitControls was not found — the OrbitControls.js ' +
-        '<script> tag likely failed to load (check the Network tab for a 404 or ' +
-        'blocked request). Camera dragging/zoom will be disabled, but the rest ' +
-        'of the scene will still run.'
-    );
+    console.warn('[Solar System] OrbitControls unavailable; using simple camera fallback.');
 }
 
 /* ---------------------------------------------------------------------- */
@@ -445,7 +431,7 @@ scene.add(nebulaPlane);
 
 let composer = null;
 try {
-    if (typeof THREE.EffectComposer === 'function' && typeof THREE.UnrealBloomPass === 'function') {
+    if (!compactScreen && typeof THREE.EffectComposer === 'function' && typeof THREE.UnrealBloomPass === 'function') {
         composer = new THREE.EffectComposer(renderer);
         composer.addPass(new THREE.RenderPass(scene, camera));
 
@@ -549,10 +535,10 @@ let focusTransition = false;
 let trackedPosition = null;
 let cameraFlight = null;
 let simulationTime = 0;
-let simulationPlaying = true;
+let simulationPlaying = !prefersReducedMotion;
 let speedMultiplier = 1;
 let previousFrameTime = null;
-const EASE = t => t * t * (3 - 2 * t);
+const EASE = t => t * t * t * (t * (t * 6 - 15) + 10); // smooth acceleration and deceleration
 const flightDuration = prefersReducedMotion ? 0 : 2.0;
 const centerOffset = new THREE.Vector3(0, 0, 0);
 const tempMovement = new THREE.Vector3();
@@ -561,29 +547,43 @@ function cancelCameraFlight() {
     if (!cameraFlight) return;
     cameraFlight = null;
     focusTransition = false;
+    if (controls) controls.enableDamping = true;
 }
-function startCameraFlight(targetPosition, radius, duration = flightDuration) {
+function startCameraFlight(targetPosition, radius, duration = null) {
     const away = camera.position.clone().sub(targetPosition);
     if (away.lengthSq() < 0.01) away.set(0, .3, 1);
     away.normalize();
-    // Don't fly toward a world from behind its surface or through the Sun.
-    const distance = Math.max(radius * 3.8, 13);
+    const distance = Math.max(radius * (selectedBody?.name === 'Saturn' ? 5.2 : 3.8), 13);
     const destinationOffset = away.multiplyScalar(distance);
     destinationOffset.y += Math.max(1.5, radius * .35);
     const absoluteDestination = targetPosition.clone().add(destinationOffset);
+    const travelDistance = camera.position.distanceTo(absoluteDestination);
+    const seconds = duration === null
+        ? (prefersReducedMotion ? 0 : Math.max(1.45, Math.min(3.1, 1.45 + travelDistance * 0.0022)))
+        : duration;
     cameraFlight = {
         elapsed: 0,
-        duration,
+        duration: seconds,
         positionStart: camera.position.clone(),
         targetStart: controls ? controls.target.clone() : new THREE.Vector3(),
         destinationOffset,
-        targetPosition: targetPosition.clone()
+        targetPosition: targetPosition.clone(),
+        arcHeight: Math.min(70, travelDistance * .12)
     };
-    if (duration === 0) {
+    if (controls) {
+        controls.enableDamping = false; // Remove residual inertia during camera tween.
+        controls.autoRotate = false;
+        controls.minDistance = Math.max(7, radius * 1.35);
+    }
+    if (seconds === 0) {
         camera.position.copy(absoluteDestination);
-        if (controls) controls.target.copy(targetPosition);
-        else camera.lookAt(targetPosition);
+        if (controls) {
+            controls.target.copy(targetPosition);
+            controls.update();
+            controls.enableDamping = true;
+        } else camera.lookAt(targetPosition);
         cameraFlight = null;
+        focusTransition = false;
     }
 }
 const ALL_BODIES = new Map([
@@ -625,13 +625,23 @@ function resetOverview() {
             positionStart: camera.position.clone(),
             targetStart: controls ? controls.target.clone() : new THREE.Vector3(),
             destinationPosition: overviewPosition.clone(),
-            targetPosition: overviewTarget.clone()
+            targetPosition: overviewTarget.clone(),
+            arcHeight: Math.min(60, camera.position.distanceTo(overviewPosition) * .1)
         };
+        if (controls) controls.enableDamping = false;
     }
-    if (controls) controls.autoRotate = false;
+    if (controls) {
+        controls.autoRotate = false;
+        controls.minDistance = 12;
+    }
     infoBar.textContent = 'Explore the Sun, eight planets and Earth’s Moon · Not to scale';
 }
 const motionButton = document.getElementById('toggle-motion');
+if (prefersReducedMotion) {
+    motionButton.setAttribute('aria-pressed', 'true');
+    motionButton.textContent = '▶ Play';
+    motionButton.title = 'Resume planet motion';
+}
 motionButton.addEventListener('click', () => {
     simulationPlaying = !simulationPlaying;
     motionButton.setAttribute('aria-pressed', String(!simulationPlaying));
