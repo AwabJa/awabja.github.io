@@ -631,6 +631,18 @@ function resetOverview() {
     if (controls) controls.autoRotate = false;
     infoBar.textContent = 'Explore the Sun, eight planets and Earth’s Moon · Not to scale';
 }
+const motionButton = document.getElementById('toggle-motion');
+motionButton.addEventListener('click', () => {
+    simulationPlaying = !simulationPlaying;
+    motionButton.setAttribute('aria-pressed', String(!simulationPlaying));
+    motionButton.textContent = simulationPlaying ? 'Ⅱ Pause' : '▶ Play';
+    motionButton.title = simulationPlaying ? 'Pause planet motion' : 'Resume planet motion';
+});
+document.getElementById('orbit-speed').addEventListener('change', event => {
+    const value = Number(event.target.value);
+    if ([.5, 1, 2, 4].includes(value)) speedMultiplier = value;
+});
+document.getElementById('reset-view').addEventListener('click', resetOverview);
 document.getElementById('inspector-close').addEventListener('click', closeInspector);
 document.getElementById('inspector-reset').addEventListener('click', resetOverview);
 document.addEventListener('keydown', event => {
