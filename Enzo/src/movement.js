@@ -17,7 +17,8 @@ export function setupMovement(camera) {
   window.addEventListener('blur',()=>keys.clear());
   document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockElement)keys.clear();});
 
-  function updateMovement(delta) {
+  const obstacleCenter=new THREE.Vector3();
+  function updateMovement(delta, colliders=[]) {
     const dt=Math.min(.05,Math.max(0,delta));
     const crouch=keys.has('KeyC');
     const sprint=!crouch&&(keys.has('ShiftLeft')||keys.has('ShiftRight'));
@@ -39,6 +40,25 @@ export function setupMovement(camera) {
     velocity.lerp(wanted,Math.min(1,dt*(moving?9:12)));
 
     camera.position.addScaledVector(velocity,dt);
+    // Collide against actual stone pillar meshes (never the invisible sky/ground).
+    for(const obstacle of colliders){
+      const geo=obstacle.geometry;
+      if(!geo || geo.type!=='BoxGeometry')continue;
+      const dims=geo.parameters;
+      obstacle.getWorldPosition(obstacleCenter);
+      if(obstacleCenter.y-dims.height*.5>1.5)continue;
+      const radius=Math.max(dims.width,dims.depth)*.52+.75;
+      const dx=camera.position.x-obstacleCenter.x;
+      const dz=camera.position.z-obstacleCenter.z;
+      const dist=Math.hypot(dx,dz);
+      if(dist<radius){
+        const nx=dist>.001?dx/dist:1;
+        const nz=dist>.001?dz/dist:0;
+        camera.position.x=obstacleCenter.x+nx*radius;
+        camera.position.z=obstacleCenter.z+nz*radius;
+        velocity.multiplyScalar(.55);
+      }
+    }
     // Stay inside the playable arena; terrain props occupy its outer rim.
     const radial=Math.hypot(camera.position.x,camera.position.z);
     if(radial>77){
