@@ -71,3 +71,8 @@
 @media(max-width:940px){.flow-preview .flow-card-art{object-position:center}}
 @media(hover:none),(pointer:coarse){.flow-preview:hover .flow-card-art{transform:none}}
 @media(prefers-reduced-motion:reduce){.flow-card-art{transition:none!important}}
+
+/* Keep the full 1200×750 Solar System composition visible at every card size.
+   The shared cover rule was cropping the title and planets in narrower cards. */
+.solar-preview{background:#050913}
+.solar-preview .solar-card-art{object-fit:contain;object-position:center center}
