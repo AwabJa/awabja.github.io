@@ -120,6 +120,29 @@ check(!/new THREE\.(RingGeometry|TorusGeometry)/.test(hand) &&
   hand.includes("fx.visible=activeFlash") &&
   hand.includes("fx.position.copy(rig.worldToLocal(palmWorld))"),
   'No persistent floating white ring; palm flash must be bone-aligned and temporary');
+// Hand inertia may affect the viewmodel, never the aim or raycaster.
+const casting = readFileSync(join(root,'Enzo/src/castingHand.js'),'utf8');
+const locomotion = readFileSync(join(root,'Enzo/src/movement.js'),'utf8');
+const shootSource = readFileSync(join(root,'Enzo/src/shooting.js'),'utf8');
+check(casting.includes('function palmWorldPosition(target)') &&
+      casting.includes('palmWorldPosition(new THREE.Vector3())') &&
+      casting.includes('fx.position.copy(rig.worldToLocal(palmCurrent.clone()))') &&
+      !casting.includes('distalBone.getWorldPosition(new THREE.Vector3())'),
+  'Muzzle and casting flash must share the actual palm, not a fingertip/back-of-hand origin');
+check(casting.includes('function settle(s,target,omega,dt)') &&
+      casting.includes('function addLookImpulse(dx,dy)') &&
+      casting.includes('settle(fingerSpring,target') &&
+      casting.includes('secondary.kick.v+=3.75'),
+  'Hand must retain frame-rate-stable wrist inertia and delayed finger recovery');
+check(game.includes('hand.addLookImpulse(event.movementX,event.movementY)') &&
+      game.includes('hand.update(delta, motion, true)') &&
+      locomotion.includes('strafe:velocity.dot(right)') &&
+      shootSource.includes('if(!hand.isReady())return;') &&
+      shootSource.includes('if(hand.cast())spellBolt(scene,start,end,camera)'),
+  'Hand physics and palm shooting must remain connected to live gameplay');
+check(casting.includes('new THREE.CatmullRomCurve3(path)') &&
+      !/new THREE\.(RingGeometry|TorusGeometry)/.test(casting),
+  'Gauntlet forearm details must follow the wrist without recreating floating circles');
 const modelFile=join(root,'Enzo/assets/models/anatomical-right-hand.glb');
 const modelLicense=join(root,'Enzo/assets/models/RIGHT-HAND-LICENSE.md');
 check(existsSync(modelFile),'Skinned CC0 hand GLB must exist locally');
