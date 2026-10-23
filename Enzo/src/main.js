@@ -376,10 +376,12 @@ setMenuStatus('LOADING ANATOMICAL GAUNTLET…');
 hand.ready.then(info=>{
     const supported=typeof renderer.domElement.requestPointerLock === 'function';
     startButton.disabled=!supported;
+    window.dispatchEvent(new Event('enzo:boot-ready'));
     setMenuStatus(supported
       ? 'GAUNTLET ONLINE / THE SHATTERED REACH IS READY'
       : 'DESKTOP BROWSER WITH MOUSE CONTROL REQUIRED');
 }).catch(error=>{
+    window.dispatchEvent(new CustomEvent('enzo:boot-error',{detail:'HAND ASSET FAILED — RELOAD OR CHECK CONNECTION'}));
     console.error('The anatomical hand could not load:',error);
     startButton.disabled=true;
     setMenuStatus('HAND ASSET FAILED TO LOAD — RELOAD TO TRY AGAIN');
