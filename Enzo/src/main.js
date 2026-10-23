@@ -3,6 +3,7 @@
 import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
 import { enemies, createEnemy, updateEnemies, initializeEnemies, clearEnemies } from './enemies.js';
 import { createArcaneWorld } from './arcaneWorld.js';
+import { createWorldPolish } from './worldPolish.js';
 import { createCastingHand } from './castingHand.js';
 import { setupCamera } from './fpsCamera.js';
 import { setupMovement } from './movement.js';
@@ -29,6 +30,7 @@ document.body.appendChild(renderer.domElement);
 
 // Phase 2: a custom arcane sky, volcanic runes, floating ruins and a portal.
 const world = createArcaneWorld(scene, renderer);
+const worldPolish = createWorldPolish(scene, world, renderer);
 const shooting = setupShootingEvents(camera, scene, hand, world.colliders, renderer.domElement);
 
 // Camera and mouse control
@@ -80,6 +82,7 @@ function animate() {
         shooting.update(delta);
         hand.update(delta, motion.moving, true);
         world.update(delta);
+        worldPolish.update(delta);
         updateSurvival(delta);
     }
 
@@ -115,6 +118,11 @@ function showSplashScreen() {
 }
 function showPauseScreen() {
     pauseScreen.classList.add('active');
+    const defeated=health===0;
+    document.getElementById('pauseTitle').innerHTML=defeated?'YOUR LIGHT <em>FADES.</em>':'THE REACH <em>AWAITS.</em>';
+    document.getElementById('pauseDescription').textContent=defeated?'The sentinels overwhelmed your last stand. The Reach will remember.':"Your fight isn't over. Return to the arena when you're ready.";
+    document.getElementById('resumeButton').firstChild.textContent=defeated?'RESTART GAME ':'RESUME GAME ';
+    hideWaveBanner();
     pauseScreen.setAttribute('aria-hidden', 'false');
     document.getElementById('resumeButton').focus({preventScroll:true});
 }
@@ -143,12 +151,14 @@ function requestGameplayLock() {
 }
 function onPointerLockChange() {
     if (document.pointerLockElement === renderer.domElement) {
+        const firstEntry = !gameStarted;
         gameStarted = true;
         isExitingToMenu = false;
         removeSplashScreen();
         hidePauseScreen();
         previousTime = performance.now();
         isGamePaused = false;
+        if(firstEntry) showWaveBanner(wave, 'THE TRIAL BEGINS');
         return;
     }
     isGamePaused = true;
@@ -175,26 +185,8 @@ function onPointerLockError() {
     }
 }
 
-// Function to adjust crosshair size based on viewport
-function adjustCrosshair() {
-    const crosshair = document.getElementById('crosshair');
-    if (crosshair) {
-        const size = Math.min(window.innerWidth, window.innerHeight) * 0.02; // 2% of the smaller dimension
-        crosshair.style.width = `${size}px`;
-        crosshair.style.height = `${size}px`;
-
-        // Adjust inner lines
-        const horizontal = crosshair.querySelector('.horizontal');
-        const vertical = crosshair.querySelector('.vertical');
-        if (horizontal && vertical) {
-            horizontal.style.width = `${size}px`;
-            vertical.style.height = `${size}px`;
-        }
-    }
-}
-
-// Initial call to adjust crosshair
-adjustCrosshair();
+// Reticle dimensions are controlled by responsive CSS, not inline viewport sizing.
+function adjustCrosshair() {}
 
 // Function to reset the game (including enemies)
 let eliminations = 0;
@@ -216,12 +208,12 @@ function updateSurvival(delta) {
         e.object.position.distanceTo(camera.position) < 2.7 + e.role.scale * .6);
     if (hitCooldown === 0 && attacker) {
         health = Math.max(0, health - attacker.role.damage);
-        healthDisplay.textContent = String(health);
+        setHealth(health);
         hitCooldown = 1.2;
         window.dispatchEvent(new Event('enzo:player-hit'));
         announce(health ? 'Under attack! Health: ' + health : 'GAME OVER — Select Restart');
         if (health === 0) {
-            document.getElementById('resumeButton').textContent = 'Restart Game';
+            document.getElementById('resumeButton').firstChild.textContent = 'RESTART GAME ';
             isGamePaused = true;
             if (document.exitPointerLock) document.exitPointerLock();
             showPauseScreen();
@@ -231,24 +223,61 @@ function updateSurvival(delta) {
         nextWavePending = true;
         wave++;
         world.setMood(wave);
-        waveDisplay.textContent = String(wave);
+        worldPolish.setMood(wave);
+        document.getElementById('waveState').textContent = 'NEXT WAVE INBOUND';
+        showWaveBanner(wave, 'SENTINELS APPROACHING');
+        waveDisplay.textContent = String(wave).padStart(2,'0');
         announce('WAVE ' + wave + ' INCOMING');
         nextWaveTimer = setTimeout(() => {
             nextWaveTimer = null;
             if (!nextWavePending) return;
             initializeEnemies(scene, Math.min(4 + wave * 2, 14));
             nextWavePending = false;
+            document.getElementById('waveState').textContent = 'SENTINELS ACTIVE';
         }, 1800);
     }
 }
 const hud = document.getElementById('gameHUD');
 const toast = document.getElementById('gameToast');
-let toastTimer;
-function announce(message) { toast.textContent = message; clearTimeout(toastTimer); toastTimer = setTimeout(() => { toast.textContent = ''; }, 3500); }
+const healthMeter = document.getElementById('healthMeter');
+const healthFill = document.getElementById('healthFill');
+const waveBanner = document.getElementById('waveBanner');
+const waveBannerTitle = document.getElementById('waveBannerTitle');
+const waveBannerSubtitle = document.getElementById('waveBannerSubtitle');
+let toastTimer, bannerTimer;
+function setHealth(value) {
+    const hp=Math.max(0,Math.min(100,value));
+    healthDisplay.textContent=String(hp);
+    document.getElementById('healthPercent').textContent=hp+'%';
+    document.getElementById('healthState').textContent=hp>55?'STABLE':hp>25?'WOUNDED':'CRITICAL';
+    healthFill.style.width=hp+'%';
+    healthMeter.setAttribute('aria-valuenow',String(hp));
+    hud.classList.toggle('is-critical',hp<=25);
+}
+function announce(message) {
+    toast.textContent=message;
+    toast.classList.add('is-visible');
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(()=>{toast.textContent='';toast.classList.remove('is-visible');},2100);
+}
+function hideWaveBanner() {
+    clearTimeout(bannerTimer);
+    waveBanner.classList.remove('is-visible');
+    waveBanner.setAttribute('aria-hidden','true');
+}
+function showWaveBanner(number,subtitle) {
+    hideWaveBanner();
+    waveBannerTitle.textContent='WAVE '+String(number).padStart(2,'0');
+    waveBannerSubtitle.textContent=subtitle;
+    waveBanner.classList.add('is-visible');
+    waveBanner.setAttribute('aria-hidden','false');
+    bannerTimer=setTimeout(hideWaveBanner,2100);
+}
 window.addEventListener('enzo:elimination', () => {
     if (isGamePaused || !document.pointerLockElement) return;
     eliminations++;
     document.getElementById('killCount').textContent = String(eliminations);
+    document.getElementById('killFill').style.width = Math.min(100,eliminations/goal*100)+'%';
     if (eliminations === goal) { document.getElementById('objectiveText').textContent = 'Mission complete — keep surviving!'; announce('MISSION COMPLETE — 5 ELIMINATIONS!'); }
     else if (eliminations < goal) announce('Enemy eliminated! ' + eliminations + '/' + goal);
 });
@@ -260,15 +289,20 @@ function resetGame() {
     health = 100;
     wave = 1;
     world.setMood(1);
+    worldPolish.setMood(1);
     hitCooldown = 0;
     nextWavePending = false;
-    healthDisplay.textContent = '100';
-    waveDisplay.textContent = '1';
+    setHealth(100);
+    waveDisplay.textContent = '01';
+    document.getElementById('waveState').textContent = 'SENTINELS ACTIVE';
     eliminations = 0;
     document.getElementById('killCount').textContent = '0';
+    document.getElementById('killFill').style.width = '0%';
     document.getElementById('objectiveText').textContent = 'Eliminate 5 enemies';
     toast.textContent = '';
-    document.getElementById('resumeButton').textContent = 'Resume Game';
+    toast.classList.remove('is-visible');
+    hideWaveBanner();
+    document.getElementById('resumeButton').firstChild.textContent = 'RESUME GAME ';
     // Clear effects, inputs and enemies so a new run always starts cleanly.
     shooting.reset();
     hand.reset();
