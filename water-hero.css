@@ -79,8 +79,20 @@
   opacity:0;
   transition:opacity .35s ease;
 }
+.water-spray-canvas{
+  position:absolute;
+  inset:0;
+  z-index:3;
+  display:block;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .35s ease;
+}
 .water-stage.is-water-running .water-art-fallback{opacity:0}
 .water-stage.is-water-running .water-canvas{opacity:1}
+.water-stage.is-water-running .water-spray-canvas{opacity:1}
 .water-coordinate{
   position:absolute;
   z-index:4;
@@ -178,6 +190,6 @@
     animation:none!important;
   }
   .water-ambient{animation:none!important}
-  .water-canvas{display:none!important}
+  .water-canvas,.water-spray-canvas{display:none!important}
   .water-art-fallback{opacity:1!important;transition:none}
 }
