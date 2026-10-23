@@ -1,87 +1,67 @@
 import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
 
-// Arcane FPS movement: horizontal aim-relative locomotion, predictable jumping,
-// acceleration/deceleration and clean input state across restarts/pause.
+// Arena movement — camera pitch must never push WASD movement into the sky.
+// The jump offset is accumulated separately from the crouch/eye height.
 export function setupMovement(camera) {
   const keys=new Set();
   const velocity=new THREE.Vector3();
-  const wish=new THREE.Vector3();
-  const forward=new THREE.Vector3();
-  const right=new THREE.Vector3();
-  const worldUp=new THREE.Vector3(0,1,0);
-  let currentHeight=1.7;
-  let verticalSpeed=0;
-  let onGround=true;
-  let moving=false;
-  const maxDelta=.05;
-
-  const controlled=new Set([
-    'KeyW','KeyA','KeyS','KeyD','Space','ShiftLeft','ShiftRight','KeyC'
-  ]);
-  const handleDown=event=>{
-    if(!controlled.has(event.code))return;
-    if(event.code==='Space')event.preventDefault();
-    keys.add(event.code);
-  };
-  const handleUp=event=>keys.delete(event.code);
-  document.addEventListener('keydown',handleDown,{passive:false});
-  document.addEventListener('keyup',handleUp);
+  const forward=new THREE.Vector3(),right=new THREE.Vector3();
+  const wanted=new THREE.Vector3(),temp=new THREE.Vector3();
+  let height=1.7,vertical=0,jump=0,grounded=true;
+  const speeds={walk:4.5,sprint:7.1,crouch:2.35};
+  document.addEventListener('keydown', e=>{
+    if(e.code==='Space' && document.pointerLockElement)e.preventDefault();
+    keys.add(e.code);
+  });
+  document.addEventListener('keyup',e=>keys.delete(e.code));
   window.addEventListener('blur',()=>keys.clear());
+  document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockElement)keys.clear();});
 
-  function updateMovement(dt) {
-    const delta=Math.min(maxDelta,Math.max(0,dt));
+  function updateMovement(delta) {
+    const dt=Math.min(.05,Math.max(0,delta));
     const crouch=keys.has('KeyC');
     const sprint=!crouch&&(keys.has('ShiftLeft')||keys.has('ShiftRight'));
-    const speed=crouch?2.15:sprint?8.2:5.25;
-    const desiredHeight=crouch?1.05:1.7;
-    currentHeight+= (desiredHeight-currentHeight)*Math.min(1,delta*13);
+    const speed=crouch?speeds.crouch:sprint?speeds.sprint:speeds.walk;
+    const newHeight=crouch?1.07:1.7;
+    height+=(newHeight-height)*Math.min(1,dt*11);
 
     camera.getWorldDirection(forward);
     forward.y=0;
-    if(forward.lengthSq()<.001)forward.set(0,0,-1);
-    else forward.normalize();
-    right.crossVectors(forward,worldUp).normalize();
-    wish.set(0,0,0);
-    if(keys.has('KeyW'))wish.add(forward);
-    if(keys.has('KeyS'))wish.sub(forward);
-    if(keys.has('KeyD'))wish.add(right);
-    if(keys.has('KeyA'))wish.sub(right);
-    if(wish.lengthSq()>0)wish.normalize().multiplyScalar(speed);
+    if(forward.lengthSq()<.0001)forward.set(0,0,-1);
+    forward.normalize();
+    right.crossVectors(forward,new THREE.Vector3(0,1,0)).normalize();
 
-    const easing=1-Math.exp(-(wish.lengthSq()>0?13:10)*delta);
-    velocity.lerp(wish,easing);
-    if(velocity.lengthSq()<.00001)velocity.set(0,0,0);
-    moving=velocity.lengthSq()>.08;
-    camera.position.x=THREE.MathUtils.clamp(camera.position.x+velocity.x*delta,-86,86);
-    camera.position.z=THREE.MathUtils.clamp(camera.position.z+velocity.z*delta,-86,86);
+    const z=Number(keys.has('KeyW'))-Number(keys.has('KeyS'));
+    const x=Number(keys.has('KeyD'))-Number(keys.has('KeyA'));
+    wanted.copy(forward).multiplyScalar(z).addScaledVector(right,x);
+    const moving=wanted.lengthSq()>.001;
+    if(moving)wanted.normalize().multiplyScalar(speed);
+    velocity.lerp(wanted,Math.min(1,dt*(moving?9:12)));
 
-    if(onGround && keys.has('Space') && !crouch) {
-      verticalSpeed=7.0;
-      onGround=false;
-      keys.delete('Space');
+    camera.position.addScaledVector(velocity,dt);
+    // Stay inside the playable arena; terrain props occupy its outer rim.
+    const radial=Math.hypot(camera.position.x,camera.position.z);
+    if(radial>77){
+      const ratio=77/radial;
+      camera.position.x*=ratio;camera.position.z*=ratio;
+      velocity.multiplyScalar(.2);
     }
-    if(!onGround) {
-      verticalSpeed-=16.5*delta;
-      camera.position.y+=verticalSpeed*delta;
-      if(camera.position.y<=currentHeight) {
-        camera.position.y=currentHeight;
-        verticalSpeed=0;
-        onGround=true;
-      }
-    }else{
-      camera.position.y=THREE.MathUtils.lerp(camera.position.y,currentHeight,Math.min(1,delta*18));
+
+    if(grounded && keys.has('Space') && !crouch) {
+      grounded=false;vertical=5.6;
     }
-    const targetFov=sprint&&moving?79:74;
-    const newFov=THREE.MathUtils.lerp(camera.fov,targetFov,Math.min(1,delta*8));
-    if(Math.abs(camera.fov-newFov)>.002) {
-      camera.fov=newFov;
-      camera.updateProjectionMatrix();
+    if(!grounded){
+      vertical-=13.5*dt;
+      jump+=vertical*dt;
+      if(jump<=0){jump=0;vertical=0;grounded=true;}
     }
+    camera.position.y=height+jump;
+    return {moving:velocity.lengthSq()>.35,sprinting:sprint,grounded};
   }
-  function reset() {
-    keys.clear();velocity.set(0,0,0);wish.set(0,0,0);
-    verticalSpeed=0;currentHeight=1.7;onGround=true;moving=false;
-    camera.fov=74;camera.updateProjectionMatrix();
+  function reset(){
+    keys.clear();velocity.set(0,0,0);
+    height=1.7;vertical=0;jump=0;grounded=true;
+    camera.position.set(0,1.7,0);
   }
-  return {updateMovement,reset,isMoving:()=>moving};
+  return {updateMovement,reset};
 }
