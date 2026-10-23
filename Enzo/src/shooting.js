@@ -77,6 +77,7 @@ export function setupShootingEvents(camera,scene,hand,environment=[],surface=nul
   installed=true;
   function handle(event) {
     if(event.button!==0 || !surface || document.pointerLockElement!==surface) return;
+    if(!hand.isReady())return;
     const now=performance.now();
     if(now-lastShot<135)return;  // maximum ~7 casts/second
     lastShot=now;
@@ -100,8 +101,9 @@ export function setupShootingEvents(camera,scene,hand,environment=[],surface=nul
         if(damageEnemy(scene,hitObject,damage))window.dispatchEvent(new Event('enzo:enemy-hit'));
       }
     }
-    hand.cast();
-    spellBolt(scene,start,end,camera);
+    // The energy effect and bolt share the current anatomical palm emitter.
+    // Always animate only after a successful skinned-hand cast.
+    if(hand.cast())spellBolt(scene,start,end,camera);
   }
   window.addEventListener('mousedown',handle);
   return {update,reset};

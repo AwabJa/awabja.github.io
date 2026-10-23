@@ -43,6 +43,7 @@ document.addEventListener('mousemove', (event) => {
         const mouseSensitivity = 0.002;
         yaw -= event.movementX * mouseSensitivity;
         pitch -= event.movementY * mouseSensitivity;
+        hand.addLookImpulse(event.movementX,event.movementY);
 
         pitch = Math.max(-maxPitch, Math.min(maxPitch, pitch));
         yaw = yaw % (2 * Math.PI);
@@ -79,7 +80,7 @@ function animate() {
         const motion = movement.updateMovement(delta, world.colliders);
         updateEnemies(scene, delta, camera.position);
         shooting.update(delta);
-        hand.update(delta, motion.moving, true);
+        hand.update(delta, motion, true);
         world.update(delta);
         worldPolish.update(delta);
         updateSurvival(delta);
