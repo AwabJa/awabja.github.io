@@ -2,7 +2,7 @@
     --crosshair-color: rgb(50, 250, 50);
     --message-color: #ffffff;
     --background-opacity: rgba(0, 0, 0, 0.8);
-    --font-family: 'Press Start 2P', cursive, sans-serif; /* Added fallback font */
+    --font-family: Arial, sans-serif;
     --shadow-color-dark: rgba(0, 0, 0, 0.5);
     --shadow-color-light: rgba(255, 255, 255, 0.4);
 }
@@ -23,76 +23,7 @@ canvas {
     height: 100%;
 }
 
-/* Splash screen */
-#splashScreen {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: black;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10; /* Ensures splash screen is on top */
-    opacity: 1;
-    transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
-    width: 100vw;
-    height: 100vh;
-    flex-direction: column;
-}
-
-#splashScreen.fade-out {
-    opacity: 0;
-    visibility: hidden; /* Hides the splash screen after fade-out */
-    pointer-events: none;
-}
-
-/* Splash screen logo styling */
-#splashLogo {
-    max-width: 90%; /* Increased from 80% to 90% for a larger logo */
-    max-height: 90%; /* Increased from 80% to 90% for a larger logo */
-    min-width: 200px; /* Prevents the logo from becoming too small */
-    min-height: 200px; /* Prevents the logo from becoming too small */
-    object-fit: contain;
-    animation: fadeInLogo 2s ease-in-out forwards;
-    margin-bottom: 15px; /* Slightly increased margin for better spacing */
-}
-
-/* Start Button Styling */
-#startButton {
-    padding: 1rem 2.5rem; /* Using rem units for scalability */
-    font-size: 1.2rem; /* Increased font size for better readability */
-    font-family: var(--font-family);
-    color: var(--message-color);
-    background-color: transparent;
-    border: 3px solid var(--message-color);
-    cursor: pointer;
-    transition: background-color 0.3s, color 0.3s, transform 0.2s;
-    margin-bottom: 10px;
-    border-radius: 8px;
-    outline: none;
-}
-
-#startButton:hover {
-    background-color: var(--message-color);
-    color: black;
-    transform: scale(1.05); /* Slightly enlarge on hover */
-}
-
-#startButton:active {
-    transform: scale(0.95); /* Slightly shrink on click */
-}
-
-/* Loading message */
-#loadingMessage {
-    font-family: var(--font-family);
-    font-size: 0.6rem; /* Decreased from 0.8rem to make text smaller */
-    color: var(--message-color); /* Use defined message color variable */
-    text-align: center; /* Centered text for better readability */
-    margin-top: 0;
-    max-width: 80%; /* Prevent text from stretching too wide */
-}
+/* Cinematic splash styles live in splash.css. */
 
 /* Pause Screen Styling */
 .pause-screen {
@@ -191,29 +122,15 @@ canvas {
     transform: translateX(-50%);
 }
 
-/* Animations */
-@keyframes fadeInLogo {
-    0% { opacity: 0; transform: scale(0.8); }
-    100% { opacity: 1; transform: scale(1); }
-}
-
 /* Responsive Design Enhancements */
 @media (max-width: 600px) {
-    /* Adjust splash logo for smaller screens */
-    #splashLogo {
-        max-width: 80%;
-        max-height: 80%;
-        min-width: 150px;
-        min-height: 150px;
-    }
-
     /* Adjust pause screen headings */
     .pause-screen h1 {
         font-size: 1.5rem;
     }
 
     /* Adjust buttons for smaller screens */
-    #startButton, .pause-screen button {
+    .pause-screen button {
         padding: 0.8rem 2rem;
         font-size: 0.9rem;
     }
@@ -235,12 +152,10 @@ canvas {
     }
 }
 
-.enzo-back{position:fixed;top:16px;left:16px;z-index:25;color:#b8ffdf;background:#061611e8;border:1px solid #427e69;padding:10px 14px;border-radius:8px;text-decoration:none;font:14px Arial,sans-serif;}
-.game-intro{color:#c5d9d0;font:14px/1.9 Arial,sans-serif;text-align:center;max-width:540px;padding:0 20px;margin:0 0 24px;}
 .game-hud{position:fixed;top:18px;right:18px;z-index:7;color:#e9fff5;background:#061610c9;border:1px solid #42a882;border-radius:10px;padding:14px 18px;display:flex;flex-direction:column;gap:6px;font:13px/1.5 Arial,sans-serif;pointer-events:none;}.game-hud[hidden]{display:none}.game-hud strong{color:#70ffb3;font-size:18px;margin-left:8px;}.game-toast{position:fixed;left:50%;top:20%;transform:translateX(-50%);z-index:9;color:#b5ffcf;text-align:center;text-shadow:0 2px 9px black;font:bold 19px Arial,sans-serif;pointer-events:none;}
-button:focus-visible,.enzo-back:focus-visible{outline:3px solid #73ffbb;outline-offset:3px;}
-@media(max-width:600px){.game-hud{top:64px;right:8px;padding:8px;font-size:11px}.game-intro{font-size:12px}}
-@media(prefers-reduced-motion:reduce){#splashLogo{animation:none!important}.pause-screen,#splashScreen{transition:none!important}}
+button:focus-visible{outline:3px solid #73ffbb;outline-offset:3px;}
+@media(max-width:600px){.game-hud{top:64px;right:8px;padding:8px;font-size:11px}}
+@media(prefers-reduced-motion:reduce){.pause-screen{transition:none!important}}
 
 /* Enzo 2.0 feedback effects */
 .game-hud strong{font-variant-numeric:tabular-nums}
