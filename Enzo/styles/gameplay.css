@@ -26,7 +26,7 @@ body {background:#060b18}
   border:0;
   border-radius:0;
   color:var(--hud-ink);
-  background:none;
+  background:radial-gradient(ellipse 83% 74% at 50% 45%,transparent 42%,rgba(1,4,14,.35) 100%);
   box-shadow:none;
   font-family:var(--hud-font);
   pointer-events:none;
