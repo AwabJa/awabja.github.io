@@ -410,7 +410,11 @@
     stage.classList.remove('is-water-running');
   });
   canvas.addEventListener('webglcontextrestored',()=>{
-    try{renderer=createRenderer();ready=true;resize();syncMotion();}
+    try{
+      renderer=createRenderer();
+      if(!renderer){ready=false;stage.classList.remove('is-water-running');return;}
+      ready=true;resize();syncMotion();
+    }
     catch(error){console.warn('Water rendering unavailable',error);}
   });
 
@@ -418,6 +422,11 @@
     if(!image.naturalWidth||!image.naturalHeight)return;
     try{
       renderer=createRenderer();
+      if(!renderer){
+        ready=false;
+        stage.classList.remove('is-water-running');
+        return;
+      }
       resize();
       if(!width||!height)return;
       ready=true;
