@@ -72,11 +72,11 @@ function impact(scene,point,camera) {
   scene.add(group);blasts.push({group,ring,age:0,life:.28});
 }
 
-export function setupShootingEvents(camera,scene,hand,environment=[],surface=null) {
+export function setupShootingEvents(camera,scene,hand,environment=[],surface=null,isPlaying=()=>false) {
   if(installed) return {update,reset};
   installed=true;
   function handle(event) {
-    if(event.button!==0 || !surface || document.pointerLockElement!==surface) return;
+    if(event.button!==0 || !isPlaying()) return;
     const now=performance.now();
     if(now-lastShot<135)return;  // maximum ~7 casts/second
     lastShot=now;
@@ -84,8 +84,7 @@ export function setupShootingEvents(camera,scene,hand,environment=[],surface=nul
     camera.getWorldDirection(forward);
     forward.normalize();
     // Fall back to a stable camera-space palm position if the hand GLB fails.
-    const start=hand.isReady() ? hand.muzzlePosition() :
-      camera.localToWorld(new THREE.Vector3(.30,-.27,-.68));
+    const start=camera.localToWorld(new THREE.Vector3(.24,-.22,-.72));
     const roots=new Set(getEnemyHitboxes());
     raycaster.set(camera.position,forward);
     raycaster.near=0;
@@ -103,7 +102,6 @@ export function setupShootingEvents(camera,scene,hand,environment=[],surface=nul
       }
     }
     // Hit registration and projectiles must not depend on a cosmetic asset.
-    if(hand.isReady())hand.cast();
     spellBolt(scene,start,end,camera);
   }
   window.addEventListener('mousedown',handle);
