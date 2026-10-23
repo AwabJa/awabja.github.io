@@ -54,6 +54,33 @@ jobs:
         shell: bash
         run: |
           set -eu
+          # GitHub runner Chrome cannot always import CDN modules because of
+          # its proxy settings. Mirror the SAME pinned Three.js files for this
+          # isolated visual test, without changing production game imports.
+          mkdir -p Enzo/local-test/build Enzo/local-test/examples/jsm/loaders
+          curl --fail --location --retry 3 --max-time 45 --silent --show-error \
+            'https://unpkg.com/three@0.128.0/build/three.module.js' \
+            -o Enzo/local-test/build/three.module.js
+          curl --fail --location --retry 3 --max-time 45 --silent --show-error \
+            'https://unpkg.com/three@0.128.0/examples/jsm/loaders/GLTFLoader.js' \
+            -o Enzo/local-test/examples/jsm/loaders/GLTFLoader.js
+          python3 - <<'PY'
+          from pathlib import Path
+          src=Path('Enzo/src/castingHand.js').read_text()
+          src=src.replace(
+            'https://unpkg.com/three@0.128.0/build/three.module.js',
+            '../local-test/build/three.module.js')
+          src=src.replace(
+            'https://unpkg.com/three@0.128.0/examples/jsm/loaders/GLTFLoader.js',
+            '../local-test/examples/jsm/loaders/GLTFLoader.js')
+          Path('Enzo/src/castingHand-preview.js').write_text(src)
+          p=Path('Enzo/hand-review.html')
+          text=p.read_text().replace(
+            'https://unpkg.com/three@0.128.0/build/three.module.js',
+            './local-test/build/three.module.js').replace(
+            './src/castingHand.js','./src/castingHand-preview.js')
+          p.write_text(text)
+          PY
           python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/enzo-http.log 2>&1 &
           sleep 2
           CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
@@ -72,7 +99,7 @@ jobs:
             --enable-unsafe-swiftshader --use-gl=angle --use-angle=swiftshader \
             --virtual-time-budget=10000 --dump-dom \
             'http://127.0.0.1:8765/Enzo/hand-review.html' >/tmp/hand-dom.html 2>/tmp/chrome-dom.log || true
-          if grep -q 'RIGGED MODEL READY' /tmp/hand-dom.html; then
+          if grep -q '<div id="status">RIGGED MODEL READY' /tmp/hand-dom.html; then
             echo "3D hand loader status: READY"
           elif grep -q 'MODEL FAILED' /tmp/hand-dom.html; then
             echo "3D hand loader status: FAILED"
