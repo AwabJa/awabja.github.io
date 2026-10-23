@@ -244,3 +244,14 @@ a:focus-visible,button:focus-visible{outline:3px solid #00ffc6;outline-offset:3p
 }
 @media(max-width:390px){.simulation-toolbar label{display:none}}
 @media(prefers-reduced-motion:reduce){.simulation-toolbar{backdrop-filter:none}}
+
+/* Camera polish: consistent gestures, no accidental browser scrolling, accessible controls. */
+canvas{touch-action:none;cursor:grab}
+canvas:active{cursor:grabbing}
+canvas.hovering{cursor:pointer}
+.simulation-toolbar button,.simulation-toolbar select{min-height:44px;transition:background-color .17s ease,border-color .17s ease}
+#guide-toggle{min-height:44px}
+#inspector-reset{min-height:44px}
+@media(prefers-reduced-motion:reduce){
+  .simulation-toolbar button,.simulation-toolbar select{transition:none}
+}
