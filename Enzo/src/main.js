@@ -76,7 +76,7 @@ function animate() {
     previousTime = currentTime;
     if (!isGamePaused && !document.hidden) {
 
-        const motion = movement.updateMovement(delta);
+        const motion = movement.updateMovement(delta, world.colliders);
         updateEnemies(scene, delta, camera.position);
         shooting.update(delta);
         hand.update(delta, motion.moving, true);
