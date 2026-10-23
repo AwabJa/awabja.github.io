@@ -99,9 +99,24 @@ for (const path of [
 }
 
 const src = readFileSync(join(root, 'Enzo/src/shooting.js'), 'utf8');
-check(src.includes('while (hitObject && !roots.has(hitObject))'),
-  'Enzo must resolve nested armor/eye hits to the enemy root');
+check(src.includes('while(root && !roots.includes(root))') && src.includes('hit.object.userData.weakPoint'),
+  'Enzo must resolve child hits to their registered roots and detect the exposed core');
+// Phase-two world/weapon wiring must remain connected to the FPS loop.
+const world = readFileSync(join(root, 'Enzo/src/arcaneWorld.js'), 'utf8');
+const hand = readFileSync(join(root, 'Enzo/src/castingHand.js'), 'utf8');
+check(world.includes('export function createArcaneWorld') &&
+  world.includes('ShaderMaterial') && world.includes('InstancedMesh'),
+  'Enzo must keep the procedural arena, storm sky and low-draw-call stones');
+check(hand.includes('export function createCastingHand') &&
+  hand.includes('muzzlePosition') && hand.includes('fingers'),
+  'First-person spellcaster must have a right hand, animation and cast origin');
+check(src.includes('hand.cast()') && src.includes('spellBolt(') && src.includes('impact('),
+  'Spell projectiles, casting animation and impact effects must remain wired');
+check(!existsSync(join(root, 'Enzo/src/objects/Sky.js')),
+  'Obsolete daylight sky module must not return');
 const game = readFileSync(join(root, 'Enzo/src/main.js'), 'utf8');
+check(game.includes('createArcaneWorld(scene, renderer)') && game.includes('createCastingHand(camera)'),
+  'Enzo main loop must load the new world and casting viewmodel');
 check(game.includes('let isGamePaused = true;'), 'Enzo must not simulate behind its start menu');
 check(game.includes('clearTimeout(nextWaveTimer)'), 'Enzo must cancel old wave timers on reset');
 const enzoEnemies = readFileSync(join(root, 'Enzo/src/enemies.js'), 'utf8');
