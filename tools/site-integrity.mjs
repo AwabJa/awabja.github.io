@@ -138,8 +138,8 @@ if(existsSync(modelFile)) {
     check(false,'Hand GLB JSON inaccessible: '+error.message);
   }
 }
-check(game.includes('hand.ready.then(') &&
-      game.includes('startButton.disabled = true;'),
+check(readFileSync(join(root,'Enzo/src/main.js'),'utf8').includes('hand.ready.then(') &&
+      readFileSync(join(root,'Enzo/src/main.js'),'utf8').includes('startButton.disabled = true;'),
   'Enzo must not begin gameplay before its actual 3D hand loads');
 check(src.includes('hand.cast()') && src.includes('spellBolt(') && src.includes('impact('),
   'Spell projectiles, casting animation and impact effects must remain wired');
