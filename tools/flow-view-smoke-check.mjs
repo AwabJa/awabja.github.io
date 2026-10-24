@@ -164,7 +164,13 @@ if(editFrom==='undo'){
   assert(movedDay.children.some(el=>el.className?.startsWith('month-task ')),'New occurrence must appear on chosen date');
   const originalDay=allDesc.find(el=>el.className==='month-cell'&&el.children.some(child=>child.className==='month-date'&&child.textContent==='6'));
   assert(!originalDay.children.some(el=>el.className?.startsWith('month-task ')),'Original occurrence must not duplicate');
-  console.log('FLOW VIEW SMOKE CHECK PASSED: per-occurrence edit changes one date and preserves series');
+  assert.equal(nodes.get('#undoBar').hidden,false,'Editing one occurrence should offer Undo');
+  nodes.get('#undoTask').fire();
+  const restored=JSON.parse(localStorage.getItem('flow.tasks.v1'));
+  assert(!restored.some(t=>t.occurrenceOverride),'Undo must remove one-off exception without deleting the original series');
+  const restoredDay=allDescendants(planner).find(el=>el.className==='month-cell'&&el.children.some(child=>child.className==='month-date'&&child.textContent==='6'));
+  assert(restoredDay.children.some(el=>el.className?.startsWith('month-task ')),'Undo should restore the original Friday occurrence');
+  console.log('FLOW VIEW SMOKE CHECK PASSED: per-occurrence edits are isolated, reversible and preserve the series');
   return
  }
  if(editFrom==='month'){
