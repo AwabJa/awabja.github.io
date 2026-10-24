@@ -91,7 +91,7 @@ function simulate(editFrom='board'){
   for(let i=0;i<Math.abs(delta);i++)move.fire();
   const getDay=date=>allDescendants(planner).find(el=>el.className?.startsWith('mobile-month-day')&&el.dataset.date===date);
   const agenda=()=>allDescendants(planner).find(el=>el.className==='mobile-month-agenda');
-  const entries=()=>allDescendants(planner).filter(el=>el.className?.startsWith('mobile-agenda-task'));
+  const entries=()=>allDescendants(planner).filter(el=>el.className==='mobile-agenda-task'||el.className==='mobile-agenda-task done');
   assert.equal(allDescendants(planner).filter(el=>el.className?.startsWith('mobile-month-day')).length,42,'Compact Month must show 42 tappable dates');
   const target=getDay('2026-10-30');
   assert(target,'Weekly October 30 occurrence must have a date button');
