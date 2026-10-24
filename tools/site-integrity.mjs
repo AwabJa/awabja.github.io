@@ -92,6 +92,8 @@ for (const path of htmlPaths) {
 const flowHtml = readFileSync(join(root, 'Flow/index.html'), 'utf8');
 const flowApp = readFileSync(join(root, 'Flow/app.js'), 'utf8');
 const flowExport = readFileSync(join(root, 'Flow/enhancements.js'), 'utf8');
+const flowMobileCss = readFileSync(join(root, 'Flow/enhancements.css'), 'utf8');
+const flowWorkflow = readFileSync(join(root, '.github/workflows/flow-checks.yml'), 'utf8');
 const flowCsp = flowHtml.match(/<meta[^>]*http-equiv="Content-Security-Policy"[^>]*content="([^"]+)"/i)?.[1] || '';
 for (const directive of ["default-src 'self'", "script-src 'self'", "style-src 'self'",
                          "connect-src 'self'", "object-src 'none'", "base-uri 'self'",
@@ -132,6 +134,21 @@ check(flowApp.includes('...(old||{})') && flowApp.includes('recurrenceMoves') &&
 check(flowApp.includes("done.onchange=()=>{if(done.checked)completeOccurrence(t)") &&
       flowApp.includes("finish.onclick=()=>completeOccurrence(t)"),
   'FLOW must permit completing a recurring calendar occurrence from every task view');
+check(flowHtml.includes('name="viewport"') && flowHtml.includes('id="mobileViewHint"'),
+  'FLOW must retain responsive viewport and touch guidance');
+for(const expected of ['.sidebar .sidebar-search{display:flex',
+                       '.mobile-view-hint:not([hidden]){display:block',
+                       '.planner:has(.month-grid)',
+                       'overscroll-behavior-inline:contain',
+                       'min-height:44px',
+                       'max-height:calc(100dvh - 20px)']){
+ check(flowMobileCss.includes(expected) || (expected==='.planner:has(.month-grid)'&&
+       readFileSync(join(root,'Flow/style.css'),'utf8').includes(expected)),
+  'FLOW mobile accessibility/scroll safeguard missing: '+expected);
+}
+check(flowWorkflow.includes('flow-browser-check.mjs') &&
+      flowWorkflow.includes('flow-performance-check.mjs'),
+  'FLOW CI must run desktop/mobile Chromium and large-task performance checks');
 check(flowHtml.includes('id="exportData"') && flowExport.includes('flow-workspace.json'),
   'FLOW must retain the JSON export control');
 check(!/(?<!\$)\$\('[^']+'\)\.forEach/.test(flowApp) &&
