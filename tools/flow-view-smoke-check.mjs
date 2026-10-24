@@ -71,7 +71,7 @@ function simulate(editFrom='board'){
  };
  let allowConfirmation=true,confirmationCount=0,alerts=[];
  const fakeWindow={
-  matchMedia:()=>({matches:editFrom==='phone',addEventListener(){}}),
+  matchMedia:()=>({matches:editFrom==='phone'||editFrom==='phoneCreate',addEventListener(){}}),
   addEventListener(){}
  };
  const boot=new Function('document','localStorage','crypto','setTimeout','requestAnimationFrame','cancelAnimationFrame','alert','confirm','prompt','window',appSource);
