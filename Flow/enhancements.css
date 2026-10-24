@@ -102,3 +102,11 @@
 .undo-bar #dismissUndo{border:0;background:transparent;padding:7px 10px;color:#c5bfd5}
 .backup-status{margin:-4px 5px 12px;color:#9894ad;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
 @media(max-width:800px){.sidebar .backup-status{display:block;margin:2px 6px 8px}}
+
+/* Project rows: selection and management are separate, keyboard-accessible actions. */
+.project-list-row{display:flex;align-items:center;gap:3px;min-width:0}
+.project-list-row>button:first-child{flex:1;min-width:0;display:flex;align-items:center;overflow-wrap:anywhere}
+.project-list-row .project-manage{flex:0 0 35px;border-radius:9px;border:1px solid transparent;background:transparent;color:#a8a4bc;min-height:35px;padding:2px 7px;font-size:18px;text-align:center;line-height:1}
+.project-list-row .project-manage:hover,.project-list-row .project-manage:focus-visible{color:#fff;border-color:#666079;background:#393544}
+.project-dialog-note{font-size:11px;line-height:1.55;color:#a7a1bb;margin:0}
+#projectForm #removeProject[hidden]{display:none}
