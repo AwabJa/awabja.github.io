@@ -16,6 +16,7 @@ const mime={'.html':'text/html; charset=utf-8','.js':'application/javascript; ch
 const server=createServer(async(req,res)=>{
  try{
   const name=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
+  if(name==='/favicon.ico'){res.writeHead(204);res.end();return}
   const target=resolve(root,'.'+(name.endsWith('/')?name+'index.html':name));
   if(!target.startsWith(root+sep)){res.writeHead(403);res.end();return}
   const content=await readFile(target);
