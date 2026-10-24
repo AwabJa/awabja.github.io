@@ -96,12 +96,13 @@ function simulate(editFrom='board'){
  // Open the saved recurring task from Board, then stop repetition using the real form handler.
  const projects=views.find(b=>b.dataset.view==='board');projects.fire();select(editFrom);
  if(editFrom==='month'){
-  const now=new Date(),difference=(2026-now.getFullYear())*12+9-now.getMonth();
+  const now=new Date(),difference=(2026-now.getFullYear())*12+10-now.getMonth();
   const navigate=nodes.get(difference<0?'#prevWeek':'#nextWeek');
   for(let i=0;i<Math.abs(difference);i++)navigate.fire()
  }
- const prefix=editFrom==='month'?'month-task ':'task ';
- const card=allDescendants(planner).find(el=>el instanceof FakeElement&&el.className.startsWith(prefix)&&typeof el.onclick==='function');
+ const selectedDay=editFrom==='month'?allDescendants(planner).find(el=>el.className==='month-cell'&&el.children.some(child=>child.className==='month-date'&&child.textContent==='6')):null;
+ const card=editFrom==='month'?selectedDay?.children.find(el=>el.className?.startsWith('month-task ')):
+  allDescendants(planner).find(el=>el instanceof FakeElement&&el.className.startsWith('task ')&&typeof el.onclick==='function');
  assert(card,'A Board card must be editable');card.fire();
  assert.equal(form.elements.repeat.value,'weekly','Editing should expose the current repeat schedule');
  form.elements.repeat.value='none';
@@ -110,6 +111,7 @@ function simulate(editFrom='board'){
  const active=saved.filter(t=>!t.done&&!t.recurrenceArchived);
  assert.equal(active.length,1,'Stopping recurrence must leave exactly one active task');
  assert.equal(active[0].repeat,'none','Original task must no longer repeat');
+ if(editFrom==='month')assert.equal(active[0].date,'2026-11-06','Stopping a November occurrence must retain that occurrence date');
  assert.equal(saved.filter(t=>t.recurrenceArchived).length,2,'Old saved upcoming copies must be retired, not deleted');
  assert.equal(saved.filter(t=>t.done).length,1,'Completed history must be retained');
  const recordsBefore=JSON.stringify(saved);
