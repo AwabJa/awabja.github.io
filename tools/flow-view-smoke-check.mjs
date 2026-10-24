@@ -205,8 +205,8 @@ if(editFrom==='undo'){
   return
  }
  // Open the saved recurring task from Board, then stop repetition using the real form handler.
- const projects=views.find(b=>b.dataset.view==='board');projects.fire();select(editFrom==='occurrence'?'month':editFrom);
- if(editFrom==='month'||editFrom==='occurrence'){
+ const projects=views.find(b=>b.dataset.view==='board');projects.fire();select(editFrom==='occurrence'||editFrom==='reset'?'month':editFrom);
+ if(editFrom==='month'||editFrom==='occurrence'||editFrom==='reset'){
   const now=new Date(),difference=(2026-now.getFullYear())*12+10-now.getMonth();
   const navigate=nodes.get(difference<0?'#prevWeek':'#nextWeek');
   for(let i=0;i<Math.abs(difference);i++)navigate.fire()
@@ -215,7 +215,7 @@ if(editFrom==='undo'){
  const card=editFrom!=='board'?selectedDay?.children.find(el=>el.className?.startsWith('month-task ')):
   allDescendants(planner).find(el=>el instanceof FakeElement&&el.className.startsWith('task ')&&typeof el.onclick==='function');
  assert(card,'A calendar or Board card must be editable');card.fire();
- if(editFrom==='occurrence'){
+ if(editFrom==='occurrence'||editFrom==='reset'){
   assert.equal(dialogs.open,false,'Task editor should not open without scope choice');
   assert.equal(nodes.get('#recurrenceChoice').open,true,'Scope chooser must open first');
   nodes.get('#editOneOccurrence').fire();
@@ -235,6 +235,22 @@ if(editFrom==='undo'){
   assert(movedDay.children.some(el=>el.className?.startsWith('month-task ')),'New occurrence must appear on chosen date');
   const originalDay=allDesc.find(el=>el.className==='month-cell'&&el.children.some(child=>child.className==='month-date'&&child.textContent==='6'));
   assert(!originalDay.children.some(el=>el.className?.startsWith('month-task ')),'Original occurrence must not duplicate');
+  if(editFrom==='reset'){
+   const edit=allDescendants(planner).find(el=>el.className==='month-cell'&&el.children.some(child=>child.className==='month-date'&&child.textContent==='5')).children.find(el=>el.className?.startsWith('month-task '));
+   assert(edit,'Customized date must be editable');
+   edit.fire();
+   nodes.get('#editOneOccurrence').fire();
+   assert.equal(nodes.get('#deleteTask').textContent,'Reset occurrence','Customized occurrence needs clear reset action');
+   nodes.get('#deleteTask').fire();
+   const after=JSON.parse(localStorage.getItem('flow.tasks.v1'));
+   assert(!after.some(t=>t.occurrenceOverride),'Reset must remove the override');
+   const friday=allDescendants(planner).find(el=>el.className==='month-cell'&&el.children.some(child=>child.className==='month-date'&&child.textContent==='6'));
+   assert(friday.children.some(el=>el.className?.startsWith('month-task ')),'Reset must restore normal recurrence date');
+   nodes.get('#undoTask').fire();
+   assert(JSON.parse(localStorage.getItem('flow.tasks.v1')).some(t=>t.occurrenceOverride),'Reset action must be undoable');
+   console.log('FLOW VIEW SMOKE CHECK PASSED: resetting customized date and Undo restore original override');
+   return
+  }
   assert.equal(nodes.get('#undoBar').hidden,false,'Editing one occurrence should offer Undo');
   nodes.get('#undoTask').fire();
   const restored=JSON.parse(localStorage.getItem('flow.tasks.v1'));
@@ -286,3 +302,4 @@ simulate('undo');
 simulate('projects');
 simulate('search');
 simulate('delete');
+simulate('reset');
