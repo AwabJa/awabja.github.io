@@ -41,6 +41,31 @@ async function scenario(name,viewport,isMobile=false){
  try{
   await page.goto(origin+'/Flow/',{waitUntil:'load'});
   await page.locator('.week-grid').waitFor();
+  // Long user-entered project names must wrap, not collapse behind the management dots.
+  const longName='A Very Long Project Name For Detailed Planning';
+  await page.evaluate(name=>{
+   const key='flow.projects.v1';
+   const saved=JSON.parse(localStorage.getItem(key)||'["Team Project","Personal","Design"]');
+   if(!saved.includes(name))saved.push(name);
+   localStorage.setItem(key,JSON.stringify(saved));
+  },longName);
+  await page.reload({waitUntil:'load'});
+  await page.locator('.week-grid').waitFor();
+  const nameEntry=page.locator('#projectList .project-name').filter({hasText:longName});
+  assert.equal(await nameEntry.count(),1,name+' should render the complete project name');
+  const labelFit=await nameEntry.evaluate(el=>({
+   text:el.textContent,
+   width:el.clientWidth,scrollWidth:el.scrollWidth,
+   height:el.getBoundingClientRect().height,
+   lineHeight:parseFloat(getComputedStyle(el).lineHeight)
+  }));
+  assert.equal(labelFit.text,longName,'Project label must retain every character');
+  assert(labelFit.scrollWidth<=labelFit.width+2,name+' project name must not be clipped horizontally');
+  assert(labelFit.height>=labelFit.lineHeight*2-2,name+' should wrap long project names onto multiple lines');
+  assert.equal(await page.locator('#projectList .project-list-row').filter({hasText:longName}).locator('.project-manage').count(),1,
+   'Each project must still have a separate management button');
+  const projectPageFit=await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2);
+  assert(projectPageFit,name+' projects should not overflow the viewport');
   const mainDestinations=page.locator('.sidebar .nav [data-view]');
   assert.equal(await mainDestinations.count(),6,'Navigation must include Calendar and Inbox');
   assert.equal(await page.locator('[data-view="calendar"]').isVisible(),true,'Calendar shortcut must be discoverable');

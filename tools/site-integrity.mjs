@@ -91,6 +91,15 @@ for (const path of htmlPaths) {
 // FLOW security and data-preservation regression checks.
 const flowHtml = readFileSync(join(root, 'Flow/index.html'), 'utf8');
 const flowApp = readFileSync(join(root, 'Flow/app.js'), 'utf8');
+// Project names must stay fully visible with a separate accessible management control.
+const projectUi = readFileSync(join(root, 'Flow/enhancements.css'), 'utf8');
+check(flowApp.includes("el('span','project-name',p)") &&
+      projectUi.includes('.project-list-row .project-name') &&
+      projectUi.includes('overflow-wrap:anywhere') &&
+      projectUi.includes('flex-direction:column;flex-wrap:nowrap') &&
+      projectUi.includes('.project-list-row{width:100%'),
+  'FLOW sidebar must wrap full project names across desktop and mobile');
+
 const flowExport = readFileSync(join(root, 'Flow/enhancements.js'), 'utf8');
 const flowMobileCss = readFileSync(join(root, 'Flow/enhancements.css'), 'utf8');
 const flowWorkflow = readFileSync(join(root, '.github/workflows/flow-checks.yml'), 'utf8');
@@ -119,7 +128,7 @@ check(flowApp.includes("type:'raw-recovery'") &&
       flowApp.includes("a.download='flow-recovery-backup.json'") &&
       flowApp.includes('raw[key]=localStorage.getItem(key)'),
   'FLOW must provide an export-only raw recovery backup for damaged data');
-check(flowHtml.includes('app.js?v=41') && flowHtml.includes('style.css?v=6') && flowHtml.includes('enhancements.js?v=5') && flowHtml.includes('enhancements.css?v=17'),
+check(flowHtml.includes('app.js?v=42') && flowHtml.includes('style.css?v=6') && flowHtml.includes('enhancements.js?v=5') && flowHtml.includes('enhancements.css?v=18'),
   'FLOW must load the current recurrence-safe JavaScript and styling');
 check(flowApp.includes('calendarCreateContext=') &&
       flowApp.includes('const createdFromCalendar=') &&

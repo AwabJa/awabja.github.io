@@ -233,3 +233,26 @@
  .mobile-month-add{margin-left:auto}
  .mobile-agenda-edit{flex-basis:150px}
 }
+
+/* Keep complete project names visible in every workspace view and viewport. */
+.sidebar .project-list{min-width:0}
+.sidebar .project-list-row{width:100%;min-width:0;align-items:stretch}
+.sidebar .project-list-row>button:first-child{
+  flex:1 1 0;min-width:0;max-width:100%;display:flex;align-items:flex-start;
+  gap:10px;padding:10px 9px 10px 12px;text-align:left;white-space:normal;
+  overflow:visible;text-overflow:clip;
+}
+.sidebar .project-list-row .project-dot{
+  flex:0 0 9px;width:9px;height:9px;margin:4px 0 0;
+}
+.sidebar .project-list-row .project-name{
+  flex:1 1 auto;min-width:0;display:block;line-height:1.45;
+  white-space:normal;overflow-wrap:anywhere;word-break:normal;
+  overflow:visible;text-overflow:clip;
+}
+.sidebar .project-list-row .project-manage{align-self:center}
+@media(max-width:800px){
+  .sidebar .project-list{display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch}
+  .sidebar .project-list-row{flex:0 0 auto}
+  .sidebar .project-list-row>button:first-child{min-height:44px}
+}
