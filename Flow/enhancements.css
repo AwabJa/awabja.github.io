@@ -42,3 +42,31 @@
 @media(max-width:800px){.nav{-webkit-overflow-scrolling:touch;overscroll-behavior-inline:contain}.nav button,.tabs button,.kanban-toggle,.inbox-organize,.quick-capture-add{touch-action:manipulation}.task,.kanban-card{transition:none}.main{overflow-wrap:break-word}}
 @media(max-width:540px){.week-grid{gap:10px}.day-body{min-height:72px}.dialog-form{padding:18px;gap:12px}.dialog-form input:not([type=checkbox]),.dialog-form textarea,.dialog-form select{font-size:16px}.quick-capture-input{font-size:16px}.nav button{min-height:42px}.sidebar .project-list button{min-height:38px}}
 @media(prefers-reduced-motion:reduce){.nav button,.list-row,.kanban-card,.task{transition:none!important;animation:none!important}}
+
+/* FLOW workflow: calendar occurrences are separate from Board stages. */
+.kanban{grid-template-columns:repeat(3,minmax(0,1fr));align-items:start;min-height:320px}
+.kanban-lane{min-width:0}
+.kanban-card .task{display:flex;flex-direction:column;align-items:stretch;gap:5px;text-align:left;white-space:normal;overflow-wrap:anywhere}
+.kanban-card .task-description{font-size:11px;line-height:1.4;color:#c8c3d9;opacity:.85;white-space:pre-wrap}
+.kanban-actions{display:flex;flex-wrap:wrap;border-top:1px solid #494555}
+.kanban-actions .kanban-toggle{flex:1;min-width:92px;border-top:0;text-align:center}
+.kanban-actions .kanban-toggle+.kanban-toggle{border-left:1px solid #494555}
+.table-view{min-width:0}
+.table-controls{display:flex;align-items:end;flex-wrap:wrap;gap:13px;margin:14px 0}
+.table-control-label{display:flex;flex-direction:column;gap:6px;color:#aaa8bc;font-size:11px}
+.table-select,.table-status-select{font:inherit;background:#292832;color:#f5f2ff;border:1px solid #504b60;border-radius:8px;padding:9px 11px;min-width:150px}
+.table-status-select{padding:7px 8px;min-width:120px;font-size:11px}
+.table-count{margin:0 0 4px auto;color:#a8a4b8;font-size:12px}
+.table-scroll{max-width:100%;overflow-x:auto;border:1px solid #3c3947;border-radius:13px;overscroll-behavior-x:contain}
+.flow-table{width:100%;min-width:780px;border-collapse:collapse;text-align:left;font-size:12px}
+.flow-table th{padding:14px 13px;color:#afaabc;font-size:11px;font-weight:600;white-space:nowrap;background:#25242d;border-bottom:1px solid #42404e}
+.flow-table td{padding:13px;border-bottom:1px solid #35323f;color:#e1dded;vertical-align:middle}
+.flow-table tbody tr:last-child td{border-bottom:0}
+.flow-table tbody tr:hover{background:#292731}
+.flow-table td:nth-child(3){text-transform:capitalize}
+.table-task-name{display:block;text-align:left;padding:0;border:0;background:transparent;color:#f3f0ff;font-weight:600;max-width:260px;overflow-wrap:anywhere}
+.table-task-name:hover{color:#afa5ff}
+.table-task-note{display:block;color:#a8a4ba;font-size:10px;max-width:260px;margin-top:4px;line-height:1.45;overflow-wrap:anywhere;white-space:pre-wrap}
+.table-done .table-task-name{text-decoration:line-through;opacity:.72}
+@media(max-width:1000px){.kanban{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.kanban{grid-template-columns:1fr}.table-controls{gap:9px}.table-count{width:100%;margin:2px 0}.table-control-label{flex:1}.table-select{width:100%;min-width:0}}
