@@ -35,6 +35,8 @@ jobs:
         run: node tools/flow-backup-check.mjs
       - name: Site integrity
         run: node tools/site-integrity.mjs
+      - name: Large workspace performance regression
+        run: node tools/flow-performance-check.mjs
       - name: Install browser test runner
         run: npm install --no-save --package-lock=false playwright-core@1.56.1
       - name: Desktop and mobile Chromium smoke tests
