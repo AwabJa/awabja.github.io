@@ -121,6 +121,17 @@ check(flowApp.includes("type:'raw-recovery'") &&
   'FLOW must provide an export-only raw recovery backup for damaged data');
 check(flowHtml.includes('app.js?v=40') && flowHtml.includes('style.css?v=6') && flowHtml.includes('enhancements.js?v=5') && flowHtml.includes('enhancements.css?v=17'),
   'FLOW must load the current recurrence-safe JavaScript and styling');
+check(flowApp.includes('calendarCreateContext=') &&
+      flowApp.includes('const createdFromCalendar=') &&
+      flowApp.includes('mode=t.project?(t.date?\'week\':\'board\'):\'list\''),
+  'FLOW must preserve calendar after date-based creation and route undated project work to Board');
+check(flowApp.includes('checklistDraft=') &&
+      flowApp.includes('checklistDraft[i].done=input.checked') &&
+      flowApp.includes('Repeating tasks need a start date.'),
+  'FLOW must stage checklist edits and reject repeating tasks without a start date');
+check(flowApp.includes('const calendarBuckets=new Map()') &&
+      flowApp.includes('calendarBuckets.get(key)||[]'),
+  'FLOW must index Week/Month calendar occurrences by date');
 check(flowApp.includes('const stoppedCopy=') &&
       flowApp.includes('const overviewSnapshot=') &&
       flowApp.includes('stopRepeating(old)') &&
