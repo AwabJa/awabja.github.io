@@ -59,7 +59,7 @@ function simulate(editFrom='board'){
  const store=new Map();
  const legacyTask=(id,date,done=false)=>({id,title:'Weekly review',description:'Review weekly goals',date,time:'10:00',project:'Personal',repeat:'weekly',color:'purple',priority:'medium',done,subtasks:[]});
  store.set('flow.tasks.v1',JSON.stringify([
-  {...legacyTask('series-original','2026-10-23'),subtasks:editFrom==='checklist'?[{title:'Research',done:false}]:[]},
+  {...legacyTask('series-original','2026-10-23'),subtasks:editFrom==='checklist'?[{title:'Research',done:false}]:editFrom==='duplicateChecklist'?[{title:'Review',done:false},{title:'Review',done:false}]:[]},
   legacyTask('series-copy-1','2026-10-30'),
   legacyTask('series-copy-2','2026-11-06'),
   legacyTask('series-history','2026-10-16',true)
@@ -209,6 +209,22 @@ if(editFrom==='checklist'){
   nodes.get('#undoTask').fire();
   assert.equal(localStorage.getItem('flow.tasks.v1'),original,'Undo must restore original checklist and task history');
   console.log('FLOW CHECKLIST SMOKE PASSED: changes staged until Save, Cancel safe, Undo restores');
+  return
+}
+if(editFrom==='duplicateChecklist'){
+  const original=localStorage.getItem('flow.tasks.v1');
+  views.find(b=>b.dataset.view==='board').fire();select('board');
+  const card=allDescendants(planner).find(e=>e.className?.startsWith('task ')&&typeof e.onclick==='function');
+  card.fire();
+  const boxes=allDescendants(nodes.get('#checklistItems')).filter(e=>e.tagName==='input');
+  assert.equal(boxes.length,2,'Both same-named subtasks should render');
+  boxes[1].checked=true;boxes[1].fire('change');
+  form.fire('submit');
+  const saved=JSON.parse(localStorage.getItem('flow.tasks.v1')).find(t=>t.id==='series-original');
+  assert.deepEqual(saved.subtasks,[{title:'Review',done:false},{title:'Review',done:true}],'Saving a second same-named subtask must not mark the first');
+  nodes.get('#undoTask').fire();
+  assert.equal(localStorage.getItem('flow.tasks.v1'),original,'Undo restores both checkboxes separately');
+  console.log('FLOW CHECKLIST IDENTITY PASSED: duplicate names do not merge checkbox states');
   return
 }
 if(editFrom==='unscheduled'){
@@ -500,5 +516,6 @@ simulate('calendar');
 simulate('phone');
 simulate('phoneCreate');
 simulate('checklist');
+simulate('duplicateChecklist');
 simulate('unscheduled');
 simulate('desktopDateAdd');
