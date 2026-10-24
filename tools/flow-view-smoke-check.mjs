@@ -112,7 +112,25 @@ if(editFrom==='undo'){
   nodes.get('#undoTask').fire();
   assert.equal(localStorage.getItem('flow.tasks.v1'),initial,'Undo must restore all original tasks exactly');
   assert.equal(nodes.get('#undoBar').hidden,true,'Undo must dismiss after restoring');
-  console.log('FLOW VIEW SMOKE CHECK PASSED: completion Undo restores original saved tasks');
+  select('week');
+  const now=new Date(),thisWeek=new Date(now.getFullYear(),now.getMonth(),now.getDate()-(now.getDay()+6)%7);
+  const targetWeek=new Date(2026,9,19),diff=Math.round((targetWeek-thisWeek)/604800000);
+  const nav=nodes.get(diff<0?'#prevWeek':'#nextWeek');
+  for(let i=0;i<Math.abs(diff);i++)nav.fire();
+  const dayBodies=allDescendants(planner).filter(el=>el.className==='day-body');
+  const draggable=allDescendants(dayBodies[4]).find(el=>el.className?.startsWith('task ')&&el.draggable);
+  assert(draggable,'Weekly repeating task must support calendar drag');
+  const dragValues=new Map(),dataTransfer={
+   types:['text/plain'],setData:(key,value)=>dragValues.set(key,value),
+   getData:key=>dragValues.get(key)||'',effectAllowed:'move'
+  };
+  draggable.ondragstart({dataTransfer});
+  dayBodies[5].ondrop({preventDefault(){},dataTransfer});
+  assert(localStorage.getItem('flow.tasks.v1')!==initial,'Calendar drag must persist its moved date');
+  assert.equal(nodes.get('#undoBar').hidden,false,'Calendar moves must offer Undo');
+  nodes.get('#undoTask').fire();
+  assert.equal(localStorage.getItem('flow.tasks.v1'),initial,'Undo must fully restore repeating calendar drag');
+  console.log('FLOW VIEW SMOKE CHECK PASSED: Undo restores completions and calendar moves');
   return
  }
  // Open the saved recurring task from Board, then stop repetition using the real form handler.
@@ -165,6 +183,7 @@ if(editFrom==='undo'){
  const active=saved.filter(t=>!t.done&&!t.recurrenceArchived);
  assert.equal(active.length,1,'Stopping recurrence must leave exactly one active task');
  assert.equal(active[0].repeat,'none','Original task must no longer repeat');
+ assert(Array.isArray(active[0].stoppedRecurrence?.legacyIds),'Stopped series must keep exact legacy ID marker');
  if(editFrom==='month')assert.equal(active[0].date,'2026-11-06','Stopping a November occurrence must retain that occurrence date');
  assert.equal(saved.filter(t=>t.recurrenceArchived).length,2,'Old saved upcoming copies must be retired, not deleted');
  assert.equal(saved.filter(t=>t.done).length,1,'Completed history must be retained');
