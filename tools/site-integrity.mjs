@@ -119,7 +119,7 @@ check(flowApp.includes("type:'raw-recovery'") &&
       flowApp.includes("a.download='flow-recovery-backup.json'") &&
       flowApp.includes('raw[key]=localStorage.getItem(key)'),
   'FLOW must provide an export-only raw recovery backup for damaged data');
-check(flowHtml.includes('app.js?v=36') && flowHtml.includes('style.css?v=6') && flowHtml.includes('enhancements.js?v=5') && flowHtml.includes('enhancements.css?v=14'),
+check(flowHtml.includes('app.js?v=37') && flowHtml.includes('style.css?v=6') && flowHtml.includes('enhancements.js?v=5') && flowHtml.includes('enhancements.css?v=15'),
   'FLOW must load the current recurrence-safe JavaScript and styling');
 check(flowApp.includes('const stoppedCopy=') &&
       flowApp.includes('const overviewSnapshot=') &&
