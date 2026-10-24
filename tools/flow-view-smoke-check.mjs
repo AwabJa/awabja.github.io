@@ -135,7 +135,7 @@ if(editFrom==='undo'){
  }
  if(editFrom==='projects'){
   const originalTasks=localStorage.getItem('flow.tasks.v1');
-  const originalProjects=localStorage.getItem('flow.projects.v1');
+  const originalProjects=localStorage.getItem('flow.projects.v1')||JSON.stringify(['Team Project','Personal','Design']);
   const manager=()=>allDescendants(nodes.get('#projectList')).find(el=>el.getAttribute('aria-label')==='Manage project Personal');
   assert(manager(),'Each project needs a Manage button');
   manager().fire();
