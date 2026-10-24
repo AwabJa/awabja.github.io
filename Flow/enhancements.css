@@ -76,3 +76,15 @@
 /* Overview now reports the displayed calendar period, not lifetime recurrence totals. */
 .overview-period{margin-left:auto;color:#a9a2c9;font-size:11px;font-weight:500;text-align:right;line-height:1.4;white-space:normal}
 @media(max-width:700px){.overview-period{max-width:60%;font-size:10px}}
+
+/* Explicit scope before editing one recurrence vs the whole repeating series. */
+.recurrence-choice-inner{padding:25px;display:flex;flex-direction:column;gap:13px}
+.recurrence-choice-inner .dialog-heading{margin-bottom:2px}
+.recurrence-choice-inner .dialog-heading h2{font-size:18px}
+.recurrence-choice-inner>strong{font-size:15px;color:#f0eaff;overflow-wrap:anywhere}
+.recurrence-choice-inner>p{font-size:12px;color:#b3aec6;line-height:1.5;margin:0}
+.scope-option{display:flex;flex-direction:column;text-align:left;gap:5px;border:1px solid #4b465d;background:#2d2a39;color:#f5f0ff;border-radius:11px;padding:14px;min-height:70px;width:100%}
+.scope-option:hover,.scope-option:focus-visible{border-color:#9688ff;background:#383149}
+.scope-option strong{font-size:13px}
+.scope-option small{font-size:11px;color:#b8b2ca;line-height:1.45}
+.scope-note{margin:0;padding:9px 11px;border-radius:9px;background:#302d40;color:#c9c1f5;font-size:11px;line-height:1.45}
