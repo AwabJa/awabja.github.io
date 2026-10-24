@@ -117,7 +117,7 @@ check(flowApp.includes("type:'raw-recovery'") &&
       flowApp.includes("a.download='flow-recovery-backup.json'") &&
       flowApp.includes('raw[key]=localStorage.getItem(key)'),
   'FLOW must provide an export-only raw recovery backup for damaged data');
-check(flowHtml.includes('app.js?v=35') && flowHtml.includes('style.css?v=6') && flowHtml.includes('enhancements.js?v=5') && flowHtml.includes('enhancements.css?v=13'),
+check(flowHtml.includes('app.js?v=36') && flowHtml.includes('style.css?v=6') && flowHtml.includes('enhancements.js?v=5') && flowHtml.includes('enhancements.css?v=14'),
   'FLOW must load the current recurrence-safe JavaScript and styling');
 check(flowApp.includes('const stoppedCopy=') &&
       flowApp.includes('const overviewSnapshot=') &&
@@ -137,6 +137,14 @@ check(flowHtml.includes('id="exportData"') && flowExport.includes('flow-workspac
 check(!/(?<!\$)\$\('[^']+'\)\.forEach/.test(flowApp) &&
       flowApp.includes("$$('[data-mode]').forEach"),
   'FLOW view buttons must use querySelectorAll rather than querySelector for iteration');
+
+check(flowApp.includes('const reassignProject=') && flowApp.includes('const activeTasks=') &&
+      flowApp.includes('const calendarOccurrences=') &&
+      flowApp.includes('const closeProjectDialog=') && flowApp.includes('const restoreUndo='),
+  'FLOW must preserve project management, filtered task views and Undo safeguards');
+for(const id of ['projectDialog','projectForm','projectName','removeProject','cancelProject']){
+ check(flowHtml.includes('id="'+id+'"'), 'FLOW missing project management element #'+id);
+}
 
 const flowViews = spawnSync(process.execPath,
   [join(root, 'tools/flow-view-smoke-check.mjs')], { encoding: 'utf8' });
