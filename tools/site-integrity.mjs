@@ -134,6 +134,17 @@ check(flowApp.includes('...(old||{})') && flowApp.includes('recurrenceMoves') &&
 check(flowApp.includes("done.onchange=()=>{if(done.checked)completeOccurrence(t)") &&
       flowApp.includes("finish.onclick=()=>completeOccurrence(t)"),
   'FLOW must permit completing a recurring calendar occurrence from every task view');
+check(flowHtml.includes('data-view="calendar"') && flowHtml.includes('data-view="inbox"') &&
+      (flowHtml.match(/<svg class="nav-icon"/g)||[]).length===6,
+  'FLOW must keep all six sidebar destinations and consistent vector icons');
+check(flowMobileCss.includes('.sidebar .nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))') &&
+      flowMobileCss.includes('.sidebar .nav button{min-width:0;justify-content:center'),
+  'FLOW must show every mobile destination in its two-row navigation grid');
+check(flowApp.includes("destination==='calendar'") &&
+      flowApp.includes("if(destination==='calendar'){view='board';mode='month';offset=0}") &&
+      flowApp.includes("const selected=destination==='calendar'?isCalendar"),
+  'FLOW must keep Calendar navigation synchronized with Week and Month mode');
+
 check(flowHtml.includes('name="viewport"') && flowHtml.includes('id="mobileViewHint"'),
   'FLOW must retain responsive viewport and touch guidance');
 for(const expected of ['.sidebar .sidebar-search{display:flex',
