@@ -96,10 +96,18 @@ function simulate(editFrom='board'){
   const target=getDay('2026-10-30');
   assert(target,'Weekly October 30 occurrence must have a date button');
   assert(target.getAttribute('aria-label').includes('1 task'),'Date accessible label should announce task count');
+  const beforeDaySelection=localStorage.getItem('flow.tasks.v1');
   target.fire();
+  assert.equal(localStorage.getItem('flow.tasks.v1'),beforeDaySelection,'Selecting a day must never mutate saved tasks');
   assert.equal(target.getAttribute('aria-pressed'),'true','Tapped day must be visibly and accessibly selected');
   assert.equal(entries().length,1,'Agenda must show only selected date tasks');
   assert(allDescendants(agenda()).some(el=>el.className==='mobile-agenda-task-title'&&el.textContent.includes('Weekly review')),'Agenda must show full task title');
+  const editTask=allDescendants(planner).find(el=>el.className==='mobile-agenda-edit');
+  assert(editTask,'Selected occurrence must remain editable');
+  editTask.fire();
+  assert.equal(nodes.get('#recurrenceChoice').open,true,'Mobile agenda must retain occurrence-versus-series editor');
+  nodes.get('#closeRecurrenceChoice').fire();
+  assert.equal(nodes.get('#recurrenceChoice').open,false);
   const addTask=allDescendants(planner).find(el=>el.className==='mobile-month-add');
   assert(addTask,'Selected date must have Add task');
   addTask.fire();
