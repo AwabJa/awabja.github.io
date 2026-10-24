@@ -40,7 +40,7 @@ const calendarOccurrences=(items,first,last)=>{
    date=next;
   }
   for(const [scheduled,display] of group.moves){
-   if(scheduled>=source.date&&display>=first&&display<=last)addOccurrence(scheduled,display);
+   if(display>=first&&display<=last)addOccurrence(scheduled,display);
   }
  }
  return result;
