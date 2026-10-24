@@ -32,7 +32,7 @@ const calendarOccurrences=(items,first,last)=>{
   if(!current||t.date<current.date)masters.set(key,t);
  }
  const result=available.filter(t=>t.date&&t.date>=first&&t.date<=last&&(!isRepeating(t)||t.done||t.occurrenceOverride));
- const finished=new Set(available.filter(t=>t.done&&isRepeating(t)).map(t=>recurrenceKey(t)+'\u001f'+(t.occurrenceDate||t.date)));
+ const finished=new Set(available.filter(t=>isRepeating(t)&&(t.done||t.occurrenceOverride)).map(t=>recurrenceKey(t)+'\u001f'+(t.occurrenceDate||t.date)));
  const scheduled=new Set();
  for(const [key,source] of masters){
   const changes=moves.get(key)||new Map();
