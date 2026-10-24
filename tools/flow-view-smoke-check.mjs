@@ -95,15 +95,42 @@ function simulate(editFrom='board'){
  }
  // Open the saved recurring task from Board, then stop repetition using the real form handler.
  const projects=views.find(b=>b.dataset.view==='board');projects.fire();select(editFrom);
- if(editFrom==='month'){
+ if(editFrom==='month'||editFrom==='occurrence'){
   const now=new Date(),difference=(2026-now.getFullYear())*12+10-now.getMonth();
   const navigate=nodes.get(difference<0?'#prevWeek':'#nextWeek');
   for(let i=0;i<Math.abs(difference);i++)navigate.fire()
  }
- const selectedDay=editFrom==='month'?allDescendants(planner).find(el=>el.className==='month-cell'&&el.children.some(child=>child.className==='month-date'&&child.textContent==='6')):null;
- const card=editFrom==='month'?selectedDay?.children.find(el=>el.className?.startsWith('month-task ')):
+ const selectedDay=editFrom!=='board'?allDescendants(planner).find(el=>el.className==='month-cell'&&el.children.some(child=>child.className==='month-date'&&child.textContent==='6')):null;
+ const card=editFrom!=='board'?selectedDay?.children.find(el=>el.className?.startsWith('month-task ')):
   allDescendants(planner).find(el=>el instanceof FakeElement&&el.className.startsWith('task ')&&typeof el.onclick==='function');
- assert(card,'A Board card must be editable');card.fire();
+ assert(card,'A calendar or Board card must be editable');card.fire();
+ if(editFrom==='occurrence'){
+  assert.equal(dialogs.open,false,'Task editor should not open without scope choice');
+  assert.equal(nodes.get('#recurrenceChoice').open,true,'Scope chooser must open first');
+  nodes.get('#editOneOccurrence').fire();
+  assert.equal(dialogs.open,true,'Per-date task editor must open');
+  assert.equal(nodes.get('#repeatField').hidden,true,'Occurrence edit must hide repeat settings');
+  assert.equal(form.elements.date.value,'2026-11-06','Occurrence date must reflect selected Friday');
+  form.elements.date.value='2026-11-05';form.elements.time.value='11:30';
+  form.fire('submit');
+  const customized=JSON.parse(localStorage.getItem('flow.tasks.v1'));
+  const override=customized.find(t=>t.occurrenceOverride);
+  assert(override,'Customized occurrence must be persisted');
+  assert.equal(override.date,'2026-11-05');
+  assert.equal(override.occurrenceDate,'2026-11-06');
+  assert.equal(customized.find(t=>t.id==='series-original').date,'2026-10-23','Series anchor must remain unchanged');
+  const allDesc=allDescendants(planner);
+  const movedDay=allDesc.find(el=>el.className==='month-cell'&&el.children.some(child=>child.className==='month-date'&&child.textContent==='5'));
+  assert(movedDay.children.some(el=>el.className?.startsWith('month-task ')),'New occurrence must appear on chosen date');
+  const originalDay=allDesc.find(el=>el.className==='month-cell'&&el.children.some(child=>child.className==='month-date'&&child.textContent==='6'));
+  assert(!originalDay.children.some(el=>el.className?.startsWith('month-task ')),'Original occurrence must not duplicate');
+  console.log('FLOW VIEW SMOKE CHECK PASSED: per-occurrence edit changes one date and preserves series');
+  return
+ }
+ if(editFrom==='month'){
+  assert.equal(nodes.get('#recurrenceChoice').open,true,'Series edit requires explicit scope');
+  nodes.get('#editRepeatingSchedule').fire();
+ }
  assert.equal(form.elements.repeat.value,'weekly','Editing should expose the current repeat schedule');
  form.elements.repeat.value='none';
  form.fire('submit');
@@ -131,3 +158,4 @@ function simulate(editFrom='board'){
 }
 simulate('board');
 simulate('month');
+simulate('occurrence');
