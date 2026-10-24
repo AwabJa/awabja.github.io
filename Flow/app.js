@@ -723,14 +723,15 @@ $('#removeProject').onclick=()=>{
 $$('[data-mode]').forEach(b=>{b.type='button';b.addEventListener('click',()=>{
  const next=b.dataset.mode;
  if(mode==='week'&&next==='month'){
-  const focus=addDays(weekStart(),3),now=new Date();
+  const weekBegin=weekStart(),weekEnd=addDays(weekBegin,6);const selectedOnWeek=isPhoneMonth()&&mobileMonthSelected&&mobileMonthSelected>=localDate(weekBegin)&&mobileMonthSelected<=localDate(weekEnd);const focus=selectedOnWeek?parseDate(mobileMonthSelected):addDays(weekBegin,3),now=new Date();
   returnWeekOffset=offset;
   returnWeekMonth=focus.getFullYear()+'-'+focus.getMonth();
   offset=(focus.getFullYear()-now.getFullYear())*12+focus.getMonth()-now.getMonth();
  }else if(mode==='month'&&next==='week'){
-  const now=new Date(),focus=new Date(now.getFullYear(),now.getMonth()+offset,1);
+  const now=new Date(),focus=isPhoneMonth()&&mobileMonthSelected?parseDate(mobileMonthSelected):new Date(now.getFullYear(),now.getMonth()+offset,1);
   const monthKey=focus.getFullYear()+'-'+focus.getMonth();
-  if(monthKey===returnWeekMonth&&returnWeekOffset!==null)offset=returnWeekOffset;
+  if(isPhoneMonth()&&mobileMonthSelected)offset=Math.round((monday(focus)-monday(now))/(7*86400000));
+  else if(monthKey===returnWeekMonth&&returnWeekOffset!==null)offset=returnWeekOffset;
   else if(focus.getFullYear()===now.getFullYear()&&focus.getMonth()===now.getMonth())offset=0;
   else offset=Math.round((monday(focus)-monday(now))/(7*86400000));
  }else if(next!==mode)offset=0;
