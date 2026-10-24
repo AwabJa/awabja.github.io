@@ -118,6 +118,12 @@ function simulate(editFrom='board'){
  for(let i=0;i<5;i++)nextButton.fire();
  const futureTasks=allDescendants(planner).filter(el=>el instanceof FakeElement&&el.className.startsWith('month-task '));
  assert.equal(futureTasks.length,0,'The stopped schedule must not recur in later months');
+ assert.equal(nodes.get('#totalTasks').textContent,0,'Workspace Overview must clear scheduled total in empty future months');
+ assert.equal(nodes.get('#doneTasks').textContent,0,'Workspace Overview must clear completed total in empty future months');
+ assert.equal(nodes.get('#activeTasks').textContent,0,'Workspace Overview must clear remaining total in empty future months');
+ assert.equal(nodes.get('#progressBar').style.width,'0%','Workspace Overview progress bar should reset to zero');
+ assert(nodes.get('#progressText').textContent.includes('No scheduled tasks'),'Workspace Overview needs explicit empty-period feedback');
+ assert(nodes.get('#overviewPeriod').textContent,'Workspace Overview must show the selected month');
  assert.equal(localStorage.getItem('flow.tasks.v1'),recordsBefore,'Navigating calendars must not change saved tasks');
  console.log('FLOW VIEW SMOKE CHECK PASSED: '+editFrom+' edit, navigation, archived copies and future months');
 }
