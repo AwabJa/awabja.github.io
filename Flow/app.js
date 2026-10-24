@@ -477,7 +477,7 @@ if(old&&!old.done&&isRepeating(old)&&!old.isOccurrenceHistory){
   if(changedSchedule){
    if(t.repeat==='none')stopRepeating(old);
    else archiveOtherPending(old);
-   t.stoppedRecurrence=t.repeat==='none'?{seriesId:old.seriesId||old.id,signature:recurrenceSignature(old),repeat:old.repeat}:undefined;
+   t.stoppedRecurrence=t.repeat==='none'?(old.stoppedRecurrence||{seriesId:old.seriesId||old.id,signature:recurrenceSignature(old),repeat:old.repeat}):undefined;
    t.recurrenceMoves=[];
    if(t.repeat==='none'){t.date=f.elements.date.value!==old.date?f.elements.date.value:(editingOccurrenceDate||displayDate(old));t.occurrenceDate=undefined;t.status=t.done?'done':'todo'}
   }
