@@ -158,3 +158,20 @@
  .sidebar .nav button{gap:4px;font-size:11px;padding:10px 3px}
  .sidebar .nav .nav-icon{flex-basis:17px;width:17px;height:17px}
 }
+
+/* Keyboard focus and visual clarity across desktop and touch-linked controls. */
+.sidebar .nav button:focus-visible,
+.tabs button:focus-visible,
+.toolbar-right button:focus-visible,
+.month-date:focus-visible,
+.month-task:focus-visible,
+.occurrence-complete:focus-visible,
+.table-task-name:focus-visible,
+.table-status-select:focus-visible,
+#newProject:focus-visible,
+#exportData:focus-visible{
+ outline:2px solid #aaa0ff;
+ outline-offset:3px;
+ position:relative;
+ z-index:1;
+}
