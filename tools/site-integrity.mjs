@@ -99,11 +99,11 @@ for (const directive of ["default-src 'self'", "script-src 'self'", "style-src '
   check(flowCsp.split(';').map(s => s.trim()).includes(directive),
     'FLOW security policy missing exact directive: ' + directive);
 }
-check(!/<script\\b(?![^>]*\\bsrc=)[^>]*>/i.test(flowHtml),
+check(!/<script\b(?![^>]*\bsrc=)[^>]*>/i.test(flowHtml),
   'FLOW must not introduce inline executable scripts');
-check(!/\\b(?:eval|Function)\\s*\\(|\\.innerHTML\\s*=|insertAdjacentHTML|document\\.write/i.test(flowApp + flowExport),
+check(!/\b(?:eval|Function)\s*\(|\.innerHTML\s*=|insertAdjacentHTML|document\.write/i.test(flowApp + flowExport),
   'FLOW must not introduce dynamic code execution or HTML injection sinks');
-check(!/FileReader|readAsText|type=["']file|\\.files\\s*\\[/i.test(flowHtml + flowApp + flowExport),
+check(!/FileReader|readAsText|type=["']file|\.files\s*\[/i.test(flowHtml + flowApp + flowExport),
   'FLOW must remain export-only without file import');
 for (const key of ['flow.tasks.v1', 'flow.projects.v1', 'flow.activity.v1']) {
   check(flowApp.includes(key) && flowExport.includes(key),
