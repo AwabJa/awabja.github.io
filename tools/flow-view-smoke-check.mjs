@@ -111,6 +111,7 @@ function simulate(editFrom='board'){
 if(editFrom==='calendar'){
   assert(pageSource.includes('data-view="calendar"'),'Calendar shortcut must be in navigation');
   assert(/data-view="inbox"><svg class="nav-icon"/.test(pageSource),'Inbox should use a vector icon');
+  assert.equal((pageSource.match(/<svg class="nav-icon"/g)||[]).length,6,'All six destinations must use matching vector icons');
   const button=key=>views.find(b=>b.dataset.view===key);
   button('inbox').fire();
   assert.equal(nodes.get('.toolbar').hidden,true,'Inbox may hide task view tabs');
