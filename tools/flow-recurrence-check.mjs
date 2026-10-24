@@ -23,7 +23,7 @@ const prelude=[
  "const save=()=>true;",
  "const render=()=>{};"
 ].join('\n');
-const create=new Function(prelude+helpers+";return {load:a=>tasks=a,get:()=>tasks,activeTasks,historyTasks,workflowTasks,calendarOccurrences,calendarDayTasks,rescheduleCalendarTask,completeTask,completeOccurrence,stopRepeating,setTaskStatus,recurrenceKey,nextRepeat};");
+const create=new Function(prelude+helpers+";return {load:a=>tasks=a,get:()=>tasks,activeTasks,historyTasks,workflowTasks,calendarOccurrences,calendarDayTasks,rescheduleCalendarTask,completeTask,completeOccurrence,stopRepeating,setTaskStatus,recurrenceKey,nextRepeat,overviewSnapshot};");
 const task=(id,date='2026-10-23',repeat='weekly',done=false)=>({id,title:'Plan the week',date,time:'10:00',project:'Personal',repeat,done,color:'purple',subtasks:[]});
 const visible=(app,date)=>app.calendarDayTasks(app.calendarOccurrences(app.get(),'2026-10-01','2027-06-30'),date);
 let assertions=0;
@@ -92,9 +92,62 @@ run('Stopping recurring schedule archives saved future copies without deletion',
  assert.equal(visible(app,'2026-10-23').length,1);
  assert.equal(visible(app,'2026-10-30').length,0);
  assert.equal(visible(app,'2026-11-06').length,0);
- assert.deepEqual(visible(app,'2026-10-16').map(t=>t.done),[true]);
+ assert.equal(visible(app,'2026-10-16').length,0,'Stopped series history belongs in Table, not Month');
+ assert.equal(app.historyTasks(app.get()).length,1,'Stored completed history must remain accessible');
  assert.equal(app.get().length,4);
  assert.equal(app.get().filter(t=>t.recurrenceArchived).length,2)
+});
+run('Previously stopped tasks automatically suppress legacy copies without IDs on reload',()=>{
+ const stopped={...task('root','2026-10-23','none'),seriesId:'root'};
+ const old=task('old','2026-10-30'),later=task('later','2026-11-06');
+ const historical=task('finished','2026-10-16','weekly',true);
+ const app=create();app.load(JSON.parse(JSON.stringify([stopped,old,later,historical])));
+ const before=JSON.stringify(app.get());
+ assert.equal(app.activeTasks(app.get()).length,1);
+ assert.equal(visible(app,'2026-10-23').length,1);
+ assert.equal(visible(app,'2026-10-30').length,0);
+ assert.equal(visible(app,'2026-11-06').length,0);
+ assert.equal(visible(app,'2026-10-16').length,0);
+ assert.equal(app.historyTasks(app.get()).length,1);
+ assert.equal(JSON.stringify(app.get()),before,'Loading must not mutate the original saved data')
+});
+run('Stopping one series never hides a separately IDed recurrence with the same title',()=>{
+ const stopped={...task('root','2026-10-23','none'),seriesId:'root'};
+ const separate={...task('separate','2026-10-23','weekly'),seriesId:'separate'};
+ const app=create();app.load([stopped,separate]);
+ assert.equal(app.activeTasks(app.get()).length,2);
+ assert.equal(visible(app,'2026-10-30').length,1)
+});
+run('Stopped schedule with renamed title keeps legacy signature for old copies',()=>{
+ const stopped={...task('root','2026-10-23','none'),seriesId:'root',title:'Renamed weekly review',
+  stoppedRecurrence:{seriesId:'root',signature:['Plan the week','Personal','10:00'].join('\u001f'),repeat:'weekly'}};
+ const old=task('old','2026-11-06');
+ const app=create();app.load([stopped,old]);
+ assert.equal(visible(app,'2026-11-06').length,0);
+ assert.equal(app.activeTasks(app.get()).length,1)
+});
+run('Workspace Overview matches the visible calendar and resets to zero after recurrence stops',()=>{
+ const app=create(),t={...task('root','2026-10-23','none'),seriesId:'root'};
+ const legacy=task('legacy','2026-10-30');
+ app.load([t,legacy]);
+ const october=app.overviewSnapshot(app.get(),'2026-10-01','2026-10-31');
+ const november=app.overviewSnapshot(app.get(),'2026-11-01','2026-11-30');
+ assert.equal(october.total,1);
+ assert.equal(october.done,0);
+ assert.equal(october.remaining,1);
+ assert.equal(november.total,0);
+ assert.equal(november.done,0);
+ assert.equal(november.remaining,0);
+ assert.deepEqual(november.byWeekday,[0,0,0,0,0,0,0])
+});
+run('Workspace Overview completion counts follow scheduled dates, including moves',()=>{
+ const app=create(),t=task('a','2026-10-23');app.load([t]);
+ app.rescheduleCalendarTask(t,'2026-10-30','2026-10-29');
+ app.completeOccurrence(visible(app,'2026-10-29')[0]);
+ const snap=app.overviewSnapshot(app.get(),'2026-10-26','2026-11-01');
+ assert.equal(snap.total,1);assert.equal(snap.done,1);assert.equal(snap.remaining,0);
+ assert.deepEqual(snap.days.find(x=>x.date==='2026-10-29'),{date:'2026-10-29',total:1,done:1,remaining:0});
+ assert.equal(snap.days.find(x=>x.date==='2026-10-30').total,0)
 });
 run('Non-recurring tasks never project into future months',()=>{
  const app=create();app.load([task('a','2026-10-23','none')]);
