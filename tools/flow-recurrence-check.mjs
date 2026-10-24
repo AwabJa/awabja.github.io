@@ -23,7 +23,7 @@ const prelude=[
  "const save=()=>true;",
  "const render=()=>{};"
 ].join('\n');
-const create=new Function(prelude+helpers+";return {load:a=>tasks=a,get:()=>tasks,activeTasks,historyTasks,workflowTasks,calendarOccurrences,calendarDayTasks,rescheduleCalendarTask,completeTask,completeOccurrence,stopRepeating,setTaskStatus,recurrenceKey,nextRepeat,overviewSnapshot};");
+const create=new Function(prelude+helpers+";return {load:a=>tasks=a,get:()=>tasks,activeTasks,historyTasks,workflowTasks,calendarOccurrences,calendarDayTasks,rescheduleCalendarTask,completeTask,completeOccurrence,stopRepeating,ensureSeriesId,setTaskStatus,recurrenceKey,nextRepeat,overviewSnapshot};");
 const task=(id,date='2026-10-23',repeat='weekly',done=false)=>({id,title:'Plan the week',date,time:'10:00',project:'Personal',repeat,done,color:'purple',subtasks:[]});
 const visible=(app,date)=>app.calendarDayTasks(app.calendarOccurrences(app.get(),'2026-10-01','2027-06-30'),date);
 let assertions=0;
@@ -111,12 +111,34 @@ run('Previously stopped tasks automatically suppress legacy copies without IDs o
  assert.equal(app.historyTasks(app.get()).length,1);
  assert.equal(JSON.stringify(app.get()),before,'Loading must not mutate the original saved data')
 });
+run('Stopped legacy matches use captured IDs rather than hiding new identical tasks',()=>{
+ const app=create(),base=task('one'),legacy=task('legacy','2026-10-30');
+ app.load([base,legacy]);
+ app.stopRepeating(base);base.repeat='none';
+ assert.deepEqual(base.stoppedRecurrence.legacyIds,['legacy']);
+ const fresh=task('fresh','2026-11-06');
+ app.get().push(fresh);
+ assert.equal(visible(app,'2026-10-30').length,0);
+ assert.equal(visible(app,'2026-11-06').length,1);
+ assert.equal(app.activeTasks(app.get()).length,2);
+});
 run('Stopping one series never hides a separately IDed recurrence with the same title',()=>{
  const stopped={...task('root','2026-10-23','none'),seriesId:'root'};
  const separate={...task('separate','2026-10-23','weekly'),seriesId:'separate'};
  const app=create();app.load([stopped,separate]);
  assert.equal(app.activeTasks(app.get()).length,2);
  assert.equal(visible(app,'2026-10-30').length,1)
+});
+run('Legacy series identifiers are stabilized only by explicit edit action',()=>{
+ const app=create(),a=task('a'),b=task('b','2026-10-30');
+ app.load([a,b]);
+ const before=JSON.stringify(app.get());
+ assert.equal(app.activeTasks(app.get()).length,1);
+ assert.equal(JSON.stringify(app.get()),before,'Viewing should not rewrite stored tasks');
+ const stable=app.ensureSeriesId(a);
+ assert.equal(stable,'a');
+ assert.equal(a.seriesId,'a');
+ assert.equal(b.seriesId,'a');
 });
 run('Stopped schedule with renamed title keeps legacy signature for old copies',()=>{
  const stopped={...task('root','2026-10-23','none'),seriesId:'root',title:'Renamed weekly review',
