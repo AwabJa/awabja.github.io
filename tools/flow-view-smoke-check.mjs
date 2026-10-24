@@ -70,12 +70,65 @@ function simulate(editFrom='board'){
   removeItem:key=>store.delete(key)
  };
  let allowConfirmation=true,confirmationCount=0;
- const boot=new Function('document','localStorage','crypto','setTimeout','requestAnimationFrame','cancelAnimationFrame','alert','confirm','prompt',appSource);
- boot(document,localStorage,{randomUUID:()=>String(Math.random())},()=>0,fn=>{fn();return 1},()=>{},()=>{},()=>{confirmationCount++;return allowConfirmation},()=>null);
+ const fakeWindow={
+  matchMedia:()=>({matches:editFrom==='phone',addEventListener(){}}),
+  addEventListener(){}
+ };
+ const boot=new Function('document','localStorage','crypto','setTimeout','requestAnimationFrame','cancelAnimationFrame','alert','confirm','prompt','window',appSource);
+ boot(document,localStorage,{randomUUID:()=>String(Math.random())},()=>0,fn=>{fn();return 1},()=>{},()=>{},()=>{confirmationCount++;return allowConfirmation},()=>null,fakeWindow);
  const planner=nodes.get('#planner');
  const contains=cls=>planner.children.some(child=>child instanceof FakeElement&&child.className===cls);
  const allDescendants=(item)=>[item,...(item.children||[]).flatMap(allDescendants).filter(Boolean)];
  const select=mode=>{const button=modes.find(b=>b.dataset.mode===mode);assert(button,'Missing '+mode+' button');button.fire();assert(button.classList.contains('selected'),mode+' tab should be selected')};
+ if(editFrom==='phone'){
+  assert(contains('week-grid'),'Phone Week should remain available');
+  select('month');
+  assert(contains('mobile-month'),'Phone Month must use a compact calendar');
+  assert(!contains('month-grid'),'Phone Month must not render desktop cards');
+  assert.equal(nodes.get('#mobileViewHint').textContent.includes('Select a date'),true,'Mobile hint must explain tap-to-select');
+  const now=new Date(),delta=(2026-now.getFullYear())*12+9-now.getMonth();
+  const move=nodes.get(delta<0?'#prevWeek':'#nextWeek');
+  for(let i=0;i<Math.abs(delta);i++)move.fire();
+  const getDay=date=>allDescendants(planner).find(el=>el.className?.startsWith('mobile-month-day')&&el.dataset.date===date);
+  const agenda=()=>allDescendants(planner).find(el=>el.className==='mobile-month-agenda');
+  const entries=()=>allDescendants(planner).filter(el=>el.className?.startsWith('mobile-agenda-task'));
+  assert.equal(allDescendants(planner).filter(el=>el.className?.startsWith('mobile-month-day')).length,42,'Compact Month must show 42 tappable dates');
+  const target=getDay('2026-10-30');
+  assert(target,'Weekly October 30 occurrence must have a date button');
+  assert(target.getAttribute('aria-label').includes('1 task'),'Date accessible label should announce task count');
+  target.fire();
+  assert.equal(target.getAttribute('aria-pressed'),'true','Tapped day must be visibly and accessibly selected');
+  assert.equal(entries().length,1,'Agenda must show only selected date tasks');
+  assert(allDescendants(agenda()).some(el=>el.className==='mobile-agenda-task-title'&&el.textContent.includes('Weekly review')),'Agenda must show full task title');
+  const addTask=allDescendants(planner).find(el=>el.className==='mobile-month-add');
+  assert(addTask,'Selected date must have Add task');
+  addTask.fire();
+  assert.equal(form.elements.date.value,'2026-10-30','Adding a task from mobile agenda must prefill selected date');
+  nodes.get('#closeDialog').fire();
+  assert.equal(dialogs.open,false);
+  const complete=allDescendants(planner).find(el=>el.className==='mobile-agenda-complete');
+  assert(complete,'Scheduled occurrence needs a Complete action');
+  complete.fire();
+  assert.equal(entries().length,1,'Completing should keep selected day in agenda');
+  assert.equal(allDescendants(planner).filter(el=>el.className==='mobile-agenda-complete').length,0,'Completed occurrence must not still show Complete');
+  assert(allDescendants(agenda()).some(el=>el.className==='mobile-agenda-task-meta'&&el.textContent.includes('Completed')),'Agenda should show completion state');
+  assert.equal(allDescendants(planner).find(el=>el.className==='mobile-agenda-summary').textContent,'1 scheduled · 1 complete','Mobile count should refresh after completion');
+  const november=getDay('2026-11-01');
+  assert(november,'Outside-month day must still be selectable');
+  november.fire();
+  assert.equal(nodes.get('#weekRange').textContent.includes('November'),true,'Tapping next-month date should navigate to that month');
+  const selected=allDescendants(planner).find(el=>el.className?.startsWith('mobile-month-day')&&el.getAttribute('aria-pressed')==='true');
+  assert.equal(selected.dataset.date,'2026-11-01','Outside date must remain selected after month navigation');
+  assert.equal(entries().length,0,'Empty selected day should have no task cards');
+  assert(allDescendants(agenda()).some(el=>el.className==='mobile-agenda-empty'),'Agenda should explain empty dates');
+  select('week');
+  assert(contains('week-grid'),'Phone Week view must remain intact');
+  select('month');
+  assert(contains('mobile-month'),'Switching back to Month must retain the compact phone layout');
+  assert.equal(allDescendants(planner).find(el=>el.className?.startsWith('mobile-month-day')&&el.getAttribute('aria-pressed')==='true').dataset.date,'2026-11-01','Selected day should persist when switching views in the same month');
+  console.log('FLOW MOBILE MONTH SMOKE PASSED: compact grid, selection, add, completion, adjacent month and Week');
+  return
+ }
  assert(contains('week-grid'),'Initial Week view must render');
  assert(nodes.get('#mobileViewHint').textContent.includes('Tap a task'),'Week mode should explain touch-compatible editing');
  assert.equal(modes.find(b=>b.dataset.mode==='week').getAttribute('aria-pressed'),'true','Selected view should expose accessibility state');
@@ -350,3 +403,4 @@ simulate('search');
 simulate('delete');
 simulate('reset');
 simulate('calendar');
+simulate('phone');
