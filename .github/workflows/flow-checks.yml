@@ -1,0 +1,37 @@
+name: FLOW regression checks
+
+on:
+  push:
+    paths:
+      - 'Flow/**'
+      - 'tools/flow-*.mjs'
+      - 'tools/site-integrity.mjs'
+      - '.github/workflows/flow-checks.yml'
+  pull_request:
+    paths:
+      - 'Flow/**'
+      - 'tools/flow-*.mjs'
+      - 'tools/site-integrity.mjs'
+      - '.github/workflows/flow-checks.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  flow:
+    name: FLOW safety and navigation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Recurrence and task state
+        run: node tools/flow-recurrence-check.mjs
+      - name: View startup and interaction
+        run: node tools/flow-view-smoke-check.mjs
+      - name: Export-only backup safety
+        run: node tools/flow-backup-check.mjs
+      - name: Site integrity
+        run: node tools/site-integrity.mjs
