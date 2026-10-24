@@ -564,7 +564,7 @@ $('#removeProject').onclick=()=>{
  const old=editingProject;
  if(!old||!projects.includes(old))return;
  const count=tasks.filter(t=>t.project===old).length;
- if(!confirm('Remove project "'+old+'"? Its '+count+' saved task records and completed history will move to Inbox. No tasks will be deleted.'))return;
+ if(!confirm('Remove project "'+old+'"? Its '+count+' task records will become unassigned (Inbox). Completed tasks remain in Table history. Nothing will be deleted.'))return;
  captureUndo('Remove project');
  reassignProject(old,'');
  projects=projects.filter(p=>p!==old);
