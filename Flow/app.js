@@ -373,9 +373,9 @@ if(mode==='month'){const monthStart=new Date(new Date().getFullYear(),new Date()
   first=monday(now);last=addDays(first,6);
   period='This week · '+dateText(localDate(first))+' – '+dateText(localDate(last))
  }
- const snapshot=overviewSnapshot(tasks,localDate(first),localDate(last));
+ const scoped=shown(),snapshot=overviewSnapshot(scoped,localDate(first),localDate(last));
  $('#overviewPeriod').textContent=period;
- $('#overviewContext').textContent='Individual scheduled dates in '+period+'. Repeating occurrences count separately; project workload is listed on the left.';
+ $('#overviewContext').textContent='Individual scheduled dates in '+period+' · '+(filterProject||'All projects')+(query?' · matching search':'')+'. Repeating occurrences count separately; the Projects panel summarizes all projects.';
  $('#totalTasks').textContent=snapshot.total;
  $('#doneTasks').textContent=snapshot.done;
  $('#activeTasks').textContent=snapshot.remaining;
@@ -395,7 +395,7 @@ if(mode==='month'){const monthStart=new Date(new Date().getFullYear(),new Date()
  }
  const bars=$('#bars');bars.replaceChildren();
  bars.setAttribute('aria-label','Scheduled tasks by weekday for '+period);
- const counts=mode==='month'||mode==='week'?snapshot.byWeekday:overviewSnapshot(tasks,localDate(monday(now)),localDate(addDays(monday(now),6))).byWeekday;
+ const counts=mode==='month'||mode==='week'?snapshot.byWeekday:overviewSnapshot(scoped,localDate(monday(now)),localDate(addDays(monday(now),6))).byWeekday;
  const max=Math.max(1,...counts);
  for(let i=0;i<7;i++){
   const count=counts[i],wrap=el('div','bar-wrap'),bar=el('div','bar'),line=el('i');
@@ -570,7 +570,7 @@ $('#removeProject').onclick=()=>{
  projects=projects.filter(p=>p!==old);
  filterProject='';view='inbox';mode='list';
  log('Removed project; moved tasks to Inbox',old);save();closeProjectDialog();render()
-};let searchFrame=0;$('#search').oninput=e=>{query=e.target.value.trim().toLowerCase();if(searchFrame)cancelAnimationFrame(searchFrame);searchFrame=requestAnimationFrame(()=>{searchFrame=0;renderPlanner()})};$$('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view;if(view==='all')mode='list';if(view==='board'&&mode==='list')mode='board';filterProject='';query='';$('#search').value='';render()});let returnWeekOffset=null,returnWeekMonth='';
+};let searchFrame=0;$('#search').oninput=e=>{query=e.target.value.trim().toLowerCase();if(searchFrame)cancelAnimationFrame(searchFrame);searchFrame=requestAnimationFrame(()=>{searchFrame=0;renderPlanner();renderStats()})};$$('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view;if(view==='all')mode='list';if(view==='board'&&mode==='list')mode='board';filterProject='';query='';$('#search').value='';render()});let returnWeekOffset=null,returnWeekMonth='';
 $$('[data-mode]').forEach(b=>{b.type='button';b.addEventListener('click',()=>{
  const next=b.dataset.mode;
  if(mode==='week'&&next==='month'){
