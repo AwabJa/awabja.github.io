@@ -231,9 +231,9 @@ const stopRepeating=(source)=>{
  source.seriesId=stableId;
  source.stoppedRecurrence=marker;
 };
-const completeNextActionable=t=>{
+const completeNextActionable=(t,reference=currentToday())=>{
  if(t&&isRepeating(t)&&!t.done&&!t.occurrenceOverride){
-  const start=currentToday(),end=localDate(addDays(parseDate(start),65)),key=recurrenceKey(t);
+  const start=reference,end=localDate(addDays(parseDate(start),65)),key=recurrenceKey(t);
   const upcoming=calendarOccurrences(tasks,start,end)
    .filter(x=>!x.done&&isRepeating(x)&&recurrenceKey(x)===key)
    .sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''))[0];
