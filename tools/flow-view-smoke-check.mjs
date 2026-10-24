@@ -59,7 +59,7 @@ function simulate(editFrom='board'){
  const store=new Map();
  const legacyTask=(id,date,done=false)=>({id,title:'Weekly review',description:'Review weekly goals',date,time:'10:00',project:'Personal',repeat:'weekly',color:'purple',priority:'medium',done,subtasks:[]});
  store.set('flow.tasks.v1',JSON.stringify([
-  legacyTask('series-original','2026-10-23'),
+  {...legacyTask('series-original','2026-10-23'),subtasks:editFrom==='checklist'?[{title:'Research',done:false}]:[]},
   legacyTask('series-copy-1','2026-10-30'),
   legacyTask('series-copy-2','2026-11-06'),
   legacyTask('series-history','2026-10-16',true)
@@ -69,18 +69,18 @@ function simulate(editFrom='board'){
   setItem:(key,value)=>store.set(key,String(value)),
   removeItem:key=>store.delete(key)
  };
- let allowConfirmation=true,confirmationCount=0;
+ let allowConfirmation=true,confirmationCount=0,alerts=[];
  const fakeWindow={
   matchMedia:()=>({matches:editFrom==='phone',addEventListener(){}}),
   addEventListener(){}
  };
  const boot=new Function('document','localStorage','crypto','setTimeout','requestAnimationFrame','cancelAnimationFrame','alert','confirm','prompt','window',appSource);
- boot(document,localStorage,{randomUUID:()=>String(Math.random())},()=>0,fn=>{fn();return 1},()=>{},()=>{},()=>{confirmationCount++;return allowConfirmation},()=>null,fakeWindow);
+ boot(document,localStorage,{randomUUID:()=>String(Math.random())},()=>0,fn=>{fn();return 1},()=>{},message=>alerts.push(message),()=>{confirmationCount++;return allowConfirmation},()=>null,fakeWindow);
  const planner=nodes.get('#planner');
  const contains=cls=>planner.children.some(child=>child instanceof FakeElement&&child.className===cls);
  const allDescendants=(item)=>[item,...(item.children||[]).flatMap(allDescendants).filter(Boolean)];
  const select=mode=>{const button=modes.find(b=>b.dataset.mode===mode);assert(button,'Missing '+mode+' button');button.fire();assert(button.classList.contains('selected'),mode+' tab should be selected')};
- if(editFrom==='phone'){
+ if(editFrom==='phone'||editFrom==='phoneCreate'){
   assert(contains('week-grid'),'Phone Week should remain available');
   select('month');
   assert(contains('mobile-month'),'Phone Month must use a compact calendar');
@@ -112,6 +112,23 @@ function simulate(editFrom='board'){
   assert(addTask,'Selected date must have Add task');
   addTask.fire();
   assert.equal(form.elements.date.value,'2026-10-30','Adding a task from mobile agenda must prefill selected date');
+  if(editFrom==='phoneCreate'){
+   const previous=localStorage.getItem('flow.tasks.v1');
+   form.elements.title.value='New selected-day task';form.elements.repeat.value='none';
+   form.elements.project.value='Personal';
+   form.fire('submit');
+   const items=JSON.parse(localStorage.getItem('flow.tasks.v1'));
+   assert.equal(items.length,5,'Calendar add should create exactly one record');
+   assert.equal(items.find(t=>t.title==='New selected-day task')?.date,'2026-10-30','Created task should use selected day');
+   assert(contains('mobile-month'),'Saving from phone Month must keep the compact calendar');
+   assert.equal(allDescendants(planner).find(el=>el.className?.startsWith('mobile-month-day')&&el.getAttribute('aria-pressed')==='true').dataset.date,'2026-10-30','Created day remains selected');
+   assert.equal(entries().length,2,'Created task should immediately appear in selected-day agenda');
+   nodes.get('#undoTask').fire();
+   assert.equal(localStorage.getItem('flow.tasks.v1'),previous,'Undo must reverse calendar-created tasks');
+   assert(contains('mobile-month'),'Undo should keep mobile calendar visible');
+   console.log('FLOW MOBILE CREATE SMOKE PASSED: saving on selected date preserves Month, agenda and Undo');
+   return
+  }
   nodes.get('#closeDialog').fire();
   assert.equal(dialogs.open,false);
   const complete=allDescendants(planner).find(el=>el.className==='mobile-agenda-complete');
@@ -169,6 +186,75 @@ function simulate(editFrom='board'){
   button.fire();
   assert(button.classList.contains('active'),target+' navigation should activate');
  }
+if(editFrom==='checklist'){
+  const source=()=>JSON.parse(localStorage.getItem('flow.tasks.v1')).find(t=>t.id==='series-original');
+  const original=localStorage.getItem('flow.tasks.v1');
+  views.find(b=>b.dataset.view==='board').fire();select('board');
+  const card=allDescendants(planner).find(e=>e.className?.startsWith('task ')&&typeof e.onclick==='function');
+  card.fire();
+  assert.equal(nodes.get('#checklistPanel').hidden,false,'Checklist should be shown for a task with subtasks');
+  const input=allDescendants(nodes.get('#checklistItems')).find(e=>e.tagName==='input');
+  assert(input,'Checklist should show a checkbox');
+  input.checked=true;input.fire('change');
+  assert.equal(source().subtasks[0].done,false,'Checkbox must not silently persist before Save');
+  nodes.get('#closeDialog').fire();
+  assert.equal(localStorage.getItem('flow.tasks.v1'),original,'Canceling editor must preserve existing checklist state');
+  const reopen=allDescendants(planner).find(e=>e.className?.startsWith('task ')&&typeof e.onclick==='function');
+  reopen.fire();
+  const checkbox=allDescendants(nodes.get('#checklistItems')).find(e=>e.tagName==='input');
+  assert.equal(checkbox.checked,false,'Draft checkmarks must reset after cancel');
+  checkbox.checked=true;checkbox.fire('change');
+  form.fire('submit');
+  assert.equal(source().subtasks[0].done,true,'Saving task must commit the checklist draft');
+  nodes.get('#undoTask').fire();
+  assert.equal(localStorage.getItem('flow.tasks.v1'),original,'Undo must restore original checklist and task history');
+  console.log('FLOW CHECKLIST SMOKE PASSED: changes staged until Save, Cancel safe, Undo restores');
+  return
+}
+if(editFrom==='unscheduled'){
+  const original=localStorage.getItem('flow.tasks.v1');
+  const create=nodes.get('#addTaskTop');create.fire();
+  assert.equal(dialogs.open,true);
+  form.elements.title.value='Unscheduled project task';
+  form.elements.project.value='Personal';
+  form.elements.date.value='';
+  form.elements.repeat.value='weekly';
+  form.fire('submit');
+  assert.equal(localStorage.getItem('flow.tasks.v1'),original,'Recurring task without start date must not save');
+  assert(alerts.some(message=>String(message).includes('need a start date')),'Clear repeat date requirement is shown');
+  assert.equal(dialogs.open,true,'Date validation should leave the editor open');
+  form.elements.repeat.value='none';
+  form.fire('submit');
+  const items=JSON.parse(localStorage.getItem('flow.tasks.v1'));
+  assert.equal(items.length,5,'Undated project task must be saveable without a recurrence');
+  const undated=items.find(t=>t.title==='Unscheduled project task');
+  assert(undated&&undated.date===''&&undated.repeat==='none','Unscheduled task must remain undated and nonrecurring');
+  assert(contains('kanban'),'Undated project tasks must appear on Board');
+  nodes.get('#undoTask').fire();
+  assert.equal(localStorage.getItem('flow.tasks.v1'),original,'Undo must restore state after undated create');
+  console.log('FLOW UNSCHEDULED SMOKE PASSED: project backlog allowed; recurrence requires start date');
+  return
+}
+if(editFrom==='desktopDateAdd'){
+  const now=new Date(),monthOffset=(2026-now.getFullYear())*12+9-now.getMonth();
+  const button=views.find(b=>b.dataset.view==='calendar');button.fire();
+  const step=nodes.get(monthOffset<0?'#prevWeek':'#nextWeek');
+  for(let i=0;i<Math.abs(monthOffset);i++)step.fire();
+  const cell=allDescendants(planner).find(el=>el.className==='month-cell'&&el.children.some(c=>c.className==='month-date'&&c.textContent==='30'));
+  assert(cell,'October 30 must exist in desktop calendar');
+  const add=cell.children.find(e=>e.className==='month-date');add.fire();
+  assert.equal(form.elements.date.value,'2026-10-30');
+  form.elements.title.value='Desktop calendar-created task';
+  form.elements.repeat.value='none';
+  form.elements.project.value='Personal';
+  form.fire('submit');
+  assert(contains('month-grid'),'Desktop Month must stay visible after date-based create');
+  assert.equal(nodes.get('#crumb').textContent,'Calendar');
+  const day=allDescendants(planner).find(el=>el.className==='month-cell'&&el.children.some(c=>c.className==='month-date'&&c.textContent==='30'));
+  assert(day.children.some(e=>e.className?.startsWith('month-task ')),'Saved task must appear on desktop Month');
+  console.log('FLOW DESKTOP DATE CREATE PASSED: adding in Month stays on Month');
+  return
+}
 if(editFrom==='calendar'){
   assert(pageSource.includes('data-view="calendar"'),'Calendar shortcut must be in navigation');
   assert(/data-view="inbox"><svg class="nav-icon"/.test(pageSource),'Inbox should use a vector icon');
@@ -412,3 +498,7 @@ simulate('delete');
 simulate('reset');
 simulate('calendar');
 simulate('phone');
+simulate('phoneCreate');
+simulate('checklist');
+simulate('unscheduled');
+simulate('desktopDateAdd');
