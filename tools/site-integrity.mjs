@@ -145,6 +145,17 @@ check(flowApp.includes("destination==='calendar'") &&
       flowApp.includes("const selected=destination==='calendar'?isCalendar"),
   'FLOW must keep Calendar navigation synchronized with Week and Month mode');
 
+check(flowApp.includes('function renderPhoneMonth(') &&
+      flowApp.includes("window.matchMedia('(max-width: 700px)')") &&
+      flowApp.includes('mobileMonthSelected') &&
+      flowApp.includes('renderPhoneMonth(host,list,monthStart,first)') &&
+      flowApp.includes('calendarDayTasks(byDay.get(key)||[],key)'),
+  'FLOW must use existing task occurrences in its phone-only selected-day Month agenda');
+check(flowMobileCss.includes('.mobile-month{display:none}') &&
+      flowMobileCss.includes('.mobile-month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))') &&
+      flowMobileCss.includes('.mobile-month-day{min-width:0;width:100%') &&
+      flowMobileCss.includes('.mobile-month-agenda{min-width:0'),
+  'FLOW must keep phone Month compact and preserve desktop Month layout');
 check(flowHtml.includes('name="viewport"') && flowHtml.includes('id="mobileViewHint"'),
   'FLOW must retain responsive viewport and touch guidance');
 for(const expected of ['.sidebar .sidebar-search{display:flex',
