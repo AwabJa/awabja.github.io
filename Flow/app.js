@@ -393,6 +393,7 @@ $('#editRepeatingSchedule').onclick=()=>{
  const source=t.virtualSource||t;
  const master=activeTasks(tasks).find(x=>isRepeating(x)&&!x.occurrenceOverride&&recurrenceKey(x)===recurrenceKey(source));
  openTask(master||source);
+ editingOccurrenceDate=t.date;
  $('#taskScopeNote').hidden=false;
  $('#taskScopeNote').textContent='Editing the entire repeating schedule. Future occurrences may change; completed history is retained.'
 };
