@@ -17,6 +17,7 @@ const prelude=[
  "const pad=n=>String(n).padStart(2,'0');",
  "const localDate=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());",
  "const parseDate=s=>new Date(s+'T12:00:00');",
+ "const currentToday=()=>'2026-10-24';",
  "const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};",
  "let tasks=[];",
  "const log=()=>{};",
@@ -24,7 +25,7 @@ const prelude=[
  "const captureUndo=()=>{};",
  "const render=()=>{};"
 ].join('\n');
-const create=new Function(prelude+helpers+";return {load:a=>tasks=a,get:()=>tasks,activeTasks,historyTasks,workflowTasks,calendarOccurrences,calendarDayTasks,rescheduleCalendarTask,completeTask,completeOccurrence,stopRepeating,ensureSeriesId,setTaskStatus,recurrenceKey,nextRepeat,overviewSnapshot,nextScheduledDates};");
+const create=new Function(prelude+helpers+";return {load:a=>tasks=a,get:()=>tasks,activeTasks,historyTasks,workflowTasks,calendarOccurrences,calendarDayTasks,rescheduleCalendarTask,completeTask,completeOccurrence,stopRepeating,ensureSeriesId,setTaskStatus,completeNextActionable,recurrenceKey,nextRepeat,overviewSnapshot,nextScheduledDates};");
 const task=(id,date='2026-10-23',repeat='weekly',done=false)=>({id,title:'Plan the week',date,time:'10:00',project:'Personal',repeat,done,color:'purple',subtasks:[]});
 const visible=(app,date)=>app.calendarDayTasks(app.calendarOccurrences(app.get(),'2026-10-01','2027-06-30'),date);
 let assertions=0;
@@ -219,6 +220,37 @@ run('Future calendar occurrences must not inherit Board In Progress status',()=>
  assert.equal(original.status,'progress');
  assert.equal(upcoming.status,'todo');
  assert.equal(app.activeTasks(app.get())[0].status,'progress','Board status stays unchanged')
+});
+run('Board completion marks the next displayed weekly date, not a stale saved anchor',()=>{
+ const app=create(),t={...task('old','2026-10-23'),seriesId:'old'};app.load([t]);
+ const visibleNext=app.nextScheduledDates(app.get(),'2026-10-24').get('old');
+ assert.equal(visibleNext,'2026-10-30');
+ app.completeNextActionable(t,'2026-10-24');
+ const history=app.historyTasks(app.get());
+ assert.equal(history.length,1);
+ assert.equal(history[0].date,visibleNext);
+ assert.equal(history[0].occurrenceDate,visibleNext);
+ assert.deepEqual(visible(app,'2026-10-30').map(t=>t.done),[true]);
+ assert.equal(app.nextScheduledDates(app.get(),'2026-10-24').get('old'),'2026-11-06');
+ assert.equal(t.date,'2026-10-23','Missed historical occurrences should not be silently rewritten');
+});
+run('Board completion honors the one-date reschedule shown to the user',()=>{
+ const app=create(),t={...task('old','2026-10-23'),seriesId:'old'};app.load([t]);
+ app.rescheduleCalendarTask(t,'2026-10-30','2026-10-29');
+ assert.equal(app.nextScheduledDates(app.get(),'2026-10-24').get('old'),'2026-10-29');
+ app.completeNextActionable(t,'2026-10-24');
+ const history=app.historyTasks(app.get());
+ assert.equal(history[0].date,'2026-10-29');
+ assert.equal(history[0].occurrenceDate,'2026-10-30');
+ assert.equal(visible(app,'2026-10-29')[0].done,true);
+ assert.equal(visible(app,'2026-10-30').length,0);
+ assert.equal(app.nextScheduledDates(app.get(),'2026-10-24').get('old'),'2026-11-06')
+});
+run('Board completion still supports a future schedule beyond the lookup horizon',()=>{
+ const app=create(),t={...task('far','2027-06-01','weekly'),seriesId:'far'};app.load([t]);
+ app.completeNextActionable(t,'2026-10-24');
+ assert.equal(app.historyTasks(app.get())[0].date,'2027-06-01');
+ assert.equal(app.activeTasks(app.get()).length,1)
 });
 run('Ordinary tasks complete only once',()=>{
  const app=create(),t=task('a','2026-10-23','none');app.load([t]);app.completeTask(t,true);
