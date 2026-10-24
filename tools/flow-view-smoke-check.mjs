@@ -133,7 +133,7 @@ function simulate(editFrom='board'){
  assert(nodes.get('#mobileViewHint').textContent.includes('Tap a task'),'Week mode should explain touch-compatible editing');
  assert.equal(modes.find(b=>b.dataset.mode==='week').getAttribute('aria-pressed'),'true','Selected view should expose accessibility state');
  select('month');assert(contains('month-grid'),'Month view must render');
- assert(nodes.get('#mobileViewHint').textContent.includes('Swipe sideways'),'Month should explain horizontal scroll on phones');
+ assert(nodes.get('#mobileViewHint').textContent.includes('Select a date'),'Month should explain selecting a date on phones');
  assert.equal(modes.find(b=>b.dataset.mode==='month').getAttribute('aria-pressed'),'true','Month selected state should be announced');
  assert(nodes.get('#overviewPeriod').textContent,'Month view must set overview period');
  assert(nodes.get('#overviewContext').textContent.includes('Individual scheduled dates'),'Overview must explain its occurrence-based counts');
