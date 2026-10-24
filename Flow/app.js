@@ -1,6 +1,12 @@
-(()=>{'use strict';const KEY='flow.tasks.v1',PK='flow.projects.v1',AK='flow.activity.v1';const $=s=>document.querySelector(s);const $$=s=>[...document.querySelectorAll(s)];const pad=n=>String(n).padStart(2,'0');const localDate=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());const parseDate=s=>new Date(s+'T12:00:00');const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};const monday=d=>addDays(d,-(d.getDay()+6)%7);const currentToday=()=>localDate(new Date());const today=currentToday();const seedProjects=['Team Project','Personal','Design'];const damagedKeys=[];const load=(key,fallback)=>{let raw;try{raw=localStorage.getItem(key);if(raw===null)return fallback;const v=JSON.parse(raw);if(Array.isArray(v))return v;damagedKeys.push(key);return fallback}catch{damagedKeys.push(key);return fallback}};let projects=load(PK,seedProjects),activity=load(AK,[]),tasks=load(KEY,[{id:'demo-1',title:'Plan the week',description:'Decide what matters most.',date:today,time:'10:00',project:'Personal',color:'yellow',done:false},{id:'demo-2',title:'Design review',description:'Refine the dashboard layout.',date:localDate(addDays(new Date(),1)),time:'13:30',project:'Team Project',color:'purple',done:false},{id:'demo-3',title:'Ship a small win',description:'Finish one meaningful task.',date:localDate(addDays(new Date(),2)),time:'15:00',project:'Design',color:'pink',done:false}]);let view='board',mode='week',offset=0,filterProject='',query='',editing=null,tableFilter='active',tableSort='date';const log=(action,title)=>{activity.unshift({id:Date.now()+'-'+Math.random(),action,title,at:new Date().toISOString()});activity=activity.slice(0,120)};let storageWarned=false;const save=()=>{if(damagedKeys.length){if(!storageWarned){storageWarned=true;alert('FLOW detected damaged saved data. Saving is disabled to protect the original records. Download the recovery backup before making changes.')}return false}let oldTasks,oldProjects,oldActivity;try{oldTasks=localStorage.getItem(KEY);oldProjects=localStorage.getItem(PK);oldActivity=localStorage.getItem(AK);localStorage.setItem(KEY,JSON.stringify(tasks));localStorage.setItem(PK,JSON.stringify(projects));localStorage.setItem(AK,JSON.stringify(activity));return true}catch{try{for(const [key,value] of [[KEY,oldTasks],[PK,oldProjects],[AK,oldActivity]]){if(value===null)localStorage.removeItem(key);else if(value!==undefined)localStorage.setItem(key,value)}}catch{}if(!storageWarned){storageWarned=true;alert('FLOW could not save changes to this browser. Your previous saved workspace was retained where possible. Export a backup before continuing.')}return false}};const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};const shown=()=>tasks.filter(t=>(view!=='board'||!filterProject||t.project===filterProject)&&(view!=='inbox'||!t.project)&&(view!=='today'||t.date===currentToday())&&(!query||(t.title+' '+t.description+' '+(t.project||'')).toLowerCase().includes(query)));const weekStart=()=>addDays(monday(new Date()),offset*7);const nextRepeat=(date,repeat)=>{if(!date||!repeat||repeat==='none')return '';const d=parseDate(date);if(repeat==='daily')d.setDate(d.getDate()+1);else if(repeat==='weekly')d.setDate(d.getDate()+7);else if(repeat==='monthly'){const day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+1);d.setDate(Math.min(day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()))}else return '';return localDate(d)};const isRepeating=t=>['daily','weekly','monthly'].includes(t?.repeat);
+(()=>{'use strict';const KEY='flow.tasks.v1',PK='flow.projects.v1',AK='flow.activity.v1';const $=s=>document.querySelector(s);const $$=s=>[...document.querySelectorAll(s)];const pad=n=>String(n).padStart(2,'0');const localDate=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());const parseDate=s=>new Date(s+'T12:00:00');const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};const monday=d=>addDays(d,-(d.getDay()+6)%7);const currentToday=()=>localDate(new Date());const today=currentToday();const seedProjects=['Team Project','Personal','Design'];const damagedKeys=[];const load=(key,fallback)=>{let raw;try{raw=localStorage.getItem(key);if(raw===null)return fallback;const v=JSON.parse(raw);if(Array.isArray(v))return v;damagedKeys.push(key);return fallback}catch{damagedKeys.push(key);return fallback}};let projects=load(PK,seedProjects),activity=load(AK,[]),tasks=load(KEY,[{id:'demo-1',title:'Plan the week',description:'Decide what matters most.',date:today,time:'10:00',project:'Personal',color:'yellow',done:false},{id:'demo-2',title:'Design review',description:'Refine the dashboard layout.',date:localDate(addDays(new Date(),1)),time:'13:30',project:'Team Project',color:'purple',done:false},{id:'demo-3',title:'Ship a small win',description:'Finish one meaningful task.',date:localDate(addDays(new Date(),2)),time:'15:00',project:'Design',color:'pink',done:false}]);let view='board',mode='week',offset=0,filterProject='',query='',editing=null,tableFilter='active',tableSort='date';const log=(action,title)=>{activity.unshift({id:Date.now()+'-'+Math.random(),action,title,at:new Date().toISOString()});activity=activity.slice(0,120)};let storageWarned=false;const save=()=>{if(damagedKeys.length){if(!storageWarned){storageWarned=true;alert('FLOW detected damaged saved data. Saving is disabled to protect the original records. Download the recovery backup before making changes.')}return false}let oldTasks,oldProjects,oldActivity;try{oldTasks=localStorage.getItem(KEY);oldProjects=localStorage.getItem(PK);oldActivity=localStorage.getItem(AK);localStorage.setItem(KEY,JSON.stringify(tasks));localStorage.setItem(PK,JSON.stringify(projects));localStorage.setItem(AK,JSON.stringify(activity));return true}catch{try{for(const [key,value] of [[KEY,oldTasks],[PK,oldProjects],[AK,oldActivity]]){if(value===null)localStorage.removeItem(key);else if(value!==undefined)localStorage.setItem(key,value)}}catch{}if(!storageWarned){storageWarned=true;alert('FLOW could not save changes to this browser. Your previous saved workspace was retained where possible. Export a backup before continuing.')}return false}};const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};const shown=()=>tasks.filter(t=>(view!=='board'||!filterProject||t.project===filterProject)&&(view!=='inbox'||!t.project)&&(view!=='today'||t.date===currentToday())&&(!query||(t.title+' '+t.description+' '+(t.project||'')).toLowerCase().includes(query)));const weekStart=()=>addDays(monday(new Date()),offset*7);const nextRepeat=(date,repeat,anchorDay)=>{if(!date||!repeat||repeat==='none')return '';const d=parseDate(date);if(repeat==='daily')d.setDate(d.getDate()+1);else if(repeat==='weekly')d.setDate(d.getDate()+7);else if(repeat==='monthly'){const day=Number.isInteger(anchorDay)&&anchorDay>=1&&anchorDay<=31?anchorDay:d.getDate();d.setDate(1);d.setMonth(d.getMonth()+1);d.setDate(Math.min(day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()))}else return '';return localDate(d)};const isRepeating=t=>['daily','weekly','monthly'].includes(t?.repeat);
 const isArchived=t=>!!t.recurrenceArchived;
 const recurrenceKey=t=>t.seriesId||[t.title,t.project||'',t.repeat||'none',t.time||''].join('\u001f');
+const recurrenceAnchor=t=>{
+ if(Number.isInteger(t.repeatAnchor)&&t.repeatAnchor>=1&&t.repeatAnchor<=31)return t.repeatAnchor;
+ const history=tasks.filter(x=>!isArchived(x)&&isRepeating(x)&&recurrenceKey(x)===recurrenceKey(t)&&x.date)
+  .sort((a,b)=>(a.occurrenceDate||a.date).localeCompare(b.occurrenceDate||b.date));
+ return parseDate((history[0]?.occurrenceDate||history[0]?.date)||t.date).getDate()
+};
 const newTaskId=()=>typeof crypto!=='undefined'&&typeof crypto.randomUUID==='function'?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2);
 const displayDate=t=>{const move=(Array.isArray(t.recurrenceMoves)?t.recurrenceMoves:[]).find(m=>m.from===t.date);return move?.to||t.date};
 const activeTasks=items=>{
@@ -50,7 +56,7 @@ const calendarOccurrences=(items,first,last)=>{
   }
   for(let i=0;i<2400&&date<=last;i++){
    add(date,changes.get(date)||date);
-   const next=nextRepeat(date,source.repeat);
+   const next=nextRepeat(date,source.repeat,recurrenceAnchor(source));
    if(!next||next<=date)break;
    date=next;
   }
@@ -96,11 +102,11 @@ const rescheduleCalendarTask=(task,original,to)=>{
  }
  log('Rescheduled',source.title);save();render();
 };
-const nextPendingRepeat=(date,repeat,series)=>{
- let next=nextRepeat(date,repeat);
+const nextPendingRepeat=(date,repeat,series,anchorDay)=>{
+ let next=nextRepeat(date,repeat,anchorDay);
  for(let i=0;i<2400&&next;i++){
   if(!tasks.some(t=>!isArchived(t)&&t.done&&isRepeating(t)&&recurrenceKey(t)===series&&(t.occurrenceDate||t.date)===next))return next;
-  next=nextRepeat(next,repeat);
+  next=nextRepeat(next,repeat,anchorDay);
  }
  return next;
 };
@@ -130,7 +136,7 @@ const completeOccurrence=t=>{
  const active=activeTasks(tasks).find(x=>isRepeating(x)&&!x.occurrenceOverride&&recurrenceKey(x)===key);
  if(active&&active.date===original){
   archiveOtherPending(active);
-  const next=nextPendingRepeat(original,active.repeat,key);
+  const next=nextPendingRepeat(original,active.repeat,key,recurrenceAnchor(active));
   if(next)active.date=next;
   active.status='todo';
   active.subtasks=(active.subtasks||[]).map(x=>typeof x==='string'?{title:x,done:false}:{...x,done:false});
@@ -296,6 +302,7 @@ if(old&&isRepeating(old)&&!old.isOccurrenceHistory){
  if(old.date!==t.date&&t.repeat!=='none')t.recurrenceMoves=[];
 }
 if(isRepeating(t)&&!t.seriesId)t.seriesId=t.id;
+if(t.repeat==='monthly'&&(!old||old.repeat!=='monthly'||old.date!==t.date))t.repeatAnchor=parseDate(t.date).getDate();
 const idx=tasks.findIndex(x=>x.id===editing);
 if(idx>=0)tasks[idx]=t;else tasks.push(t);
 if(f.elements.done.checked&&!t.done)completeTask(t,true);
