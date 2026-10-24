@@ -21,6 +21,7 @@ const prelude=[
  "let tasks=[];",
  "const log=()=>{};",
  "const save=()=>true;",
+ "const captureUndo=()=>{};",
  "const render=()=>{};"
 ].join('\n');
 const create=new Function(prelude+helpers+";return {load:a=>tasks=a,get:()=>tasks,activeTasks,historyTasks,workflowTasks,calendarOccurrences,calendarDayTasks,rescheduleCalendarTask,completeTask,completeOccurrence,stopRepeating,ensureSeriesId,setTaskStatus,recurrenceKey,nextRepeat,overviewSnapshot};");
