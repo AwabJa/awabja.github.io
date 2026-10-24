@@ -40,6 +40,32 @@ async function scenario(name,viewport,isMobile=false){
  try{
   await page.goto(origin+'/Flow/',{waitUntil:'load'});
   await page.locator('.week-grid').waitFor();
+  const mainDestinations=page.locator('.sidebar .nav [data-view]');
+  assert.equal(await mainDestinations.count(),6,'Navigation must include Calendar and Inbox');
+  assert.equal(await page.locator('[data-view="calendar"]').isVisible(),true,'Calendar shortcut must be discoverable');
+  assert.equal(await page.locator('[data-view="inbox"] .nav-icon').count(),1,'Inbox must use a consistent vector icon');
+  if(isMobile){
+   const navigation=await page.locator('.sidebar .nav').evaluate(el=>({
+    client:el.clientWidth,scroll:el.scrollWidth,
+    controls:[...el.querySelectorAll('[data-view]')].map(button=>{
+     const rect=button.getBoundingClientRect(),parent=el.getBoundingClientRect();
+     return {x:rect.left-parent.left,width:rect.width,height:rect.height}
+    })
+   }));
+   assert(navigation.scroll<=navigation.client+2,name+' should expose all primary navigation destinations without sideways scrolling');
+   for(const button of navigation.controls){
+    assert(button.x>=-2&&button.x+button.width<=navigation.client+2,name+' must keep every nav button within the screen');
+    assert(button.height>=44,name+' nav button must be at least 44px tall')
+   }
+  }
+  await page.locator('[data-view="inbox"]').click();
+  assert.equal(await page.locator('.toolbar').isVisible(),false,'Inbox may hide calendar tabs');
+  await page.locator('[data-view="calendar"]').click();
+  await page.locator('.month-grid').waitFor();
+  assert.equal(await page.locator('[data-view="calendar"]').getAttribute('aria-current'),'page','Calendar shortcut must activate');
+  await page.locator('[data-mode="week"]').click();
+  await page.locator('.week-grid').waitFor();
+  assert.equal(await page.locator('[data-view="calendar"]').getAttribute('aria-current'),'page','Week remains part of Calendar');
   assert.equal(await page.locator('[data-mode="week"]').getAttribute('class').then(x=>x?.includes('selected')),true);
   const dimensions=await page.evaluate(()=>({body:document.documentElement.scrollWidth,viewport:innerWidth}));
   assert(dimensions.body<=dimensions.viewport+2,name+' should not horizontally overflow the browser viewport');
