@@ -57,11 +57,19 @@ async function scenario(name,viewport,isMobile=false){
    text:el.textContent,
    width:el.clientWidth,scrollWidth:el.scrollWidth,
    height:el.getBoundingClientRect().height,
-   lineHeight:parseFloat(getComputedStyle(el).lineHeight)
+   lineHeight:parseFloat(getComputedStyle(el).lineHeight),
+   naturalWidth:(()=>{
+    const probe=document.createElement('canvas').getContext('2d');
+    probe.font=getComputedStyle(el).font;
+    return probe.measureText(el.textContent).width;
+   })()
   }));
   assert.equal(labelFit.text,longName,'Project label must retain every character');
   assert(labelFit.scrollWidth<=labelFit.width+2,name+' project name must not be clipped horizontally');
-  assert(labelFit.height>=labelFit.lineHeight*2-2,name+' should wrap long project names onto multiple lines');
+  assert(labelFit.height>=labelFit.lineHeight-2,name+' should display a complete first line');
+  if(labelFit.naturalWidth>labelFit.width+2){
+   assert(labelFit.height>=labelFit.lineHeight*2-2,name+' should wrap long project names when needed');
+  }
   assert.equal(await page.locator('#projectList .project-list-row').filter({hasText:longName}).locator('.project-manage').count(),1,
    'Each project must still have a separate management button');
   const projectPageFit=await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2);
