@@ -129,8 +129,14 @@ check(flowApp.includes("done.onchange=()=>{if(done.checked)completeOccurrence(t)
   'FLOW must permit completing a recurring calendar occurrence from every task view');
 check(flowHtml.includes('id="exportData"') && flowExport.includes('flow-workspace.json'),
   'FLOW must retain the JSON export control');
-check(!/(?<!\\$)\\$\\([^)]*\\)\\.forEach/.test(flowApp),
-  'FLOW must use querySelectorAll for multi-element iteration');
+check(!/(?<!\$)\$\('[^']+'\)\.forEach/.test(flowApp) &&
+      flowApp.includes("$$('[data-mode]').forEach"),
+  'FLOW view buttons must use querySelectorAll rather than querySelector for iteration');
+
+const flowViews = spawnSync(process.execPath,
+  [join(root, 'tools/flow-view-smoke-check.mjs')], { encoding: 'utf8' });
+check(flowViews.status === 0,
+  'FLOW startup and navigation smoke test failed:\n' + (flowViews.stderr || flowViews.stdout || '').trim());
 
 // Exercise actual FLOW recurrence and completion helpers, not just source tokens.
 const flowRecurrence = spawnSync(process.execPath,
