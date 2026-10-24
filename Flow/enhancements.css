@@ -93,3 +93,12 @@
 .overview-context,.project-context{margin:2px 0 12px;color:#a9a5ba;font-size:11px;line-height:1.5}
 .overview-context{margin:8px 0 12px}
 .project-context{margin-top:-8px}
+
+/* Reversible actions and local-first backup guidance. */
+.undo-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 16px;padding:10px 13px;border:1px solid #7061a6;border-radius:11px;background:#2c2940;color:#e5dfff;font-size:12px}
+.undo-bar span{flex:1;min-width:100px}
+.undo-bar button{border:1px solid #7267a0;border-radius:7px;background:#463b68;color:#f5f2ff;padding:7px 12px;font-size:12px}
+.undo-bar button:hover,.undo-bar button:focus-visible{background:#5a4d86}
+.undo-bar #dismissUndo{border:0;background:transparent;padding:7px 10px;color:#c5bfd5}
+.backup-status{margin:-4px 5px 12px;color:#9894ad;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+@media(max-width:800px){.sidebar .backup-status{display:block;margin:2px 6px 8px}}
