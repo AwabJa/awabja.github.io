@@ -179,6 +179,7 @@ const finishOneOff=(task,done)=>{
 const completeOccurrence=(t,fromWorkflow=false)=>{
  if(!t||t.done)return;
  const source=t.virtualSource||t;
+ if(isRepeating(source)&&!source.date){if(typeof alert==='function')alert('Set a start date for this repeating task before completing it.');return}
  if(!isRepeating(source)||source.occurrenceOverride){
   if(!source.done){captureUndo('Complete task');if(finishOneOff(source,true)){save();render()}}
   return
