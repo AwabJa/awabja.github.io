@@ -354,6 +354,7 @@ if(mode==='month'){const monthStart=new Date(new Date().getFullYear(),new Date()
  }
  const snapshot=overviewSnapshot(tasks,localDate(first),localDate(last));
  $('#overviewPeriod').textContent=period;
+ $('#overviewContext').textContent='Individual scheduled dates in '+period+'. Repeating occurrences count separately; project workload is listed on the left.';
  $('#totalTasks').textContent=snapshot.total;
  $('#doneTasks').textContent=snapshot.done;
  $('#activeTasks').textContent=snapshot.remaining;
@@ -364,11 +365,11 @@ if(mode==='month'){const monthStart=new Date(new Date().getFullYear(),new Date()
   'No scheduled tasks in this period';
  $('#projectCount').textContent=projects.length+' projects';
  const summary=$('#projectSummary');summary.replaceChildren();
- const open=activeTasks(tasks);
+ const open=activeTasks(tasks),finishedProjects=historyTasks(tasks).filter(t=>!isRepeating(t));
  for(const p of projects){
-  const count=open.filter(t=>t.project===p).length;
+  const activeCount=open.filter(t=>t.project===p).length,finished=finishedProjects.filter(t=>t.project===p).length;
   const row=el('div','summary-row');
-  row.append(el('span','',p),el('small','',count+' open'));
+  row.append(el('span','',p),el('small','',activeCount+' active'+(finished?' · '+finished+' finished':'')));
   summary.append(row)
  }
  const bars=$('#bars');bars.replaceChildren();
