@@ -18,13 +18,13 @@ const calendarOccurrences=(items,first,last)=>{
   if(!t.date||!isRepeating(t)||t.done)return true;
   return !groups.get(recurrenceKey(t))?.moves.has(t.date);
  });
- const existing=new Set(result.filter(t=>t.date).map(t=>recurrenceKey(t)+'\u001f'+t.date));
+ const existing=new Set(result.filter(t=>t.date&&isRepeating(t)).map(t=>recurrenceKey(t)+'\u001f'+(t.occurrenceDate||t.date)));
  for(const [key,group] of groups){
   const source=group.source;
   if(!source||source.done)continue;
   const addOccurrence=(scheduled,display)=>{
    if(display<first||display>last)return;
-   const signature=key+'\u001f'+display;
+   const signature=key+'\u001f'+scheduled;
    if(existing.has(signature))return;
    existing.add(signature);
    result.push({...source,date:display,done:false,occurrenceDate:scheduled,virtualSource:source,movedOccurrence:scheduled!==display,subtasks:(source.subtasks||[]).map(x=>typeof x==='string'?x:{...x,done:false})});
@@ -67,7 +67,7 @@ const rescheduleCalendarTask=(task,scheduled,to)=>{
  }
  log('Rescheduled',source.title);save();render();
 };
-const calendarDayTasks=(items,key)=>{const seen=new Set();return items.filter(t=>t.date===key).filter(t=>{if(!['daily','weekly','monthly'].includes(t.repeat))return true;const signature=[recurrenceKey(t),t.date,t.done?'done':'open'].join('\u001f');if(seen.has(signature))return false;seen.add(signature);return true})};
+const calendarDayTasks=(items,key)=>{const seen=new Set();return items.filter(t=>t.date===key).filter(t=>{if(!['daily','weekly','monthly'].includes(t.repeat))return true;const signature=[recurrenceKey(t),t.occurrenceDate||t.date,t.done?'done':'open'].join('\u001f');if(seen.has(signature))return false;seen.add(signature);return true})};
 const nextPendingRepeat=(date,repeat,series)=>{
  let next=nextRepeat(date,repeat);
  for(let i=0;i<2400&&next;i++){
