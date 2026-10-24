@@ -88,3 +88,8 @@
 .scope-option strong{font-size:13px}
 .scope-option small{font-size:11px;color:#b8b2ca;line-height:1.45}
 .scope-note{margin:0;padding:9px 11px;border-radius:9px;background:#302d40;color:#c9c1f5;font-size:11px;line-height:1.45}
+
+/* Distinguish scheduled-occurrence stats from unique project workload. */
+.overview-context,.project-context{margin:2px 0 12px;color:#a9a5ba;font-size:11px;line-height:1.5}
+.overview-context{margin:8px 0 12px}
+.project-context{margin-top:-8px}
