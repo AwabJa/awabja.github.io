@@ -42,8 +42,8 @@ const displayDate=t=>{const move=(Array.isArray(t.recurrenceMoves)?t.recurrenceM
 const activeTasks=items=>{
  const pending=new Map(),ordinary=[],stops=stoppedSeries();
  for(const t of items){
-  if(isArchived(t)||stoppedCopy(t,stops)||t.done)continue;
-  if(!isRepeating(t)||t.occurrenceOverride){ordinary.push(t);continue}
+  if(isArchived(t)||stoppedCopy(t,stops)||t.done||t.occurrenceOverride)continue;
+  if(!isRepeating(t)){ordinary.push(t);continue}
   const key=recurrenceKey(t),prior=pending.get(key);
   const due=displayDate(t),priorDue=prior?displayDate(prior):'9999';
   if(!prior||due<priorDue||(due===priorDue&&t.occurrenceOverride&&!prior.occurrenceOverride))pending.set(key,t);
@@ -77,7 +77,7 @@ const calendarOccurrences=(items,first,last)=>{
    const signature=key+'\u001f'+original;
    if(target<first||target>last||finished.has(signature)||scheduled.has(signature))return;
    scheduled.add(signature);
-   result.push({...source,date:target,occurrenceDate:original,virtualSource:source,movedOccurrence:original!==target,done:false,subtasks:(source.subtasks||[]).map(x=>typeof x==='string'?x:{...x,done:false})});
+   result.push({...source,date:target,status:original===source.date?source.status:'todo',occurrenceDate:original,virtualSource:source,movedOccurrence:original!==target,done:false,subtasks:(source.subtasks||[]).map(x=>typeof x==='string'?x:{...x,done:false})});
   };
   let date=source.date;
   if(source.repeat==='daily'||source.repeat==='weekly'){
@@ -94,6 +94,16 @@ const calendarOccurrences=(items,first,last)=>{
   for(const [original,target] of changes)if(original>=source.date&&target>=first&&target<=last)add(original,target);
  }
  return result;
+};
+const nextScheduledDates=(items,at=currentToday())=>{
+ const future=calendarOccurrences(items,at,localDate(addDays(parseDate(at),65)));
+ const next=new Map();
+ for(const t of future){
+  if(t.done||!isRepeating(t))continue;
+  const series=recurrenceKey(t),previous=next.get(series);
+  if(!previous||t.date<previous)next.set(series,t.date);
+ }
+ return next
 };
 const calendarDayTasks=(items,key)=>{
  const seen=new Set();
@@ -262,12 +272,12 @@ if(mode==='list'&&fullViews){
   makeSelect('Sort',tableSort,[['date','Due date'],['priority','Priority'],['project','Project'],['name','Task name']],value=>{tableSort=value;renderPlanner()})
  );
  wrap.append(controls);
- const pending=activeTasks(baseList),finished=historyTasks(baseList);
+ const pending=activeTasks(baseList),finished=historyTasks(baseList),nextDates=nextScheduledDates(baseList);const due=t=>isRepeating(t)&&!t.done?(nextDates.get(recurrenceKey(t))||displayDate(t)):t.date;
  const rows=(tableFilter==='history'?finished:tableFilter==='all'?[...pending,...finished]:pending).sort((a,b)=>{
-  if(tableSort==='priority')return ({high:0,medium:1,low:2,none:3}[a.priority||'none']-({high:0,medium:1,low:2,none:3}[b.priority||'none']))||(displayDate(a)||'9999').localeCompare(displayDate(b)||'9999');
-  if(tableSort==='project')return (a.project||'').localeCompare(b.project||'')||(displayDate(a)||'9999').localeCompare(displayDate(b)||'9999');
+  if(tableSort==='priority')return ({high:0,medium:1,low:2,none:3}[a.priority||'none']-({high:0,medium:1,low:2,none:3}[b.priority||'none']))||(due(a)||'9999').localeCompare(due(b)||'9999');
+  if(tableSort==='project')return (a.project||'').localeCompare(b.project||'')||(due(a)||'9999').localeCompare(due(b)||'9999');
   if(tableSort==='name')return a.title.localeCompare(b.title);
-  return (displayDate(a)||'9999').localeCompare(displayDate(b)||'9999')||(a.time||'').localeCompare(b.time||'')
+  return (due(a)||'9999').localeCompare(due(b)||'9999')||(a.time||'').localeCompare(b.time||'')
  });
  const count=el('p','table-count',rows.length+' '+(tableFilter==='history'?'completed occurrences':tableFilter==='all'?'tracked entries':'active tasks'));
  controls.append(count);
@@ -287,7 +297,7 @@ if(mode==='list'&&fullViews){
    status.value=taskStatus(t);status.setAttribute('aria-label','Change status for '+t.title);
    status.onchange=()=>setTaskStatus(t,status.value);statusCell.append(status);
    tr.append(name,statusCell,el('td','',t.priority&&t.priority!=='none'?t.priority:'—'),
-    el('td','',t.date?dateText(t.done?t.date:displayDate(t)):'—'),
+    el('td','',t.date?dateText(due(t)):'—'),
     el('td','',t.time?formatTime(t.time):'—'),
     el('td','',t.project||'Inbox'),
     el('td','',isRepeating(t)?t.repeat+(t.done?' · history':''):'—'));
@@ -321,7 +331,7 @@ if(view==='today'||view==='inbox'){
 if(mode==='board'){
  const note=el('p','recurrence-note','Board tracks actionable work. Repeating tasks appear once; each finished occurrence is saved in history. Done shows only the 12 most recent completions from the last 14 days.');
  host.append(note);
- const pending=activeTasks(baseList),recent=recentlyCompleted(baseList);
+ const pending=activeTasks(baseList),recent=recentlyCompleted(baseList),nextDates=nextScheduledDates(baseList);
  const lanes=[
   ['To Do','todo',pending.filter(t=>taskStatus(t)==='todo')],
   ['In Progress','progress',pending.filter(t=>taskStatus(t)==='progress')],
@@ -337,7 +347,7 @@ if(mode==='board'){
   for(const t of laneTasks){
    const card=el('div','kanban-card'),button=el('button','task '+t.color);
    button.append(el('span','task-name',t.title+priorityLabel(t)));
-   if(t.date||t.time)button.append(el('span','task-time',(t.done?'Finished ':'Due ')+(t.date?dateText(t.done?t.date:displayDate(t)):'')+(t.time?' · '+formatTime(t.time):'')));
+   if(t.date||t.time)button.append(el('span','task-time',(t.done?'Finished ':'Due ')+(t.date?dateText(t.done?t.date:isRepeating(t)?nextDates.get(recurrenceKey(t))||displayDate(t):displayDate(t)):'')+(t.time?' · '+formatTime(t.time):'')));
    if(t.project)button.append(el('span','task-project',t.project));
    if(t.description)button.append(el('span','task-description',t.description));
    if(isRepeating(t))button.append(el('span','task-progress','↻ '+t.repeat+(t.done?' · Completed occurrence':' · Next occurrence')));
