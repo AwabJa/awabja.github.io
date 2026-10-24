@@ -32,6 +32,7 @@ for(const candidate of candidates){try{await access(candidate);executablePath=ca
 const browser=await chromium.launch(executablePath?{executablePath,headless:true,args:['--no-sandbox']}:{channel:'chrome',headless:true,args:['--no-sandbox']});
 const failures=[],results=[];
 async function scenario(name,viewport,isMobile=false){
+ const compactMonth=viewport.width<=700;
  const context=await browser.newContext({viewport,isMobile,hasTouch:isMobile,deviceScaleFactor:isMobile?2:1,acceptDownloads:true});
  const page=await context.newPage();
  const errors=[];
@@ -61,7 +62,7 @@ async function scenario(name,viewport,isMobile=false){
   await page.locator('[data-view="inbox"]').click();
   assert.equal(await page.locator('.toolbar').isVisible(),false,'Inbox may hide calendar tabs');
   await page.locator('[data-view="calendar"]').click();
-  await page.locator('.month-grid').waitFor();
+  await page.locator(compactMonth?'.mobile-month':'.month-grid').waitFor();
   assert.equal(await page.locator('[data-view="calendar"]').getAttribute('aria-current'),'page','Calendar shortcut must activate');
   await page.locator('[data-mode="week"]').click();
   await page.locator('.week-grid').waitFor();
@@ -80,12 +81,33 @@ async function scenario(name,viewport,isMobile=false){
    for(const [selector,height] of Object.entries(sizes))assert(height>=40,name+' '+selector+' touch target too small: '+height);
   }else assert.equal(await page.locator('#mobileViewHint').isVisible(),false,'Desktop should not show mobile hint');
   await page.locator('[data-mode="month"]').click();
-  await page.locator('.month-grid').waitFor();
-  if(isMobile){
-   assert.match(await page.locator('#mobileViewHint').innerText(),/Swipe sideways/);
-   const scroll=await page.evaluate(()=>{const e=document.querySelector('#planner');return {scrollWidth:e.scrollWidth,clientWidth:e.clientWidth}});
-   if(viewport.width<700)assert(scroll.scrollWidth>scroll.clientWidth,'Mobile month needs a horizontally scrollable grid');
-   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),'Month must not force whole-page horizontal overflow')
+  await page.locator(compactMonth?'.mobile-month':'.month-grid').waitFor();
+  if(compactMonth){
+   assert.equal(await page.locator('.month-grid').count(),0,'Phone must not build desktop month cards');
+   assert.equal(await page.locator('.mobile-month-day').count(),42,'Phone month must have six rows of seven days');
+   assert.match(await page.locator('#mobileViewHint').innerText(),/Select a date/);
+   const dimensions=await page.evaluate(()=>{
+    const grid=document.querySelector('.mobile-month-grid'),planner=document.querySelector('#planner');
+    return {grid:Math.round(grid.getBoundingClientRect().width),
+     calendar:Math.round(grid.parentElement.getBoundingClientRect().width),
+     planner:Math.round(planner.getBoundingClientRect().width),
+     page:document.documentElement.scrollWidth,viewport:innerWidth}
+   });
+   assert(dimensions.grid<=dimensions.calendar+1,'Compact calendar must fit its card');
+   assert(dimensions.calendar<=dimensions.planner+1,'Calendar card must fit its container');
+   assert(dimensions.page<=dimensions.viewport+2,'Compact month must not overflow phone viewport');
+   const day=page.locator('.mobile-month-day:not(.outside)').first();
+   const selectedDate=await day.getAttribute('data-date');
+   await day.click();
+   assert.equal(await day.getAttribute('aria-pressed'),'true','Tapped date must become selected');
+   assert.equal(await page.locator('.mobile-month-agenda').isVisible(),true,'Phone month needs agenda below');
+   await page.locator('.mobile-month-add').click();
+   assert.equal(await page.locator('#taskForm [name=date]').inputValue(),selectedDate,'Add task should use selected date');
+   await page.locator('#closeDialog').click();
+   assert.equal(await page.locator('#taskDialog').isVisible(),false,'Closing date-prefilled editor should work');
+  }else{
+   assert.equal(await page.locator('.mobile-month').count(),0,'Desktop and tablet must retain full month grid');
+   if(isMobile)assert.match(await page.locator('#mobileViewHint').innerText(),/Swipe sideways/);
   }
   await page.locator('[data-mode="board"]').click();await page.locator('.kanban').waitFor();
   assert.equal(await page.locator('.kanban-lane').count(),3,'Board must have three stages');
@@ -102,10 +124,25 @@ async function scenario(name,viewport,isMobile=false){
   await page.locator('#taskForm [name=repeat]').selectOption('weekly');
   await page.locator('#taskForm [name=project]').selectOption('Personal');
   await page.locator('#taskForm button[type=submit]').click();
-  await page.locator('[data-mode="month"]').click();await page.locator('.month-grid').waitFor();
-  const matching=page.locator('.month-task').filter({hasText:'Browser QA weekly'});
-  assert(await matching.count()>=1,'Weekly task must appear on calendar');
-  await matching.first().click();
+  await page.locator('[data-mode="month"]').click();
+  await page.locator(compactMonth?'.mobile-month':'.month-grid').waitFor();
+  if(compactMonth){
+   const scheduledDate=await page.evaluate(()=>{
+    const items=JSON.parse(localStorage.getItem('flow.tasks.v1')||'[]');
+    return items.find(item=>item.title==='Browser QA weekly'&&!item.done)?.date
+   });
+   assert(scheduledDate,'Saved weekly task must have a calendar date');
+   const dateButton=page.locator('.mobile-month-day[data-date="'+scheduledDate+'"]');
+   assert.equal(await dateButton.count(),1,'Compact month should include the task date');
+   await dateButton.click();
+   const matching=page.locator('.mobile-agenda-task').filter({hasText:'Browser QA weekly'});
+   assert.equal(await matching.count(),1,'Selected-day agenda should show a single recurring task');
+   await matching.first().locator('.mobile-agenda-edit').click();
+  }else{
+   const matching=page.locator('.month-task').filter({hasText:'Browser QA weekly'});
+   assert(await matching.count()>=1,'Weekly task must appear on desktop/tablet calendar');
+   await matching.first().click()
+  }
   assert.equal(await page.locator('#recurrenceChoice').isVisible(),true,'Recurring task must require scope choice');
   await page.locator('#editOneOccurrence').click();
   assert.equal(await dialog.isVisible(),true);
