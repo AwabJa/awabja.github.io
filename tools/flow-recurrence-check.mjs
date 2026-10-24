@@ -197,7 +197,7 @@ run('Monthly tasks on the 31st recover after short months',()=>{
  assert.equal(visible(app,'2027-04-30').length,1)
 });
 run('A customized future recurring date remains in Calendar but does not add a Board/Table task',()=>{
- const app=create(),source=task('series-a','2026-10-23');
+ const app=create(),source={...task('series-a','2026-10-23'),seriesId:'series-a'};
  app.load([source,{...task('override-a','2026-10-29'),seriesId:'series-a',occurrenceDate:'2026-10-30',occurrenceOverride:true,time:'11:30'}]);
  assert.equal(app.activeTasks(app.get()).length,1,'Board/Table must have one schedule');
  assert.equal(visible(app,'2026-10-29').length,1,'Calendar must show edited occurrence');
