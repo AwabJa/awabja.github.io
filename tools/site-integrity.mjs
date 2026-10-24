@@ -132,6 +132,12 @@ check(flowHtml.includes('id="exportData"') && flowExport.includes('flow-workspac
 check(!/(?<!\\$)\\$\\([^)]*\\)\\.forEach/.test(flowApp),
   'FLOW must use querySelectorAll for multi-element iteration');
 
+// Exercise actual FLOW recurrence and completion helpers, not just source tokens.
+const flowRecurrence = spawnSync(process.execPath,
+  [join(root, 'tools/flow-recurrence-check.mjs')], { encoding: 'utf8' });
+check(flowRecurrence.status === 0,
+  'FLOW recurrence behavioral regressions:\n' + (flowRecurrence.stderr || flowRecurrence.stdout || '').trim());
+
 // The game only generates its ground maps in JS; the original ~35 MB
 // texture pair and the obsolete Moon photo must not silently return.
 for (const path of [
