@@ -15,7 +15,7 @@ class FakeElement {
  constructor(tag='div'){
   this.tagName=tag;this.children=[];this.dataset={};this.attrs={};
   this.style={};this.hidden=false;this.textContent='';this.className='';
-  this.value='';this.events={};this.classes=new Set();
+  this.value='';this.checked=false;this.events={};this.classes=new Set();
   this.classList={
    toggle:(value,force)=>{const next=force===undefined?!this.classes.has(value):!!force;if(next)this.classes.add(value);else this.classes.delete(value);return next},
    add:value=>this.classes.add(value),
@@ -33,6 +33,9 @@ class FakeElement {
  fire(name='click',event={}){const handler=this.events[name]||this['on'+name];if(typeof handler!=='function')throw Error(this.tagName+' has no '+name+' handler');handler({preventDefault(){},target:this,currentTarget:this,...event})}
  querySelector(selector){return this.children.find(child=>child instanceof FakeElement&&('.'+child.className===selector||'#'+child.attrs.id===selector))||null}
  after(){}
+ reset(){}
+ showModal(){this.open=true}
+ close(){this.open=false}
  scrollIntoView(){}
  focus(){}
 }
@@ -41,6 +44,10 @@ function simulate(){
  for(const [,id] of pageSource.matchAll(/\bid="([^"]+)"/g))nodes.set('#'+id,new FakeElement());
  for(const selector of ['.lower','.toolbar','.tabs','.toolbar-right','.subheading'])nodes.set(selector,new FakeElement());
  nodes.get('#heading').append(new FakeElement('#text'));
+ const form=nodes.get('#taskForm');
+ form.elements={};
+ for(const name of ['title','description','date','time','project','color','priority','repeat','done','subtasks','attachment'])form.elements[name]=new FakeElement('input');
+ const dialogs=nodes.get('#taskDialog');dialogs.open=false;
  const modes=[...pageSource.matchAll(/data-mode="([^"]+)"/g)].map(([,mode])=>{const e=new FakeElement('button');e.dataset.mode=mode;return e});
  const views=[...pageSource.matchAll(/data-view="([^"]+)"/g)].map(([,view])=>{const e=new FakeElement('button');e.dataset.view=view;return e});
  const document={
@@ -50,6 +57,13 @@ function simulate(){
   querySelectorAll:selector=>selector==='[data-mode]'?modes:selector==='[data-view]'||selector==='.nav button'?views:selector==='.kanban-lane'?[]:[]
  };
  const store=new Map();
+ const legacyTask=(id,date,done=false)=>({id,title:'Weekly review',description:'Review weekly goals',date,time:'10:00',project:'Personal',repeat:'weekly',color:'purple',priority:'medium',done,subtasks:[]});
+ store.set('flow.tasks.v1',JSON.stringify([
+  legacyTask('series-original','2026-10-23'),
+  legacyTask('series-copy-1','2026-10-30'),
+  legacyTask('series-copy-2','2026-11-06'),
+  legacyTask('series-history','2026-10-16',true)
+ ]));
  const localStorage={
   getItem:key=>store.has(key)?store.get(key):null,
   setItem:(key,value)=>store.set(key,String(value)),
@@ -63,7 +77,7 @@ function simulate(){
  assert(contains('week-grid'),'Initial Week view must render');
  select('month');assert(contains('month-grid'),'Month view must render');
  select('board');assert(contains('kanban'),'Board view must render');
- select('list');assert(contains('list-view'),'Table view must render');
+ select('list');assert(contains('table-view'),'Table view must render');
  select('week');assert(contains('week-grid'),'Week view must render again');
  for(const target of ['today','all','activity','inbox','board']){
   const button=views.find(b=>b.dataset.view===target);
@@ -71,6 +85,27 @@ function simulate(){
   button.fire();
   assert(button.classList.contains('active'),target+' navigation should activate');
  }
- console.log('FLOW VIEW SMOKE CHECK PASSED: Week, Month, Board, Table and 5 navigation buttons');
+ // Open the saved recurring task from Board, then stop repetition using the real form handler.
+ const projects=views.find(b=>b.dataset.view==='board');projects.fire();select('board');
+ const allDescendants=(item)=>[item,...(item.children||[]).flatMap(allDescendants).filter(Boolean)];
+ const card=allDescendants(planner).find(el=>el instanceof FakeElement&&el.className.startsWith('task ')&&typeof el.onclick==='function');
+ assert(card,'A Board card must be editable');card.fire();
+ assert.equal(form.elements.repeat.value,'weekly','Editing should expose the current repeat schedule');
+ form.elements.repeat.value='none';
+ form.fire('submit');
+ const saved=JSON.parse(localStorage.getItem('flow.tasks.v1'));
+ const active=saved.filter(t=>!t.done&&!t.recurrenceArchived);
+ assert.equal(active.length,1,'Stopping recurrence must leave exactly one active task');
+ assert.equal(active[0].repeat,'none','Original task must no longer repeat');
+ assert.equal(saved.filter(t=>t.recurrenceArchived).length,2,'Old saved upcoming copies must be retired, not deleted');
+ assert.equal(saved.filter(t=>t.done).length,1,'Completed history must be retained');
+ const recordsBefore=JSON.stringify(saved);
+ select('month');
+ const nextButton=nodes.get('#nextWeek');
+ for(let i=0;i<5;i++)nextButton.fire();
+ const futureTasks=allDescendants(planner).filter(el=>el instanceof FakeElement&&el.className.startsWith('month-task '));
+ assert.equal(futureTasks.length,0,'The stopped schedule must not recur in later months');
+ assert.equal(localStorage.getItem('flow.tasks.v1'),recordsBefore,'Navigating calendars must not change saved tasks');
+ console.log('FLOW VIEW SMOKE CHECK PASSED: navigation, recurring edit, archived copies and future months');
 }
 simulate();
