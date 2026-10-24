@@ -593,7 +593,7 @@ $('#removeProject').onclick=()=>{
  projects=projects.filter(p=>p!==old);
  filterProject='';view='inbox';mode='list';
  log('Removed project; moved tasks to Inbox',old);save();closeProjectDialog();render()
-};let searchFrame=0;$('#search').oninput=e=>{query=e.target.value.trim().toLowerCase();if(searchFrame)cancelAnimationFrame(searchFrame);searchFrame=requestAnimationFrame(()=>{searchFrame=0;renderPlanner();renderStats()})};$('[data-view]').forEach(b=>b.onclick=()=>{
+};let searchFrame=0;$('#search').oninput=e=>{query=e.target.value.trim().toLowerCase();if(searchFrame)cancelAnimationFrame(searchFrame);searchFrame=requestAnimationFrame(()=>{searchFrame=0;renderPlanner();renderStats()})};$$('[data-view]').forEach(b=>b.onclick=()=>{
  const destination=b.dataset.view;
  if(destination==='calendar'){view='board';mode='month';offset=0}
  else {view=destination;if(view==='all')mode='list';if(view==='board')mode='board'}
