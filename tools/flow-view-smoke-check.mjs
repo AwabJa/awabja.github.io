@@ -39,7 +39,7 @@ class FakeElement {
  scrollIntoView(){}
  focus(){}
 }
-function simulate(){
+function simulate(editFrom='board'){
  const nodes=new Map();
  for(const [,id] of pageSource.matchAll(/\bid="([^"]+)"/g))nodes.set('#'+id,new FakeElement());
  for(const selector of ['.lower','.toolbar','.tabs','.toolbar-right','.subheading'])nodes.set(selector,new FakeElement());
@@ -94,8 +94,14 @@ function simulate(){
   assert(button.classList.contains('active'),target+' navigation should activate');
  }
  // Open the saved recurring task from Board, then stop repetition using the real form handler.
- const projects=views.find(b=>b.dataset.view==='board');projects.fire();select('board');
- const card=allDescendants(planner).find(el=>el instanceof FakeElement&&el.className.startsWith('task ')&&typeof el.onclick==='function');
+ const projects=views.find(b=>b.dataset.view==='board');projects.fire();select(editFrom);
+ if(editFrom==='month'){
+  const now=new Date(),difference=(2026-now.getFullYear())*12+9-now.getMonth();
+  const navigate=nodes.get(difference<0?'#prevWeek':'#nextWeek');
+  for(let i=0;i<Math.abs(difference);i++)navigate.fire()
+ }
+ const prefix=editFrom==='month'?'month-task ':'task ';
+ const card=allDescendants(planner).find(el=>el instanceof FakeElement&&el.className.startsWith(prefix)&&typeof el.onclick==='function');
  assert(card,'A Board card must be editable');card.fire();
  assert.equal(form.elements.repeat.value,'weekly','Editing should expose the current repeat schedule');
  form.elements.repeat.value='none';
@@ -113,6 +119,7 @@ function simulate(){
  const futureTasks=allDescendants(planner).filter(el=>el instanceof FakeElement&&el.className.startsWith('month-task '));
  assert.equal(futureTasks.length,0,'The stopped schedule must not recur in later months');
  assert.equal(localStorage.getItem('flow.tasks.v1'),recordsBefore,'Navigating calendars must not change saved tasks');
- console.log('FLOW VIEW SMOKE CHECK PASSED: navigation, recurring edit, archived copies and future months');
+ console.log('FLOW VIEW SMOKE CHECK PASSED: '+editFrom+' edit, navigation, archived copies and future months');
 }
-simulate();
+simulate('board');
+simulate('month');
