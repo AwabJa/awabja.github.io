@@ -73,11 +73,19 @@ function simulate(){
  boot(document,localStorage,{randomUUID:()=>String(Math.random())},()=>0,fn=>{fn();return 1},()=>{},()=>true,()=>null);
  const planner=nodes.get('#planner');
  const contains=cls=>planner.children.some(child=>child instanceof FakeElement&&child.className===cls);
+ const allDescendants=(item)=>[item,...(item.children||[]).flatMap(allDescendants).filter(Boolean)];
  const select=mode=>{const button=modes.find(b=>b.dataset.mode===mode);assert(button,'Missing '+mode+' button');button.fire();assert(button.classList.contains('selected'),mode+' tab should be selected')};
  assert(contains('week-grid'),'Initial Week view must render');
  select('month');assert(contains('month-grid'),'Month view must render');
  select('board');assert(contains('kanban'),'Board view must render');
+ assert.equal(allDescendants(planner).filter(el=>el.className==='kanban-lane').length,3,'Board needs three workflow lanes');
  select('list');assert(contains('table-view'),'Table view must render');
+ const filters=allDescendants(planner).filter(el=>el.className==='table-select');
+ assert.equal(filters.length,2,'Table needs filtering and sorting controls');
+ const filter=filters[0];filter.value='history';filter.fire('change');
+ assert.equal(allDescendants(planner).filter(el=>el.tagName==='tr').length,2,'History filter should show the completed task plus header');
+ const newFilter=allDescendants(planner).find(el=>el.className==='table-select');newFilter.value='active';newFilter.fire('change');
+ assert.equal(allDescendants(planner).filter(el=>el.tagName==='tr').length,2,'Active filter should show one master task');
  select('week');assert(contains('week-grid'),'Week view must render again');
  for(const target of ['today','all','activity','inbox','board']){
   const button=views.find(b=>b.dataset.view===target);
@@ -87,7 +95,6 @@ function simulate(){
  }
  // Open the saved recurring task from Board, then stop repetition using the real form handler.
  const projects=views.find(b=>b.dataset.view==='board');projects.fire();select('board');
- const allDescendants=(item)=>[item,...(item.children||[]).flatMap(allDescendants).filter(Boolean)];
  const card=allDescendants(planner).find(el=>el instanceof FakeElement&&el.className.startsWith('task ')&&typeof el.onclick==='function');
  assert(card,'A Board card must be editable');card.fire();
  assert.equal(form.elements.repeat.value,'weekly','Editing should expose the current repeat schedule');
