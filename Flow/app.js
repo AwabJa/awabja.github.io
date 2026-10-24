@@ -646,7 +646,7 @@ try{
 }finally{undoBatch=false}
 log(idx>=0?'Updated':'Created',t.title);save();$('#taskDialog').close();const createdFromCalendar=idx<0&&calendarCreateContext;
  calendarCreateContext=null;
- if(idx<0&&!createdFromCalendar){filterProject='';query='';$('#search').value='';view=t.project?'board':'inbox';mode=t.project?'week':'list';offset=t.date?Math.round((monday(parseDate(t.date))-monday(new Date()))/(7*86400000)):0}
+ if(idx<0&&!createdFromCalendar){filterProject='';query='';$('#search').value='';view=t.project?'board':'inbox';mode=t.project?(t.date?'week':'board'):'list';offset=t.date?Math.round((monday(parseDate(t.date))-monday(new Date()))/(7*86400000)):0}
  if(createdFromCalendar&&isPhoneMonth()&&t.date&&mode==='month'&&t.date.slice(0,7)===localDate(new Date(new Date().getFullYear(),new Date().getMonth()+offset,1)).slice(0,7))mobileMonthSelected=t.date;render();$('#planner').scrollIntoView({block:'nearest',behavior:'smooth'})};$('#deleteTask').onclick=()=>{
  if(!editing)return;
  const removed=tasks.find(t=>t.id===editing);
