@@ -252,6 +252,14 @@ run('Board completion still supports a future schedule beyond the lookup horizon
  assert.equal(app.historyTasks(app.get())[0].date,'2027-06-01');
  assert.equal(app.activeTasks(app.get()).length,1)
 });
+run('Undated legacy repeating tasks do not create impossible completion history',()=>{
+ const app=create(),t={...task('undated','','weekly'),date:'',seriesId:'undated'};app.load([t]);
+ const before=JSON.stringify(app.get());
+ app.completeNextActionable(t,'2026-10-24');
+ assert.equal(app.historyTasks(app.get()).length,0);
+ assert.equal(app.activeTasks(app.get()).length,1);
+ assert.equal(JSON.stringify(app.get()),before,'Invalid completion must not mutate stored records')
+});
 run('Ordinary tasks complete only once',()=>{
  const app=create(),t=task('a','2026-10-23','none');app.load([t]);app.completeTask(t,true);
  assert.equal(app.get().length,1);assert.equal(app.get()[0].done,true)
