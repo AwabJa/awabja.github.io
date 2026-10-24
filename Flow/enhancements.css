@@ -110,3 +110,37 @@
 .project-list-row .project-manage:hover,.project-list-row .project-manage:focus-visible{color:#fff;border-color:#666079;background:#393544}
 .project-dialog-note{font-size:11px;line-height:1.55;color:#a7a1bb;margin:0}
 #projectForm #removeProject[hidden]{display:none}
+
+/* Responsive and touch stability: keep the same task actions available on phones. */
+.mobile-view-hint{display:none}
+@media(max-width:800px){
+ .sidebar .sidebar-search{display:flex;align-items:center;margin:12px 0 10px;min-height:44px}
+ .sidebar-search input{font-size:16px;min-width:0;flex:1}
+ .mobile-view-hint:not([hidden]){display:block;margin:4px 0 13px;padding:10px 12px;border-radius:10px;background:#282631;border:1px solid #403b50;color:#bab3d0;font-size:11px;line-height:1.5}
+ .nav{gap:5px;scroll-snap-type:x proximity}
+ .nav button{flex:0 0 auto;scroll-snap-align:start;min-height:44px}
+ .tabs button,.toolbar-right button,.top-actions .primary,.sidebar #newProject,.sidebar #exportData{min-height:44px}
+ .time-format-label select{min-height:44px;font-size:13px}
+ .project-list-row{max-width:100%}
+ .project-list-row>button:first-child{min-height:44px}
+ .project-list-row .project-manage{min-height:44px;min-width:44px;flex-basis:44px}
+ .kanban-actions .kanban-toggle,.inbox-organize,.quick-capture-add{min-height:44px}
+ .month-date,.month-task,.occurrence-complete,.week-grid .add-slot,.week-grid .empty-day{min-height:44px}
+ .scope-option{min-height:72px}
+ dialog{max-height:calc(100dvh - 20px);overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+ .dialog-heading button,.dialog-actions button,#cancelProject{min-width:44px;min-height:44px}
+ .dialog-form input,.dialog-form select,.dialog-form textarea{font-size:16px}
+ .planner:has(.month-grid),.table-scroll{-webkit-overflow-scrolling:touch;overscroll-behavior-inline:contain}
+}
+@media(max-width:540px){
+ .toolbar-right{width:100%;gap:7px}
+ .toolbar-right #weekRange{min-width:0;overflow-wrap:anywhere}
+ .month-grid{scroll-margin-inline-start:12px}
+ .sidebar .sidebar-search{margin-top:9px}
+ .main{padding-bottom:max(24px,env(safe-area-inset-bottom))}
+}
+@media(hover:none) and (pointer:coarse){
+ .task:hover{transform:none}
+ .task,.kanban-card{transition:none}
+ button{touch-action:manipulation}
+}
