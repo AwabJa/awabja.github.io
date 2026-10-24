@@ -117,7 +117,7 @@ check(flowApp.includes("type:'raw-recovery'") &&
       flowApp.includes("a.download='flow-recovery-backup.json'") &&
       flowApp.includes('raw[key]=localStorage.getItem(key)'),
   'FLOW must provide an export-only raw recovery backup for damaged data');
-check(flowHtml.includes('app.js?v=34') && flowHtml.includes('style.css?v=6') && flowHtml.includes('enhancements.css?v=12'),
+check(flowHtml.includes('app.js?v=35') && flowHtml.includes('style.css?v=6') && flowHtml.includes('enhancements.js?v=5') && flowHtml.includes('enhancements.css?v=13'),
   'FLOW must load the current recurrence-safe JavaScript and styling');
 check(flowApp.includes('const stoppedCopy=') &&
       flowApp.includes('const overviewSnapshot=') &&
@@ -148,6 +148,20 @@ const flowRecurrence = spawnSync(process.execPath,
   [join(root, 'tools/flow-recurrence-check.mjs')], { encoding: 'utf8' });
 check(flowRecurrence.status === 0,
   'FLOW recurrence behavioral regressions:\n' + (flowRecurrence.stderr || flowRecurrence.stdout || '').trim());
+
+// Verify local export-only backup flow and user-visible Undo/scope controls.
+const flowBackup = spawnSync(process.execPath,
+  [join(root, 'tools/flow-backup-check.mjs')], { encoding: 'utf8' });
+check(flowBackup.status === 0,
+  'FLOW backup safety smoke test failed:\n' + (flowBackup.stderr || flowBackup.stdout || '').trim());
+check(flowApp.includes('const captureUndo=') && flowApp.includes('const restoreUndo=') &&
+      flowApp.includes('const ensureSeriesId=') && flowApp.includes('const calendarEditor=') &&
+      flowApp.includes('editingOccurrence='),
+  'FLOW must retain Undo and scoped recurring task editing');
+for(const id of ['undoBar','undoTask','recurrenceChoice','editOneOccurrence',
+                 'editRepeatingSchedule','repeatField','backupStatus']){
+ check(flowHtml.includes('id="'+id+'"'), 'FLOW missing safety/accessibility control #'+id);
+}
 
 // The game only generates its ground maps in JS; the original ~35 MB
 // texture pair and the obsolete Moon photo must not silently return.
