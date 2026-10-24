@@ -24,7 +24,7 @@ const prelude=[
  "const captureUndo=()=>{};",
  "const render=()=>{};"
 ].join('\n');
-const create=new Function(prelude+helpers+";return {load:a=>tasks=a,get:()=>tasks,activeTasks,historyTasks,workflowTasks,calendarOccurrences,calendarDayTasks,rescheduleCalendarTask,completeTask,completeOccurrence,stopRepeating,ensureSeriesId,setTaskStatus,recurrenceKey,nextRepeat,overviewSnapshot};");
+const create=new Function(prelude+helpers+";return {load:a=>tasks=a,get:()=>tasks,activeTasks,historyTasks,workflowTasks,calendarOccurrences,calendarDayTasks,rescheduleCalendarTask,completeTask,completeOccurrence,stopRepeating,ensureSeriesId,setTaskStatus,recurrenceKey,nextRepeat,overviewSnapshot,nextScheduledDates};");
 const task=(id,date='2026-10-23',repeat='weekly',done=false)=>({id,title:'Plan the week',date,time:'10:00',project:'Personal',repeat,done,color:'purple',subtasks:[]});
 const visible=(app,date)=>app.calendarDayTasks(app.calendarOccurrences(app.get(),'2026-10-01','2027-06-30'),date);
 let assertions=0;
@@ -195,6 +195,30 @@ run('Monthly tasks on the 31st recover after short months',()=>{
  assert.equal(visible(app,'2027-02-28').length,1);
  assert.equal(visible(app,'2027-03-31').length,1);
  assert.equal(visible(app,'2027-04-30').length,1)
+});
+run('A customized future recurring date remains in Calendar but does not add a Board/Table task',()=>{
+ const app=create(),source=task('series-a','2026-10-23');
+ app.load([source,{...task('override-a','2026-10-29'),seriesId:'series-a',occurrenceDate:'2026-10-30',occurrenceOverride:true,time:'11:30'}]);
+ assert.equal(app.activeTasks(app.get()).length,1,'Board/Table must have one schedule');
+ assert.equal(visible(app,'2026-10-29').length,1,'Calendar must show edited occurrence');
+ assert.equal(visible(app,'2026-10-30').length,0,'Calendar must not render old preview');
+ const dates=app.nextScheduledDates(app.get(),'2026-10-24');
+ assert.equal(dates.get('series-a'),'2026-10-29','Next Board/Table date should follow moved date')
+});
+run('Recurring Board/Table due date advances relative to current date without modifying saved tasks',()=>{
+ const app=create(),source=task('series','2025-10-24');
+ app.load([source]);const before=JSON.stringify(app.get());
+ assert.equal(app.nextScheduledDates(app.get(),'2026-10-24').get(app.recurrenceKey(source)),'2026-10-30');
+ assert.equal(JSON.stringify(app.get()),before,'Derived next date must not rewrite old browser records');
+ assert.equal(app.activeTasks(app.get()).length,1,'Recurring series remains one actionable card');
+});
+run('Future calendar occurrences must not inherit Board In Progress status',()=>{
+ const app=create(),source={...task('series'),status:'progress'};
+ app.load([source]);
+ const original=visible(app,'2026-10-23')[0],upcoming=visible(app,'2026-10-30')[0];
+ assert.equal(original.status,'progress');
+ assert.equal(upcoming.status,'todo');
+ assert.equal(app.activeTasks(app.get())[0].status,'progress','Board status stays unchanged')
 });
 run('Ordinary tasks complete only once',()=>{
  const app=create(),t=task('a','2026-10-23','none');app.load([t]);app.completeTask(t,true);
