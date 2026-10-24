@@ -70,8 +70,8 @@ function simulate(editFrom='board'){
   removeItem:key=>store.delete(key)
  };
  let allowConfirmation=true,confirmationCount=0;
- const boot=new Function('document','localStorage','crypto','setTimeout','requestAnimationFrame','alert','confirm','prompt',appSource);
- boot(document,localStorage,{randomUUID:()=>String(Math.random())},()=>0,fn=>{fn();return 1},()=>{},()=>{confirmationCount++;return allowConfirmation},()=>null);
+ const boot=new Function('document','localStorage','crypto','setTimeout','requestAnimationFrame','cancelAnimationFrame','alert','confirm','prompt',appSource);
+ boot(document,localStorage,{randomUUID:()=>String(Math.random())},()=>0,fn=>{fn();return 1},()=>{},()=>{},()=>{confirmationCount++;return allowConfirmation},()=>null);
  const planner=nodes.get('#planner');
  const contains=cls=>planner.children.some(child=>child instanceof FakeElement&&child.className===cls);
  const allDescendants=(item)=>[item,...(item.children||[]).flatMap(allDescendants).filter(Boolean)];
