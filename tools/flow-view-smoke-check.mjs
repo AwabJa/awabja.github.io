@@ -108,6 +108,35 @@ function simulate(editFrom='board'){
   button.fire();
   assert(button.classList.contains('active'),target+' navigation should activate');
  }
+if(editFrom==='calendar'){
+  assert(pageSource.includes('data-view="calendar"'),'Calendar shortcut must be in navigation');
+  assert(/data-view="inbox"><svg class="nav-icon"/.test(pageSource),'Inbox should use a vector icon');
+  const button=key=>views.find(b=>b.dataset.view===key);
+  button('inbox').fire();
+  assert.equal(nodes.get('.toolbar').hidden,true,'Inbox may hide task view tabs');
+  assert.equal(button('inbox').getAttribute('aria-current'),'page');
+  button('calendar').fire();
+  assert.equal(nodes.get('.toolbar').hidden,false,'Calendar shortcut must restore calendar view controls');
+  assert(contains('month-grid'),'Calendar shortcut must open Month');
+  assert.equal(button('calendar').getAttribute('aria-current'),'page','Calendar must show active sidebar state');
+  assert.equal(button('board').getAttribute('aria-current'),'false','Projects must not remain selected in Calendar');
+  assert.equal(nodes.get('#heading').firstChild.textContent,'Calendar ','Calendar heading must be unambiguous');
+  assert.equal(planner.getAttribute('aria-label'),'Monthly task calendar');
+  select('week');
+  assert(contains('week-grid'),'Calendar must support Week');
+  assert.equal(button('calendar').getAttribute('aria-current'),'page');
+  assert.equal(planner.getAttribute('aria-label'),'Weekly task calendar');
+  button('board').fire();
+  assert(contains('kanban'),'Projects shortcut must open Board');
+  assert.equal(button('board').getAttribute('aria-current'),'page');
+  assert.equal(button('calendar').getAttribute('aria-current'),'false');
+  assert.equal(nodes.get('#heading').firstChild.textContent,'Projects ');
+  const before=localStorage.getItem('flow.tasks.v1');
+  button('today').fire();button('calendar').fire();button('board').fire();
+  assert.equal(localStorage.getItem('flow.tasks.v1'),before,'Navigation must never change task data');
+  console.log('FLOW VIEW SMOKE CHECK PASSED: Inbox → Calendar Month → Week → Projects across navigation');
+  return
+}
 if(editFrom==='undo'){
   const initial=localStorage.getItem('flow.tasks.v1');
   const projects=views.find(b=>b.dataset.view==='board');projects.fire();select('board');
@@ -319,3 +348,4 @@ simulate('projects');
 simulate('search');
 simulate('delete');
 simulate('reset');
+simulate('calendar');
