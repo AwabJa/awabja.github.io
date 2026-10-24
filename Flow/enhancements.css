@@ -175,3 +175,61 @@
  position:relative;
  z-index:1;
 }
+
+/* Phone Month: a full-width date picker plus a focused daily agenda.
+   Desktop and larger-tablet Month views retain their existing detailed grid. */
+.mobile-month{display:none}
+@media(max-width:700px){
+ .mobile-month{display:grid;gap:16px;width:100%;min-width:0}
+ .mobile-month-calendar{min-width:0;max-width:100%;padding:12px 9px 10px;background:#25232e;border:1px solid #403b50;border-radius:16px}
+ .mobile-month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;width:100%;min-width:0}
+ .mobile-month-weekday{text-align:center;color:#a9a3bd;font-size:10px;line-height:28px;font-weight:650;user-select:none}
+ .mobile-month-day{min-width:0;width:100%;height:52px;min-height:52px;padding:4px 1px;border:1px solid transparent;border-radius:10px;background:transparent;color:#ebe7f7;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;position:relative;touch-action:manipulation}
+ .mobile-month-number{font-size:13px;font-weight:650;line-height:1}
+ .mobile-month-day.outside{color:#757185}
+ .mobile-month-day.today:not(.selected){background:#333046;color:#ded7ff}
+ .mobile-month-day.today:not(.selected) .mobile-month-number{text-decoration:underline;text-decoration-color:#998bff;text-underline-offset:4px}
+ .mobile-month-day.selected{background:#7569f1;color:#fff;border-color:#8d83ff;box-shadow:0 2px 8px #6358ce55}
+ .mobile-month-day:focus-visible{outline:2px solid #b4a9ff;outline-offset:2px;z-index:1}
+ .mobile-month-dots{display:flex;align-items:center;justify-content:center;gap:3px;min-height:5px;max-width:100%}
+ .mobile-month-dot{width:5px;height:5px;flex:0 0 5px;border-radius:50%;background:#aaa0ff}
+ .mobile-month-dot.completed{background:#62c9b2}
+ .mobile-month-day.selected .mobile-month-dot{background:#fff}
+ .mobile-month-day.selected .mobile-month-dot.completed{background:#b6ffe6}
+ .mobile-month-overflow{position:absolute;right:1px;bottom:1px;color:#bcb4de;font-size:8px;line-height:1}
+ .mobile-month-day.selected .mobile-month-overflow{color:white}
+ .mobile-month-agenda{min-width:0;background:#22212a;border:1px solid #3d3949;border-radius:16px;padding:14px 12px;display:grid;gap:13px}
+ .mobile-agenda-header{display:flex;align-items:flex-start;justify-content:space-between;gap:9px;min-width:0}
+ .mobile-agenda-titles{min-width:0;flex:1;display:flex;flex-direction:column;gap:5px}
+ .mobile-agenda-heading{font-size:16px;color:#f5f1ff;line-height:1.35;font-weight:650;margin:0;overflow-wrap:anywhere}
+ .mobile-agenda-summary{font-size:11px;color:#aba5bf;line-height:1.4}
+ .mobile-month-add{flex:0 0 auto;min-height:44px;padding:9px 11px;border:1px solid #7668c7;border-radius:9px;background:#403868;color:#f4f0ff;font-size:11px;font-weight:650;white-space:nowrap;touch-action:manipulation}
+ .mobile-month-add:focus-visible,.mobile-month-add:hover{outline:2px solid #a99aff;outline-offset:2px}
+ .mobile-agenda-list{display:grid;gap:9px;min-width:0}
+ .mobile-agenda-empty{margin:0;padding:20px 12px;border:1px dashed #555065;border-radius:11px;text-align:center;color:#a9a3bf;font-size:12px;line-height:1.5}
+ .mobile-agenda-task{display:flex;align-items:stretch;flex-wrap:wrap;gap:0;background:#2d2a37;border:1px solid #4a455a;border-radius:12px;overflow:hidden;min-width:0}
+ .mobile-agenda-task.done{opacity:.8}
+ .mobile-agenda-edit{display:flex;flex:1 1 175px;align-items:flex-start;text-align:left;gap:11px;min-width:0;min-height:60px;padding:12px;background:transparent;border:0;color:#f4f1ff;overflow-wrap:anywhere;touch-action:manipulation}
+ .mobile-agenda-edit:focus-visible,.mobile-agenda-complete:focus-visible{outline:2px solid #aa9dff;outline-offset:-3px}
+ .mobile-agenda-accent{display:block;width:4px;min-width:4px;align-self:stretch;border-radius:4px;background:#a89cff}
+ .mobile-agenda-accent.yellow{background:#f4ce6b}
+ .mobile-agenda-accent.blue{background:#79bcfa}
+ .mobile-agenda-accent.pink{background:#ee91c9}
+ .mobile-agenda-accent.green{background:#74d3ab}
+ .mobile-agenda-details{min-width:0;display:flex;flex-direction:column;gap:5px;overflow-wrap:anywhere}
+ .mobile-agenda-task-title{font-size:13px;font-weight:650;line-height:1.35}
+ .mobile-agenda-task.done .mobile-agenda-task-title{text-decoration:line-through}
+ .mobile-agenda-task-meta{color:#aaa4be;font-size:10px;line-height:1.4}
+ .mobile-agenda-task-description{font-size:11px;color:#c1bad0;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}
+ .mobile-agenda-complete{flex:0 0 auto;min-height:44px;min-width:91px;align-self:stretch;padding:10px 9px;background:#37314d;color:#e1d8ff;border:0;border-left:1px solid #544967;font-size:11px;font-weight:650;touch-action:manipulation}
+ .mobile-agenda-complete:active{background:#4a3f6a}
+}
+@media(max-width:360px){
+ .mobile-month-calendar{padding:10px 6px}
+ .mobile-month-grid{gap:2px}
+ .mobile-month-day{height:46px;min-height:46px}
+ .mobile-month-day .mobile-month-number{font-size:12px}
+ .mobile-agenda-header{flex-wrap:wrap}
+ .mobile-month-add{margin-left:auto}
+ .mobile-agenda-edit{flex-basis:150px}
+}
