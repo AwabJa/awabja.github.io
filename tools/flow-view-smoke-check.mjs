@@ -94,7 +94,7 @@ function simulate(editFrom='board'){
   assert(button.classList.contains('active'),target+' navigation should activate');
  }
  // Open the saved recurring task from Board, then stop repetition using the real form handler.
- const projects=views.find(b=>b.dataset.view==='board');projects.fire();select(editFrom);
+ const projects=views.find(b=>b.dataset.view==='board');projects.fire();select(editFrom==='occurrence'?'month':editFrom);
  if(editFrom==='month'||editFrom==='occurrence'){
   const now=new Date(),difference=(2026-now.getFullYear())*12+10-now.getMonth();
   const navigate=nodes.get(difference<0?'#prevWeek':'#nextWeek');
