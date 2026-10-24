@@ -36,3 +36,14 @@ body{padding:0}
 .time-format-label{display:inline-flex;align-items:center;gap:6px;color:#aaa7ba;font-size:11px;white-space:nowrap}
 .time-format-label select{border:1px solid #494653;background:#25242e;color:#f2efff;border-radius:8px;padding:7px 8px;font-size:11px;max-width:160px}
 @media(max-width:450px){.time-format-label select{max-width:135px}}
+
+/* A scheduled recurrence is a calendar occurrence, not another Board item. */
+.recurrence-note{margin:0 0 14px;padding:10px 13px;border:1px solid #393647;border-radius:10px;background:#24232d;color:#bdb8d3;font-size:12px;line-height:1.5}
+.list-item-main{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px}
+.list-item-main button{width:100%;overflow-wrap:anywhere}
+.list-recurrence{font-size:10px;color:#a8a3c4;line-height:1.35}
+.occurrence-complete{align-self:stretch;margin-top:-3px;border:1px solid #5a526e;border-radius:7px;background:#292738;color:#c9c2ef;padding:6px 8px;font-size:10px;text-align:center;min-height:27px;white-space:nowrap}
+.occurrence-complete:hover,.occurrence-complete:focus-visible{background:#413859;color:#fff;border-color:#8d7beb}
+.month-cell .occurrence-complete{width:100%}
+.day-body .occurrence-complete{width:100%}
+@media(max-width:700px){.occurrence-complete{font-size:10px;padding:5px 3px;white-space:normal}}
