@@ -439,6 +439,7 @@ $('#editOneOccurrence').onclick=()=>{
  if(!saved){form.elements.done.checked=false;form.elements.subtasks.value=(source.subtasks||[]).map(x=>typeof x==='string'?x:x.title).join('\n')}
 };
 $('#taskForm').onsubmit=e=>{e.preventDefault();const f=e.currentTarget;const old=tasks.find(x=>x.id===editing);const t={...(old||{}),id:editing||newTaskId(),title:f.elements.title.value.trim(),description:f.elements.description.value.trim(),date:f.elements.date.value,time:f.elements.time.value,project:f.elements.project.value,color:f.elements.color.value,priority:f.elements.priority.value,repeat:f.elements.repeat.value,done:!!old?.done,subtasks:f.elements.subtasks.value.split('\n').map(x=>x.trim()).filter(Boolean).map(title=>({title,done:!!old?.subtasks?.find(x=>typeof x==='object'&&x.title===title&&x.done)})),attachment:f.elements.attachment.value.trim()};if(!t.title||(!t.date&&t.project))return;
+if(!editingOccurrence&&old?.done&&isRepeating(old)&&t.repeat==='none'&&!confirm('Stop the repeating schedule? Future occurrences will disappear from the calendar; saved completion history will remain available in Table.'))return;
 if(!editingOccurrence&&old&&isRepeating(old)&&!old.isOccurrenceHistory){
  const fields=['title','description','date','time','project','color','priority','repeat','attachment'];
  const changed=fields.some(k=>String(t[k]||'')!==String(old[k]||''))||
