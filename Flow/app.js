@@ -17,6 +17,8 @@ const stoppedMatches=(candidate,stop)=>{
  const marker=stop.stoppedRecurrence;
  if(candidate.seriesId&&stop.seriesId&&candidate.seriesId===stop.seriesId)return true;
  if(candidate.seriesId)return false; // Distinct named series must stay distinct.
+ if(Array.isArray(marker?.legacyIds))return marker.legacyIds.includes(candidate.id);
+ // Historical stop markers lacked IDs: use the legacy signature for those only.
  return recurrenceSignature(candidate)===(marker?.signature||recurrenceSignature(stop))
   &&(!marker?.repeat||candidate.repeat===marker.repeat);
 };
@@ -175,11 +177,17 @@ const completeTask=(t,done)=>{
  if(done&&isRepeating(t)&&!t.done&&!t.occurrenceOverride){completeOccurrence(t);return}
  if(finishOneOff(t,done)){save();render()}
 };
+const ensureSeriesId=source=>{
+ if(!isRepeating(source))return source?.seriesId||source?.id;
+ const key=recurrenceKey(source),stableId=source.seriesId||source.id;
+ for(const t of tasks)if(isRepeating(t)&&recurrenceKey(t)===key&&!t.seriesId)t.seriesId=stableId;
+ return stableId
+};
 const stopRepeating=(source)=>{
  if(!source||!isRepeating(source)||source.isOccurrenceHistory)return;
  const oldSeries=recurrenceKey(source),stableId=source.seriesId||source.id;
- const signature=recurrenceSignature(source);
- const marker={seriesId:stableId,signature,repeat:source.repeat};
+ const signature=recurrenceSignature(source),legacyIds=tasks.filter(t=>t!==source&&!t.seriesId&&isRepeating(t)&&recurrenceSignature(t)===signature&&t.repeat===source.repeat).map(t=>t.id);
+ const marker={seriesId:stableId,signature,repeat:source.repeat,legacyIds};
  for(const t of tasks){
   if(!isRepeating(t))continue;
   const sameSeries=recurrenceKey(t)===oldSeries||(!t.seriesId&&recurrenceSignature(t)===signature&&t.repeat===source.repeat);
