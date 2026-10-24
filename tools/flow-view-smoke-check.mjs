@@ -69,8 +69,9 @@ function simulate(editFrom='board'){
   setItem:(key,value)=>store.set(key,String(value)),
   removeItem:key=>store.delete(key)
  };
+ let allowConfirmation=true,confirmationCount=0;
  const boot=new Function('document','localStorage','crypto','setTimeout','requestAnimationFrame','alert','confirm','prompt',appSource);
- boot(document,localStorage,{randomUUID:()=>String(Math.random())},()=>0,fn=>{fn();return 1},()=>{},()=>true,()=>null);
+ boot(document,localStorage,{randomUUID:()=>String(Math.random())},()=>0,fn=>{fn();return 1},()=>{},()=>{confirmationCount++;return allowConfirmation},()=>null);
  const planner=nodes.get('#planner');
  const contains=cls=>planner.children.some(child=>child instanceof FakeElement&&child.className===cls);
  const allDescendants=(item)=>[item,...(item.children||[]).flatMap(allDescendants).filter(Boolean)];
@@ -99,6 +100,20 @@ function simulate(editFrom='board'){
   assert(button,'Missing '+target+' navigation');
   button.fire();
   assert(button.classList.contains('active'),target+' navigation should activate');
+ }
+if(editFrom==='undo'){
+  const initial=localStorage.getItem('flow.tasks.v1');
+  const projects=views.find(b=>b.dataset.view==='board');projects.fire();select('board');
+  const complete=allDescendants(planner).find(el=>el.className==='kanban-toggle'&&el.textContent.includes('Complete'));
+  assert(complete,'Board needs an actionable Complete button');
+  complete.fire();
+  assert(localStorage.getItem('flow.tasks.v1')!==initial,'Completion must change saved task data');
+  assert.equal(nodes.get('#undoBar').hidden,false,'Undo should appear after completion');
+  nodes.get('#undoTask').fire();
+  assert.equal(localStorage.getItem('flow.tasks.v1'),initial,'Undo must restore all original tasks exactly');
+  assert.equal(nodes.get('#undoBar').hidden,true,'Undo must dismiss after restoring');
+  console.log('FLOW VIEW SMOKE CHECK PASSED: completion Undo restores original saved tasks');
+  return
  }
  // Open the saved recurring task from Board, then stop repetition using the real form handler.
  const projects=views.find(b=>b.dataset.view==='board');projects.fire();select(editFrom==='occurrence'?'month':editFrom);
@@ -140,7 +155,12 @@ function simulate(editFrom='board'){
  }
  assert.equal(form.elements.repeat.value,'weekly','Editing should expose the current repeat schedule');
  form.elements.repeat.value='none';
- form.fire('submit');
+ const beforeCancel=localStorage.getItem('flow.tasks.v1');
+ allowConfirmation=false;form.fire('submit');
+ assert.equal(localStorage.getItem('flow.tasks.v1'),beforeCancel,'Declining series change must keep saved tasks unchanged');
+ assert.equal(dialogs.open,true,'Task editor must remain open when series edit is cancelled');
+ allowConfirmation=true;form.fire('submit');
+ assert(confirmationCount>=2,'Series-wide edits must request confirmation');
  const saved=JSON.parse(localStorage.getItem('flow.tasks.v1'));
  const active=saved.filter(t=>!t.done&&!t.recurrenceArchived);
  assert.equal(active.length,1,'Stopping recurrence must leave exactly one active task');
@@ -166,3 +186,4 @@ function simulate(editFrom='board'){
 simulate('board');
 simulate('month');
 simulate('occurrence');
+simulate('undo');
