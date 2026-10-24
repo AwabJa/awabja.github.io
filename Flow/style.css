@@ -9,3 +9,14 @@ body{padding:0}
 @media(min-width:1550px){.main{padding-left:clamp(42px,4vw,80px);padding-right:clamp(42px,4vw,80px)}}
 @media(max-width:800px){.shell{display:block;min-height:100dvh}.sidebar{min-height:0;border-right:0;border-bottom:1px solid #34333e}.sidebar .project-list{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.sidebar .project-list button{border:1px solid #3b3947}.sidebar .project-label{display:block;margin:14px 4px 5px}.sidebar #newProject,.sidebar #exportData,.sidebar .import-label{display:inline-block;margin:7px 5px 4px 0;padding:10px 12px}.sidebar .sidebar-bottom{display:block;margin:8px 3px 0}.sidebar .sidebar-bottom a{display:inline;margin-left:12px}.main{min-height:0;padding:24px 18px}.topbar{flex-wrap:wrap}}
 @media(max-width:450px){.top-actions{width:100%;flex-direction:row;justify-content:space-between;align-items:center}.top-actions span{display:inline}.toolbar-right{flex-wrap:wrap}.toolbar{align-items:stretch}}
+
+/* Monthly task calendar */
+.month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;width:100%}
+.month-weekday{text-align:center;color:#a8a5b8;font-size:12px;font-weight:600;padding:10px 0}
+.month-cell{min-width:0;min-height:115px;padding:9px 7px;border:1px solid #3b3949;border-radius:10px;background:#292832;display:flex;flex-direction:column;gap:5px}
+.month-cell.outside{opacity:.45}.month-cell.today{border-color:#8c80ff;background:#302d43}
+.month-date{border:0;background:transparent;color:#e7e4f4;text-align:left;font-weight:700;cursor:pointer;padding:2px 5px}
+.month-task{border:0;border-radius:6px;padding:6px 5px;color:#f7f5ff;background:#50467c;font-size:11px;text-align:left;overflow-wrap:anywhere;cursor:pointer}
+.month-task.yellow{background:#766136}.month-task.blue{background:#315a79}.month-task.pink{background:#773f66}.month-task.green{background:#356b5b}
+.month-task.done{text-decoration:line-through;opacity:.6}
+@media(max-width:700px){.month-grid{gap:3px}.month-cell{min-height:80px;padding:4px 2px}.month-weekday{font-size:10px}.month-date{font-size:11px}.month-task{font-size:9px;padding:4px 2px}}
