@@ -146,6 +146,12 @@ if(editFrom==='undo'){
   assert.equal(tasks.length,4,'Renaming must preserve all task records');
   assert(tasks.every(t=>t.project==='Home'),'Renaming must update completed and scheduled task assignments');
   assert(JSON.parse(localStorage.getItem('flow.projects.v1')).includes('Home'),'New project name should be listed');
+  select('month');
+  const now=new Date(),difference=(2026-now.getFullYear())*12+9-now.getMonth();
+  const navigate=nodes.get(difference<0?'#prevWeek':'#nextWeek');
+  for(let i=0;i<Math.abs(difference);i++)navigate.fire();
+  const oct30=allDescendants(planner).find(el=>el.className==='month-cell'&&el.children.some(child=>child.className==='month-date'&&child.textContent==='30'));
+  assert.equal(oct30.children.filter(e=>e.className?.startsWith('month-task ')).length,1,'Renaming project must retain one weekly recurrence on Oct 30');
   assert.equal(nodes.get('#undoBar').hidden,false,'Project rename must be reversible');
   nodes.get('#undoTask').fire();
   assert.equal(localStorage.getItem('flow.tasks.v1'),originalTasks,'Undo must restore all project task assignments');
@@ -185,6 +191,9 @@ if(editFrom==='undo'){
   assert(contains('month-grid'),'Empty search results must preserve Month layout');
   assert.equal(allDescendants(planner).filter(e=>e.className?.startsWith('month-task ')).length,0,
    'Nonmatching search must hide calendar task cards');
+  assert.equal(nodes.get('#totalTasks').textContent,0,'Search-filtered calendar should have zero overview scheduled tasks');
+  assert.equal(nodes.get('#doneTasks').textContent,0,'Search-filtered calendar should have zero completed tasks');
+  assert(nodes.get('#overviewContext').textContent.includes('matching search'),'Overview should disclose that search filtering is applied');
   console.log('FLOW VIEW SMOKE CHECK PASSED: filtering preserves selected calendar view');
   return
  }
