@@ -7,12 +7,27 @@ const recurrenceAnchor=t=>{
   .sort((a,b)=>(a.occurrenceDate||a.date).localeCompare(b.occurrenceDate||b.date));
  return parseDate((history[0]?.occurrenceDate||history[0]?.date)||t.date).getDate()
 };
+// Legacy versions stored upcoming instances as independent records. A stopped
+// one-off keeps its original series ID; use its original signature to suppress
+// uncoupled legacy copies without modifying or deleting the saved records.
+const recurrenceSignature=t=>[t.title||'',t.project||'',t.time||''].join('\u001f');
+const stoppedSeries=()=>tasks.filter(t=>!isRepeating(t)&&!isArchived(t)&&(t.seriesId||t.stoppedRecurrence));
+const stoppedMatches=(candidate,stop)=>{
+ if(!isRepeating(candidate)||candidate.id===stop.id)return false;
+ const marker=stop.stoppedRecurrence;
+ if(candidate.seriesId&&stop.seriesId&&candidate.seriesId===stop.seriesId)return true;
+ if(candidate.seriesId)return false; // Distinct named series must stay distinct.
+ return recurrenceSignature(candidate)===(marker?.signature||recurrenceSignature(stop))
+  &&(!marker?.repeat||candidate.repeat===marker.repeat);
+};
+const stoppedCopy=t=>isRepeating(t)&&stoppedSeries().some(stop=>stoppedMatches(t,stop));
+const invisibleCalendarTask=t=>isArchived(t)||!!t.calendarHidden||stoppedCopy(t);
 const newTaskId=()=>typeof crypto!=='undefined'&&typeof crypto.randomUUID==='function'?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2);
 const displayDate=t=>{const move=(Array.isArray(t.recurrenceMoves)?t.recurrenceMoves:[]).find(m=>m.from===t.date);return move?.to||t.date};
 const activeTasks=items=>{
  const pending=new Map(),ordinary=[];
  for(const t of items){
-  if(isArchived(t)||t.done)continue;
+  if(isArchived(t)||stoppedCopy(t)||t.done)continue;
   if(!isRepeating(t)){ordinary.push(t);continue}
   const key=recurrenceKey(t),prior=pending.get(key);
   const due=displayDate(t),priorDue=prior?displayDate(prior):'9999';
@@ -23,7 +38,7 @@ const activeTasks=items=>{
 const historyTasks=items=>items.filter(t=>!isArchived(t)&&t.done);
 const workflowTasks=items=>[...activeTasks(items),...historyTasks(items)];
 const calendarOccurrences=(items,first,last)=>{
- const available=items.filter(t=>!isArchived(t)),masters=new Map(),moves=new Map();
+ const available=items.filter(t=>!invisibleCalendarTask(t)),masters=new Map(),moves=new Map();
  for(const t of available){
   if(!t.date||!isRepeating(t))continue;
   const key=recurrenceKey(t);
@@ -150,12 +165,21 @@ const completeTask=(t,done)=>{
 };
 const stopRepeating=(source)=>{
  if(!source||!isRepeating(source)||source.isOccurrenceHistory)return;
- const key=recurrenceKey(source),stableId=source.seriesId||source.id;
+ const oldSeries=recurrenceKey(source),stableId=source.seriesId||source.id;
+ const signature=recurrenceSignature(source);
+ const marker={seriesId:stableId,signature,repeat:source.repeat};
  for(const t of tasks){
-  if(!isRepeating(t)||recurrenceKey(t)!==key)continue;
+  if(!isRepeating(t))continue;
+  const sameSeries=recurrenceKey(t)===oldSeries||(!t.seriesId&&recurrenceSignature(t)===signature&&t.repeat===source.repeat);
+  if(!sameSeries)continue;
   if(!t.seriesId)t.seriesId=stableId;
-  if(t!==source&&!t.done)t.recurrenceArchived=true;
+  if(t!==source){
+   if(t.done)t.calendarHidden=true;
+   else t.recurrenceArchived=true;
+  }
  }
+ source.seriesId=stableId;
+ source.stoppedRecurrence=marker;
 };
 const taskStatus=t=>t.done?'done':t.status==='progress'?'progress':'todo';
 const setTaskStatus=(t,status)=>{
@@ -294,7 +318,9 @@ if(old&&!old.done&&isRepeating(old)&&!old.isOccurrenceHistory){
   for(const member of members)if(!member.seriesId)member.seriesId=stable;
   t.seriesId=stable;
   if(changedSchedule){
-   stopRepeating(old);
+   if(t.repeat==='none')stopRepeating(old);
+   else archiveOtherPending(old);
+   t.stoppedRecurrence=t.repeat==='none'?{seriesId:old.seriesId||old.id,signature:recurrenceSignature(old),repeat:old.repeat}:undefined;
    t.recurrenceMoves=[];
    if(t.repeat==='none'){t.date=displayDate(old);t.occurrenceDate=undefined;t.status=t.done?'done':'todo'}
   }
