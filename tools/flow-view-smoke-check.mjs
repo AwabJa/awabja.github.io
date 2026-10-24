@@ -133,6 +133,77 @@ if(editFrom==='undo'){
   console.log('FLOW VIEW SMOKE CHECK PASSED: Undo restores completions and calendar moves');
   return
  }
+ if(editFrom==='projects'){
+  const originalTasks=localStorage.getItem('flow.tasks.v1');
+  const originalProjects=localStorage.getItem('flow.projects.v1');
+  const manager=()=>allDescendants(nodes.get('#projectList')).find(el=>el.getAttribute('aria-label')==='Manage project Personal');
+  assert(manager(),'Each project needs a Manage button');
+  manager().fire();
+  assert.equal(nodes.get('#projectDialog').open,true,'Project manager must open');
+  nodes.get('#projectName').value='Home';
+  nodes.get('#projectForm').fire('submit');
+  let tasks=JSON.parse(localStorage.getItem('flow.tasks.v1'));
+  assert.equal(tasks.length,4,'Renaming must preserve all task records');
+  assert(tasks.every(t=>t.project==='Home'),'Renaming must update completed and scheduled task assignments');
+  assert(JSON.parse(localStorage.getItem('flow.projects.v1')).includes('Home'),'New project name should be listed');
+  assert.equal(nodes.get('#undoBar').hidden,false,'Project rename must be reversible');
+  nodes.get('#undoTask').fire();
+  assert.equal(localStorage.getItem('flow.tasks.v1'),originalTasks,'Undo must restore all project task assignments');
+  assert.equal(localStorage.getItem('flow.projects.v1'),originalProjects,'Undo must restore original project names');
+
+  manager().fire();
+  nodes.get('#removeProject').fire();
+  tasks=JSON.parse(localStorage.getItem('flow.tasks.v1'));
+  assert.equal(tasks.length,4,'Removing a project must preserve task records');
+  assert(tasks.every(t=>t.project===''),'Removal must move every task and history entry to Inbox');
+  assert(!JSON.parse(localStorage.getItem('flow.projects.v1')).includes('Personal'),'Project must disappear');
+  assert.equal(nodes.get('#crumb').textContent,'Inbox','Removal should navigate to Inbox');
+  const inboxCount=allDescendants(nodes.get('#projectList')).length;
+  assert(inboxCount>0,'Other projects must remain');
+  nodes.get('#undoTask').fire();
+  assert.equal(localStorage.getItem('flow.tasks.v1'),originalTasks,'Undo must restore tasks after removing project');
+  assert.equal(localStorage.getItem('flow.projects.v1'),originalProjects,'Undo must restore project names after removal');
+
+  nodes.get('#newProject').fire();
+  assert.equal(nodes.get('#projectDialog').open,true);
+  nodes.get('#projectName').value='Sprint Alpha';nodes.get('#projectForm').fire('submit');
+  assert(JSON.parse(localStorage.getItem('flow.projects.v1')).includes('Sprint Alpha'),'Creating project must persist it');
+  assert.equal(localStorage.getItem('flow.tasks.v1'),originalTasks,'Creating a project must not modify task records');
+  nodes.get('#undoTask').fire();
+  assert.equal(localStorage.getItem('flow.projects.v1'),originalProjects,'Undo must reverse new project creation');
+  console.log('FLOW VIEW SMOKE CHECK PASSED: safe project rename, removal, creation and Undo');
+  return
+ }
+ if(editFrom==='search'){
+  select('week');
+  const search=nodes.get('#search');search.value='weekly';
+  search.fire('input',{target:search});
+  assert(contains('week-grid'),'Search must preserve Week calendar layout');
+  select('month');
+  assert(contains('month-grid'),'Search must preserve Month calendar layout');
+  search.value='not-a-real-task';search.fire('input',{target:search});
+  assert(contains('month-grid'),'Empty search results must preserve Month layout');
+  assert.equal(allDescendants(planner).filter(e=>e.className?.startsWith('month-task ')).length,0,
+   'Nonmatching search must hide calendar task cards');
+  console.log('FLOW VIEW SMOKE CHECK PASSED: filtering preserves selected calendar view');
+  return
+ }
+ if(editFrom==='delete'){
+  const projects=views.find(b=>b.dataset.view==='board');projects.fire();select('board');
+  const card=allDescendants(planner).find(el=>el.className?.startsWith('task ')&&typeof el.onclick==='function');
+  assert(card,'Repeating schedule card must be editable');card.fire();
+  assert.equal(nodes.get('#deleteTask').textContent,'Remove schedule');
+  nodes.get('#deleteTask').fire();
+  const records=JSON.parse(localStorage.getItem('flow.tasks.v1'));
+  assert.equal(records.length,4,'Removing a repeating schedule must not destroy old records');
+  assert.equal(records.filter(t=>t.recurrenceArchived).length,3,'All pending records must be archived');
+  assert.equal(records.filter(t=>t.done).length,1,'Completed history must be preserved');
+  assert.equal(allDescendants(planner).filter(e=>e.className?.startsWith('task ')).length,0,'Removed schedule must leave active Board');
+  nodes.get('#undoTask').fire();
+  assert.equal(JSON.parse(localStorage.getItem('flow.tasks.v1')).filter(t=>t.recurrenceArchived).length,0,'Undo must restore schedule');
+  console.log('FLOW VIEW SMOKE CHECK PASSED: removing schedule preserves history, hides future work and supports Undo');
+  return
+ }
  // Open the saved recurring task from Board, then stop repetition using the real form handler.
  const projects=views.find(b=>b.dataset.view==='board');projects.fire();select(editFrom==='occurrence'?'month':editFrom);
  if(editFrom==='month'||editFrom==='occurrence'){
@@ -212,3 +283,6 @@ simulate('board');
 simulate('month');
 simulate('occurrence');
 simulate('undo');
+simulate('projects');
+simulate('search');
+simulate('delete');
