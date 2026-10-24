@@ -29,3 +29,10 @@ body{padding:0}
 .month-task-description{font-size:10px;opacity:.8;overflow-wrap:anywhere;white-space:pre-wrap}
 .month-task.done .month-task-title{text-decoration:line-through}
 @media(max-width:700px){.month-grid{grid-template-columns:repeat(7,minmax(90px,1fr));min-width:700px}.planner:has(.month-grid){overflow-x:auto;overscroll-behavior-x:contain}.month-cell{min-height:130px}.month-task{font-size:11px;padding:6px}.month-task-meta,.month-task-description{font-size:10px}}
+
+/* Full details in weekly cards and compact time preference. */
+.week-grid .task{height:auto;white-space:normal;overflow-wrap:anywhere;text-align:left}
+.week-grid .task-description{display:block;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;opacity:.8;line-height:1.4;margin-top:5px}
+.time-format-label{display:inline-flex;align-items:center;gap:6px;color:#aaa7ba;font-size:11px;white-space:nowrap}
+.time-format-label select{border:1px solid #494653;background:#25242e;color:#f2efff;border-radius:8px;padding:7px 8px;font-size:11px;max-width:160px}
+@media(max-width:450px){.time-format-label select{max-width:135px}}
