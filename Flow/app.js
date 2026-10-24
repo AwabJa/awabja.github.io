@@ -35,14 +35,14 @@ const stoppedMatches=(candidate,stop)=>{
  return recurrenceSignature(candidate)===(marker?.signature||recurrenceSignature(stop))
   &&(!marker?.repeat||candidate.repeat===marker.repeat);
 };
-const stoppedCopy=t=>isRepeating(t)&&stoppedSeries().some(stop=>stoppedMatches(t,stop));
-const invisibleCalendarTask=t=>isArchived(t)||!!t.calendarHidden||stoppedCopy(t);
+const stoppedCopy=(t,stops=stoppedSeries())=>isRepeating(t)&&stops.some(stop=>stoppedMatches(t,stop));
+const invisibleCalendarTask=(t,stops)=>isArchived(t)||!!t.calendarHidden||stoppedCopy(t,stops);
 const newTaskId=()=>typeof crypto!=='undefined'&&typeof crypto.randomUUID==='function'?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2);
 const displayDate=t=>{const move=(Array.isArray(t.recurrenceMoves)?t.recurrenceMoves:[]).find(m=>m.from===t.date);return move?.to||t.date};
 const activeTasks=items=>{
- const pending=new Map(),ordinary=[];
+ const pending=new Map(),ordinary=[],stops=stoppedSeries();
  for(const t of items){
-  if(isArchived(t)||stoppedCopy(t)||t.done)continue;
+  if(isArchived(t)||stoppedCopy(t,stops)||t.done)continue;
   if(!isRepeating(t)||t.occurrenceOverride){ordinary.push(t);continue}
   const key=recurrenceKey(t),prior=pending.get(key);
   const due=displayDate(t),priorDue=prior?displayDate(prior):'9999';
@@ -53,7 +53,7 @@ const activeTasks=items=>{
 const historyTasks=items=>items.filter(t=>!isArchived(t)&&t.done);
 const workflowTasks=items=>[...activeTasks(items),...historyTasks(items)];
 const calendarOccurrences=(items,first,last)=>{
- const available=items.filter(t=>!invisibleCalendarTask(t)),masters=new Map(),moves=new Map();
+ const stops=stoppedSeries(),available=items.filter(t=>!invisibleCalendarTask(t,stops)),masters=new Map(),moves=new Map();
  for(const t of available){
   if(!t.date||!isRepeating(t))continue;
   const key=recurrenceKey(t);
@@ -71,7 +71,7 @@ const calendarOccurrences=(items,first,last)=>{
  const finished=new Set(available.filter(t=>isRepeating(t)&&(t.done||t.occurrenceOverride)).map(t=>recurrenceKey(t)+'\u001f'+(t.occurrenceDate||t.date)));
  const scheduled=new Set();
  for(const [key,source] of masters){
-  const changes=moves.get(key)||new Map();
+  const changes=moves.get(key)||new Map(),anchorDay=recurrenceAnchor(source);
   const add=(original,target)=>{
    const signature=key+'\u001f'+original;
    if(target<first||target>last||finished.has(signature)||scheduled.has(signature))return;
@@ -86,7 +86,7 @@ const calendarOccurrences=(items,first,last)=>{
   }
   for(let i=0;i<2400&&date<=last;i++){
    add(date,changes.get(date)||date);
-   const next=nextRepeat(date,source.repeat,recurrenceAnchor(source));
+   const next=nextRepeat(date,source.repeat,anchorDay);
    if(!next||next<=date)break;
    date=next;
   }
@@ -149,9 +149,10 @@ const rescheduleCalendarTask=(task,original,to)=>{
  log('Rescheduled',source.title);save();render();
 };
 const nextPendingRepeat=(date,repeat,series,anchorDay)=>{
+ const finished=new Set(tasks.filter(t=>!isArchived(t)&&t.done&&isRepeating(t)&&recurrenceKey(t)===series).map(t=>t.occurrenceDate||t.date));
  let next=nextRepeat(date,repeat,anchorDay);
  for(let i=0;i<2400&&next;i++){
-  if(!tasks.some(t=>!isArchived(t)&&t.done&&isRepeating(t)&&recurrenceKey(t)===series&&(t.occurrenceDate||t.date)===next))return next;
+  if(!finished.has(next))return next;
   next=nextRepeat(next,repeat,anchorDay);
  }
  return next;
@@ -243,7 +244,7 @@ const calendarEditor=t=>{
 };
 const closeRecurrenceChoice=()=>{$('#recurrenceChoice').close();calendarChoiceTask=null};
 
-const priorityLabel=t=>t.priority&&t.priority!=='none'?' · '+t.priority.toUpperCase():'';const timeFormatKey='flow.timeFormat.v1';let timeFormat='12';try{timeFormat=localStorage.getItem(timeFormatKey)==='24'?'24':'12'}catch{}const formatTime=value=>{if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(value||''))return value||'';if(timeFormat==='24')return value;const [hours,minutes]=value.split(':').map(Number);return (hours%12||12)+':'+pad(minutes)+(hours>=12?' PM':' AM')};const dateText=s=>s?parseDate(s).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'Unscheduled';function renderSidebar(){const list=$('#projectList');list.replaceChildren();projects.forEach(p=>{const b=el('button',filterProject===p?'active':'');b.append(el('span','project-dot'),document.createTextNode(p));b.onclick=()=>{filterProject=filterProject===p?'':p;view='board';mode='board';render()};list.append(b)});$$('.nav button').forEach(b=>{b.classList.toggle('active',b.dataset.view===view);if(b.dataset.view==='inbox'){let count=b.querySelector('.inbox-count');if(!count){count=el('span','inbox-count');b.append(count)}const n=tasks.filter(t=>!t.project).length;count.textContent=String(n);count.hidden=n===0;count.setAttribute('aria-label',n+' unorganized tasks')}})}function renderPlanner(){const host=$('#planner');host.replaceChildren();const baseList=view==='today'?tasks.filter(t=>!query||(t.title+' '+(t.description||'')+' '+(t.project||'')).toLowerCase().includes(query)):shown();const list=view==='today'?calendarOccurrences(baseList,currentToday(),currentToday()).filter(t=>t.date===currentToday()):(view==='board'||view==='all')&&(mode==='week'||mode==='month')&&!query?calendarOccurrences(baseList,mode==='month'?localDate(monday(new Date(new Date().getFullYear(),new Date().getMonth()+offset,1))):localDate(weekStart()),mode==='month'?localDate(addDays(monday(new Date(new Date().getFullYear(),new Date().getMonth()+offset,1)),41)):localDate(addDays(weekStart(),6))):workflowTasks(baseList);if(view==='inbox'){const capture=el('form','quick-capture');const input=el('input','quick-capture-input');input.type='text';input.maxLength=100;input.required=true;input.placeholder='What do you need to remember?';input.setAttribute('aria-label','Quick capture a task');const add=el('button','quick-capture-add','＋ Capture');add.type='submit';capture.append(input,add);capture.onsubmit=e=>{e.preventDefault();const title=input.value.trim();if(!title)return;tasks.unshift({id:(typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():Date.now().toString()),title,description:'',date:'',time:'',project:'',color:'purple',done:false,subtasks:[],attachment:''});log('Captured',title);save();render();const next=$('.quick-capture-input');if(next)next.focus()};host.append(capture);const help=el('p','capture-help','Capture now, organize later. Assign a project when you are ready.');host.append(help)}const fullViews=view==='board'||view==='all';$('.lower').hidden=view!=='board';$('#addTaskTop').hidden=view==='inbox'||view==='activity';$('.toolbar').hidden=!fullViews;$('.tabs').hidden=!fullViews;$('.toolbar-right').hidden=!fullViews||(mode!=='week'&&mode!=='month');const start=weekStart();const end=addDays(start,6);const monthDate=new Date(new Date().getFullYear(),new Date().getMonth()+offset,1);$('#weekRange').textContent=mode==='month'?monthDate.toLocaleDateString(undefined,{month:'long',year:'numeric'}):dateText(localDate(start))+' – '+dateText(localDate(end));$('#dateLabel').textContent=new Date().toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});$('#crumb').textContent=view==='today'?'Today':view==='all'?'All Tasks':view==='activity'?'Activity':view==='inbox'?'Inbox':'Project Board';$('.subheading').textContent=view==='inbox'?'A place for thoughts and tasks that need organizing.':view==='today'?'Focus on what matters today.':view==='all'?'Every task, one clear view.':view==='activity'?'Your recent workspace changes.':'Plan with clarity. Make room for what matters.';$('#addTaskTop').textContent='＋ Add task';$('#heading').firstChild.textContent=(filterProject|| (view==='today'?'Today':view==='all'?'All Tasks':view==='activity'?'Activity':view==='inbox'?'Inbox':'Projects'))+' ';$$('[data-mode]').forEach(b=>b.classList.toggle('selected',b.dataset.mode===mode));if(view==='activity'){const wrap=el('div','activity-list');if(!activity.length)wrap.append(el('div','empty-state','Your task activity will appear here.'));activity.forEach(a=>{const row=el('div','activity-row');row.append(el('span','activity-icon','◷'),el('span','',a.action+' · '+a.title),el('small','',new Date(a.at).toLocaleString()));wrap.append(row)});host.append(wrap);return}
+const priorityLabel=t=>t.priority&&t.priority!=='none'?' · '+t.priority.toUpperCase():'';const timeFormatKey='flow.timeFormat.v1';let timeFormat='12';try{timeFormat=localStorage.getItem(timeFormatKey)==='24'?'24':'12'}catch{}const formatTime=value=>{if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(value||''))return value||'';if(timeFormat==='24')return value;const [hours,minutes]=value.split(':').map(Number);return (hours%12||12)+':'+pad(minutes)+(hours>=12?' PM':' AM')};const dateText=s=>s?parseDate(s).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'Unscheduled';function renderSidebar(){const list=$('#projectList');list.replaceChildren();projects.forEach(p=>{const b=el('button',filterProject===p?'active':'');b.append(el('span','project-dot'),document.createTextNode(p));b.onclick=()=>{filterProject=filterProject===p?'':p;view='board';mode='board';render()};list.append(b)});$$('.nav button').forEach(b=>{b.classList.toggle('active',b.dataset.view===view);if(b.dataset.view==='inbox'){let count=b.querySelector('.inbox-count');if(!count){count=el('span','inbox-count');b.append(count)}const n=activeTasks(tasks).filter(t=>!t.project).length;count.textContent=String(n);count.hidden=n===0;count.setAttribute('aria-label',n+' unorganized tasks')}})}function renderPlanner(){const host=$('#planner');host.replaceChildren();const baseList=view==='today'?tasks.filter(t=>!query||(t.title+' '+(t.description||'')+' '+(t.project||'')).toLowerCase().includes(query)):shown();const list=view==='today'?calendarOccurrences(baseList,currentToday(),currentToday()).filter(t=>t.date===currentToday()):(view==='board'||view==='all')&&(mode==='week'||mode==='month')?calendarOccurrences(baseList,mode==='month'?localDate(monday(new Date(new Date().getFullYear(),new Date().getMonth()+offset,1))):localDate(weekStart()),mode==='month'?localDate(addDays(monday(new Date(new Date().getFullYear(),new Date().getMonth()+offset,1)),41)):localDate(addDays(weekStart(),6))):view==='inbox'?activeTasks(baseList):workflowTasks(baseList);if(view==='inbox'){const capture=el('form','quick-capture');const input=el('input','quick-capture-input');input.type='text';input.maxLength=100;input.required=true;input.placeholder='What do you need to remember?';input.setAttribute('aria-label','Quick capture a task');const add=el('button','quick-capture-add','＋ Capture');add.type='submit';capture.append(input,add);capture.onsubmit=e=>{e.preventDefault();const title=input.value.trim();if(!title)return;tasks.unshift({id:(typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():Date.now().toString()),title,description:'',date:'',time:'',project:'',color:'purple',done:false,subtasks:[],attachment:''});log('Captured',title);save();render();const next=$('.quick-capture-input');if(next)next.focus()};host.append(capture);const help=el('p','capture-help','Capture now, organize later. Assign a project when you are ready.');host.append(help)}const fullViews=view==='board'||view==='all';$('.lower').hidden=view!=='board';$('#addTaskTop').hidden=view==='inbox'||view==='activity';$('.toolbar').hidden=!fullViews;$('.tabs').hidden=!fullViews;$('.toolbar-right').hidden=!fullViews||(mode!=='week'&&mode!=='month');const start=weekStart();const end=addDays(start,6);const monthDate=new Date(new Date().getFullYear(),new Date().getMonth()+offset,1);$('#weekRange').textContent=mode==='month'?monthDate.toLocaleDateString(undefined,{month:'long',year:'numeric'}):dateText(localDate(start))+' – '+dateText(localDate(end));$('#dateLabel').textContent=new Date().toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});$('#crumb').textContent=view==='today'?'Today':view==='all'?'All Tasks':view==='activity'?'Activity':view==='inbox'?'Inbox':'Project Board';$('.subheading').textContent=view==='inbox'?'A place for thoughts and tasks that need organizing.':view==='today'?'Focus on what matters today.':view==='all'?'Every task, one clear view.':view==='activity'?'Your recent workspace changes.':'Plan with clarity. Make room for what matters.';$('#addTaskTop').textContent='＋ Add task';$('#heading').firstChild.textContent=(filterProject|| (view==='today'?'Today':view==='all'?'All Tasks':view==='activity'?'Activity':view==='inbox'?'Inbox':'Projects'))+' ';$$('[data-mode]').forEach(b=>b.classList.toggle('selected',b.dataset.mode===mode));if(view==='activity'){const wrap=el('div','activity-list');if(!activity.length)wrap.append(el('div','empty-state','Your task activity will appear here.'));activity.forEach(a=>{const row=el('div','activity-row');row.append(el('span','activity-icon','◷'),el('span','',a.action+' · '+a.title),el('small','',new Date(a.at).toLocaleString()));wrap.append(row)});host.append(wrap);return}
 if(mode==='list'&&fullViews){
  const wrap=el('div','table-view'),controls=el('div','table-controls');
  const intro=el('p','recurrence-note','One active task per repeating schedule. Future dates live in Week and Month; completed occurrences are available under History.');
@@ -295,7 +296,7 @@ if(mode==='list'&&fullViews){
  }
  host.append(wrap);return
 }
-if(view==='today'||view==='inbox'||query){
+if(view==='today'||view==='inbox'){
  const wrap=el('div','list-view');
  const sorted=[...list].sort((a,b)=>view==='inbox'?0:(a.date||'9999').localeCompare(b.date||'9999')||(a.time||'').localeCompare(b.time||''));
  if(!sorted.length)wrap.append(el('div','empty-state',view==='inbox'?'Inbox is clear. Add a task here to capture something for later.':'No tasks here yet. Add one to get started.'));
