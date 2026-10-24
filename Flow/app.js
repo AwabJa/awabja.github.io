@@ -176,7 +176,7 @@ const finishOneOff=(task,done)=>{
  if(!done&&task.isOccurrenceHistory)task.occurrenceOverride=true;
  log(done?'Completed':'Reopened',task.title);return true;
 };
-const completeOccurrence=t=>{
+const completeOccurrence=(t,fromWorkflow=false)=>{
  if(!t||t.done)return;
  const source=t.virtualSource||t;
  if(!isRepeating(source)||source.occurrenceOverride){
@@ -193,10 +193,9 @@ const completeOccurrence=t=>{
   subtasks:(source.subtasks||[]).map(x=>typeof x==='string'?{title:x,done:false}:{...x})};
  tasks.push(history);
  const active=activeTasks(tasks).find(x=>isRepeating(x)&&!x.occurrenceOverride&&recurrenceKey(x)===key);
- if(active&&active.date===original){
+ if(active&&(active.date===original||fromWorkflow)){
   archiveOtherPending(active);
-  const next=nextPendingRepeat(original,active.repeat,key,recurrenceAnchor(active));
-  if(next)active.date=next;
+  if(active.date===original){const next=nextPendingRepeat(original,active.repeat,key,recurrenceAnchor(active));if(next)active.date=next}
   active.status='todo';
   active.subtasks=(active.subtasks||[]).map(x=>typeof x==='string'?{title:x,done:false}:{...x,done:false});
  }
@@ -237,7 +236,7 @@ const completeNextActionable=(t,reference=currentToday())=>{
   const upcoming=calendarOccurrences(tasks,start,end)
    .filter(x=>!x.done&&isRepeating(x)&&recurrenceKey(x)===key)
    .sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''))[0];
-  if(upcoming){completeOccurrence(upcoming);return}
+  if(upcoming){completeOccurrence(upcoming,true);return}
  }
  completeTask(t,true)
 };
