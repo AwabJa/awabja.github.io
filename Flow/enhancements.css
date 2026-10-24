@@ -144,3 +144,17 @@
  .task,.kanban-card{transition:none}
  button{touch-action:manipulation}
 }
+
+/* Shared vector navigation icons and fully visible mobile Calendar/Inbox access. */
+.nav .nav-icon{display:block;flex:0 0 19px;width:19px;height:19px;pointer-events:none}
+@media(max-width:800px){
+ .sidebar .nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;overflow:visible;scroll-snap-type:none}
+ .sidebar .nav button{min-width:0;justify-content:center;align-items:center;gap:6px;padding:11px 6px;font-size:12px;min-height:46px;white-space:nowrap}
+ .sidebar .nav button span:not(.inbox-count){flex:0 1 auto}
+ .sidebar .nav button[data-view="inbox"]{position:relative}
+ .sidebar .nav .inbox-count{position:absolute;top:-5px;right:-4px;min-width:18px;padding:2px 4px}
+}
+@media(max-width:350px){
+ .sidebar .nav button{gap:4px;font-size:11px;padding:10px 3px}
+ .sidebar .nav .nav-icon{flex-basis:17px;width:17px;height:17px}
+}
