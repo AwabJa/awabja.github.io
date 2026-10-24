@@ -77,6 +77,13 @@ function simulate(editFrom='board'){
  const select=mode=>{const button=modes.find(b=>b.dataset.mode===mode);assert(button,'Missing '+mode+' button');button.fire();assert(button.classList.contains('selected'),mode+' tab should be selected')};
  assert(contains('week-grid'),'Initial Week view must render');
  select('month');assert(contains('month-grid'),'Month view must render');
+ assert(nodes.get('#overviewPeriod').textContent,'Month view must set overview period');
+ assert(nodes.get('#overviewContext').textContent.includes('Individual scheduled dates'),'Overview must explain its occurrence-based counts');
+ const projectRows=allDescendants(nodes.get('#projectSummary')).filter(el=>el.className==='summary-row');
+ assert.equal(projectRows.length,3,'Projects panel lists existing projects');
+ const personal=projectRows.find(row=>row.children.some(c=>c.textContent==='Personal'));
+ assert(personal,'Personal project must be listed');
+ assert(personal.children.some(c=>c.textContent==='1 active'),'Legacy recurring instances must count as one active project task');
  select('board');assert(contains('kanban'),'Board view must render');
  assert.equal(allDescendants(planner).filter(el=>el.className==='kanban-lane').length,3,'Board needs three workflow lanes');
  select('list');assert(contains('table-view'),'Table view must render');
