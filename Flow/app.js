@@ -53,10 +53,11 @@ const activeTasks=items=>{
 const historyTasks=items=>items.filter(t=>!isArchived(t)&&t.done);
 const workflowTasks=items=>[...activeTasks(items),...historyTasks(items)];
 const calendarOccurrences=(items,first,last)=>{
- const stops=stoppedSeries(),available=items.filter(t=>!invisibleCalendarTask(t,stops)),masters=new Map(),moves=new Map();
+ const stops=stoppedSeries(),available=items.filter(t=>!invisibleCalendarTask(t,stops)),masters=new Map(),moves=new Map(),firstScheduled=new Map();
  for(const t of available){
   if(!t.date||!isRepeating(t))continue;
-  const key=recurrenceKey(t);
+  const key=recurrenceKey(t),scheduled=t.occurrenceDate||t.date;
+  if(!firstScheduled.has(key)||scheduled<firstScheduled.get(key))firstScheduled.set(key,scheduled);
   if(Array.isArray(t.recurrenceMoves))for(const m of t.recurrenceMoves){
    if(m&&/^\d{4}-\d{2}-\d{2}$/.test(m.from||'')&&/^\d{4}-\d{2}-\d{2}$/.test(m.to||'')){
     if(!moves.has(key))moves.set(key,new Map());
@@ -71,7 +72,7 @@ const calendarOccurrences=(items,first,last)=>{
  const finished=new Set(available.filter(t=>isRepeating(t)&&(t.done||t.occurrenceOverride)).map(t=>recurrenceKey(t)+'\u001f'+(t.occurrenceDate||t.date)));
  const scheduled=new Set();
  for(const [key,source] of masters){
-  const changes=moves.get(key)||new Map(),anchorDay=recurrenceAnchor(source);
+  const changes=moves.get(key)||new Map(),anchorDay=Number.isInteger(source.repeatAnchor)&&source.repeatAnchor>=1&&source.repeatAnchor<=31?source.repeatAnchor:parseDate(firstScheduled.get(key)||source.date).getDate();
   const add=(original,target)=>{
    const signature=key+'\u001f'+original;
    if(target<first||target>last||finished.has(signature)||scheduled.has(signature))return;
