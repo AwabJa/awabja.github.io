@@ -415,7 +415,27 @@ $('#editOneOccurrence').onclick=()=>{
  form.elements.repeat.value=source.repeat;
  if(!saved){form.elements.done.checked=false;form.elements.subtasks.value=(source.subtasks||[]).map(x=>typeof x==='string'?x:x.title).join('\n')}
 };
-$('#taskForm').onsubmit=e=>{e.preventDefault();const f=e.currentTarget;const old=tasks.find(x=>x.id===editing);const t={...(old||{}),id:editing||newTaskId(),title:f.elements.title.value.trim(),description:f.elements.description.value.trim(),date:f.elements.date.value,time:f.elements.time.value,project:f.elements.project.value,color:f.elements.color.value,priority:f.elements.priority.value,repeat:f.elements.repeat.value,done:!!old?.done,subtasks:f.elements.subtasks.value.split('\n').map(x=>x.trim()).filter(Boolean).map(title=>({title,done:!!old?.subtasks?.find(x=>typeof x==='object'&&x.title===title&&x.done)})),attachment:f.elements.attachment.value.trim()};if(!t.title||(!t.date&&t.project))return;if(old?.done&&isRepeating(old)&&t.repeat==='none'){const master=activeTasks(tasks).find(x=>isRepeating(x)&&!x.isOccurrenceHistory&&recurrenceKey(x)===recurrenceKey(old));if(master){stopRepeating(master);master.date=displayDate(master);master.repeat='none';master.recurrenceMoves=[];log('Stopped repeating schedule',master.title)}}
+$('#taskForm').onsubmit=e=>{e.preventDefault();const f=e.currentTarget;const old=tasks.find(x=>x.id===editing);const t={...(old||{}),id:editing||newTaskId(),title:f.elements.title.value.trim(),description:f.elements.description.value.trim(),date:f.elements.date.value,time:f.elements.time.value,project:f.elements.project.value,color:f.elements.color.value,priority:f.elements.priority.value,repeat:f.elements.repeat.value,done:!!old?.done,subtasks:f.elements.subtasks.value.split('\n').map(x=>x.trim()).filter(Boolean).map(title=>({title,done:!!old?.subtasks?.find(x=>typeof x==='object'&&x.title===title&&x.done)})),attachment:f.elements.attachment.value.trim()};if(!t.title||(!t.date&&t.project))return;
+if(editingOccurrence){
+ const scope=editingOccurrence,source=tasks.find(x=>x.id===scope.sourceId);
+ if(!source||!isRepeating(source))return;
+ const seriesId=ensureSeriesId(source);
+ const previous=scope.existingId?tasks.find(x=>x.id===scope.existingId):null;
+ const record={
+  ...t,id:previous?.id||newTaskId(),seriesId,repeat:source.repeat,
+  occurrenceDate:scope.original,occurrenceOverride:!previous?.isOccurrenceHistory,
+  isOccurrenceHistory:!!previous?.isOccurrenceHistory,recurrenceMoves:[],
+  recurrenceArchived:false,calendarHidden:false,
+  done:!!previous?.done,completedAt:previous?.completedAt||''
+ };
+ const idx=previous?tasks.findIndex(x=>x.id===previous.id):-1;
+ if(idx>=0)tasks[idx]=record;else tasks.push(record);
+ if(f.elements.done.checked!==record.done)finishOneOff(record,f.elements.done.checked);
+ log(idx>=0?'Updated one occurrence':'Customized one occurrence',record.title);
+ editingOccurrence=null;save();$('#taskDialog').close();render();
+ $('#planner').scrollIntoView({block:'nearest',behavior:'smooth'});
+ return
+}if(old?.done&&isRepeating(old)&&t.repeat==='none'){const master=activeTasks(tasks).find(x=>isRepeating(x)&&!x.isOccurrenceHistory&&recurrenceKey(x)===recurrenceKey(old));if(master){stopRepeating(master);master.date=displayDate(master);master.repeat='none';master.recurrenceMoves=[];log('Stopped repeating schedule',master.title)}}
 if(old&&!old.done&&isRepeating(old)&&!old.isOccurrenceHistory){
  const changedSchedule=t.repeat!==old.repeat;
  const changedIdentity=t.title!==old.title||t.project!==old.project||t.time!==old.time;
