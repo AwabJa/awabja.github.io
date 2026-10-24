@@ -105,6 +105,19 @@ async function scenario(name,viewport,isMobile=false){
    assert.equal(await page.locator('#taskForm [name=date]').inputValue(),selectedDate,'Add task should use selected date');
    await page.locator('#closeDialog').click();
    assert.equal(await page.locator('#taskDialog').isVisible(),false,'Closing date-prefilled editor should work');
+   await page.locator('.mobile-month-add').click();
+   await page.locator('#taskForm [name=title]').fill('Browser QA agenda task');
+   await page.locator('#taskForm [name=repeat]').selectOption('none');
+   await page.locator('#taskForm [name=project]').selectOption('Personal');
+   await page.locator('#taskForm button[type=submit]').click();
+   await page.locator('.mobile-month').waitFor();
+   assert.equal(await page.locator('.mobile-month-day.selected').getAttribute('data-date'),selectedDate,
+    'Saving on a phone date must preserve the selected month and day');
+   assert.equal(await page.locator('.mobile-agenda-task').filter({hasText:'Browser QA agenda task'}).count(),1,
+    'Newly saved phone task must appear under the selected day');
+   await page.locator('#undoTask').click();
+   assert.equal(await page.locator('.mobile-agenda-task').filter({hasText:'Browser QA agenda task'}).count(),0,
+    'Undo of calendar-created task must remove it from the agenda');
   }else{
    assert.equal(await page.locator('.mobile-month').count(),0,'Desktop and tablet must retain full month grid');
    if(isMobile)assert.match(await page.locator('#mobileViewHint').innerText(),/Swipe sideways/);
