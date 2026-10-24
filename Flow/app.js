@@ -126,6 +126,9 @@ const rescheduleCalendarTask=(task,original,to)=>{
  const source=task.virtualSource||task;
  if(isRepeating(source)&&!source.occurrenceOverride){
   const key=recurrenceKey(source);
+  const current=tasks.filter(t=>recurrenceKey(t)===key).flatMap(t=>Array.isArray(t.recurrenceMoves)?t.recurrenceMoves:[]).find(m=>m.from===original)?.to||original;
+  if(current===to)return;
+  captureUndo('Move repeating occurrence');
   let changed=false;
   for(const t of tasks){
    if(recurrenceKey(t)!==key||!Array.isArray(t.recurrenceMoves))continue;
@@ -140,6 +143,7 @@ const rescheduleCalendarTask=(task,original,to)=>{
   if(!changed)return;
  }else{
   if(source.date===to)return;
+  captureUndo('Move task');
   source.date=to;
  }
  log('Rescheduled',source.title);save();render();
@@ -164,11 +168,12 @@ const completeOccurrence=t=>{
  if(!t||t.done)return;
  const source=t.virtualSource||t;
  if(!isRepeating(source)||source.occurrenceOverride){
-  if(finishOneOff(source,true)){save();render()}
+  if(!source.done){captureUndo('Complete task');if(finishOneOff(source,true)){save();render()}}
   return
  }
  const key=recurrenceKey(source),original=t.occurrenceDate||t.date;
  if(tasks.some(x=>!isArchived(x)&&x.done&&isRepeating(x)&&recurrenceKey(x)===key&&(x.occurrenceDate||x.date)===original))return;
+ captureUndo('Complete repeating occurrence');
  const moved=(Array.isArray(source.recurrenceMoves)?source.recurrenceMoves:[]).find(m=>m.from===original)?.to;
  const calendarDate=t.virtualSource?t.date:(moved||source.date);
  const history={...source,id:newTaskId(),date:calendarDate,occurrenceDate:original,done:true,status:'done',
@@ -188,7 +193,7 @@ const completeOccurrence=t=>{
 const completeTask=(t,done)=>{
  if(!t)return;
  if(done&&isRepeating(t)&&!t.done&&!t.occurrenceOverride){completeOccurrence(t);return}
- if(finishOneOff(t,done)){save();render()}
+ if(!!t.done!==!!done){captureUndo(done?'Complete task':'Reopen task');if(finishOneOff(t,done)){save();render()}}
 };
 const ensureSeriesId=source=>{
  if(!isRepeating(source))return source?.seriesId||source?.id;
@@ -219,8 +224,9 @@ const setTaskStatus=(t,status)=>{
  if(!t)return;
  if(status==='done'){completeTask(t,true);return}
  const wasDone=!!t.done;
- if(wasDone){t.done=false;t.completedAt='';if(t.isOccurrenceHistory)t.occurrenceOverride=true}
  if(t.status===status&&!wasDone)return;
+ captureUndo(wasDone?'Reopen task':'Change task status');
+ if(wasDone){t.done=false;t.completedAt='';if(t.isOccurrenceHistory)t.occurrenceOverride=true}
  t.status=status;log(status==='progress'?'Started':'Moved to To Do',t.title);save();render()
 };
 const recentlyCompleted=items=>{
