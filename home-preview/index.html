@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="site.css?v=1">
+  <link rel="stylesheet" href="site.css?v=2">
   <script src="site.js?v=1" defer></script>
 </head>
 <body>
@@ -38,28 +38,30 @@
   </nav>
   <main id="main">
     <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-scene" aria-hidden="true"><img src="assets/portal-hero.webp" width="1320" height="1040" alt="" fetchpriority="high" decoding="async"></div>
-      <div class="hero-vignette" aria-hidden="true"></div>
+      <div class="hero-scene" aria-hidden="true">
+        <div class="studio-glow"></div>
+        <div class="studio-structure"></div>
+        <div class="studio-ground"></div>
+      </div>
       <div class="hero-content">
         <p class="eyebrow hero-eyebrow"><span class="eyebrow-line" aria-hidden="true"></span> CREATIVE DEVELOPER</p>
         <h1 id="hero-title">I craft digital<br>experiences that<br><span>feel alive.</span></h1>
         <p class="hero-intro">Blending design, technology, and curiosity to make meaningful, immersive experiences on the web.</p>
-        <a href="#work" class="explore-link"><span class="circle-arrow" aria-hidden="true">↗</span><span>EXPLORE MY WORK</span></a>
+        <a href="#work" class="explore-link">VIEW SELECTED WORK</a>
       </div>
-      <div class="hero-side" aria-hidden="true"><span>IDEAS<br>CODE<br>EXPERIENCES</span><i></i><span>01 / 03</span><div class="side-dots"><b></b><b></b><b></b></div></div>
       <a class="scroll-marker" href="#work"><span>SCROLL</span><i aria-hidden="true"></i></a>
       <div class="hero-bottom-fade" aria-hidden="true"></div>
     </section>
 
     <section class="work" id="work" aria-labelledby="work-title">
-      <div class="section-heading"><div class="heading-label"><h2 id="work-title">FEATURED WORK</h2><span aria-hidden="true"></span></div><a href="#project-grid">VIEW ALL PROJECTS <b aria-hidden="true">↗</b></a></div>
+      <div class="section-heading"><div class="heading-label"><h2 id="work-title">FEATURED WORK</h2><span aria-hidden="true"></span></div><a href="#project-grid">ALL PROJECTS</a></div>
       <div class="projects-grid" id="project-grid">
         <article class="project project-flow" data-reveal>
           <a href="../Flow/" class="project-image" aria-label="Explore Flow — productivity workspace">
             <img src="assets/flow-scene.webp" alt="Cinematic concept artwork of an illuminated circular portal above a reflecting pool" width="940" height="546" loading="lazy" decoding="async">
             <span class="project-number">01</span>
             <span class="project-info"><span class="project-category">PRODUCTIVITY / WEB APP</span><span class="project-title">Flow</span><span class="project-description">A thoughtful workspace for projects, tasks, and momentum.</span></span>
-            <span class="project-arrow" aria-hidden="true">↗</span>
+            <span class="project-cta" aria-hidden="true">VIEW PROJECT</span>
           </a>
         </article>
         <article class="project project-solar" data-reveal>
@@ -67,7 +69,7 @@
             <img src="assets/solar-scene.webp" alt="Cinematic concept artwork of a ringed planet over a rocky landscape" width="940" height="585" loading="lazy" decoding="async">
             <span class="project-number">02</span>
             <span class="project-info"><span class="project-category">INTERACTIVE 3D</span><span class="project-title">Solar System Explorer</span><span class="project-description">An interactive journey through our cosmic neighborhood.</span></span>
-            <span class="project-arrow" aria-hidden="true">↗</span>
+            <span class="project-cta" aria-hidden="true">VIEW PROJECT</span>
           </a>
         </article>
         <article class="project project-enzo" data-reveal>
@@ -75,7 +77,7 @@
             <img src="assets/enzo-scene.webp" alt="Cinematic concept artwork of a dark mountain refuge at dusk" width="940" height="542" loading="lazy" decoding="async">
             <span class="project-number">03</span>
             <span class="project-info"><span class="project-category">BROWSER GAME / EXPERIMENT</span><span class="project-title">Enzo</span><span class="project-description">An evolving first-person experiment in immersive gameplay.</span></span>
-            <span class="project-arrow" aria-hidden="true">↗</span>
+            <span class="project-cta" aria-hidden="true">VIEW PROJECT</span>
           </a>
         </article>
       </div>
@@ -87,13 +89,13 @@
       <div class="about-inner" data-reveal>
         <div class="about-index"><span>DESIGN</span><span>DEVELOPMENT</span><span>STORYTELLING</span><span class="about-line"></span></div>
         <h2 id="about-title"><span class="quote-sign" aria-hidden="true">“</span>The web is more powerful when it <em>feels human.</em></h2>
-        <div class="about-copy"><p>I'm A.J., a creative developer exploring the intersection of thoughtful design, useful products, and immersive technology.</p><a href="#contact">MORE ABOUT ME <b aria-hidden="true">↗</b></a></div>
+        <div class="about-copy"><p>I'm A.J., a creative developer exploring the intersection of thoughtful design, useful products, and immersive technology.</p><a href="#contact">GET IN TOUCH</a></div>
       </div>
     </section>
 
     <section class="contact" id="contact" aria-labelledby="contact-title">
       <p class="eyebrow">HAVE SOMETHING IN MIND?</p>
-      <div class="contact-inner"><h2 id="contact-title">Let's make something<br><span>remarkable.</span></h2><a href="mailto:awabjahmed@gmail.com" class="contact-cta" aria-label="Email A.J. Ahmed"><span aria-hidden="true">↗</span></a></div>
+      <div class="contact-inner"><h2 id="contact-title">Let's make something<br><span>remarkable.</span></h2><a href="mailto:awabjahmed@gmail.com" class="contact-cta">EMAIL ME</a></div>
       <a class="email-link" href="mailto:awabjahmed@gmail.com">AWABJAHMED@GMAIL.COM</a>
     </section>
   </main>

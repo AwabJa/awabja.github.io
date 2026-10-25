@@ -33,6 +33,14 @@ try{
    const data=await page.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,images:[...document.querySelectorAll('main img')].map(i=>i.naturalWidth),projects:document.querySelectorAll('.project').length,imagesVisible:[...document.querySelectorAll('.project')].map(x=>getComputedStyle(x).opacity)}));
    assert(data.scrollWidth<=data.width+2,`${width}px viewport does not overflow (${data.scrollWidth})`);
    assert.equal(data.projects,3,'All real projects shown');
+   assert.equal(await page.locator('.hero-scene img').count(),0,'Hero no longer uses the fantasy wallpaper');
+   assert.equal(await page.locator('.studio-structure').count(),1,'A quiet architectural scene replaces the wallpaper');
+   assert.equal(await page.locator('.circle-arrow,.project-arrow').count(),0,'Circular arrow buttons are removed');
+   assert.equal(await page.locator('.project-cta').count(),3,'Projects have understated text calls to action');
+   assert.equal(await page.locator('.contact-cta').innerText(),'EMAIL ME','Contact button has a clear text label');
+   assert.equal(await page.locator('.explore-link').innerText(),'VIEW SELECTED WORK','Hero button is clearly labeled');
+   assert.equal(await page.locator('.studio-structure').evaluate(el=>getComputedStyle(el).display!=='none'),true,'Hero detail stays visible');
+
    assert(data.images.every(w=>w>0),'Artwork fully loads');
    assert(data.imagesVisible.every(v=>Number(v)>.9),'Project previews are not hidden by animation');
    assert.equal(errors.length,0,'No browser JS errors: '+errors.join('; '));
