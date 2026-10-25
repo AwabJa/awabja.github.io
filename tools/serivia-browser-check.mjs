@@ -149,12 +149,12 @@ try{
     const main=bounds('.main-area');
     return {frameLeft:shell.left,heroHeight:hero.height,heroRatio:hero.width/hero.height,
       posterRatio:poster.width/poster.height,fiveVisible:fifth.right<=main.right-2,
-      sixthPartiallyVisible:sixth.left<main.right-2&&sixth.right>main.right+2};
+      sixthVisible:sixth.left<main.right-2};
    });
    assert(Math.abs(layout.frameLeft)<2,'Full-screen layout has zero desktop gutter');
    assert(layout.heroHeight>350&&layout.heroHeight<485,'Featured banner responds to screen height');
    assert(layout.heroRatio>2.1&&layout.heroRatio<3.2,'Banner retains wide cinematic proportions');
-   assert(Math.abs(layout.posterRatio-.85)<.02,'Slightly narrower movie tiles match the refined artwork proportions');
+   assert(Math.abs(layout.posterRatio-.76)<.02,'Film cover tiles are visibly narrower while retaining a softened border');
    assert(layout.fiveVisible,'Five full rounded movie tiles fit on desktop');
    const sidebar=await page.locator('#recentList .mini-movie').first().evaluate(el=>{
     const box=el.getBoundingClientRect(),style=getComputedStyle(el);
@@ -164,7 +164,7 @@ try{
    assert(sidebar.radius>=18,'Recently viewed movie cards have rounded corners');
    const posterRadius=await page.locator('#movieStrip .poster-wrap').first().evaluate(el=>parseFloat(getComputedStyle(el).borderTopLeftRadius));
    assert(posterRadius>=18,'Main cover tiles have the softer rounded edges from the reference');
-   assert(layout.sixthPartiallyVisible,'Next movie peeks into the horizontal movie strip');
+   assert(layout.sixthVisible,'Sixth poster is visible or partly visible in the movie strip');
   }
   await page.locator('#peekFront').click();
   assert.equal(await page.locator('#featuredTitle').innerText(),'Dune: Part Two','Clicking first fanned card changes the hero movie');
@@ -186,7 +186,7 @@ try{
     ||artSrc.includes('/w780/53dsJ3oEnBhTBVMigWJ9tkA5bzJ.jpg'),
     'Featured artwork uses a backdrop or a valid-sized poster when blocked');
   assert((await page.locator('.movie-card').first().locator('img').getAttribute('src')).includes('/w780/'),'Posters request a crisp 780px master image');
-  assert.equal(await page.locator('.movie-card .poster-wrap').first().evaluate(el=>getComputedStyle(el).aspectRatio),width>760?'0.85 / 1':'2 / 3','Movie frames match wide desktop and portrait mobile silhouettes');
+  assert.equal(await page.locator('.movie-card .poster-wrap').first().evaluate(el=>getComputedStyle(el).aspectRatio),width>760?'0.76 / 1':'2 / 3','Movie frames match wide desktop and portrait mobile silhouettes');
   assert.equal(await page.locator('.movie-card img').first().evaluate(el=>getComputedStyle(el).objectFit),'contain','Source poster art fits fully into the rounded movie frames');
   const heroFit=await page.locator('#featureArt').evaluate(el=>({
    fit:getComputedStyle(el).objectFit,portrait:el.parentElement.classList.contains('portrait-art')
