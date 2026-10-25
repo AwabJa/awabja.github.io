@@ -72,6 +72,35 @@ try{
    await page.locator('.menu-panel a[href="#work"]').click();
    assert.equal(await toggle.getAttribute('aria-expanded'),'false','Menu closes on link');
    results.push({width,status:'PASS'});await page.close();
+   // Also check the independent minimal-hero comparison, without changing the approved preview.
+   const alternative=await browser.newPage({viewport:{width,height:width<=390?820:900}});
+   const altErrors=[];alternative.on('pageerror',err=>altErrors.push(err.message));
+   const altResponse=await alternative.goto(origin+'/home-preview/hero-alt/',{waitUntil:'domcontentloaded'});
+   assert.equal(altResponse.status(),200,'Alternate hero preview loads');
+   await alternative.locator('.hero h1').waitFor();
+   await alternative.locator('main img').evaluateAll(async images=>{
+     await Promise.all(images.map(async img=>{img.loading='eager';try{await img.decode()}catch{}}));
+   });
+   const altResult=await alternative.evaluate(()=>({
+     width:innerWidth,scrollWidth:document.documentElement.scrollWidth,
+     images:[...document.querySelectorAll('main img')].map(i=>i.naturalWidth)
+   }));
+   assert(altResult.scrollWidth<=altResult.width+2,'Alternate '+width+'px hero does not overflow ('+altResult.scrollWidth+')');
+   assert(altResult.images.every(n=>n>0),'Alternate preview images load');
+   assert.equal(await alternative.locator('.hero-display-type').innerText(),'AJ.','Alternate hero has an understated personal monogram');
+   assert.equal(await alternative.locator('.studio-structure').count(),0,'Alternate hero has no architectural slab');
+   assert.equal(await alternative.locator('.project').count(),3,'Project cards remain intact in alternate preview');
+   assert.equal(await alternative.locator('.project-flow a').getAttribute('href'),'../../Flow/','Alternate Flow link resolves to real project');
+   assert.equal(await alternative.locator('.project-solar a').getAttribute('href'),'../../3D%20Navigation%20Bar/','Alternate solar link resolves');
+   assert.equal(await alternative.locator('.project-enzo a').getAttribute('href'),'../../Enzo/','Alternate Enzo link resolves');
+   assert.equal(await alternative.locator('.menu-panel>a').count(),4,'Alternate retains hamburger menu');
+   assert.equal(await alternative.locator('.desktop-nav>a').count(),3,'Alternate retains desktop nav');
+   const altToggle=alternative.locator('.menu-button');await altToggle.click();
+   assert.equal(await altToggle.getAttribute('aria-expanded'),'true','Alternate hamburger opens');
+   await alternative.locator('.menu-panel a[href="#work"]').click();
+   assert.equal(await altToggle.getAttribute('aria-expanded'),'false','Alternate hamburger closes');
+   assert.deepEqual(altErrors,[],'Alternate preview has no browser JS errors');
+   await alternative.close();
  }
  const reduced=await browser.newPage({viewport:{width:390,height:800},reducedMotion:'reduce'});
  await reduced.goto(origin+'/home-preview/');
