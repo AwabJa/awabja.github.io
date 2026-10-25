@@ -395,7 +395,7 @@ check(seriviaScript.includes("sessionStorage.removeItem('serivia.tmdb.session.v1
       seriviaIndex.includes('>About catalog</button>'),
   'Serivia removes obsolete session tokens and offers catalog information instead');
 check(seriviaStyles.includes('border-radius:clamp(18px,1.47vw,24px)') &&
-      seriviaStyles.includes('aspect-ratio:0.7448') &&
+      seriviaStyles.includes('aspect-ratio:2/3') &&
       seriviaScript.includes('const VISIBLE_RECENT=3'),
   'Approved rounded cinematic layout and three recent-movie cards must remain intact');
 
