@@ -2,6 +2,8 @@
 'use strict';
 // Curated seed content, not a live TMDB feed. No API tokens are shipped to public GitHub Pages.
 const CDN='https://image.tmdb.org/t/p/';
+// Licensed film-promo preview image; fallback remains on TMDB if unavailable.
+const DRAGON_PROMO='https://comicbookmovie.com/images/articles/banners/how-to-train-your-dragon-trailer-and-poster-officially-released-as-live-action-toothless-takes-center-stage-ab214627.jpg';
 const movie=(id,title,year,rating,minutes,genres,poster,backdrop,overview,certificate='PG-13')=>
   ({id,title,year,rating,minutes,genres,poster,backdrop:backdrop||null,overview,certificate});
 const MOVIES=[
@@ -168,6 +170,18 @@ function setArt(img,movie,role='poster'){
  img.decoding='async';
  img.sizes=imageSizes[role]||imageSizes.backdrop;
  img.srcset=sizes.map((size,i)=>pic(file,size)+' '+(landscape?[780,1280][i]:[342,500,780][i])+'w').join(', ');
+ if(role==='backdrop'&&movie.id===1087192){
+  // Match the approved cliffside key art without changing poster thumbnails.
+  // If third-party promotional art is unavailable, restore TMDB automatically.
+  img.removeAttribute('srcset');
+  img.src=DRAGON_PROMO;
+  img.onerror=()=>{
+   img.onerror=null;
+   img.srcset=sizes.map((size,i)=>pic(file,size)+' '+[780,1280][i]+'w').join(', ');
+   img.src=pic(file,'w1280');
+  };
+  return;
+ }
  img.src=pic(file,landscape?'w1280':'w780');
  img.onerror=()=>{
   img.onerror=null;img.removeAttribute('srcset');
