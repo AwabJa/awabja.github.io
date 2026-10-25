@@ -196,6 +196,7 @@ const readIds=(key,def)=>storageRead(key,def).filter(id=>Number.isInteger(id)&&b
 const storageWrite=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value))}catch{/* Storage may be unavailable in private browsing. */}};
 const FAV_KEY='serivia.watchlist.v1',RECENT_KEY='serivia.recent.v1';
  const MAX_RECENT=12;
+ const VISIBLE_RECENT=3; // Preserve history, but keep the sidebar at three tiles.
 let favorites=new Set(readIds(FAV_KEY,[]));
 let recent=readIds(RECENT_KEY,[693134,762509,1087192]).slice(0,MAX_RECENT);
 const node=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n};
@@ -287,7 +288,8 @@ function renderMovies(){
 }
 function renderRecent(){
  const list=$('recentList');list.replaceChildren();
- for(const id of recent.slice(0,MAX_RECENT)){
+ for(const id of recent){
+  if(list.childElementCount>=VISIBLE_RECENT)break;
   const movie=byId.get(id);if(!movie)continue;
   const b=node('button','mini-movie');b.type='button';b.setAttribute('aria-label','Explore '+movie.title);
   const cover=image(movie,'recent');cover.alt='';b.dataset.artTitle=movie.title;b.appendChild(cover);
