@@ -497,3 +497,418 @@
   }
   .sidebar .side-activity{margin-top:clamp(12px,2vh,20px)}
 }
+
+
+/* Cinematic viewport-fit desktop layout — October 2026 reference. */
+/* Desktop: original interactive Serivia, composed as one cinematic screen.
+   Width and height both control content sizing; compact screens may scroll
+   rather than hiding controls, results or metadata. */
+@media (min-width:761px){
+  :root{
+    --screen-pad:clamp(16px,1.55vw,30px);
+    --banner-h:clamp(258px,min(40dvh,27vw),400px);
+    --poster-w:clamp(128px,min(12vw,18dvh),198px);
+  }
+  body{
+    background:#102a32;
+  }
+  .site-wrap{
+    min-height:100dvh;
+    padding:0;
+    display:block;
+  }
+  .app-shell{
+    grid-template-columns:clamp(220px,18.6vw,315px) minmax(0,1fr);
+    width:100%;
+    max-width:none;
+    height:100dvh;
+    min-height:0;
+    border-radius:0;
+    box-shadow:none;
+    overflow:hidden;
+    background:linear-gradient(115deg,#12242b,#0d1b21 55%,#09161b);
+  }
+  .sidebar{
+    min-width:0;
+    min-height:0;
+    padding:clamp(18px,2.1dvh,28px) 15px 13px clamp(20px,2.7vw,44px);
+    background:linear-gradient(160deg,#10232a 2%,#0e1d23 60%,#0c1a20 100%);
+    border-right:1px solid #ffffff0a;
+  }
+  .brand{
+    font-size:clamp(20px,1.55vw,26px);
+    gap:12px;
+    min-height:46px;
+  }
+  .brand-icon{
+    width:36px;
+    height:36px;
+  }
+  .sidebar .side-nav{
+    display:grid;
+    gap:4px;
+    margin-top:clamp(18px,3.6dvh,36px);
+    padding-right:5px;
+  }
+  .sidebar .side-nav-secondary{
+    position:relative;
+    margin-top:clamp(16px,2.8dvh,30px);
+    padding-top:clamp(12px,2dvh,20px);
+  }
+  .sidebar .side-nav-secondary::before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    right:10px;
+    height:1px;
+    background:#ffffff18;
+  }
+  .sidebar .side-link{
+    display:flex;
+    min-width:0;
+    min-height:clamp(35px,4.25dvh,44px);
+    font-size:clamp(12px,.91vw,15px);
+    gap:14px;
+    padding:6px 11px 6px 13px;
+    line-height:1.15;
+    position:relative;
+    border-radius:10px;
+    white-space:nowrap;
+  }
+  .sidebar .side-link svg{width:18px;height:18px;flex-basis:18px}
+  .sidebar .side-link:hover{background:#ffffff0d}
+  .sidebar .side-link.is-active{
+    background:linear-gradient(90deg,#26363ba6,#25343918);
+    color:#fff;
+  }
+  .sidebar .side-link.is-active::before{
+    content:"";
+    position:absolute;
+    top:7px;
+    bottom:7px;
+    left:0;
+    width:3px;
+    background:var(--gold);
+    border-radius:6px;
+  }
+  .sidebar .side-activity{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    gap:0;
+    flex:1 1 0%;
+    min-height:0;
+    margin-top:clamp(14px,2.4dvh,25px);
+    padding-top:clamp(12px,1.8dvh,20px);
+    padding-right:9px;
+    padding-bottom:4px;
+    overflow-y:auto;
+    overflow-x:hidden;
+    scrollbar-width:thin;
+    scrollbar-color:#4e6872 transparent;
+    overscroll-behavior-y:contain;
+  }
+  .sidebar .side-activity::before{
+    content:"";
+    position:sticky;
+    top:0;
+    height:1px;
+    flex:0 0 1px;
+    background:#ffffff18;
+    z-index:1;
+  }
+  .sidebar .side-activity::-webkit-scrollbar{display:block;width:5px}
+  .sidebar .side-activity::-webkit-scrollbar-thumb{background:#4e6872;border-radius:9px}
+  .sidebar .side-section-title{
+    position:sticky;
+    top:0;
+    display:flex;
+    align-items:center;
+    min-height:clamp(35px,4dvh,44px);
+    flex:0 0 auto;
+    gap:10px;
+    padding:8px 0;
+    margin:5px 0 7px;
+    color:#cad6d9;
+    background:#102127;
+    font-size:clamp(12px,.85vw,14px);
+    z-index:2;
+  }
+  .sidebar .side-section-title svg{width:18px;height:18px}
+  .sidebar .recent-list{gap:10px;padding-bottom:9px}
+  .sidebar .mini-movie{
+    width:100%;
+    height:clamp(78px,10.5dvh,112px);
+    min-height:76px;
+    border-radius:14px;
+    border:1px solid #ffffff1d;
+    padding:11px;
+    flex:0 0 auto;
+  }
+  .sidebar .mini-title{font-size:clamp(11px,.82vw,13px);max-width:none}
+  .sidebar .mini-bottom{bottom:7px;left:9px;right:9px}
+  .sidebar .portfolio-link{
+    flex-shrink:0;
+    margin-top:6px;
+    min-height:25px;
+    padding-top:4px;
+    font-size:11px;
+  }
+  .main-area{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    min-height:0;
+    height:100%;
+    padding:clamp(14px,1.8dvh,26px) var(--screen-pad) 12px clamp(19px,1.9vw,32px);
+    overflow-y:auto;
+    overflow-x:clip;
+    overscroll-behavior-y:contain;
+    scrollbar-width:thin;
+    scrollbar-color:#3e5963 transparent;
+  }
+  .main-area .toolbar{
+    display:grid;
+    grid-template-columns:clamp(118px,9.5vw,158px) minmax(160px,1fr) clamp(44px,3.5vw,56px) clamp(130px,10.2vw,177px);
+    align-items:center;
+    gap:clamp(8px,1.05vw,18px);
+    margin-bottom:clamp(12px,1.5dvh,20px);
+    flex:0 0 auto;
+  }
+  .main-area .type-dropdown,
+  .main-area .search-group,
+  .main-area .icon-button,
+  .main-area .profile{
+    height:clamp(43px,5.6dvh,58px);
+    border-radius:15px;
+  }
+  .main-area .type-dropdown{padding-inline:16px;background:#26353d}
+  .main-area .search-group{background:linear-gradient(90deg,#283740,#29373f);border-color:#ffffff12}
+  .main-area .icon-button{width:100%;background:#25343b}
+  .main-area .profile{padding-inline:7px;background:#24353c}
+  .main-area .profile-avatar{background:linear-gradient(130deg,#ffdf51,#ca9416)}
+  .main-area > #main{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    flex:1 0 auto;
+    min-height:max-content;
+  }
+  /* The reference has no intrusive demo-status banner above the artwork.
+     TMDB connection is still available from Settings and the Connect dialog.
+     The status remains available on filtered non-featured pages. */
+  #main:has(.featured-section:not([hidden])) .catalog-notice{
+    display:none;
+  }
+  .main-area .featured-section{
+    position:relative;
+    flex:0 0 auto;
+    width:100%;
+    max-width:none;
+    margin-bottom:clamp(11px,1.8dvh,19px);
+  }
+  .main-area .featured-stack{
+    --fan-space:clamp(96px,11.3vw,188px);
+    width:calc(100% - var(--fan-space));
+    max-width:none;
+    height:var(--banner-h);
+    margin-right:0;
+    position:relative;
+  }
+  .main-area .featured{
+    border-radius:19px;
+    box-shadow:0 12px 34px #0006;
+  }
+  .main-area .peek-front{
+    width:calc(var(--fan-space) * .71);
+    right:calc(var(--fan-space) * -.58);
+    top:7%;
+    bottom:7%;
+    border-radius:19px;
+  }
+  .main-area .peek-back{
+    display:block;
+    width:calc(var(--fan-space) * .43);
+    right:calc(var(--fan-space) * -.98);
+    top:12%;
+    bottom:12%;
+    border-radius:17px;
+  }
+  .main-area .feature-tags{top:16px;left:19px;gap:6px}
+  .main-area .feature-tags span{
+    padding:7px 11px;
+    font-size:clamp(10px,.8vw,13px);
+    background:#30373873;
+    border-color:#ffffff16;
+  }
+  .main-area .feature-bottom{left:21px;right:22px;bottom:19px;gap:12px}
+  .main-area .feature-play{width:clamp(42px,4.5dvh,51px);height:clamp(42px,4.5dvh,51px)}
+  .main-area .featured-titles>span:first-child{font-size:clamp(15px,1.2vw,21px)}
+  .main-area .featured-trailer-label{font-size:clamp(11px,.9vw,14px)}
+  .main-area .slide-dots{top:-12px;right:0}
+  #main .browse-section{
+    flex:0 0 auto;
+    min-width:0;
+    min-height:max-content;
+  }
+  #main .genre-row{
+    gap:12px;
+    margin-bottom:clamp(8px,1.2dvh,13px);
+  }
+  #main .genre-scroll{
+    width:auto;
+    min-width:0;
+    gap:clamp(6px,.6vw,11px);
+    scrollbar-width:none;
+  }
+  #main .genre-scroll button{
+    min-height:clamp(39px,5.3dvh,49px);
+    padding:0 clamp(14px,1.35vw,23px);
+    border-radius:50px;
+    font-size:clamp(11px,.9vw,14px);
+    background:#26343a;
+  }
+  #main .genre-scroll button[aria-pressed=true]{background:#fff;color:#111e24}
+  #main .genre-pagers{
+    display:flex;
+    flex:0 0 auto;
+    gap:8px;
+    margin-left:auto;
+  }
+  #main .genre-pagers button{
+    display:grid;
+    place-items:center;
+    width:clamp(37px,3.2vw,47px);
+    height:clamp(39px,5.3dvh,49px);
+    border:0;
+    border-radius:13px;
+    color:#e5ecee;
+    background:#27363c;
+    transition:background .2s;
+  }
+  #main .genre-pagers button:hover{background:#3b5059}
+  #main .genre-pagers button:disabled{opacity:.36;cursor:default}
+  #main .genre-pagers svg{
+    width:16px;height:16px;
+    fill:none;stroke:currentColor;stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round;
+  }
+  #main .genre-pagers .genre-prev svg{transform:rotate(180deg)}
+  #main .results-title{
+    min-height:18px;
+    margin-bottom:clamp(6px,.8dvh,9px);
+    font-size:11px;
+  }
+  #main .movie-strip:not(.is-live){
+    display:flex;
+    flex:0 0 auto;
+    gap:clamp(10px,.9vw,16px);
+    min-height:max-content;
+    align-items:stretch;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scroll-snap-type:x proximity;
+    padding-bottom:7px;
+  }
+  #main .movie-card{
+    flex:0 0 var(--poster-w);
+    width:var(--poster-w);
+    max-width:var(--poster-w);
+    min-height:0;
+  }
+  #main .poster-wrap{
+    aspect-ratio:2/3;
+    border-radius:14px;
+  }
+  #main .movie-name{
+    display:block;
+    min-height:0;
+    margin:8px 1px 4px;
+    font-size:clamp(11px,.82vw,13.5px);
+    line-height:1.3;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  #main .movie-meta{
+    margin:0 1px;
+    padding:0;
+    min-height:21px;
+    font-size:clamp(10px,.75vw,12px);
+    flex-wrap:nowrap;
+  }
+  #main .movie-meta svg{width:14px;height:14px}
+  #main .movie-strip.is-live{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(min(150px,100%),1fr));
+    justify-content:initial;
+    gap:19px 13px;
+    overflow:visible;
+    scroll-snap-type:none;
+    padding-bottom:24px;
+  }
+  #main .movie-strip.is-live .movie-card{
+    width:100%;
+    max-width:200px;
+    flex-basis:auto;
+  }
+  #main .movie-strip.is-live .movie-name{
+    white-space:normal;
+    overflow:visible;
+    min-height:2.6em;
+  }
+  .main-area .app-footer{
+    flex:0 0 auto;
+    margin-top:auto;
+    padding-top:8px;
+    font-size:9px;
+    letter-spacing:.04em;
+  }
+}
+/* Tablet/compact desktop: keep fan and browsing usable; scrolling when
+   genuinely necessary is preferable to clipped information. */
+@media(min-width:761px) and (max-width:1199px){
+  :root{
+    --screen-pad:16px;
+    --banner-h:clamp(238px,min(36dvh,30vw),348px);
+    --poster-w:clamp(120px,min(13vw,17dvh),163px);
+  }
+  .app-shell{grid-template-columns:clamp(190px,20vw,240px) minmax(0,1fr)}
+  .sidebar{padding-left:18px;padding-right:11px}
+  .main-area{padding-left:16px}
+  .main-area .toolbar{
+    grid-template-columns:105px minmax(135px,1fr) 44px 48px;
+    gap:9px;
+  }
+  .main-area .profile{justify-content:center}
+  .main-area .profile-text,.main-area .profile>svg{display:none}
+  .main-area .featured-stack{--fan-space:clamp(78px,9vw,112px)}
+  .main-area .peek-front{width:calc(var(--fan-space) * .68)}
+  .main-area .peek-back{width:calc(var(--fan-space) * .42)}
+  .sidebar .side-link{font-size:12px;gap:11px}
+  #main .genre-scroll button{padding-inline:15px}
+}
+/* Short landscape screens get proportional poster and hero sizing, with
+   scroll fallback rather than collisions at unusual browser zoom levels. */
+@media(min-width:761px) and (max-height:740px){
+  :root{
+    --banner-h:clamp(208px,min(35dvh,24vw),290px);
+    --poster-w:clamp(112px,min(11vw,16dvh),158px);
+  }
+  .sidebar .side-nav{margin-top:12px;gap:2px}
+  .sidebar .side-nav-secondary{margin-top:10px;padding-top:8px}
+  .sidebar .side-activity{margin-top:9px;padding-top:8px}
+  .sidebar .mini-movie{height:clamp(68px,10dvh,85px);min-height:68px}
+  .main-area .toolbar{margin-bottom:9px}
+  .main-area .featured-section{margin-bottom:9px}
+  #main .genre-row{margin-bottom:6px}
+  #main .results-title{margin-bottom:4px}
+  .main-area .app-footer{padding-top:3px}
+}
+/* Mobile: retain the existing full-width page and off-canvas navigation.
+   New desktop genre arrows are omitted because swiping is native on touch. */
+@media(max-width:760px){
+  #main .genre-pagers{display:none}
+  .sidebar .side-link.is-active{color:#fff}
+}
