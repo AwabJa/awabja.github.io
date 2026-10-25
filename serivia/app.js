@@ -410,7 +410,7 @@ function initialize(){
 
  for(const genre of GENRES){
   const b=node('button','',genre);b.type='button';b.dataset.genre=genre;
-  b.addEventListener('click',()=>{state.genre=genre;renderMovies();b.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'})});
+  b.addEventListener('click',()=>{state.genre=genre;renderMovies();b.scrollIntoView({block:'nearest',inline:'nearest',behavior:reducedMotion.matches?'auto':'smooth'})});
   $('genreScroll').appendChild(b);
  }
  renderMovies();updateCatalogNotice();
@@ -421,8 +421,8 @@ function initialize(){
   back.disabled=genreTrack.scrollLeft<2;
   forward.disabled=max<=2||genreTrack.scrollLeft>=max-2;
  };
- back.addEventListener('click',()=>genreTrack.scrollBy({left:-Math.max(140,genreTrack.clientWidth*.65),behavior:'smooth'}));
- forward.addEventListener('click',()=>genreTrack.scrollBy({left:Math.max(140,genreTrack.clientWidth*.65),behavior:'smooth'}));
+ back.addEventListener('click',()=>genreTrack.scrollBy({left:-Math.max(140,genreTrack.clientWidth*.65),behavior:reducedMotion.matches?'auto':'smooth'}));
+ forward.addEventListener('click',()=>genreTrack.scrollBy({left:Math.max(140,genreTrack.clientWidth*.65),behavior:reducedMotion.matches?'auto':'smooth'}));
  genreTrack.addEventListener('scroll',updateGenrePagers,{passive:true});
  window.addEventListener('resize',updateGenrePagers,{passive:true});
  requestAnimationFrame(updateGenrePagers);
