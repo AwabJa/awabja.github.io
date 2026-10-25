@@ -397,6 +397,14 @@ try{
  await reduced.route('https://image.tmdb.org/**',route=>route.abort());
  await reduced.goto(origin+'/serivia/');
  assert.equal(await reduced.locator('.movie-card').count(),15);
+ assert.equal(await reduced.locator('.movie-card img').first().evaluate(el=>getComputedStyle(el).transitionDuration),'0s',
+   'Reduced-motion preference removes poster animations');
+ await reduced.locator('#peekFront').click();
+ assert.equal(await reduced.locator('#featured').evaluate(el=>el.classList.contains('slide-enter')),false,
+   'Reduced-motion preference skips featured carousel animation');
+ await reduced.locator('#genreScroll button[data-genre="Action"]').click();
+ assert.equal(await reduced.locator('#genreScroll button[data-genre="Action"]').getAttribute('aria-pressed'),'true',
+   'Genre chips stay clickable with reduced motion enabled');
  await reduced.close();
  console.log('SERIVIA BROWSER CHECKS PASSED '+JSON.stringify(results));
 }finally{
