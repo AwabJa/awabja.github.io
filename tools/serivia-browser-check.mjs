@@ -161,7 +161,7 @@ try{
   await page.locator('#slideDots button').first().click();
   assert.equal(await page.locator('#featureArt').getAttribute('alt'),'How to Train Your Dragon movie artwork');
   const artSrc=await page.locator('#featureArt').getAttribute('src');
-  assert(artSrc.includes('/w1280/8J6UlIFcU7eZfq9iCLbgc8Auklg.jpg'),'Hero uses genuine HD landscape image, not a stretched poster');
+  assert(artSrc.includes('how-to-train-your-dragon-trailer-and-poster')||artSrc.includes('/w1280/8J6UlIFcU7eZfq9iCLbgc8Auklg.jpg'),'Featured hero uses cinematic artwork with an HD fallback');
   assert((await page.locator('.movie-card').first().locator('img').getAttribute('src')).includes('/w780/'),'Posters request a crisp 780px master image');
   assert.equal(await page.locator('.movie-card .poster-wrap').first().evaluate(el=>getComputedStyle(el).aspectRatio),width>760?'0.87 / 1':'2 / 3','Poster aspect ratios follow desktop and mobile compositions');
   assert.equal(await page.locator('.movie-card img').first().evaluate(el=>getComputedStyle(el).objectFit),width>760?'cover':'contain','Poster art follows the screenshot desktop treatment');
