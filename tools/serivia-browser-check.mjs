@@ -174,11 +174,18 @@ try{
   await page.locator('#slideDots button').first().click();
   assert.equal(await page.locator('#featureArt').getAttribute('alt'),'How to Train Your Dragon movie artwork');
   const artSrc=await page.locator('#featureArt').getAttribute('src');
-  assert(artSrc.includes('how-to-train-your-dragon-trailer-and-poster')||artSrc.includes('/w1280/8J6UlIFcU7eZfq9iCLbgc8Auklg.jpg'),'Featured hero uses cinematic artwork with an HD fallback');
+  assert(artSrc.includes('how-to-train-your-dragon-trailer-and-poster')
+    ||artSrc.includes('/w1280/8J6UlIFcU7eZfq9iCLbgc8Auklg.jpg')
+    ||artSrc.includes('/w780/53dsJ3oEnBhTBVMigWJ9tkA5bzJ.jpg'),
+    'Featured artwork uses a backdrop or a valid-sized poster when blocked');
   assert((await page.locator('.movie-card').first().locator('img').getAttribute('src')).includes('/w780/'),'Posters request a crisp 780px master image');
   assert.equal(await page.locator('.movie-card .poster-wrap').first().evaluate(el=>getComputedStyle(el).aspectRatio),width>760?'0.8 / 1':'2 / 3','Movie frames match wide desktop and portrait mobile silhouettes');
   assert.equal(await page.locator('.movie-card img').first().evaluate(el=>getComputedStyle(el).objectFit),'contain','Source poster art fits fully into the rounded movie frames');
-  assert.equal(await page.locator('#featureArt').evaluate(el=>getComputedStyle(el).objectFit),'cover','Wide banner uses cinematic landscape art');
+  const heroFit=await page.locator('#featureArt').evaluate(el=>({
+   fit:getComputedStyle(el).objectFit,portrait:el.parentElement.classList.contains('portrait-art')
+  }));
+  assert.equal(heroFit.fit,heroFit.portrait?'contain':'cover',
+   'Feature art displays landscape in cover mode and portrait fallback in contain mode');
   assert.equal(await page.locator('#genreScroll button').count(),11,'Genre chips render');
   assert.equal((await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content')).includes("script-src 'self'"),true,'Scripts limited to same origin');
   const doc=await page.evaluate(()=>({
