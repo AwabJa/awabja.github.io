@@ -5,6 +5,9 @@ const CDN='https://image.tmdb.org/t/p/';
 const movie=(id,title,year,rating,minutes,genres,poster,backdrop,overview,certificate='PG-13')=>
   ({id,title,year,rating,minutes,genres,poster,backdrop:backdrop||null,overview,certificate});
 const MOVIES=[
+ movie(552524,'Lilo & Stitch',2025,7.2,112,['Adventure','Comedy','Family','Sci-Fi'],'j9yv60GA4T2b7ts5BZEWju9UEeP.jpg',null,'A young Hawaiian girl befriends a mischievous alien and discovers what it truly means to be family.','PG'),
+ movie(575265,'Mission: Impossible - The Final Reckoning',2025,8.2,170,['Action','Adventure','Thriller'],'z53D72EAOxGRqdr7KXXWp9dJiDe.jpg',null,'Ethan Hunt races against time to confront a dangerous artificial intelligence and save the future.'),
+ movie(670292,'The Creator',2023,7.1,133,['Action','Drama','Sci-Fi'],'vBZ0qvaRxqEhZwl6LWmruJqWE8Z.jpg',null,'A former soldier searches for a mysterious creator in a future shaped by artificial intelligence.'),
  movie(1087192,'How to Train Your Dragon',2025,7.8,125,['Action','Adventure','Fantasy','Family'],'53dsJ3oEnBhTBVMigWJ9tkA5bzJ.jpg','8J6UlIFcU7eZfq9iCLbgc8Auklg.jpg','On the rugged island of Berk, a young Viking befriends a Night Fury dragon and begins to change how his world sees these mysterious creatures.','PG'),
  movie(823219,'Flow',2024,7.9,85,['Animation','Adventure','Fantasy'],'zeinX0xt78GgtpCQjx7d2S6Gh7g.jpg',null,'A solitary cat finds shelter on a boat after a great flood and learns to survive with an unlikely animal crew.','PG'),
  movie(762509,'Mufasa: The Lion King',2024,7.3,118,['Adventure','Drama','Family'],'lurEK87kukWNaHd0zYnsi3yzJrs.jpg','1w8kutrRucTd3wlYyu5QlUDMiG1.jpg','A young, orphaned lion named Mufasa finds friendship and his destiny on an epic journey across the Pride Lands.','PG'),
@@ -20,6 +23,7 @@ const MOVIES=[
 ];
 const GENRES=['Trending','Adventure','Action','Comedy','Crime','Drama','Fantasy','Horror','Sci-Fi','Animation','Family'];
 const FEATURE_IDS=[1087192,693134,762509,1241982];
+const HOME_SHOWCASE_IDS=[552524,823219,575265,762509,693134,670292];
 const byId=new Map(MOVIES.map(m=>[m.id,m]));
 // TMDB does not permit unauthenticated movie search. Public GitHub Pages has no
 // secure server-side secrets, so users opt into live browsing per browser session.
@@ -210,7 +214,10 @@ function filters(){
   if(m.rating<state.rating)return false;
   return true;
  });
- if(state.view==='trending')out.sort((a,b)=>b.rating-a.rating);
+ if(state.view==='home'&&state.sort==='featured'&&state.genre==='Trending'&&!state.query){
+  const order=new Map(HOME_SHOWCASE_IDS.map((id,index)=>[id,index]));
+  out.sort((a,b)=>(order.get(a.id)??999)-(order.get(b.id)??999));
+ }else if(state.view==='trending')out.sort((a,b)=>b.rating-a.rating);
  else if(state.sort==='rating')out.sort((a,b)=>b.rating-a.rating);
  else if(state.sort==='year')out.sort((a,b)=>b.year-a.year);
  else if(state.sort==='az')out.sort((a,b)=>a.title.localeCompare(b.title));
