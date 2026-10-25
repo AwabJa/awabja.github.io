@@ -505,33 +505,36 @@
    rather than hiding controls, results or metadata. */
 @media (min-width:761px){
   :root{
-    --screen-pad:clamp(16px,1.55vw,30px);
-    --banner-h:clamp(258px,min(40dvh,27vw),400px);
-    --poster-w:clamp(128px,min(12vw,18dvh),198px);
+    --screen-pad:clamp(16px,1.55vw,26px);
+    --banner-h:clamp(265px,min(43dvh,24vw),398px);
+    --poster-gap:clamp(10px,1vw,18px);
   }
   body{
-    background:#102a32;
+    background:radial-gradient(ellipse 110% 110% at 50% 50%,#26454e 0%,#17353e 58%,#0f2a33 100%);
   }
   .site-wrap{
+    display:grid;
+    place-items:stretch;
+    width:100%;
+    height:100dvh;
     min-height:100dvh;
-    padding:0;
-    display:block;
+    padding:clamp(12px,4.8dvh,46px) clamp(12px,2.22vw,40px) clamp(12px,3.6dvh,35px);
   }
   .app-shell{
-    grid-template-columns:clamp(220px,18.6vw,315px) minmax(0,1fr);
+    grid-template-columns:clamp(230px,19.9%,320px) minmax(0,1fr);
     width:100%;
     max-width:none;
-    height:100dvh;
+    height:100%;
     min-height:0;
-    border-radius:0;
-    box-shadow:none;
+    border-radius:16px;
+    box-shadow:0 30px 90px #07181d80,0 1px 12px #05131940;
     overflow:hidden;
-    background:linear-gradient(115deg,#12242b,#0d1b21 55%,#09161b);
+    background:linear-gradient(115deg,#10242b,#0b1c22 54%,#09181e);
   }
   .sidebar{
     min-width:0;
     min-height:0;
-    padding:clamp(18px,2.1dvh,28px) 15px 13px clamp(20px,2.7vw,44px);
+    padding:clamp(15px,1.7dvh,21px) 19px 11px clamp(21px,1.65vw,30px);
     background:linear-gradient(160deg,#10232a 2%,#0e1d23 60%,#0c1a20 100%);
     border-right:1px solid #ffffff0a;
   }
@@ -661,7 +664,7 @@
     min-width:0;
     min-height:0;
     height:100%;
-    padding:clamp(14px,1.8dvh,26px) var(--screen-pad) 12px clamp(19px,1.9vw,32px);
+    padding:clamp(12px,1.6dvh,17px) var(--screen-pad) 12px 0;
     overflow-y:auto;
     overflow-x:clip;
     overscroll-behavior-y:contain;
@@ -673,14 +676,14 @@
     grid-template-columns:clamp(118px,9.5vw,158px) minmax(160px,1fr) clamp(44px,3.5vw,56px) clamp(130px,10.2vw,177px);
     align-items:center;
     gap:clamp(8px,1.05vw,18px);
-    margin-bottom:clamp(12px,1.5dvh,20px);
+    margin-bottom:clamp(12px,1.85dvh,19px);
     flex:0 0 auto;
   }
   .main-area .type-dropdown,
   .main-area .search-group,
   .main-area .icon-button,
   .main-area .profile{
-    height:clamp(43px,5.6dvh,58px);
+    height:clamp(42px,5.8dvh,55px);
     border-radius:15px;
   }
   .main-area .type-dropdown{padding-inline:16px;background:#26353d}
@@ -706,10 +709,10 @@
     flex:0 0 auto;
     width:100%;
     max-width:none;
-    margin-bottom:clamp(11px,1.8dvh,19px);
+    margin-bottom:clamp(12px,1.75dvh,18px);
   }
   .main-area .featured-stack{
-    --fan-space:clamp(96px,11.3vw,188px);
+    --fan-space:clamp(115px,12.2vw,204px);
     width:calc(100% - var(--fan-space));
     max-width:none;
     height:var(--banner-h);
@@ -721,16 +724,16 @@
     box-shadow:0 12px 34px #0006;
   }
   .main-area .peek-front{
-    width:calc(var(--fan-space) * .71);
-    right:calc(var(--fan-space) * -.58);
+    width:calc(var(--fan-space) * .76);
+    right:calc(var(--fan-space) * -.51);
     top:7%;
     bottom:7%;
     border-radius:19px;
   }
   .main-area .peek-back{
     display:block;
-    width:calc(var(--fan-space) * .43);
-    right:calc(var(--fan-space) * -.98);
+    width:calc(var(--fan-space) * .56);
+    right:calc(var(--fan-space) * -.94);
     top:12%;
     bottom:12%;
     border-radius:17px;
@@ -754,7 +757,7 @@
   }
   #main .genre-row{
     gap:12px;
-    margin-bottom:clamp(8px,1.2dvh,13px);
+    margin-bottom:clamp(10px,1.45dvh,14px);
   }
   #main .genre-scroll{
     width:auto;
@@ -800,10 +803,23 @@
     margin-bottom:clamp(6px,.8dvh,9px);
     font-size:11px;
   }
+  /* In the reference the genre row sits directly above the posters.
+     Keep the status text available to screen readers without a blank row. */
+  #main:has(.featured-section:not([hidden])) .results-title{
+    position:absolute;
+    width:1px;
+    height:1px;
+    min-height:0;
+    padding:0;
+    margin:0;
+    overflow:hidden;
+    clip-path:inset(50%);
+    white-space:nowrap;
+  }
   #main .movie-strip:not(.is-live){
     display:flex;
     flex:0 0 auto;
-    gap:clamp(10px,.9vw,16px);
+    gap:var(--poster-gap);
     min-height:max-content;
     align-items:stretch;
     overflow-x:auto;
@@ -812,14 +828,18 @@
     padding-bottom:7px;
   }
   #main .movie-card{
-    flex:0 0 var(--poster-w);
-    width:var(--poster-w);
-    max-width:var(--poster-w);
+    flex:0 0 clamp(134px,calc((100% - 5 * var(--poster-gap)) / 6),202px);
+    width:clamp(134px,calc((100% - 5 * var(--poster-gap)) / 6),202px);
+    max-width:202px;
     min-height:0;
   }
   #main .poster-wrap{
-    aspect-ratio:2/3;
+    aspect-ratio:0.87;
     border-radius:14px;
+  }
+  #main .poster-wrap>img{
+    object-fit:cover;
+    object-position:center 46%;
   }
   #main .movie-name{
     display:block;
@@ -871,12 +891,12 @@
 @media(min-width:761px) and (max-width:1199px){
   :root{
     --screen-pad:16px;
-    --banner-h:clamp(238px,min(36dvh,30vw),348px);
-    --poster-w:clamp(120px,min(13vw,17dvh),163px);
+    --banner-h:clamp(240px,min(38dvh,27vw),355px);
+    --poster-gap:clamp(9px,.9vw,13px);
   }
   .app-shell{grid-template-columns:clamp(190px,20vw,240px) minmax(0,1fr)}
   .sidebar{padding-left:18px;padding-right:11px}
-  .main-area{padding-left:16px}
+  .main-area{padding-left:0}
   .main-area .toolbar{
     grid-template-columns:105px minmax(135px,1fr) 44px 48px;
     gap:9px;
@@ -893,8 +913,8 @@
    scroll fallback rather than collisions at unusual browser zoom levels. */
 @media(min-width:761px) and (max-height:740px){
   :root{
-    --banner-h:clamp(208px,min(35dvh,24vw),290px);
-    --poster-w:clamp(112px,min(11vw,16dvh),158px);
+    --banner-h:clamp(215px,min(35dvh,24vw),293px);
+    --poster-gap:10px;
   }
   .sidebar .side-nav{margin-top:12px;gap:2px}
   .sidebar .side-nav-secondary{margin-top:10px;padding-top:8px}
@@ -911,4 +931,29 @@
 @media(max-width:760px){
   #main .genre-pagers{display:none}
   .sidebar .side-link.is-active{color:#fff}
+}
+
+/* Poster width tracks the six-cover composition of the visual reference.
+   At narrower widths the row naturally overflows horizontally. */
+@media(min-width:761px){
+  .main-area .featured-titles>span:first-child{font-weight:800}
+  .main-area .slide-dots{right:2px;top:-12px}
+  .main-area .app-footer{opacity:.75}
+  .sidebar .recent-list{gap:12px}
+  .sidebar .mini-movie{height:clamp(78px,11.25dvh,108px)}
+  .sidebar .side-activity{margin-top:clamp(11px,2dvh,19px)}
+}
+/* Smaller tablets use the native mobile drawer before the dense desktop
+   toolbar becomes too narrow for accessible controls. */
+@media(min-width:761px) and (max-width:900px){
+  .site-wrap{padding:10px}
+  .app-shell{grid-template-columns:205px minmax(0,1fr)}
+  .main-area{padding-right:12px}
+  .main-area .featured-stack{--fan-space:86px}
+  .main-area .toolbar{gap:7px}
+}
+/* Mobile maintains the existing poster ratio and native document scrolling. */
+@media(max-width:760px){
+  #main .poster-wrap{aspect-ratio:2/3}
+  #main .poster-wrap>img{object-fit:contain}
 }
