@@ -89,7 +89,7 @@ try{
    // Simulate a real finger dragging the large hero horizontally.
    const hero=page.locator('#featured');await hero.scrollIntoViewIfNeeded();
    const r=await hero.boundingBox();
-   const from={x:r.x+r.width*.72,y:r.y+r.height*.5},to={x:from.x-115,y:from.y+6};
+   const from={x:r.x+r.width*.38,y:r.y+r.height*.53},to={x:from.x-80,y:from.y+6};
    const cdp=await context.newCDPSession(page);
    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[from]});
    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[to]});
