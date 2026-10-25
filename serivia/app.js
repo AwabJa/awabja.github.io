@@ -7,7 +7,7 @@ const DRAGON_PROMO='https://comicbookmovie.com/images/articles/banners/how-to-tr
 const movie=(id,title,year,rating,minutes,genres,poster,backdrop,overview,certificate='PG-13')=>
   ({id,title,year,rating,minutes,genres,poster,backdrop:backdrop||null,overview,certificate});
 const MOVIES=[
- movie(552524,'Lilo & Stitch',2025,7.2,112,['Adventure','Comedy','Family','Sci-Fi'],'j9yv60GA4T2b7ts5BZEWju9UEeP.jpg',null,'A young Hawaiian girl befriends a mischievous alien and discovers what it truly means to be family.','PG'),
+ movie(552524,'Lilo & Stitch',2025,7.2,112,['Adventure','Comedy','Family','Sci-Fi'],'j9yv60GA4T2b7ts5BZEWju9UEeP.jpg','fovkdObjss9Qa5UnqdTRh0nendD.jpg','A young Hawaiian girl befriends a mischievous alien and discovers what it truly means to be family.','PG'),
  movie(575265,'Mission: Impossible - The Final Reckoning',2025,8.2,170,['Action','Adventure','Thriller'],'z53D72EAOxGRqdr7KXXWp9dJiDe.jpg',null,'Ethan Hunt races against time to confront a dangerous artificial intelligence and save the future.'),
  movie(670292,'The Creator',2023,7.1,133,['Action','Drama','Sci-Fi'],'vBZ0qvaRxqEhZwl6LWmruJqWE8Z.jpg',null,'A former soldier searches for a mysterious creator in a future shaped by artificial intelligence.'),
  movie(1087192,'How to Train Your Dragon',2025,7.8,125,['Action','Adventure','Fantasy','Family'],'53dsJ3oEnBhTBVMigWJ9tkA5bzJ.jpg','8J6UlIFcU7eZfq9iCLbgc8Auklg.jpg','On the rugged island of Berk, a young Viking befriends a Night Fury dragon and begins to change how his world sees these mysterious creatures.','PG'),
@@ -18,7 +18,7 @@ const MOVIES=[
  movie(533535,'Deadpool & Wolverine',2024,7.6,128,['Action','Comedy','Sci-Fi'],'8cdWjvZQUExUUTzyp4t6EDMubfO.jpg','by8z9Fe8y7p4jo2YlW2SZDnptyT.jpg','A wisecracking antihero reluctantly teams up with a gruff mutant for a chaotic adventure across realities.','R'),
  movie(157336,'Interstellar',2014,8.7,169,['Adventure','Drama','Sci-Fi'],'gEU2QniE6E77NI6lCU6MxlNBvIx.jpg','pbrkL804c8yAv3zBZR4QPEafpAR.jpg','A team of explorers travels beyond the known galaxy to search for humanity’s next home.'),
  movie(27205,'Inception',2010,8.4,148,['Action','Sci-Fi','Crime'],'xlaY2zyzMfkhk0HSC5VUwzoZPU1.jpg','8ZTVqvKDQ8emSGUEMjsS4yHAwrp.jpg','A skilled thief enters dreams to steal secrets and faces an impossible task: planting an idea instead.'),
- movie(299534,'Avengers: Endgame',2019,8.3,181,['Action','Adventure','Sci-Fi'],'ulzhLuWrPK07P1YkdWQLZnQh1JL.jpg',null,'The remaining heroes gather for one final chance to undo an unimaginable loss.'),
+ movie(299534,'Avengers: Endgame',2019,8.3,181,['Action','Adventure','Sci-Fi'],'ulzhLuWrPK07P1YkdWQLZnQh1JL.jpg','7RyHsO4yDXtBv1zUU3mTpHeQ0d5.jpg','The remaining heroes gather for one final chance to undo an unimaginable loss.'),
  movie(122,'The Lord of the Rings: The Return of the King',2003,8.5,201,['Action','Adventure','Fantasy'],'rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg',null,'The fate of Middle-earth rests on a perilous journey to destroy a powerful ring.'),
  movie(550,'Fight Club',1999,8.4,139,['Drama','Crime'],'jSziioSwPVrOy9Yow3XhWIBDjq1.jpg',null,'An office worker encounters a charismatic outsider and becomes drawn into a secret society.','R'),
  movie(1020414,"Peter Pan's Neverland Nightmare",2025,5.1,89,['Horror','Fantasy'],'mOR1Ks0EcXocwMV4EPv4letz0F5.jpg','nhxOttmAS2w8e6hyIcKoNvgHoix.jpg','A dark reimagining of a familiar Neverland story.','R')
