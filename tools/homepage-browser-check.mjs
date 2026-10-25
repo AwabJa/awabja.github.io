@@ -1,7 +1,7 @@
-/** Browser QA for the unlisted cinematic homepage design; chromium via CHROME_BIN. */
+/** Production homepage responsive, keyboard, security, and performance checks. */
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { readFile, access } from 'node:fs/promises';
+import { readFile, access, stat } from 'node:fs/promises';
 import { resolve, dirname, extname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
@@ -22,6 +22,8 @@ const candidates=[process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/chro
 let executablePath;for(const p of candidates){try{await access(p);executablePath=p;break;}catch{}}
 const browser=await chromium.launch(executablePath?{executablePath,headless:true,args:['--no-sandbox']}:{channel:'chrome',headless:true,args:['--no-sandbox']});
 try{
+ const bytes=await Promise.all(['index.html','homepage.css','homepage.js'].map(p=>stat(resolve(root,p)).then(x=>x.size)));
+ assert(bytes[0]<12000&&bytes[1]<30000&&bytes[2]<7500,'Homepage HTML, CSS and JS stay below byte budgets');
  const results=[];
  for(const width of [320,390,768,1440]){
    // Validate the published homepage independently from both design previews.
@@ -71,6 +73,11 @@ try{
    assert.equal(await production.locator('meta[name="robots"][content*="noindex"]').count(),0,'Published homepage is indexable');
    assert.equal(await production.locator('.preview-pill').count(),0,'Published homepage has no preview badge');
    assert.equal(await production.title(),'A.J. Ahmed — Creative Developer','Published page has a production title');
+   assert.equal(await production.locator('link[href^="homepage.css"]').count(),1,'Single main CSS stylesheet');
+   assert.equal(await production.locator('link[href*="hero-lines.css"]').count(),0,'No secondary blocking hero stylesheet');
+   assert.equal(await production.locator('link[rel="canonical"]').getAttribute('href'),'https://awabja.github.io/','Canonical URL');
+   const security=await production.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
+   assert(security.includes("script-src 'self';")&&security.includes("object-src 'none'"),'Strict homepage CSP');
    assert.equal(await production.locator('.project').count(),3,'Existing project cards remain intact');
    assert.equal(await production.locator('.project-flow a').getAttribute('href'),'Flow/','Published Flow link is correct');
    assert.equal(await production.locator('.project-solar a').getAttribute('href'),'3D%20Navigation%20Bar/','Published Solar link is correct');
@@ -80,6 +87,20 @@ try{
    assert.equal(await production.locator('.desktop-nav>a').count(),3,'Desktop links remain');
    const liveMenu=production.locator('.menu-button');await liveMenu.click();
    assert.equal(await liveMenu.getAttribute('aria-expanded'),'true','Published hamburger opens');
+   if(width===390){
+     const first=production.locator('.menu-panel a').first();
+     const last=production.locator('.menu-panel a').last();
+     assert.equal(await first.evaluate(el=>document.activeElement===el),true,'Opening the drawer focuses its first link');
+     await first.press('Shift+Tab');
+     assert.equal(await liveMenu.evaluate(el=>document.activeElement===el),true,'Reverse Tab reaches close button');
+     await liveMenu.press('Shift+Tab');
+     assert.equal(await last.evaluate(el=>document.activeElement===el),true,'Focus wraps to last menu link');
+     await last.press('Tab');
+     assert.equal(await liveMenu.evaluate(el=>document.activeElement===el),true,'Focus wraps to menu toggle');
+     await liveMenu.press('Escape');
+     assert.equal(await liveMenu.getAttribute('aria-expanded'),'false','Escape closes drawer');
+     await liveMenu.click();
+   }
    await production.locator('.menu-panel a[href="#work"]').click();
    assert.equal(await liveMenu.getAttribute('aria-expanded'),'false','Published hamburger closes');
    assert.deepEqual(prodErrors,[],'Published homepage has no browser JavaScript errors');
@@ -125,6 +146,14 @@ try{
  ]);
  assert.equal(new URL(touchPage.url()).pathname,'/Flow/','One tap opens Flow without an extra touch');
  await touchContext.close();
+ const landscape=await browser.newPage({viewport:{width:568,height:320},isMobile:true,hasTouch:true});
+ await landscape.goto(origin+'/');
+ await landscape.locator('.menu-button').click();
+ const menuScroll=await landscape.locator('.menu-panel').evaluate(el=>({overflow:getComputedStyle(el).overflowY,height:el.clientHeight}));
+ assert.equal(menuScroll.overflow,'auto','Short mobile landscape drawer can scroll');
+ assert(menuScroll.height<=321,'Drawer fits landscape screen height');
+ assert.equal(await landscape.locator('.menu-panel a').count(),4);
+ await landscape.close();
  const reduced=await browser.newPage({viewport:{width:390,height:800},reducedMotion:'reduce'});
  await reduced.goto(origin+'/');
  assert.equal(await reduced.locator('.hero-display-line').count(),1);

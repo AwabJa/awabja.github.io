@@ -18,7 +18,20 @@
       panel.querySelector('a')?.focus();
     });
     panel.querySelectorAll('a').forEach(link=>link.addEventListener('click',close));
-    document.addEventListener('keydown',event=>{if(event.key==='Escape'&&toggle.getAttribute('aria-expanded')==='true'){close();toggle.focus()}});
+    document.addEventListener('keydown',event=>{
+      if(toggle.getAttribute('aria-expanded')!=='true')return;
+      if(event.key==='Escape'){close();toggle.focus({preventScroll:true});return}
+      if(event.key!=='Tab')return;
+      // Keep keyboard focus within the open, scroll-locked navigation drawer.
+      const links=[...panel.querySelectorAll('a[href]')];
+      if(!links.length)return;
+      const first=links[0],last=links[links.length-1],active=document.activeElement;
+      if(event.shiftKey&&(active===first||active===toggle)){
+        event.preventDefault();(active===first?toggle:last).focus();
+      }else if(!event.shiftKey&&(active===last||active===toggle)){
+        event.preventDefault();(active===last?toggle:first).focus();
+      }
+    });
     document.addEventListener('click',event=>{if(!panel.contains(event.target)&&!toggle.contains(event.target))close()});
   }
   // Touchscreens need a brief pressed state rather than sticky simulated hover.

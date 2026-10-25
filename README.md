@@ -18,7 +18,6 @@ Each project has its own directory. The homepage links to the existing project U
 | --- | --- |
 | `index.html` | Published homepage |
 | `homepage.css` | Black-theme layout and general styles |
-| `hero-lines.css` | Minimal line-only hero |
 | `homepage.js` | Navigation, scroll progress, and animation |
 | `assets/homepage/` | Homepage-specific project artwork |
 | `favicon.svg` | Shared favicon |
@@ -28,7 +27,7 @@ Each project has its own directory. The homepage links to the existing project U
 
 ## Maintaining the site
 
-GitHub Pages publishes the static site from `main`. The homepage is plain HTML, CSS and JavaScript with no build framework.
+GitHub Pages publishes the static site from `main`. The hero design shares the main stylesheet to avoid a second render-blocking CSS request. The homepage is plain HTML, CSS and JavaScript with no build framework.
 
 The homepage browser test uses `playwright-core` and requires Chrome or Chromium. GitHub Actions runs it on relevant changes.
 
