@@ -155,7 +155,7 @@ const imageSizes={poster:'(max-width:480px) 145px, (max-width:1000px) 155px, (ma
 function setArt(img,movie,role='poster'){
  const landscape=role!=='poster';
  const file=landscape?widescreen(movie):movie.poster;
- const sizes=landscape?['w780','w1280']:['w342','w500','w780'];
+ const sizes=role==='recent'?['w300','w780']:landscape?['w780','w1280']:['w342','w500','w780'];
  const container=img.parentElement;
  container?.classList.remove('image-failed','portrait-art');
  if(landscape&&!movie.backdrop)container?.classList.add('portrait-art');
@@ -163,7 +163,7 @@ function setArt(img,movie,role='poster'){
   container.dataset.artTitle=movie.title;
   // When no landscape still exists, blur the poster behind an intact
   // portrait image rather than stretching it across the widescreen panel.
-  const fallback=landscape&&movie.poster?pic(movie.poster,'w500'):'';
+  const fallback=movie.poster?pic(movie.poster,'w500'):'';
   container.style.setProperty('--art-fallback',fallback?'url("'+fallback+'")':'none');
  }
  if(!file){
@@ -175,7 +175,7 @@ function setArt(img,movie,role='poster'){
  img.alt=role==='poster'?movie.title+' movie poster':movie.title+' movie artwork';
  img.decoding='async';
  img.sizes=imageSizes[role]||imageSizes.backdrop;
- img.srcset=sizes.map((size,i)=>pic(file,size)+' '+(landscape?[780,1280][i]:[342,500,780][i])+'w').join(', ');
+ img.srcset=sizes.map((size,i)=>pic(file,size)+' '+(role==='recent'?[300,780][i]:landscape?[780,1280][i]:[342,500,780][i])+'w').join(', ');
  if(role==='backdrop'&&movie.id===1087192){
   // Match the approved cliffside key art without changing poster thumbnails.
   // If third-party promotional art is unavailable, restore TMDB automatically.
@@ -188,10 +188,18 @@ function setArt(img,movie,role='poster'){
   };
   return;
  }
- img.src=pic(file,landscape?'w1280':'w780');
+ img.src=pic(file,role==='recent'?'w780':landscape?'w1280':'w780');
  img.onerror=()=>{
-  img.onerror=null;img.removeAttribute('srcset');
-  // A CDN error must leave an intentional, readable movie-title tile.
+  img.onerror=null;
+  img.removeAttribute('srcset');
+  // If a real backdrop disappears from the CDN, fall back to the centered
+  // portrait composition; never leave a broken image in a detail dialog.
+  if(landscape&&movie.backdrop&&movie.poster){
+   movie.backdrop=null;
+   setArt(img,movie,role);
+   return;
+  }
+  // Missing poster too: a readable title tile is safer than a broken image.
   img.hidden=true;
   container?.classList.add('image-failed');
  };
