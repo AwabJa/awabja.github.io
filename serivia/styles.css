@@ -989,3 +989,89 @@
      secondary views retain the footer. */
   .main-area:has(.featured-section:not([hidden])) > .app-footer{display:none}
 }
+
+
+/* Reference-matched wide film cards and sidebar previews. */
+/* Preserve Serivia's true full-screen shell. The screenshot uses landscape-
+   leaning, soft-cornered cover tiles, rather than narrow 2:3 poster frames.
+   Only the desktop view is adjusted; phone layout stays native and scrollable. */
+@media(min-width:901px){
+  :root{
+    --poster-w:clamp(160px,min(13.2vw,24dvh),228px);
+    --poster-gap:clamp(13px,1.07vw,19px);
+  }
+  .app-shell{
+    grid-template-columns:clamp(240px,21vw,370px) minmax(0,1fr);
+  }
+}
+@media(min-width:761px){
+  /* Give the recent-film cards the broader, rounded landscape silhouette. */
+  .sidebar{
+    padding-right:clamp(12px,1.12vw,20px);
+    padding-left:clamp(17px,1.72vw,29px);
+  }
+  .sidebar .side-activity{
+    padding-right:5px;
+  }
+  .sidebar .recent-list{
+    gap:clamp(10px,1.18dvh,14px);
+  }
+  .sidebar .mini-movie{
+    width:100%;
+    height:clamp(91px,12.3dvh,120px);
+    min-height:0;
+    border-radius:clamp(18px,1.48vw,24px);
+    padding:12px;
+  }
+  .sidebar .mini-movie img{
+    object-fit:cover;
+    object-position:center;
+  }
+  /* Cover art fills each wider tile without stretching the source image.
+     Keep faces and main subjects centered, with softened movie-tile corners. */
+  #main .poster-wrap{
+    aspect-ratio:0.86;
+    border-radius:clamp(18px,1.47vw,24px);
+    overflow:hidden;
+    isolation:isolate;
+    background:linear-gradient(155deg,#27363b,#132027);
+  }
+  #main .poster-wrap>img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    object-position:center 43%;
+  }
+  #main .movie-card{
+    max-width:228px;
+  }
+  #main .movie-name{
+    margin-top:8px;
+  }
+}
+/* Compact laptops get slightly smaller wide cards rather than clipping the
+   hero, genre controls or metadata; the main panel can still scroll. */
+@media(min-width:761px) and (max-width:1199px){
+  :root{
+    --poster-w:clamp(119px,min(14.1vw,20dvh),170px);
+    --poster-gap:clamp(9px,1vw,14px);
+  }
+  .sidebar .mini-movie{
+    height:clamp(78px,11.2dvh,105px);
+    border-radius:18px;
+  }
+}
+@media(min-width:761px) and (max-height:740px){
+  :root{
+    --poster-w:clamp(108px,min(12vw,19dvh),157px);
+  }
+  .sidebar .mini-movie{
+    height:clamp(68px,10.2dvh,85px);
+  }
+}
+/* Mobile intentionally keeps the taller poster shape to preserve complete
+   source artwork on narrow touch screens. */
+@media(max-width:760px){
+  #main .poster-wrap{aspect-ratio:2/3;border-radius:16px}
+  #main .poster-wrap>img{object-fit:contain;object-position:center}
+}
