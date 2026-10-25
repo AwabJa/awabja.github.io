@@ -1,0 +1,170 @@
+/* Full-screen Serivia concept: only the sample page imports this file. */
+.sample-side-panel,.sample-preview-note{display:none}
+@media(min-width:761px){
+  .site-wrap{
+    display:block;
+    width:100%;
+    min-height:100dvh;
+    padding:0;
+  }
+  .app-shell{
+    width:100%;
+    max-width:none;
+    height:100dvh;
+    min-height:0;
+    border-radius:0;
+    box-shadow:none;
+    grid-template-columns:258px minmax(0,1fr);
+  }
+  .main-area{
+    min-width:0;
+    padding:26px 28px 15px 30px;
+    overflow-x:clip;
+    overflow-y:auto;
+  }
+  .featured-section{
+    width:100%;
+    max-width:916px;
+    margin-bottom:20px;
+  }
+  .featured-stack{
+    width:min(750px,calc(100% - 166px));
+    max-width:750px;
+    height:clamp(295px,38vh,390px);
+    margin-right:0;
+  }
+  /* More films appear below, rather than scaling up their individual posters. */
+  .movie-strip:not(.is-live){
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(150px,168px));
+    gap:21px 15px;
+    align-items:start;
+    justify-content:space-between;
+    overflow:visible;
+    scroll-snap-type:none;
+    padding-bottom:28px;
+  }
+  .movie-strip:not(.is-live) .movie-card{
+    flex:none;
+    width:100%;
+    min-width:0;
+    max-width:168px;
+  }
+  .movie-strip.is-live{
+    grid-template-columns:repeat(auto-fill,minmax(150px,168px));
+    justify-content:space-between;
+    gap:21px 15px;
+  }
+  .sample-preview-note{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    position:fixed;
+    z-index:30;
+    bottom:18px;
+    right:22px;
+    padding:10px 13px;
+    background:#293a40ed;
+    border:1px solid #516269;
+    border-radius:12px;
+    box-shadow:0 7px 24px #0008;
+    color:#e9f1ef;
+    font-size:11px;
+    font-weight:700;
+    pointer-events:auto;
+  }
+  .sample-preview-note a{color:#ffda34;text-decoration:underline;text-underline-offset:3px}
+}
+@media(min-width:761px) and (max-width:1000px){
+  .app-shell{grid-template-columns:205px minmax(0,1fr)}
+  .main-area{padding:22px 18px 15px 15px}
+  .featured-stack{
+    width:min(750px,calc(100% - 98px));
+    height:clamp(275px,37vh,355px);
+  }
+}
+@media(min-width:1001px) and (max-width:1300px){
+  .app-shell{grid-template-columns:235px minmax(0,1fr)}
+  .main-area{padding-right:22px}
+  .featured-stack{width:min(750px,calc(100% - 122px))}
+}
+/* On larger monitors the previously unused right-hand space becomes
+   a film-picks rail. The hero remains 750px at its maximum. */
+@media(min-width:1340px){
+  #main{
+    display:grid;
+    grid-template-columns:minmax(0,916px) minmax(180px,1fr);
+    column-gap:20px;
+    align-content:start;
+    align-items:start;
+  }
+  #main > .page-heading,
+  #main > .catalog-notice,
+  #main > .browse-section{
+    grid-column:1/-1;
+  }
+  #main > .featured-section{
+    grid-column:1;
+    width:100%;
+    max-width:none;
+  }
+  #main > .sample-side-panel{
+    grid-column:2;
+  }
+  .sample-side-panel{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    min-width:0;
+    height:clamp(295px,38vh,390px);
+    padding:15px 12px;
+    border:1px solid #35464c;
+    border-radius:19px;
+    background:linear-gradient(155deg,#223239,#172329);
+    overflow:hidden;
+  }
+  .sample-side-heading{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+    padding:1px 4px 4px;
+  }
+  .sample-eyebrow{font-size:9px;letter-spacing:.14em;color:#ffe060;font-weight:800}
+  .sample-side-heading h2{font-size:15px;letter-spacing:-.02em;line-height:1.3}
+  .sample-pick{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+    min-height:0;
+    flex:1;
+    padding:6px;
+    border-radius:11px;
+    background:#ffffff0b;
+    transition:background .2s,transform .2s;
+  }
+  .sample-pick:hover,.sample-pick:focus-visible{background:#ffffff20;transform:translateX(2px)}
+  .sample-pick img{
+    display:block;
+    width:57px;
+    height:100%;
+    max-height:83px;
+    min-height:63px;
+    flex:0 0 57px;
+    object-fit:cover;
+    border-radius:8px;
+    background:#28373b;
+  }
+  .sample-pick-details{display:grid;gap:6px;min-width:0}
+  .sample-pick-title{font-size:12px;font-weight:750;line-height:1.25}
+  .sample-pick-meta{font-size:10px;color:#adbdc1;line-height:1.25}
+  .sample-side-foot{padding:4px 4px 0;font-size:10px;line-height:1.3;color:#94a8af}
+}
+@media(min-width:1800px){
+  .sample-side-panel{padding:18px;gap:12px}
+  .sample-pick img{width:72px;flex-basis:72px}
+  .sample-pick-title{font-size:14px}
+}
+@media(max-width:760px){
+  .sample-side-panel,.sample-preview-note{display:none!important}
+}
