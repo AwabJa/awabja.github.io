@@ -39,6 +39,12 @@ async function scenario(name,viewport,isMobile=false){
  page.on('pageerror',error=>errors.push(error.message));
  page.on('console',msg=>{if(msg.type()==='error')errors.push('console: '+msg.text())});
  try{
+  // Existing feature tests use a private fixture, not the public first-visit defaults.
+  await page.addInitScript(()=>{
+   if(localStorage.getItem('flow.projects.v1')===null){
+    localStorage.setItem('flow.projects.v1',JSON.stringify(['Team Project','Personal','Design']));
+   }
+  });
   await page.goto(origin+'/Flow/',{waitUntil:'load'});
   await page.locator('.week-grid').waitFor();
   // Long user-entered project names must wrap, not collapse behind the management dots.
@@ -204,7 +210,47 @@ async function scenario(name,viewport,isMobile=false){
  }catch(e){failures.push({name,error:e.stack||String(e),browserErrors:errors})}
  finally{await context.close()}
 }
+async function freshVisitorScenario(){
+ const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+ const page=await context.newPage();
+ try{
+  await page.goto(origin+'/Flow/',{waitUntil:'load'});
+  await page.locator('.week-grid').waitFor();
+  assert.equal(await page.locator('#projectList .project-list-row').count(),0,
+   'New visitors must have no starter projects');
+  assert.equal(await page.locator('#projectSummary .summary-row').count(),0,
+   'Overview must have no starter project rows');
+  assert.equal(await page.locator('#projectCount').innerText(),'0 projects');
+  assert.equal(await page.locator('#totalTasks').innerText(),'0');
+  const saved=await page.evaluate(()=>({
+   tasks:localStorage.getItem('flow.tasks.v1'),
+   projects:localStorage.getItem('flow.projects.v1')
+  }));
+  assert.equal(saved.tasks,null,'Opening the app must not silently write starter tasks');
+  assert.equal(saved.projects,null,'Opening the app must not silently write starter projects');
+  await page.locator('#addTaskTop').click();
+  assert.equal(await page.locator('#projectSelect').inputValue(),'',
+   'A new task with no projects must default to Inbox');
+  await page.locator('#taskForm [name=title]').fill('My first task');
+  await page.locator('#taskForm [name=date]').fill('');
+  await page.locator('#taskForm button[type=submit]').click();
+  const firstTasks=await page.evaluate(()=>JSON.parse(localStorage.getItem('flow.tasks.v1')));
+  assert.equal(firstTasks.length,1,'Saving a first-time task must work');
+  assert.equal(firstTasks[0].project,'','First task must be unassigned');
+  await page.locator('#undoTask').click();
+  const undone=await page.evaluate(()=>JSON.parse(localStorage.getItem('flow.tasks.v1')));
+  assert.deepEqual(undone,[],'Undo must restore an empty workspace');
+  await page.locator('#newProject').click();
+  await page.locator('#projectName').fill('My first project');
+  await page.locator('#projectForm button[type=submit]').click();
+  const firstProjects=await page.evaluate(()=>JSON.parse(localStorage.getItem('flow.projects.v1')));
+  assert.deepEqual(firstProjects,['My first project'],'Creating a first project must work');
+  results.push({name:'Fresh visitor',viewport:'390×844',status:'PASS'});
+ }catch(error){failures.push({name:'Fresh visitor',error:error.stack||String(error)})}
+ finally{await context.close()}
+}
 try{
+ await freshVisitorScenario();
  await scenario('Desktop',{width:1440,height:900});
  await scenario('Tablet touch',{width:768,height:1024},true);
  await scenario('Phone touch',{width:390,height:844},true);

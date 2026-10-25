@@ -83,12 +83,15 @@ function simulate(editFrom='board'){
  };
  const store=new Map();
  const legacyTask=(id,date,done=false)=>({id,title:'Weekly review',description:'Review weekly goals',date,time:'10:00',project:'Personal',repeat:'weekly',color:'purple',priority:'medium',done,subtasks:[]});
+ if(editFrom!=='fresh'){
+ store.set('flow.projects.v1',JSON.stringify(['Team Project','Personal','Design']));
  store.set('flow.tasks.v1',JSON.stringify([
   {...legacyTask('series-original','2026-10-23'),subtasks:editFrom==='checklist'?[{title:'Research',done:false}]:editFrom==='duplicateChecklist'?[{title:'Review',done:false},{title:'Review',done:false}]:[]},
   legacyTask('series-copy-1','2026-10-30'),
   legacyTask('series-copy-2','2026-11-06'),
   legacyTask('series-history','2026-10-16',true)
  ]));
+ }
  const localStorage={
   getItem:key=>store.has(key)?store.get(key):null,
   setItem:(key,value)=>store.set(key,String(value)),
@@ -105,6 +108,39 @@ function simulate(editFrom='board'){
  const contains=cls=>planner.children.some(child=>child instanceof FakeElement&&child.className===cls);
  const allDescendants=(item)=>[item,...(item.children||[]).flatMap(allDescendants).filter(Boolean)];
  const select=mode=>{const button=modes.find(b=>b.dataset.mode===mode);assert(button,'Missing '+mode+' button');button.fire();assert(button.classList.contains('selected'),mode+' tab should be selected')};
+ if(editFrom==='fresh'){
+  assert.equal(localStorage.getItem('flow.projects.v1'),null,'Fresh visitors start with no stored projects');
+  assert.equal(localStorage.getItem('flow.tasks.v1'),null,'Fresh visitors start with no stored tasks');
+  assert.equal(nodes.get('#projectList').children.length,0,'Fresh project sidebar must be empty');
+  assert.equal(nodes.get('#projectSummary').children.length,0,'Fresh projects summary must be empty');
+  assert.equal(nodes.get('#projectCount').textContent,'0 projects','Fresh project count must start at zero');
+  assert.equal(nodes.get('#totalTasks').textContent,0,'Fresh task count must start at zero');
+  assert(contains('week-grid'),'The week calendar should remain usable without task data');
+  nodes.get('#addTaskTop').fire();
+  assert.equal(dialogs.open,true,'Fresh visitors can create a task without first creating a project');
+  assert.equal(form.elements.project.value,'','No project should default to Inbox');
+  assert.equal(nodes.get('#projectSelect').children.length,1,'Only Inbox should appear in an empty project selector');
+  form.elements.title.value='My first task';
+  form.elements.project.value='';
+  form.elements.date.value='';
+  form.elements.repeat.value='none';
+  form.fire('submit');
+  const savedTasks=JSON.parse(localStorage.getItem('flow.tasks.v1'));
+  assert.equal(savedTasks.length,1,'Saving the first task must create one record');
+  assert.equal(savedTasks[0].project,'','The first task must be stored in Inbox');
+  assert.equal(nodes.get('#crumb').textContent,'Inbox','The first unassigned task should open Inbox');
+  nodes.get('#undoTask').fire();
+  assert.deepEqual(JSON.parse(localStorage.getItem('flow.tasks.v1')),[],'Undo must return to a blank task list');
+  nodes.get('#newProject').fire();
+  assert.equal(nodes.get('#projectDialog').open,true,'A fresh visitor can create a project');
+  nodes.get('#projectName').value='First project';
+  nodes.get('#projectForm').fire('submit');
+  assert.deepEqual(JSON.parse(localStorage.getItem('flow.projects.v1')),['First project'],
+   'The first project must be saved without introducing sample projects');
+  assert.deepEqual(JSON.parse(localStorage.getItem('flow.tasks.v1')),[],'Creating a project must not create demo tasks');
+  console.log('FLOW FIRST VISIT PASSED: empty workspace, task creation, Undo and first project');
+  return
+ }
  if(editFrom==='phone'||editFrom==='phoneCreate'){
   assert(contains('week-grid'),'Phone Week should remain available');
   select('month');
@@ -529,6 +565,7 @@ if(editFrom==='undo'){
  assert.equal(localStorage.getItem('flow.tasks.v1'),recordsBefore,'Navigating calendars must not change saved tasks');
  console.log('FLOW VIEW SMOKE CHECK PASSED: '+editFrom+' edit, navigation, archived copies and future months');
 }
+simulate('fresh');
 simulate('board');
 simulate('month');
 simulate('occurrence');
