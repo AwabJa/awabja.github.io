@@ -7,16 +7,16 @@
   <meta name="description" content="Serivia is a cinematic movie discovery prototype. Search curated films, browse genres, explore movie details and build a watchlist.">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://image.tmdb.org https://www.themoviedb.org; connect-src 'self' https://api.themoviedb.org; upgrade-insecure-requests;">
-  <title>Serivia — Full-screen layout sample</title>
+  <title>Serivia — Original Design Full-Screen Preview</title>
   <meta name="robots" content="noindex">
-  <link rel="canonical" href="https://awabja.github.io/serivia/sample/">
+  <link rel="canonical" href="https://awabja.github.io/serivia/">
   <link rel="icon" type="image/svg+xml" href="../favicon.svg?v=1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../styles.css?v=13">
-  <link rel="stylesheet" href="sample.css?v=1">
+  <link rel="stylesheet" href="sample.css?v=2">
   <script src="../app.js?v=7" defer></script>
 </head>
 <body>
@@ -106,25 +106,6 @@
               </article>
             </div>
           </section>
-          <aside class="sample-side-panel" aria-label="More movie picks">
-            <div class="sample-side-heading">
-              <span class="sample-eyebrow">MORE TO EXPLORE</span>
-              <h2>On your radar</h2>
-            </div>
-            <a class="sample-pick" href="https://www.themoviedb.org/movie/693134" target="_blank" rel="noopener noreferrer" aria-label="View Dune Part Two on TMDB">
-              <img src="https://image.tmdb.org/t/p/w185/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg" width="57" height="83" alt="Dune: Part Two poster" loading="lazy">
-              <span class="sample-pick-details"><span class="sample-pick-title">Dune: Part Two</span><span class="sample-pick-meta">Sci-fi · 2024</span></span>
-            </a>
-            <a class="sample-pick" href="https://www.themoviedb.org/movie/823219" target="_blank" rel="noopener noreferrer" aria-label="View Flow on TMDB">
-              <img src="https://image.tmdb.org/t/p/w185/zeinX0xt78GgtpCQjx7d2S6Gh7g.jpg" width="57" height="83" alt="Flow poster" loading="lazy">
-              <span class="sample-pick-details"><span class="sample-pick-title">Flow</span><span class="sample-pick-meta">Animation · 2024</span></span>
-            </a>
-            <a class="sample-pick" href="https://www.themoviedb.org/movie/157336" target="_blank" rel="noopener noreferrer" aria-label="View Interstellar on TMDB">
-              <img src="https://image.tmdb.org/t/p/w185/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg" width="57" height="83" alt="Interstellar poster" loading="lazy">
-              <span class="sample-pick-details"><span class="sample-pick-title">Interstellar</span><span class="sample-pick-meta">Adventure · 2014</span></span>
-            </a>
-            <p class="sample-side-foot">Extra picks, not oversized movie banners.</p>
-          </aside>
           <section class="browse-section" id="browseSection" aria-label="Browse movies">
             <div class="genre-row">
               <div class="genre-scroll" id="genreScroll" role="group" aria-label="Filter by genre"></div>
@@ -140,7 +121,6 @@
       </div>
     </div>
   </div>
-  <div class="sample-preview-note">Full-screen sample <a href="../">View original site</a></div>
   <div class="overlay" id="overlay" hidden></div>
   <dialog class="detail-modal" id="detailDialog" aria-labelledby="detailTitle">
     <button class="dialog-close" id="closeDetails" type="button" aria-label="Close movie details"><svg><use href="#ic-close"/></svg></button>
