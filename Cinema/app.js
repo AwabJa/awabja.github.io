@@ -127,6 +127,21 @@ function toggleFavorite(id){
  if(state.view==='favorites')renderMovies();
 }
 function getFeature(){return byId.get(FEATURE_IDS[state.slide])}
+const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
+let carouselTimer=null,lastCarouselInput=0,lastHorizontalWheel=0;
+function showSlide(index,manual=true){
+ const next=(index+FEATURE_IDS.length)%FEATURE_IDS.length;
+ if(manual)lastCarouselInput=Date.now();
+ if(state.slide===next)return;
+ state.slide=next;
+ feature();
+ if(!reducedMotion.matches){
+  const hero=$('featured');
+  hero.classList.remove('slide-enter');
+  void hero.offsetWidth;
+  hero.classList.add('slide-enter');
+ }
+}
 function feature(){
  const movie=getFeature();
  $('featuredTitle').textContent=movie.title;
@@ -142,13 +157,15 @@ function feature(){
  $('slideDots').querySelectorAll('button').forEach((b,i)=>{b.classList.toggle('is-current',i===state.slide);b.setAttribute('aria-pressed',String(i===state.slide))});
  const peek1=byId.get(FEATURE_IDS[(state.slide+1)%FEATURE_IDS.length]);
  const peek2=byId.get(FEATURE_IDS[(state.slide+2)%FEATURE_IDS.length]);
- document.querySelector('.peek-front').style.backgroundImage='url("'+pic(peek1.poster,'w342')+'")';
- document.querySelector('.peek-back').style.backgroundImage='url("'+pic(peek2.poster,'w342')+'")';
+ $('peekFront').style.backgroundImage='url("'+pic(peek1.poster,'w342')+'")';
+ $('peekBack').style.backgroundImage='url("'+pic(peek2.poster,'w342')+'")';
+ $('peekFront').setAttribute('aria-label','Show next featured movie: '+peek1.title);
+ $('peekBack').setAttribute('aria-label','Show featured movie: '+peek2.title);
 }
 function drawDots(){
  const dots=$('slideDots');for(let i=0;i<FEATURE_IDS.length;i++){
   const b=node('button');b.type='button';b.setAttribute('aria-label','Featured movie '+(i+1));
-  b.addEventListener('click',()=>{state.slide=i;feature()});dots.appendChild(b);
+  b.addEventListener('click',()=>showSlide(i));dots.appendChild(b);
  }
 }
 function visit(id){
@@ -221,6 +238,53 @@ function switchView(view){
 }
 function initialize(){
  drawDots();feature();renderRecent();
+ // Buttons, exposed movie covers, horizontal trackpads, touch swipes and mouse dragging.
+ $('featuredPrevious').addEventListener('click',()=>showSlide(state.slide-1));
+ $('featuredNext').addEventListener('click',()=>showSlide(state.slide+1));
+ $('peekFront').addEventListener('click',()=>showSlide(state.slide+1));
+ $('peekBack').addEventListener('click',()=>showSlide(state.slide+2));
+ let gesture=null,lastSwipeAt=-Infinity;
+ const hero=$('featured');
+ hero.addEventListener('pointerdown',event=>{
+  if(event.target.closest('button,a'))return;
+  if(event.button!==0)return;
+  gesture={id:event.pointerId,x:event.clientX,y:event.clientY};
+ });
+ hero.addEventListener('pointerup',event=>{
+  if(!gesture||event.pointerId!==gesture.id)return;
+  const dx=event.clientX-gesture.x,dy=event.clientY-gesture.y;
+  gesture=null;
+  if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.2){
+   lastSwipeAt=performance.now();
+   showSlide(state.slide+(dx<0?1:-1));
+  }
+ });
+ hero.addEventListener('pointercancel',()=>{gesture=null});
+ hero.addEventListener('dragstart',e=>e.preventDefault());
+ $('featuredStack').addEventListener('wheel',event=>{
+  if(Math.abs(event.deltaX)<20||Math.abs(event.deltaX)<Math.abs(event.deltaY)*1.2)return;
+  if(Date.now()-lastHorizontalWheel<650)return;
+  lastHorizontalWheel=Date.now();
+  showSlide(state.slide+(event.deltaX>0?1:-1));
+ },{passive:true});
+ $('featuredSection').addEventListener('mouseenter',()=>{lastCarouselInput=Date.now()});
+ $('featuredSection').addEventListener('focusin',()=>{lastCarouselInput=Date.now()});
+ // Advance when idle, while allowing users to interact at their own pace.
+ if(!reducedMotion.matches){
+  carouselTimer=window.setInterval(()=>{
+   if(document.hidden||$('detailDialog').open||$('infoDialog').open)return;
+   if(state.view!=='home'&&state.view!=='trending')return;
+   if(state.query||Date.now()-lastCarouselInput<9000)return;
+   showSlide(state.slide+1,false);
+  },7500);
+  window.addEventListener('pagehide',()=>window.clearInterval(carouselTimer),{once:true});
+ }
+ hero.addEventListener('click',e=>{
+  if(e.target.closest('button,a'))return;
+  if(performance.now()-lastSwipeAt<450){e.preventDefault();return}
+  openMovie(getFeature().id);
+ });
+
  for(const genre of GENRES){
   const b=node('button','',genre);b.type='button';b.dataset.genre=genre;
   b.addEventListener('click',()=>{state.genre=genre;renderMovies();b.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'})});
@@ -238,7 +302,7 @@ function initialize(){
  $('genrePrevious').addEventListener('click',()=>$('genreScroll').scrollBy({left:-220,behavior:'smooth'}));
  $('genreNext').addEventListener('click',()=>$('genreScroll').scrollBy({left:220,behavior:'smooth'}));
  $('favoriteFeature').addEventListener('click',()=>toggleFavorite(getFeature().id));
- $('featured').addEventListener('click',e=>{if(e.target.closest('button,a'))return;openMovie(getFeature().id)});
+
  $('detailFavorite').addEventListener('click',()=>{if(state.activeMovie!==null)toggleFavorite(state.activeMovie)});
  $('closeDetails').addEventListener('click',()=>$('detailDialog').close());
  $('closeInfo').addEventListener('click',()=>$('infoDialog').close());
@@ -262,7 +326,8 @@ function initialize(){
  $('overlay').addEventListener('click',closeMobileNav);
  document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){closeMobileNav();togglePopover($('filters'),$('filterBtn'),false);togglePopover($('typeMenu'),$('typeBtn'),false)}
-  if(e.key==='ArrowRight'&&e.target.closest('.featured-section')){state.slide=(state.slide+1)%FEATURE_IDS.length;feature()}
+  if(e.target.closest('.featured-section')&&e.key==='ArrowRight'){e.preventDefault();showSlide(state.slide+1)}
+  if(e.target.closest('.featured-section')&&e.key==='ArrowLeft'){e.preventDefault();showSlide(state.slide-1)}
  });
  document.addEventListener('click',e=>{
   if(!e.target.closest('.search-group')&&!$('filters').hidden)togglePopover($('filters'),$('filterBtn'),false);

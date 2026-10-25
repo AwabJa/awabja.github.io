@@ -25,7 +25,7 @@ for(const path of binaries){try{await access(path);executablePath=path;break}cat
 const browser=await chromium.launch(executablePath?{executablePath,headless:true,args:['--no-sandbox']}:{channel:'chrome',headless:true,args:['--no-sandbox']});
 try{
  const budgets=await Promise.all(['Cinema/index.html','Cinema/styles.css','Cinema/app.js'].map(file=>stat(resolve(root,file)).then(result=>result.size)));
- assert(budgets[0]<20000&&budgets[1]<30000&&budgets[2]<28000,'Static app files remain compact');
+ assert(budgets[0]<20000&&budgets[1]<35000&&budgets[2]<28000,'Static app files remain compact');
  const results=[];
  for(const width of [320,390,768,1440]){
   const context=await browser.newContext({viewport:{width,height:width<500?812:1000},isMobile:width<500,hasTouch:width<500});
@@ -39,6 +39,22 @@ try{
   assert.equal(await page.title(),'Serivia — Discover great movies');
   assert.equal(await page.locator('.movie-card').count(),12,'Twelve curated film cards render');
   assert.equal(await page.locator('#slideDots button').count(),4,'Featured carousel has four slides');
+  assert.equal(await page.locator('#featuredNext').isVisible(),true,'Featured next arrow is visible');
+  await page.locator('#featuredNext').click();
+  assert.equal(await page.locator('#featuredTitle').innerText(),'Dune: Part Two','Arrow navigates to next featured movie');
+  assert.equal(await page.locator('#slideDots button[aria-pressed="true"]').count(),1,'Current dot stays synced');
+  await page.locator('#featuredPrevious').click();
+  assert.equal(await page.locator('#featuredTitle').innerText(),'How to Train Your Dragon','Previous arrow navigates backwards');
+  await page.locator('#peekFront').click();
+  assert.equal(await page.locator('#featuredTitle').innerText(),'Dune: Part Two','Exposed next card is clickable');
+  await page.locator('#peekBack').click();
+  assert.equal(await page.locator('#featuredTitle').innerText(),'Moana 2','Farther exposed card opens its featured slide');
+  await page.locator('#slideDots button').first().click();
+  assert.equal(await page.locator('#featuredTitle').innerText(),'How to Train Your Dragon','Dots select a particular movie');
+  await page.locator('#featuredNext').focus();
+  await page.keyboard.press('ArrowRight');
+  assert.equal(await page.locator('#featuredTitle').innerText(),'Dune: Part Two','Keyboard arrow changes featured movie');
+  await page.locator('#slideDots button').first().click();
   assert.equal(await page.locator('#featureArt').getAttribute('alt'),'Artwork for How to Train Your Dragon');
   assert.equal(await page.locator('#genreScroll button').count(),11,'Genre chips render');
   assert.equal((await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content')).includes("script-src 'self'"),true,'Scripts limited to same origin');
@@ -49,6 +65,12 @@ try{
    area:document.querySelector('.main-area').getBoundingClientRect().width
   }));
   assert(doc.scrollWidth<=doc.width+2,'No horizontal page overflow at '+width+'px: '+doc.scrollWidth);
+  assert(Math.abs(doc.shell-doc.width)<3,'App uses the entire viewport width at '+width+'px');
+  if(width===1440){
+   const dimensions=await page.locator('.app-shell').evaluate(el=>({height:el.getBoundingClientRect().height,viewport:innerHeight,radius:getComputedStyle(el).borderTopLeftRadius}));
+   assert(Math.abs(dimensions.height-dimensions.viewport)<=2,'Desktop app uses full browser height');
+   assert.equal(dimensions.radius,'0px','No desktop framed window corners');
+  }
   assert(doc.area>180,'Content pane is usable');
   assert(doc.filmSrc.startsWith('https://image.tmdb.org/t/p/w342/'),'Licensed media paths use TMDB HTTPS CDN');
   if(width<=390){
@@ -60,6 +82,18 @@ try{
    assert.equal(await page.locator('#mobileMenu').getAttribute('aria-expanded'),'false','Mobile navigation closes on selection');
   }else{
    assert.equal(await page.locator('.sidebar').isVisible(),true,'Desktop/tablet sidebar visible');
+  }
+  if(width<=390){
+   // Simulate a real finger dragging the large hero horizontally.
+   const hero=page.locator('#featured');await hero.scrollIntoViewIfNeeded();
+   const r=await hero.boundingBox();
+   const from={x:r.x+r.width*.72,y:r.y+r.height*.5},to={x:from.x-115,y:from.y+6};
+   const cdp=await context.newCDPSession(page);
+   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[from]});
+   await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[to]});
+   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+   assert.equal(await page.locator('#featuredTitle').innerText(),'Dune: Part Two','Swiping featured banner moves to next movie');
+   await page.locator('#slideDots button').first().click();
   }
   await page.locator('#searchInput').fill('interstellar');
   assert.equal(await page.locator('.movie-card').count(),1,'Search finds Interstellar');

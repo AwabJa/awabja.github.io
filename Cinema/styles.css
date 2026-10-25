@@ -11,3 +11,45 @@
 @media(max-width:360px){.feature-tags span{padding:6px 7px}.featured-stack{height:244px}.featured-titles>span:first-child{font-size:12px}.movie-card{flex-basis:132px;width:132px}.genre-scroll button{padding:0 13px}}
 @media(hover:none){.movie-card:active .poster-wrap img,.mini-movie:active{transform:scale(.987)}.card-hover-icon{display:none}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}.movie-card:hover .poster-wrap img{transform:none!important}}
 .tmdb-credit-logo{display:block;width:132px;max-width:45%;height:auto;margin:18px 0 4px}
+
+
+/* Full-screen application: the frame is now the browser viewport. */
+.site-wrap{display:block;min-height:100svh;padding:0}
+.app-shell{width:100%;max-width:none;height:100svh;height:100dvh;min-height:0;border-radius:0;box-shadow:none}
+.main-area{overflow-x:clip;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#35474d transparent}
+.featured-stack{height:clamp(310px,43vh,500px)}
+/* Genuine accessible carousel controls and clickable, partially exposed next cards. */
+.featured{cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.featured:active{cursor:grabbing}
+.feature-art{pointer-events:none}
+.feature-navigation{position:absolute;z-index:4;right:16px;top:50%;transform:translateY(-50%);display:flex;gap:8px;align-items:center}
+.feature-arrow{width:42px;height:42px;display:grid;place-items:center;border:1px solid #ffffff7d;background:#0810149c;border-radius:50%;color:#f6f6f6;backdrop-filter:blur(8px);transition:background .18s,transform .18s}
+.feature-arrow:hover{background:#ffffff50;transform:scale(1.06)}
+.feature-arrow svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.peek{cursor:pointer;display:block;border:1px solid #ffffff26;padding:0;text-align:left;background-color:#334044;background-size:cover;background-position:center;transition:filter .25s,transform .25s,border-color .25s}
+.peek:hover,.peek:focus-visible{filter:brightness(1.14) saturate(1.05);transform:translateX(5px);border-color:#ffffff96}
+.peek-front{z-index:2}.peek-back{z-index:1}
+.peek:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#0000 70%,#0003);pointer-events:none}
+.featured.slide-enter .feature-art{animation:feature-slide-in .48s cubic-bezier(.19,.7,.2,1) both}
+.featured.slide-enter .feature-bottom,.featured.slide-enter .feature-tags{animation:feature-text-in .36s ease both}
+@keyframes feature-slide-in{from{opacity:.58;transform:translateX(24px) scale(1.03)}to{opacity:1;transform:none}}
+@keyframes feature-text-in{from{opacity:.35;transform:translateY(7px)}to{opacity:1;transform:none}}
+@media(max-width:760px){
+  .app-shell{height:auto;min-height:100svh;overflow:visible}
+  .main-area{overflow:visible}
+  .featured-stack{height:clamp(265px,52vw,365px)}
+  .feature-navigation{right:11px;top:52%}
+  .feature-arrow{width:37px;height:37px}
+}
+@media(max-width:480px){
+  .featured-stack{height:285px}
+  .feature-navigation{right:9px;top:46%}
+  .feature-arrow{width:36px;height:36px}
+  .feature-tags{right:90px}
+  .feature-tags span:nth-child(n+3){display:none}
+}
+@media(max-width:360px){.featured-stack{height:258px}}
+@media(prefers-reduced-motion:reduce){
+ .featured.slide-enter .feature-art,.featured.slide-enter .feature-bottom,.featured.slide-enter .feature-tags{animation:none}
+ .peek,.feature-arrow{transition:none}
+}

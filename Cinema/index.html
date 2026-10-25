@@ -13,8 +13,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=2">
-  <script src="app.js?v=2" defer></script>
+  <link rel="stylesheet" href="styles.css?v=3">
+  <script src="app.js?v=3" defer></script>
 </head>
 <body>
   <svg class="svg-icons" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
@@ -87,9 +87,14 @@
           <div class="page-heading" id="pageHeading"><h1 id="pageTitle">Discover movies</h1><span id="pageSubtitle">A little something for your next movie night.</span></div>
           <section class="featured-section" id="featuredSection" aria-label="Featured movies">
             <div class="slide-dots" id="slideDots" aria-label="Choose featured movie"></div>
-            <div class="featured-stack">
-              <div class="peek peek-back" aria-hidden="true"></div><div class="peek peek-front" aria-hidden="true"></div>
+            <div class="featured-stack" id="featuredStack" aria-label="Featured movie carousel">
+              <button class="peek peek-back" id="peekBack" type="button" aria-label="Show featured movie two slides ahead"></button>
+              <button class="peek peek-front" id="peekFront" type="button" aria-label="Show next featured movie"></button>
               <article class="featured" id="featured">
+                <div class="feature-navigation">
+                  <button class="feature-arrow feature-previous" id="featuredPrevious" type="button" aria-label="Previous featured movie"><svg class="chev-back"><use href="#ic-chevron"/></svg></button>
+                  <button class="feature-arrow feature-next" id="featuredNext" type="button" aria-label="Next featured movie"><svg><use href="#ic-chevron"/></svg></button>
+                </div>
                 <img class="feature-art" id="featureArt" src="" alt="" fetchpriority="high">
                 <div class="feature-wash"></div>
                 <div class="feature-tags" id="featureTags"></div>
