@@ -87,6 +87,10 @@ try{
   assert(fan.hero.right<fan.front.right&&fan.front.right<fan.back.right,'Preview covers are progressively fanned out at '+width+'px');
   assert(fan.back.right<=fan.main.right+3,'Fanned covers fit inside the main content at '+width+'px');
   assert(fan.hero.width>fan.front.width*2.5,'Main hero is much larger than the stacked covers');
+  if(width>=1440){
+   assert(Math.abs((fan.main.right-28)-fan.back.right)<22,
+     'The back fanned card reaches the right edge of the aligned content with no blank strip');
+  }
   assert(fan.hero.width<=751,'Featured banner must be no wider than the 750px reference at '+width+'px');
   if(width>=1440){
    assert(fan.hero.width>=735,'Feature stays close to the 750px reference at large desktop widths');
@@ -121,11 +125,24 @@ try{
    area:document.querySelector('.main-area').getBoundingClientRect().width
   }));
   assert(doc.scrollWidth<=doc.width+2,'No horizontal page overflow at '+width+'px: '+doc.scrollWidth);
-  assert(Math.abs(doc.shell-doc.width)<3,'App uses the entire viewport width at '+width+'px');
-  if(width===1440){
-   const dimensions=await page.locator('.app-shell').evaluate(el=>({height:el.getBoundingClientRect().height,viewport:innerHeight,radius:getComputedStyle(el).borderTopLeftRadius}));
-   assert(Math.abs(dimensions.height-dimensions.viewport)<=2,'Desktop app uses full browser height');
-   assert.equal(dimensions.radius,'0px','No desktop framed window corners');
+  const shellGeometry=await page.locator('.app-shell').evaluate(el=>{
+   const rect=el.getBoundingClientRect();
+   return {left:rect.left,right:rect.right,width:rect.width,height:rect.height,viewport:innerWidth,viewportHeight:innerHeight,
+    radius:getComputedStyle(el).borderTopLeftRadius};
+  });
+  if(width>760){
+   assert(shellGeometry.width<=1233,'App frame stays within the screenshot width at '+width+'px');
+   assert(Math.abs(shellGeometry.left-(width-shellGeometry.width)/2)<2,
+     'Desktop app is centered instead of leaving a blank strip on the right at '+width+'px');
+   assert(shellGeometry.radius==='23px','Desktop frame has reference rounded corners');
+   if(width>=1440){
+    assert(shellGeometry.width>=1220,'Desktop window fills the reference 1232px design canvas');
+    assert(Math.abs(shellGeometry.height-Math.min(880,shellGeometry.viewportHeight-48))<3,
+      'Desktop frame uses the reference 880px height');
+   }
+  }else{
+   assert(Math.abs(shellGeometry.width-width)<3,'Mobile app remains full viewport width');
+   assert(shellGeometry.radius==='0px','Mobile app is edge to edge');
   }
   assert(doc.area>180,'Content pane is usable');
   await page.waitForFunction(()=>document.querySelector('.poster-wrap')?.classList.contains('image-failed'));
