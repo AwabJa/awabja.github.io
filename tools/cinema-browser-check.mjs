@@ -91,9 +91,12 @@ try{
    const r=await hero.boundingBox();
    const from={x:r.x+r.width*.38,y:r.y+r.height*.53},to={x:from.x-80,y:from.y+6};
    const cdp=await context.newCDPSession(page);
+   await page.evaluate(()=>{window.__swipeEvents=[];for(const n of ['pointerdown','pointerup','pointercancel','touchstart','touchmove','touchend'])document.addEventListener(n,e=>window.__swipeEvents.push({event:n,target:e.target?.className?.baseVal??e.target?.className,at:[e.clientX,e.clientY],touches:e.touches?.length,changed:[...e.changedTouches||[]].map(t=>[t.clientX,t.clientY])}),true)});
+   const touched=await page.evaluate(p=>{const el=document.elementFromPoint(p.x,p.y);return {tag:el?.tagName,cls:el?.className,rect:el?.getBoundingClientRect()?.toJSON()}},from);
    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[from]});
    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[to]});
    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+   console.log('SWIPE DEBUG',width,JSON.stringify({from,to,touched,events:await page.evaluate(()=>window.__swipeEvents)}));
    assert.equal(await page.locator('#featuredTitle').innerText(),'Dune: Part Two','Swiping featured banner moves to next movie');
    await page.locator('#slideDots button').first().click();
   }
