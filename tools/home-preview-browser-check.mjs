@@ -38,7 +38,12 @@ try{
    assert.equal(await page.locator('.circle-arrow,.project-arrow').count(),0,'Circular arrow buttons are removed');
    assert.equal(await page.locator('.project-cta').count(),3,'Projects have understated text calls to action');
    assert.equal(await page.locator('.contact-cta').innerText(),'EMAIL ME','Contact button has a clear text label');
-   assert.equal(await page.locator('.explore-link').innerText(),'VIEW SELECTED WORK','Hero button is clearly labeled');
+   assert.equal(await page.locator('.explore-link').innerText(),'EXPLORE MY PROJECTS','Hero button is clearly labeled');
+   assert.match(await page.locator('.hero h1').innerText(),/Hi, I'm A\\.J\\./,'Hero introduces the developer directly');
+   assert.equal(await page.locator('.project-flow img').getAttribute('src'),'assets/flow-interface.svg','Flow uses a workspace illustration');
+   assert.equal(await page.locator('.project-solar img').getAttribute('src'),'assets/solar-interface.svg','Solar uses a planetary illustration');
+   assert.equal(await page.locator('.project-enzo img').getAttribute('src'),'../Enzo/assets/shattered-reach-splash.webp','Enzo uses actual game artwork');
+   assert.equal(await page.locator('.about-art').evaluate(el=>getComputedStyle(el).backgroundImage.includes('horizon-scene.webp')),false,'About no longer uses fantasy artwork');
    assert.equal(await page.locator('.studio-structure').evaluate(el=>getComputedStyle(el).display!=='none'),true,'Hero detail stays visible');
 
    assert(data.images.every(w=>w>0),'Artwork fully loads');

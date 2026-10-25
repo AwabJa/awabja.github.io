@@ -69,8 +69,8 @@ body.menu-open{overflow:hidden}
 .project-flow{grid-row:1 / span 2}
 .project-image{display:block;position:relative;width:100%;height:100%;min-height:0;overflow:hidden;background:#0b1117;border:1px solid #30333b;isolation:isolate}
 .project-image img{position:absolute;inset:0;height:100%;width:100%;object-fit:cover;transition:transform .85s cubic-bezier(.17,.72,.2,1),filter .8s;filter:brightness(.85) saturate(.95)}
-.project-flow img{object-position:50% 55%;filter:brightness(.7) saturate(.9)}
-.project-solar img{object-position:center 46%}.project-enzo img{object-position:center 46%}
+.project-flow img{object-position:50% 50%;filter:brightness(.96) saturate(.95)}
+.project-solar img{object-position:center 46%;filter:brightness(.97) saturate(.96)}.project-enzo img{object-position:center 46%;filter:brightness(.88) saturate(.94)}
 .project-image::after{content:"";position:absolute;z-index:0;inset:0;background:linear-gradient(180deg,#07090b65 0%,transparent 37%,transparent 46%,#03080ae9 100%);pointer-events:none}
 .project-image:hover img{transform:scale(1.048);filter:brightness(1.07) saturate(1.09)}
 .project-number{position:absolute;top:16px;left:19px;z-index:2;font:300 24px var(--sans);letter-spacing:-.06em;color:#e4e5ecaa}
@@ -89,7 +89,7 @@ body.menu-open{overflow:hidden}
 
 .visual-note{margin:18px 0 0;font:400 9px/1.8 var(--mono);color:#707784;letter-spacing:.08em}
 .about{min-height:440px;padding:110px var(--gutter) 140px;position:relative;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse 75% 80% at 35% 100%,#233442,#080b11 75%)}
-.about-art{z-index:-1;pointer-events:none;position:absolute;inset:45% 0 0;background:linear-gradient(0deg,#05080cd9,transparent 65%),url('assets/horizon-scene.webp') center bottom/cover no-repeat;filter:saturate(.7) brightness(.62);opacity:.8}
+.about-art{z-index:-1;pointer-events:none;position:absolute;inset:0;background:radial-gradient(ellipse 54% 110% at 27% 110%,#31465538,transparent 76%),linear-gradient(180deg,#080d13,#0b1319);opacity:1}
 .about-inner{max-width:1350px;margin:auto;display:grid;grid-template-columns:minmax(0,.65fr) minmax(0,1.45fr) minmax(0,.8fr);align-items:start;gap:clamp(25px,5vw,85px)}
 .about-index{font:400 10px/1.95 var(--mono);letter-spacing:.14em;color:#aeb5c4;display:flex;flex-direction:column;padding-top:8px}.about-line{margin-top:16px;height:1px;width:45px;background:#9fa7b0}
 .about h2{font-weight:300;font-size:clamp(29px,3.35vw,51px);letter-spacing:-.065em;line-height:1.25;margin:0;max-width:680px}

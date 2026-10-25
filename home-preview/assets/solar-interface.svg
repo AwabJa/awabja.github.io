@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 690" role="img" aria-labelledby="title desc">
+<title id="title">Solar System Explorer interface illustration</title><desc id="desc">An interactive-looking map with the Sun, planetary orbits, labels and a navigation panel.</desc>
+<defs>
+<radialGradient id="space"><stop stop-color="#192d42"/><stop offset=".65" stop-color="#0b1423"/><stop offset="1" stop-color="#070c15"/></radialGradient>
+<radialGradient id="sun" cx=".3" cy=".3"><stop stop-color="#fff6cc"/><stop offset=".36" stop-color="#ffc663"/><stop offset=".74" stop-color="#e28737"/><stop offset="1" stop-color="#9b3b21"/></radialGradient>
+<radialGradient id="earth" cx=".3" cy=".3"><stop stop-color="#a8dfdc"/><stop offset=".5" stop-color="#4d99b4"/><stop offset="1" stop-color="#163957"/></radialGradient>
+<radialGradient id="jup" cx=".2" cy=".25"><stop stop-color="#efd8ad"/><stop offset=".55" stop-color="#aa8060"/><stop offset="1" stop-color="#4e3c3d"/></radialGradient>
+<radialGradient id="mars" cx=".3" cy=".3"><stop stop-color="#f3ac7a"/><stop offset="1" stop-color="#5c2d2c"/></radialGradient>
+<radialGradient id="sat" cx=".3" cy=".3"><stop stop-color="#e5d5ae"/><stop offset="1" stop-color="#777260"/></radialGradient>
+<filter id="sunGlow"><feGaussianBlur stdDeviation="25"/></filter>
+</defs>
+<rect width="1200" height="690" fill="url(#space)"/>
+<g fill="#d1dce8" opacity=".6"><circle cx="140" cy="80" r="1"/><circle cx="368" cy="90" r="1"/><circle cx="692" cy="121" r="1"/><circle cx="975" cy="74" r="1.3"/><circle cx="1098" cy="178" r="1"/><circle cx="842" cy="310" r="1"/><circle cx="100" cy="425" r="1.1"/><circle cx="930" cy="555" r=".9"/><circle cx="378" cy="622" r="1"/><circle cx="714" cy="570" r="1"/><circle cx="1039" cy="405" r="1"/><circle cx="609" cy="410" r="1"/></g>
+<g stroke="#65819a" fill="none" opacity=".3" stroke-width="1.2">
+<ellipse cx="260" cy="352" rx="214" ry="86" transform="rotate(-15 260 352)"/>
+<ellipse cx="260" cy="352" rx="338" ry="136" transform="rotate(-15 260 352)"/>
+<ellipse cx="260" cy="352" rx="481" ry="191" transform="rotate(-15 260 352)"/>
+<ellipse cx="260" cy="352" rx="628" ry="246" transform="rotate(-15 260 352)"/>
+<ellipse cx="260" cy="352" rx="774" ry="303" transform="rotate(-15 260 352)"/>
+</g>
+<circle cx="226" cy="364" r="136" fill="#f29a37" opacity=".25" filter="url(#sunGlow)"/>
+<circle cx="226" cy="364" r="97" fill="url(#sun)"/><path d="M180 300A94 94 0 0 0 230 455" stroke="#ffd78a" stroke-opacity=".55" stroke-width="2" fill="none"/>
+<g font-family="Arial,sans-serif" fill="#e9f1fb">
+<text x="52" y="54" font-size="14" font-weight="700" letter-spacing="3">SOLAR SYSTEM</text>
+<text x="52" y="77" font-size="10" letter-spacing="2" fill="#8197b2">AN INTERACTIVE EXPLORER</text>
+<path d="M45 100H1155" stroke="#7c91a8" opacity=".23"/>
+<text x="1040" y="56" font-size="11" fill="#9bb0c4">EXPLORE MODE</text>
+<text x="52" y="622" font-size="11" letter-spacing="1.2" fill="#91a7bf">DRAG TO ORBIT</text>
+<text x="52" y="647" font-size="11" letter-spacing="1.2" fill="#91a7bf">SELECT A PLANET TO LEARN MORE</text>
+</g>
+<circle cx="500" cy="321" r="11" fill="#baaba5"/><circle cx="500" cy="321" r="15.5" fill="none" stroke="#e1c5b5" stroke-opacity=".3"/>
+<circle cx="585" cy="441" r="16" fill="url(#mars)"/>
+<circle cx="722" cy="227" r="27" fill="url(#earth)"/>
+<path d="M703 220q10 -7 17 5t20 -8M711 242q11 -9 25 0" stroke="#94d1a7" opacity=".65" stroke-width="4" fill="none"/>
+<circle cx="887" cy="485" r="42" fill="url(#jup)"/>
+<path d="M852 472q30 -6 71 0M848 492q40 6 76 -1M851 505q35 4 67 -2" stroke="#eed7ad" opacity=".25" stroke-width="7"/>
+<circle cx="1008" cy="205" r="32" fill="url(#sat)"/>
+<ellipse cx="1008" cy="205" rx="69" ry="15" transform="rotate(-24 1008 205)" fill="none" stroke="#cebfa2" stroke-width="12" opacity=".65"/>
+<ellipse cx="1008" cy="205" rx="77" ry="19" transform="rotate(-24 1008 205)" fill="none" stroke="#e4d6b6" stroke-width="2" opacity=".65"/>
+<g font-family="Arial,sans-serif" font-size="12" letter-spacing="1" fill="#c0cedd">
+<text x="189" y="490">SUN</text><text x="470" y="289">MERCURY</text><text x="544" y="485">MARS</text><text x="684" y="178">EARTH</text><text x="840" y="552">JUPITER</text><text x="1055" y="166">SATURN</text>
+</g>
+<rect x="921" y="574" width="235" height="68" rx="11" fill="#111f30" fill-opacity=".91" stroke="#52657a" stroke-opacity=".5"/>
+<text x="943" y="598" font-family="Arial,sans-serif" font-size="10" fill="#87a2bc" letter-spacing="1.2">CURRENT SELECTION</text>
+<text x="943" y="622" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#eef5fa">EARTH</text>
+<circle cx="1126" cy="607" r="12" fill="url(#earth)"/>
+</svg>
