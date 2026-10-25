@@ -54,6 +54,14 @@ try{
    }
    const toggle=page.locator('.menu-button');await toggle.click();
    assert.equal(await toggle.getAttribute('aria-expanded'),'true','Menu opens');
+   const menuSizing=await page.locator('.menu-panel>a strong').first().evaluate(el=>({
+     size:parseFloat(getComputedStyle(el).fontSize),
+     lineHeight:parseFloat(getComputedStyle(el).lineHeight)
+   }));
+   assert(menuSizing.size>=26&&menuSizing.size<=35,'Hamburger navigation typography is compact ('+menuSizing.size+'px)');
+   assert(menuSizing.lineHeight>=menuSizing.size,'Menu link text has comfortable line spacing');
+   assert.equal(await page.locator('.desktop-nav a').count(),3,'Desktop top navigation remains intact');
+   assert.equal(await page.locator('.menu-panel a').count(),4,'Hamburger still links to four sections');
    await page.locator('.menu-panel').waitFor({state:'visible'});
    await page.locator('.menu-panel a[href="#work"]').click();
    assert.equal(await toggle.getAttribute('aria-expanded'),'false','Menu closes on link');
