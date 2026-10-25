@@ -267,7 +267,6 @@ try{
     'Lilo and Stitch now uses verified landscape artwork instead of its vertical poster');
   assert((await page.locator('#detailPoster').getAttribute('src')).includes('/w1280/fovkdObjss9Qa5UnqdTRh0nendD.jpg'),
     'Lilo and Stitch details use the verified TMDB widescreen artwork');
-  await page.waitForFunction(()=>document.querySelector('#detailPoster')?.complete&&document.querySelector('#detailPoster')?.naturalWidth>0);
   assert.equal(await page.locator('#detailPoster').evaluate(el=>getComputedStyle(el).objectFit),'cover',
     'Landscape movie artwork fills its detail frame without distortion');
   assert((await page.locator('#detailTrailer').getAttribute('href')).includes('themoviedb.org/movie/552524/videos'));
