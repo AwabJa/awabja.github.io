@@ -24,7 +24,7 @@ let executablePath;
 for(const path of binaries){try{await access(path);executablePath=path;break}catch{}}
 const browser=await chromium.launch(executablePath?{executablePath,headless:true,args:['--no-sandbox']}:{channel:'chrome',headless:true,args:['--no-sandbox']});
 try{
- const budgets=await Promise.all(['Cinema/index.html','Cinema/styles.css','Cinema/app.js'].map(file=>stat(resolve(root,file)).then(result=>result.size)));
+ const budgets=await Promise.all(['serivia/index.html','serivia/styles.css','serivia/app.js'].map(file=>stat(resolve(root,file)).then(result=>result.size)));
  assert(budgets[0]<20000&&budgets[1]<38000&&budgets[2]<42000,'Static app files remain compact');
  const results=[];
  for(const width of [320,390,768,1440]){
@@ -33,14 +33,16 @@ try{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   // The curated app is tested offline from TMDB; poster failures must be graceful.
   await page.route('https://image.tmdb.org/**',route=>route.abort('failed'));
-  const response=await page.goto(origin+'/Cinema/',{waitUntil:'domcontentloaded'});
-  assert.equal(response.status(),200,'Cinema opens');
+  const response=await page.goto(origin+'/serivia/',{waitUntil:'domcontentloaded'});
+  assert.equal(response.status(),200,'serivia opens');
+  assert.equal(new URL(page.url()).pathname,'/serivia/','App lives at the lowercase project route');
+  assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'),'https://awabja.github.io/serivia/','Canonical route is correct');
   await page.locator('.movie-card').first().waitFor();
   assert.equal(await page.title(),'Serivia — Discover great movies');
   assert.equal(await page.locator('.brand > span:last-child').textContent(),'serivia','Wordmark stays lowercase even when sidebar is closed on mobile');
   assert.equal(await page.locator('.brand-icon svg rect').count(),1,'Brand uses a single clapperboard body');
   assert.equal(await page.locator('.brand-icon svg path').count(),4,'Clapperboard has its hinged striped slate and play symbol');
-  assert.equal(await page.locator('link[rel="icon"]').getAttribute('href'),'favicon.svg?v=1','Cinema uses matching clapperboard tab icon');
+  assert.equal(await page.locator('link[rel="icon"]').getAttribute('href'),'favicon.svg?v=1','serivia uses matching clapperboard tab icon');
   assert.equal(await page.locator('.movie-card').count(),12,'Twelve curated film cards render');
   const assertLabels=async contextName=>{
     const layout=await page.evaluate(()=>{
@@ -198,7 +200,7 @@ try{
   ];
   route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({page,total_pages:2,total_results:3,results:item})});
  });
- await livePage.goto(origin+'/Cinema/',{waitUntil:'domcontentloaded'});
+ await livePage.goto(origin+'/serivia/',{waitUntil:'domcontentloaded'});
  assert.equal(await livePage.locator('#catalogMode').innerText(),'Demo collection · 12 films','Without token, sample collection is explicit');
  assert.equal(await livePage.locator('.brand').getAttribute('href'),'#main','Brand points at a real local section');
  await livePage.locator('#connectTmdb').click();
@@ -254,10 +256,10 @@ try{
  await liveCtx.close();
  const reduced=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});
  await reduced.route('https://image.tmdb.org/**',route=>route.abort());
- await reduced.goto(origin+'/Cinema/');
+ await reduced.goto(origin+'/serivia/');
  assert.equal(await reduced.locator('.movie-card').count(),12);
  await reduced.close();
- console.log('CINEMA BROWSER CHECKS PASSED '+JSON.stringify(results));
+ console.log('SERIVIA BROWSER CHECKS PASSED '+JSON.stringify(results));
 }finally{
  await browser.close();await new Promise(done=>server.close(done));
 }

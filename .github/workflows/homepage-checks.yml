@@ -7,7 +7,7 @@ on:
       - 'homepage.css'
       - 'homepage.js'
       - 'assets/homepage/**'
-      - 'Cinema/**'
+      - 'serivia/**'
       - 'tools/homepage-browser-check.mjs'
       - '.github/workflows/homepage-checks.yml'
   pull_request:
@@ -16,7 +16,7 @@ on:
       - 'homepage.css'
       - 'homepage.js'
       - 'assets/homepage/**'
-      - 'Cinema/**'
+      - 'serivia/**'
       - 'tools/homepage-browser-check.mjs'
       - '.github/workflows/homepage-checks.yml'
 

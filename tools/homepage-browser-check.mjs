@@ -80,7 +80,7 @@ try{
    assert(security.includes("script-src 'self';")&&security.includes("object-src 'none'"),'Strict homepage CSP');
    assert.equal(await production.locator('.project').count(),3,'Existing project cards remain intact');
    assert.equal(await production.locator('.project-flow a').getAttribute('href'),'Flow/','Published Flow link is correct');
-   assert.equal(await production.locator('.project-serivia a').getAttribute('href'),'Cinema/','serivia project links to Cinema');
+   assert.equal(await production.locator('.project-serivia a').getAttribute('href'),'serivia/','serivia project links to named route');
    assert.equal(await production.locator('.project-serivia .project-title').innerText(),'serivia','serivia branding is lowercase');
    assert.equal(await production.locator('.project-serivia img').getAttribute('src'),'assets/homepage/serivia-product.svg','Local serivia card artwork');
    assert.equal(await production.locator('.project-solar').count(),0,'Old Solar project card removed');
@@ -108,9 +108,12 @@ try{
    await production.locator('.menu-panel a[href="#work"]').click();
    assert.equal(await liveMenu.getAttribute('aria-expanded'),'false','Published hamburger closes');
    assert.deepEqual(prodErrors,[],'Published homepage has no browser JavaScript errors');
-   for(const href of ['Flow/','Cinema/','Enzo/']){
+   for(const href of ['Flow/','serivia/','Enzo/']){
      assert.equal((await production.request.get(origin+'/'+href)).status(),200,'Live project '+href+' resolves');
    }
+   const legacyHtml=await production.request.get(origin+'/Cinema/',{maxRedirects:0});
+   assert.equal(legacyHtml.status(),200,'Previous Cinema link still responds');
+   assert((await legacyHtml.text()).includes('url=../serivia/'),'Old Cinema URL redirects to serivia');
    assert.equal(await production.locator('body').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(9, 9, 9)','Near-black theme is retained');
    assert.equal(await production.locator('.email-link').count(),0,'Old visible email link remains removed');
    if(width>=768){

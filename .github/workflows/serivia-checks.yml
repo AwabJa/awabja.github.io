@@ -1,16 +1,16 @@
-name: Cinema preview checks
+name: serivia browser checks
 
 on:
   push:
     paths:
-      - 'Cinema/**'
-      - 'tools/cinema-browser-check.mjs'
-      - '.github/workflows/cinema-checks.yml'
+      - 'serivia/**'
+      - 'tools/serivia-browser-check.mjs'
+      - '.github/workflows/serivia-checks.yml'
   pull_request:
     paths:
-      - 'Cinema/**'
-      - 'tools/cinema-browser-check.mjs'
-      - '.github/workflows/cinema-checks.yml'
+      - 'serivia/**'
+      - 'tools/serivia-browser-check.mjs'
+      - '.github/workflows/serivia-checks.yml'
 
 permissions:
   contents: read
@@ -36,4 +36,4 @@ jobs:
             echo "Chromium required" >&2
             exit 1
           fi
-          node tools/cinema-browser-check.mjs
+          node tools/serivia-browser-check.mjs

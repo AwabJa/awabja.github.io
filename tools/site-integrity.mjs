@@ -16,7 +16,7 @@ const check = (ok, label) => {
   assertions++;
   if (!ok) problems.push(label);
 };
-const htmlPaths = ['index.html', 'Enzo/index.html', 'Cinema/index.html', 'Flow/index.html'];
+const htmlPaths = ['index.html', 'Enzo/index.html', 'serivia/index.html', 'Cinema/index.html', 'Flow/index.html'];
 
 const scripts = [];
 function walk(dir) {
@@ -380,7 +380,13 @@ check(game.includes("healthMeter.setAttribute('aria-valuenow'") &&
 const enzoEnemies = readFileSync(join(root, 'Enzo/src/enemies.js'), 'utf8');
 check(enzoEnemies.includes('enemy.traverse(child =>'),
   'Enzo must dispose meshes in enemy subtrees');
-check(existsSync(join(root,'Cinema/index.html')) && existsSync(join(root,'Cinema/app.js')) && existsSync(join(root,'Cinema/favicon.svg')), 'serivia project must remain published');
+check(existsSync(join(root,'serivia/index.html')) && existsSync(join(root,'serivia/app.js')) && existsSync(join(root,'serivia/favicon.svg')), 'serivia project must remain published');
+// Retain a minimal redirect for people who saved the former /Cinema/ URL.
+const oldCinemaHtml=readFileSync(join(root,'Cinema/index.html'),'utf8');
+check(oldCinemaHtml.includes('http-equiv="refresh" content="0; url=../serivia/"') &&
+      oldCinemaHtml.includes('name="robots" content="noindex"') &&
+      !existsSync(join(root,'Cinema/app.js')),
+  'Old /Cinema/ link must redirect to /serivia/ without duplicate app code');
 // Assert the published homepage uses independent assets, not legacy site experiments.
 const homeHtml=readFileSync(join(root,'index.html'),'utf8');
 const homeCss=readFileSync(join(root,'homepage.css'),'utf8');
@@ -391,7 +397,7 @@ check(homeHtml.includes('href="homepage.css?v=5"') &&
   'Homepage must load its single production stylesheet and JavaScript');
 check(homeHtml.includes('class="project project-serivia"') && homeHtml.includes('class="project-title">serivia') && !homeHtml.includes('project-solar') && !homeHtml.includes('Solar System Explorer'), 'Homepage must show serivia, not the retired Solar System');
 check(homeHtml.includes('href="Flow/"') &&
-      homeHtml.includes('href="Cinema/"') &&
+      homeHtml.includes('href="serivia/"') &&
       homeHtml.includes('href="Enzo/"'),
   'Homepage must retain live project links');
 check(homeHtml.includes('assets/homepage/flow-product.svg') &&

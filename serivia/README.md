@@ -1,6 +1,6 @@
 # Serivia — cinematic movie discovery
 
-**Preview:** https://awabja.github.io/Cinema/
+**Preview:** https://awabja.github.io/serivia/
 
 A standalone, responsive, no-build movie discovery prototype inspired by the supplied dashboard reference. It is featured as project 02 on the portfolio homepage, alongside Flow and Enzo.
 
@@ -27,9 +27,9 @@ This product uses TMDB API content but is not endorsed or certified by TMDB. Ima
 
 ## Running
 
-Serve the repository root with a local static HTTP server, then open \`/Cinema/\`. Opening \`index.html\` directly as a \`file://\` URL may limit browser storage.
+Serve the repository root with a local static HTTP server, then open \`/serivia/\`. Opening \`index.html\` directly as a \`file://\` URL may limit browser storage.
 
-Changes are tested with \`tools/cinema-browser-check.mjs\` in the \`Cinema preview checks\` GitHub Actions workflow. The site is a static GitHub Pages app.
+Changes are tested with \`tools/serivia-browser-check.mjs\` in the \`serivia browser checks\` GitHub Actions workflow. The site is a static GitHub Pages app.
 
 ## Portfolio
 
