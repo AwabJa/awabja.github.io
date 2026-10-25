@@ -127,6 +127,7 @@ try{
      metadataInView:first.bottom<=viewport.bottom-20,posterVisible:first.top>=viewport.top,
      footerInView:document.querySelector('.app-footer').getBoundingClientRect().bottom<=viewport.bottom+1};
    });
+   console.log('SERIVIA_FIT '+width+' '+JSON.stringify(fit));
    assert(fit.scrollExcess<=15,'Cinematic dashboard should fit the default desktop viewport');
    assert(fit.metadataInView&&fit.posterVisible,'Movie posters and metadata are visible without scrolling');
    assert(fit.footerInView,'Footer remains visible on normal desktop monitors');
