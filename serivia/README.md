@@ -16,14 +16,11 @@ A standalone, responsive, no-build movie discovery prototype inspired by the sup
 
 ## Movie data and artwork
 
-Without API connection the app displays **15 curated demo films** as a fallback. For a much larger, actively updated catalog, visitors can choose **Connect TMDB** and enter their own TMDB **API Read Access Token**. With an active connection, the app searches TMDB, browses popular/trending/upcoming films, supports genres, filters and pagination, and loads current film metadata and posters. It does not promise literally every film ever made: coverage depends on TMDB's database.
+The public site operates in **curated demo mode** with 15 movies. It never requires visitors to log in, supply an API key, or connect a TMDB account. Search, genres, filters, trailers and local watchlist history work without API access.
 
-The token is used from that browser session and is stored only in `sessionStorage`, not committed to this repository. Its bearer header is sent directly over HTTPS to `api.themoviedb.org`; it is **not secure against someone with access to the same browser or its extensions**. The demo never asks for a TMDB password. To make live browsing work for *all visitors automatically*, host a separate authenticated API proxy or prebuilt data feed with a server-side secret, not a secret in GitHub Pages source.
+The former optional browser-based API token form is disabled. The app clears any old Serivia TMDB session credential upon loading. The public site's Content Security Policy prevents outgoing API requests. **Never add a private TMDB token directly to this repository, GitHub Pages HTML or client-side JavaScript.** For a shared live catalog, use a server-side credential behind an appropriately rate-limited proxy or publish a generated static film feed. Configure that integration separately when it is ready.
 
-Obtain an access token from [TMDB account settings](https://www.themoviedb.org/settings/api). TMDB noncommercial API terms require attribution:
-https://developer.themoviedb.org/docs/faq
-
-This product uses TMDB API content but is not endorsed or certified by TMDB. Image downloads are served directly by the TMDB HTTPS image CDN and can temporarily fail; fallback art is shown.
+This product uses TMDB-sourced image references but is not endorsed or certified by TMDB. Images are fetched over HTTPS from the TMDB image CDN; artwork may temporarily fail, in which case the app shows a fallback title card. Movie ratings in the curated catalog are sample values, not a live rating feed.
 
 ## Running
 
