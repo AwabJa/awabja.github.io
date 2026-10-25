@@ -180,7 +180,12 @@ function openInfo(kind){
  if(kind==='credits'){
   $('infoTitle').textContent='About the movie artwork';
   p('This is a curated demonstration catalog, not a live trending feed. Movie posters, artwork and movie information reference TMDB. Ratings are sample snapshot values, not live or Rotten Tomatoes scores.');
-  p('This product uses the TMDB API content but is not endorsed or certified by TMDB.');
+  p('This product uses the TMDB API but is not endorsed or certified by TMDB.');
+  const logo=node('img','tmdb-credit-logo');
+  logo.src='https://www.themoviedb.org/assets/2/v4/logos/v2/blue_long_2-9665a76b1ae401a510ec1e0ca40ddcb3b0cfe45f1d51b77a308fea0845885648.svg';
+  logo.alt='The Movie Database (TMDB) official logo';
+  logo.width=132;logo.height=24;
+  body.appendChild(logo);
   link('Explore The Movie Database ↗','https://www.themoviedb.org/');
   const small=node('p','credit-note','Movie artwork belongs to its respective owners. No copyrighted images are included in this repository; images are displayed from TMDB CDN.');
   body.appendChild(small);
