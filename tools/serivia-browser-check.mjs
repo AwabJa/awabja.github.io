@@ -163,7 +163,7 @@ try{
   const artSrc=await page.locator('#featureArt').getAttribute('src');
   assert(artSrc.includes('/w1280/8J6UlIFcU7eZfq9iCLbgc8Auklg.jpg'),'Hero uses genuine HD landscape image, not a stretched poster');
   assert((await page.locator('.movie-card').first().locator('img').getAttribute('src')).includes('/w780/'),'Posters request a crisp 780px master image');
-  assert.equal(await page.locator('.movie-card .poster-wrap').first().evaluate(el=>getComputedStyle(el).aspectRatio),width>760?'0.87':'2 / 3','Poster aspect ratios follow desktop and mobile compositions');
+  assert.equal(await page.locator('.movie-card .poster-wrap').first().evaluate(el=>getComputedStyle(el).aspectRatio),width>760?'0.87 / 1':'2 / 3','Poster aspect ratios follow desktop and mobile compositions');
   assert.equal(await page.locator('.movie-card img').first().evaluate(el=>getComputedStyle(el).objectFit),width>760?'cover':'contain','Poster art follows the screenshot desktop treatment');
   assert.equal(await page.locator('#featureArt').evaluate(el=>getComputedStyle(el).objectFit),'cover','Wide banner uses cinematic landscape art');
   assert.equal(await page.locator('#genreScroll button').count(),11,'Genre chips render');
