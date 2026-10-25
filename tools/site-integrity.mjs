@@ -389,7 +389,7 @@ const homeCss=readFileSync(join(root,'homepage.css'),'utf8');
 const homeJs=readFileSync(join(root,'homepage.js'),'utf8');
 check(homeHtml.includes('href="homepage.css?v=4"') &&
       !homeHtml.includes('hero-lines.css') &&
-      homeHtml.includes('src="homepage.js?v=3"'),
+      homeHtml.includes('src="homepage.js?v=4"'),
   'Homepage must load its single production stylesheet and JavaScript');
 check(homeHtml.includes('href="Flow/"') &&
       homeHtml.includes('href="3D%20Navigation%20Bar/"') &&

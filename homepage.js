@@ -15,7 +15,12 @@
       panel.inert=false;panel.classList.add('is-open');
       document.body.classList.add('menu-open');
       toggle.setAttribute('aria-expanded','true');toggle.setAttribute('aria-label','Close menu');
-      panel.querySelector('a')?.focus();
+      // Wait until the once-hidden drawer is rendered before focusing its first link.
+      requestAnimationFrame(()=>{
+        if(toggle.getAttribute('aria-expanded')==='true'){
+          panel.querySelector('a')?.focus({preventScroll:true});
+        }
+      });
     });
     panel.querySelectorAll('a').forEach(link=>link.addEventListener('click',close));
     document.addEventListener('keydown',event=>{

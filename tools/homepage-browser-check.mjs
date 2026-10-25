@@ -90,6 +90,7 @@ try{
    if(width===390){
      const first=production.locator('.menu-panel a').first();
      const last=production.locator('.menu-panel a').last();
+     await production.waitForFunction(()=>document.activeElement===document.querySelector('.menu-panel a'),null,{timeout:2500});
      assert.equal(await first.evaluate(el=>document.activeElement===el),true,'Opening the drawer focuses its first link');
      await first.press('Shift+Tab');
      assert.equal(await liveMenu.evaluate(el=>document.activeElement===el),true,'Reverse Tab reaches close button');
