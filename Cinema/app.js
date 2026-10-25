@@ -496,6 +496,7 @@ function initialize(){
   $('genreScroll').appendChild(b);
  }
  renderMovies();updateCatalogNotice();if(token)loadLive(false);
+ document.querySelector('.brand').addEventListener('click',event=>{event.preventDefault();switchView('home')});
  document.querySelectorAll('.side-link[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
  $('searchInput').addEventListener('input',e=>{
   state.query=e.target.value.trim();

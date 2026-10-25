@@ -200,6 +200,7 @@ try{
  });
  await livePage.goto(origin+'/Cinema/',{waitUntil:'domcontentloaded'});
  assert.equal(await livePage.locator('#catalogMode').innerText(),'Demo collection · 12 films','Without token, sample collection is explicit');
+ assert.equal(await livePage.locator('.brand').getAttribute('href'),'#main','Brand points at a real local section');
  await livePage.locator('#connectTmdb').click();
  await livePage.locator('#tmdbAccessToken').fill('fake_test_read_access_token');
  await livePage.locator('.tmdb-connect-form button[type=submit]').click();

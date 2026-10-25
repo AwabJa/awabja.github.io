@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=7">
-  <script src="app.js?v=5" defer></script>
+  <script src="app.js?v=6" defer></script>
 </head>
 <body>
   <svg class="svg-icons" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
@@ -42,7 +42,7 @@
   <div class="site-wrap">
     <div class="app-shell">
       <aside class="sidebar" id="sidebar" aria-label="Side navigation">
-        <a class="brand" href="#home" aria-label="Serivia home"><span class="brand-icon"><svg viewBox="0 0 38 38" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="14" width="28" height="20" rx="3"/><path d="M5 14 3.6 8.1a2.6 2.6 0 0 1 1.9-3.2L29.2 1.2a2.6 2.6 0 0 1 3 1.9L33.5 9 5 14Z"/><path d="m11 4.1 4.5 7.6m4.2-9.1 4.5 7.7m3.6-8.6 4.5 7.2"/><path d="M5 20h28"/><path d="m16 23 8 4.5-8 4.5Z" fill="currentColor" stroke="none"/></svg></span><span>serivia</span></a>
+        <a class="brand" href="#main" aria-label="serivia home"><span class="brand-icon"><svg viewBox="0 0 38 38" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="14" width="28" height="20" rx="3"/><path d="M5 14 3.6 8.1a2.6 2.6 0 0 1 1.9-3.2L29.2 1.2a2.6 2.6 0 0 1 3 1.9L33.5 9 5 14Z"/><path d="m11 4.1 4.5 7.6m4.2-9.1 4.5 7.7m3.6-8.6 4.5 7.2"/><path d="M5 20h28"/><path d="m16 23 8 4.5-8 4.5Z" fill="currentColor" stroke="none"/></svg></span><span>serivia</span></a>
         <nav class="side-nav" aria-label="Discover navigation">
           <button class="side-link is-active" data-view="home"><svg><use href="#ic-home"/></svg><span>Home</span></button>
           <button class="side-link" data-view="favorites"><svg><use href="#ic-heart"/></svg><span>Favorites</span></button>
@@ -100,7 +100,7 @@
                 <div class="feature-wash"></div>
                 <div class="feature-tags" id="featureTags"></div>
                 <div class="feature-bottom">
-                  <a class="feature-play" id="featureTrailer" href="#" target="_blank" rel="noopener noreferrer" aria-label="Find movie trailer"><svg><use href="#ic-play"/></svg></a>
+                  <a class="feature-play" id="featureTrailer" href="https://www.themoviedb.org/movie/1087192/videos" target="_blank" rel="noopener noreferrer" aria-label="Find movie trailer"><svg><use href="#ic-play"/></svg></a>
                   <div class="featured-titles"><span id="featuredTitle">Featured movie</span><span class="featured-trailer-label">Watch the trailer <span class="feature-duration" id="featureDuration"></span></span></div>
                   <button class="favorite-feature" id="favoriteFeature" type="button" aria-label="Add featured movie to favorites" aria-pressed="false"><svg><use href="#ic-heart"/></svg></button>
                 </div>
@@ -126,7 +126,7 @@
   <dialog class="detail-modal" id="detailDialog" aria-labelledby="detailTitle">
     <button class="dialog-close" id="closeDetails" type="button" aria-label="Close movie details"><svg><use href="#ic-close"/></svg></button>
     <div class="detail-media"><img id="detailPoster" src="" alt="" width="1280" height="720"><div class="detail-media-wash"></div></div>
-    <div class="detail-content"><div class="detail-eyebrow" id="detailMeta"></div><h2 id="detailTitle"></h2><div class="detail-genres" id="detailGenres"></div><p id="detailSynopsis"></p><div class="detail-actions"><button type="button" class="primary-action" id="detailFavorite"><svg><use href="#ic-heart"/></svg> Add to watchlist</button><a id="detailTrailer" class="secondary-action" target="_blank" rel="noopener noreferrer" href="#"><svg><use href="#ic-external"/></svg> Find trailer</a></div></div>
+    <div class="detail-content"><div class="detail-eyebrow" id="detailMeta"></div><h2 id="detailTitle"></h2><div class="detail-genres" id="detailGenres"></div><p id="detailSynopsis"></p><div class="detail-actions"><button type="button" class="primary-action" id="detailFavorite"><svg><use href="#ic-heart"/></svg> Add to watchlist</button><a id="detailTrailer" class="secondary-action" target="_blank" rel="noopener noreferrer" href="https://www.themoviedb.org/movie/1087192/videos"><svg><use href="#ic-external"/></svg> Find trailer</a></div></div>
   </dialog>
   <dialog class="info-modal" id="infoDialog" aria-labelledby="infoTitle"><button class="dialog-close" id="closeInfo" type="button" aria-label="Close dialog"><svg><use href="#ic-close"/></svg></button><div class="info-content"><span class="eyebrow">SERIVIA / ABOUT</span><h2 id="infoTitle">Made for movie nights.</h2><div id="infoBody"></div></div></dialog>
 </body>
