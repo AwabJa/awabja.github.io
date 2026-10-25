@@ -37,3 +37,11 @@ jobs:
             exit 1
           fi
           node tools/serivia-browser-check.mjs
+      - name: Upload desktop visual checkpoint
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: serivia-desktop-visual
+          path: serivia-desktop-visual.png
+          if-no-files-found: ignore
+          retention-days: 3
