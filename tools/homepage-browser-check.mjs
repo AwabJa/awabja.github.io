@@ -88,9 +88,43 @@ try{
    }
    assert.equal(await production.locator('body').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(9, 9, 9)','Near-black theme is retained');
    assert.equal(await production.locator('.email-link').count(),0,'Old visible email link remains removed');
+   if(width>=768){
+     const animation=await production.locator('.project-flow img').evaluate(el=>getComputedStyle(el).transitionDuration);
+     assert(animation.includes('.85s')||animation.includes('0.85s'),'Desktop keeps its smooth hover zoom');
+   }
    await production.close();
    results.push({width,status:'PASS'});
  }
+ // Real touch input: feedback appears while pressed, cancels cleanly on a swipe,
+ // and a single tap opens the destination without a two-tap requirement.
+ const touchContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+ const touchPage=await touchContext.newPage();
+ await touchPage.goto(origin+'/',{waitUntil:'domcontentloaded'});
+ const flowLink=touchPage.locator('.project-flow .project-image');
+ await flowLink.scrollIntoViewIfNeeded();
+ const pressBox=await flowLink.boundingBox();
+ const touchX=pressBox.x+pressBox.width/2;
+ const touchY=pressBox.y+Math.min(90,pressBox.height/3);
+ const session=await touchContext.newCDPSession(touchPage);
+ await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:touchX,y:touchY}]});
+ assert.equal(await flowLink.evaluate(el=>el.classList.contains('is-touching')),true,'Touch press activates card feedback');
+ await touchPage.waitForTimeout(80);
+ const pressed=await flowLink.evaluate(el=>({
+   border:getComputedStyle(el).borderColor,
+   scale:getComputedStyle(el).transform,
+   imageScale:getComputedStyle(el.querySelector('img')).transform
+ }));
+ assert(pressed.border!=='rgb(43, 43, 43)','Touch provides a visible border highlight');
+ assert(pressed.scale!=='none'&&pressed.imageScale!=='none','Touch press smoothly moves the image and card');
+ await session.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});
+ assert.equal(await flowLink.evaluate(el=>el.classList.contains('is-touching')),false,'Canceled touch clears feedback');
+ assert.equal(new URL(touchPage.url()).pathname,'/','Cancel does not navigate');
+ await Promise.all([
+   touchPage.waitForURL(url=>url.pathname==='/Flow/',{waitUntil:'domcontentloaded'}),
+   touchPage.touchscreen.tap(touchX,touchY)
+ ]);
+ assert.equal(new URL(touchPage.url()).pathname,'/Flow/','One tap opens Flow without an extra touch');
+ await touchContext.close();
  const reduced=await browser.newPage({viewport:{width:390,height:800},reducedMotion:'reduce'});
  await reduced.goto(origin+'/');
  assert.equal(await reduced.locator('.hero-display-line').count(),1);

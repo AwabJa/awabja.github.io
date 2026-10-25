@@ -72,7 +72,9 @@ body.menu-open{overflow:hidden}
 .project-flow img{object-position:50% 48%;filter:brightness(.96) saturate(.92)}
 .project-solar img{object-position:center 46%;filter:brightness(.97) saturate(.96)}.project-enzo img{object-position:center 46%;filter:brightness(.88) saturate(.94)}
 .project-image::after{content:"";position:absolute;z-index:0;inset:0;background:linear-gradient(180deg,#09090965 0%,transparent 37%,transparent 46%,#070707e9 100%);pointer-events:none}
-.project-image:hover img{transform:scale(1.048);filter:brightness(1.07) saturate(1.09)}
+@media(hover:hover) and (pointer:fine){
+  .project-image:hover img{transform:scale(1.048);filter:brightness(1.07) saturate(1.09)}
+}
 .project-number{position:absolute;top:16px;left:19px;z-index:2;font:300 24px var(--sans);letter-spacing:-.06em;color:#e4e5ecaa}
 .project-info{display:flex;flex-direction:column;gap:4px;position:absolute;bottom:60px;left:23px;right:23px;z-index:2;max-width:500px}
 .project-category{font:500 9px var(--mono);letter-spacing:.13em;color:#b8b8b5;margin-bottom:9px}
@@ -81,7 +83,34 @@ body.menu-open{overflow:hidden}
 .project-solar .project-title,.project-enzo .project-title{font-size:clamp(22px,2vw,29px)}
 .project-solar .project-info,.project-enzo .project-info{bottom:55px}
 .project-cta{position:absolute;z-index:2;bottom:22px;left:23px;padding-bottom:5px;font:500 10px var(--mono);letter-spacing:.12em;color:#e8edef;border-bottom:1px solid #b1b1ad;transition:border-color .2s,color .2s}
-.project-image:hover .project-cta{color:#fff;border-color:#fff}
+@media(hover:hover) and (pointer:fine){
+  .project-image:hover .project-cta{color:#fff;border-color:#fff}
+}
+/* Tactile feedback for touch input: one tap still opens the project immediately. */
+@media(hover:none), (pointer:coarse){
+  .project-image{
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+    transition:transform .2s cubic-bezier(.2,.72,.2,1),border-color .2s ease;
+  }
+  .project-image img{
+    transition:transform .23s cubic-bezier(.2,.72,.2,1),filter .2s ease;
+  }
+  .project-cta{transition:transform .2s ease,color .2s ease,border-color .2s ease}
+  .project-image:is(:active,.is-touching){
+    transform:scale(.992);
+    border-color:#787878;
+  }
+  .project-image:is(:active,.is-touching) img{
+    transform:scale(1.017);
+    filter:brightness(1.09) saturate(1.06);
+  }
+  .project-image:is(:active,.is-touching) .project-cta{
+    transform:translateX(3px);
+    color:#fff;
+    border-color:#fff;
+  }
+}
 .contact-cta{flex:none;display:inline-flex;align-items:center;justify-content:center;min-width:143px;min-height:49px;padding:0 25px;border:1px solid #b4b4b1;border-radius:2px;color:#e8edef;font:500 11px var(--mono);letter-spacing:.12em;transition:background .2s,color .2s}
 .contact-cta:hover{background:#e8edef;color:#0c0c0c}
 
@@ -117,4 +146,9 @@ body.menu-open{overflow:hidden}
   .hero{min-height:710px}.hero-scene{bottom:0}.hero-content{padding-top:310px;padding-bottom:95px}.hero h1{font-size:clamp(38px,9.1vw,49px);letter-spacing:-.065em}.hero-eyebrow{font-size:9px}.hero-intro{font-size:13px;max-width:320px}.explore-link{font-size:10px;min-height:46px;min-width:185px}.section-heading{gap:8px}.heading-label{gap:12px}.heading-label h2{font-size:9px}.heading-label span{width:19px}.section-heading a{font-size:8px;gap:6px}.projects-grid{grid-template-rows:435px 285px 285px}.project-info{bottom:60px;left:18px;right:18px}.project-cta{left:18px;bottom:20px}.project-solar .project-info,.project-enzo .project-info{bottom:55px}.project-title,.project-solar .project-title,.project-enzo .project-title{font-size:clamp(22px,6vw,30px)}.project-category{font-size:8px}.project-description{font-size:11px;max-width:230px}.about{min-height:420px}.about-copy p{font-size:14px}.contact-inner{align-items:flex-start;flex-wrap:wrap;gap:24px}.contact-inner h2{flex:1 1 100%}.contact h2{font-size:clamp(38px,8.5vw,50px)}.contact-cta{min-width:120px;min-height:46px;font-size:10px;padding:0 15px}.footer{flex-wrap:wrap;gap:22px}.footer>div{flex-basis:100%}.preview-pill{bottom:7px;right:7px;font-size:8px;padding:8px}}
 @media(max-width:360px){.hero-content{padding-top:285px}.hero h1{font-size:36px}.projects-grid{grid-template-rows:410px 260px 260px}.project-solar .project-title{font-size:21px}.contact h2{font-size:36px}}
 @media(hover:none){.project-image:hover img{transform:none}}
+@media(prefers-reduced-motion:reduce){
+  .project-image:is(:active,.is-touching),
+  .project-image:is(:active,.is-touching) img,
+  .project-image:is(:active,.is-touching) .project-cta{transform:none!important}
+}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}.reveal-ready [data-reveal]{opacity:1!important;transform:none!important}}

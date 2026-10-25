@@ -21,6 +21,19 @@
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&toggle.getAttribute('aria-expanded')==='true'){close();toggle.focus()}});
     document.addEventListener('click',event=>{if(!panel.contains(event.target)&&!toggle.contains(event.target))close()});
   }
+  // Touchscreens need a brief pressed state rather than sticky simulated hover.
+  // Do not preventDefault or delay navigation: cards remain ordinary single-tap links.
+  document.querySelectorAll('.project-image').forEach(card=>{
+    const release=()=>card.classList.remove('is-touching');
+    card.addEventListener('pointerdown',event=>{
+      if(event.pointerType==='touch'||event.pointerType==='pen')card.classList.add('is-touching');
+    });
+    card.addEventListener('pointerup',release);
+    card.addEventListener('pointercancel',release);
+    card.addEventListener('pointerleave',release);
+    card.addEventListener('touchmove',release,{passive:true});
+    card.addEventListener('blur',release);
+  });
   const year=document.getElementById('year');if(year)year.textContent=String(new Date().getFullYear());
   const progress=document.querySelector('.reading-line');
   if(progress){
