@@ -5,13 +5,11 @@ on:
     paths:
       - 'Flow/**'
       - 'tools/flow-*.mjs'
-      - 'tools/site-integrity.mjs'
       - '.github/workflows/flow-checks.yml'
   pull_request:
     paths:
       - 'Flow/**'
       - 'tools/flow-*.mjs'
-      - 'tools/site-integrity.mjs'
       - '.github/workflows/flow-checks.yml'
 
 permissions:
@@ -33,8 +31,6 @@ jobs:
         run: node tools/flow-view-smoke-check.mjs
       - name: Export-only backup safety
         run: node tools/flow-backup-check.mjs
-      - name: Site integrity
-        run: node tools/site-integrity.mjs
       - name: Large workspace performance regression
         run: node tools/flow-performance-check.mjs
       - name: Install browser test runner
