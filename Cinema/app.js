@@ -243,23 +243,36 @@ function initialize(){
  $('featuredNext').addEventListener('click',()=>showSlide(state.slide+1));
  $('peekFront').addEventListener('click',()=>showSlide(state.slide+1));
  $('peekBack').addEventListener('click',()=>showSlide(state.slide+2));
- let gesture=null,lastSwipeAt=-Infinity;
+ let gesture=null,touchGesture=null,lastSwipeAt=-Infinity;
  const hero=$('featured');
+ const endGesture=(dx,dy)=>{
+  if(Math.abs(dx)<=45||Math.abs(dx)<=Math.abs(dy)*1.2)return;
+  // Pointer and Touch events may both fire for one gesture. Advance exactly once.
+  if(performance.now()-lastSwipeAt<450)return;
+  lastSwipeAt=performance.now();
+  showSlide(state.slide+(dx<0?1:-1));
+ };
  hero.addEventListener('pointerdown',event=>{
-  if(event.target.closest('button,a'))return;
-  if(event.button!==0)return;
+  if(event.target.closest('button,a')||event.button!==0)return;
   gesture={id:event.pointerId,x:event.clientX,y:event.clientY};
  });
  hero.addEventListener('pointerup',event=>{
   if(!gesture||event.pointerId!==gesture.id)return;
   const dx=event.clientX-gesture.x,dy=event.clientY-gesture.y;
-  gesture=null;
-  if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.2){
-   lastSwipeAt=performance.now();
-   showSlide(state.slide+(dx<0?1:-1));
-  }
+  gesture=null;endGesture(dx,dy);
  });
  hero.addEventListener('pointercancel',()=>{gesture=null});
+ hero.addEventListener('touchstart',event=>{
+  if(event.target.closest('button,a')||event.touches.length!==1)return;
+  touchGesture={x:event.touches[0].clientX,y:event.touches[0].clientY};
+ },{passive:true});
+ hero.addEventListener('touchend',event=>{
+  if(!touchGesture||!event.changedTouches.length)return;
+  const point=event.changedTouches[0];
+  const dx=point.clientX-touchGesture.x,dy=point.clientY-touchGesture.y;
+  touchGesture=null;endGesture(dx,dy);
+ },{passive:true});
+ hero.addEventListener('touchcancel',()=>{touchGesture=null},{passive:true});
  hero.addEventListener('dragstart',e=>e.preventDefault());
  $('featuredStack').addEventListener('wheel',event=>{
   if(Math.abs(event.deltaX)<20||Math.abs(event.deltaX)<Math.abs(event.deltaY)*1.2)return;
