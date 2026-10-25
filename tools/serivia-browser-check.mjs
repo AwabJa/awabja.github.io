@@ -194,7 +194,12 @@ try{
   assert.equal(await page.locator('#detailFavorite').innerText(),'Saved to watchlist');
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('#detailDialog').evaluate(el=>el.open),false,'Escape closes details');
+  await page.locator('#filterBtn').click();
+  await page.locator('#yearFilter').selectOption('2024');
+  await page.locator('#ratingFilter').selectOption('8');
   await page.locator('#profileBtn').click();
+  assert.equal(await page.locator('#yearFilter').inputValue(),'all','Favorites resets stale year filters');
+  assert.equal(await page.locator('#ratingFilter').inputValue(),'0','Favorites resets stale rating filters');
   assert.equal(await page.locator('#pageTitle').innerText(),'Your watchlist');
   assert.equal(await page.locator('.movie-card').count(),1,'Favorites view shows saved movie');
   await page.reload({waitUntil:'domcontentloaded'});
@@ -205,6 +210,34 @@ try{
   results.push({width,status:'PASS'});
   await context.close();
  }
+
+ // Regression: shorter desktops can scroll both the recent list and the
+ // main content without clipping the last movie or overlapping navigation.
+ const shortCtx=await browser.newContext({viewport:{width:1440,height:620}});
+ const shortPage=await shortCtx.newPage();
+ await shortPage.route('https://image.tmdb.org/**',route=>route.abort('failed'));
+ await shortPage.goto(origin+'/serivia/',{waitUntil:'domcontentloaded'});
+ await shortPage.evaluate(()=>localStorage.setItem('serivia.recent.v1',JSON.stringify(
+   [1087192,823219,762509,693134,1241982,533535,157336,27205,299534,122,550,1020414]
+ )));
+ await shortPage.reload({waitUntil:'domcontentloaded'});
+ assert.equal(await shortPage.locator('#recentList .mini-movie').count(),12,'All recent films remain in the sidebar');
+ const geometry=await shortPage.evaluate(()=>{
+  const activity=document.querySelector('.side-activity'),pane=document.querySelector('.main-area');
+  activity.scrollTop=activity.scrollHeight;pane.scrollTop=pane.scrollHeight;
+  const box=activity.getBoundingClientRect(),last=activity.querySelector('.mini-movie:last-child').getBoundingClientRect();
+  const nav=document.querySelector('.side-nav-secondary').getBoundingClientRect();
+  const portfolio=document.querySelector('.sidebar .portfolio-link').getBoundingClientRect();
+  const main=pane.getBoundingClientRect(),label=pane.querySelector('.movie-card .movie-meta').getBoundingClientRect();
+  return {recentScroll:activity.scrollHeight-activity.clientHeight,mainScroll:pane.scrollHeight-pane.clientHeight,
+   lastVisible:last.bottom<=box.bottom+6,navClear:nav.bottom<=box.top+6,
+   portfolioVisible:portfolio.bottom<=innerHeight+3&&portfolio.top>=0,
+   movieLabelVisible:label.bottom<=main.bottom+6&&label.top>=main.top-6};
+ });
+ assert(geometry.recentScroll>100&&geometry.lastVisible,'Recent movies can scroll to the last film');
+ assert(geometry.navClear&&geometry.portfolioVisible,'Sidebar navigation and portfolio link remain visible');
+ assert(geometry.mainScroll>50&&geometry.movieLabelVisible,'Main content scrolls to visible poster ratings');
+ await shortCtx.close();
 
  // Mock the official API to exercise live data without a real credential
  // or untrusted network dependency in CI.
@@ -222,7 +255,7 @@ try{
   const req=route.request(),url=new URL(req.url());
   requests.push({path:url.pathname,search:url.searchParams.toString(),auth:req.headers().authorization});
   const page=Number(url.searchParams.get('page')||1);
-  const item=url.pathname.endsWith('/search/movie')?[films[0]]:page===1?[films[0],films[1]]:[
+  const item=url.pathname.endsWith('/search/movie')?[films[0]]:page===1?[films[1],films[0]]:[
    {id:900003,title:'Third Discovery',release_date:'2026-08-01',vote_average:9.1,genre_ids:[12],poster_path:'/third.jpg',backdrop_path:null,overview:'More movie results.'}
   ];
   route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({page,total_pages:2,total_results:3,results:item})});
@@ -234,9 +267,16 @@ try{
  await livePage.locator('#tmdbAccessToken').fill('fake_test_read_access_token');
  await livePage.locator('.tmdb-connect-form button[type=submit]').click();
  await livePage.waitForFunction(()=>document.querySelector('#catalogMode').textContent.includes('Live movie catalog'));
- await livePage.waitForFunction(()=>document.querySelector('#movieStrip .movie-card')?.textContent.includes('A Brand New Movie'));
+ await livePage.waitForFunction(()=>[...document.querySelectorAll('#movieStrip .movie-card')].some(el=>el.textContent.includes('A Brand New Movie')));
  assert.equal(await livePage.locator('.movie-card').count(),2,'Connected live catalog shows remote results');
  assert.equal(await livePage.locator('.movie-strip').evaluate(el=>getComputedStyle(el).display),'grid','Live results use a multi-row grid');
+ await livePage.locator('#filterBtn').click();
+ await livePage.locator('#sortFilter').selectOption('year');
+ await livePage.waitForFunction(()=>document.querySelector('.movie-card .movie-name')?.textContent==='A Brand New Movie');
+ assert.equal(await livePage.locator('.movie-card .movie-name').first().innerText(),'A Brand New Movie','Live results respect newest-first sorting');
+ await livePage.locator('#sortFilter').selectOption('featured');
+ await livePage.waitForFunction(()=>document.querySelector('.movie-card .movie-name')?.textContent==='Another Film');
+ await livePage.locator('#filterBtn').click();
  const liveLayout=await livePage.evaluate(()=>{
   const grid=document.querySelector('#movieStrip');
   const first=grid.querySelector('.movie-card');
@@ -277,6 +317,10 @@ try{
  assert.equal(await livePage.evaluate(()=>localStorage.getItem('serivia.tmdb.session.v1')),null,'Token is not in persistent localStorage');
  assert.equal(await livePage.evaluate(()=>sessionStorage.getItem('serivia.tmdb.session.v1')),'fake_test_read_access_token','Token remains session-only');
  await livePage.locator('#connectTmdb').click();
+ await livePage.locator('.tmdb-disconnect').last().click();
+ assert.equal(await livePage.locator('.movie-card').count(),1,'Watchlist clearing needs confirmation');
+ await livePage.locator('.tmdb-disconnect').last().click();
+ assert.equal(await livePage.locator('.movie-card').count(),0,'Confirmed clear removes saved movies');
  await livePage.locator('.tmdb-disconnect').first().click();
  assert.equal(await livePage.locator('#catalogMode').innerText(),'Demo collection · 12 films','Disconnect restores demo');
  assert.equal(await livePage.evaluate(()=>sessionStorage.getItem('serivia.tmdb.session.v1')),null,'Disconnect removes token');
