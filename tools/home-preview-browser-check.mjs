@@ -49,6 +49,14 @@ try{
   assert.equal(await page.locator('.side-rail').isVisible(),true,'Fixed sidebar navigation must be visible');
   assert.equal(await page.locator('#work-title').innerText(),'Projects','Editorial project heading is visible');
   assert.equal(await page.locator('.manifesto-strip').count(),0,'Old ticker must be gone');
+  const visual=await page.evaluate(()=>({
+   background:getComputedStyle(document.body).backgroundImage,
+   overlay:getComputedStyle(document.body,'::before').backgroundImage,
+   accent:getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(),
+  }));
+  assert(visual.background.startsWith('linear-gradient('),'Smooth charcoal base must use one restrained gradient');
+  assert(visual.overlay.startsWith('radial-gradient('),'Only one soft ambient glow should sit behind the page');
+  assert.equal(visual.accent,'#d9a17f','Accent should be warm copper, not purple');
   assert.equal(await page.locator('.hero-orbit').count(),0,'Old orbital decoration must be gone');
   assert.equal(errors.length,0,'No browser JS errors: '+errors.join('; '));
   for(const href of ['../Flow/index.html','../Enzo/index.html','../3D%20Navigation%20Bar/index.html']){
