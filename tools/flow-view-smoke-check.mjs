@@ -11,6 +11,31 @@ const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const appSource=readFileSync(resolve(root,'Flow/app.js'),'utf8');
 const pageSource=readFileSync(resolve(root,'Flow/index.html'),'utf8');
 
+// Malformed array elements must activate recovery mode instead of crashing views.
+const loadSnippet=appSource.slice(appSource.indexOf('const damagedKeys=[];'),appSource.indexOf('let projects=load('));
+assert(loadSnippet.includes('validLoadedArray'), 'FLOW must validate saved array records');
+function loadedRecords(key,raw) {
+ const storage={getItem:requested=>requested===key?raw:null};
+ const state=new Function('localStorage','KEY','PK','AK',loadSnippet+';return {load,damagedKeys};')(
+  storage,'flow.tasks.v1','flow.projects.v1','flow.activity.v1');
+ return {data:state.load(key,[]),damagedKeys:state.damagedKeys}
+}
+for(const [key,raw] of [
+ ['flow.tasks.v1','[null]'],
+ ['flow.tasks.v1','[{"id":"bad","title":"Broken","subtasks":{}}]'],
+ ['flow.projects.v1','[null]'],
+ ['flow.activity.v1','[null]']
+]){
+ const state=loadedRecords(key,raw);
+ assert.deepEqual(state.data,[],'Unsafe saved records must not enter the renderer');
+ assert.deepEqual(state.damagedKeys,[key],'Unsafe records must trigger read-only recovery mode')
+}
+assert.deepEqual(loadedRecords('flow.tasks.v1','[{"id":3,"title":"Old valid task"}]').damagedKeys,[],
+ 'Legacy task IDs may still be numeric');
+assert.deepEqual(loadedRecords('flow.projects.v1','["Personal","Work"]').damagedKeys,[],
+ 'Normal projects must remain loadable');
+console.log('FLOW STORAGE VALIDATION PASSED: corrupt records protected and legacy records retained');
+
 class FakeElement {
  constructor(tag='div'){
   this.tagName=tag;this.children=[];this.dataset={};this.attrs={};
