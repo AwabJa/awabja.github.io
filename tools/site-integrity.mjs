@@ -386,12 +386,11 @@ check(solar.includes("generateSpaceTexture('Moon'"),
 // Assert the published homepage uses independent assets, not legacy site experiments.
 const homeHtml=readFileSync(join(root,'index.html'),'utf8');
 const homeCss=readFileSync(join(root,'homepage.css'),'utf8');
-const heroCss=readFileSync(join(root,'hero-lines.css'),'utf8');
 const homeJs=readFileSync(join(root,'homepage.js'),'utf8');
-check(homeHtml.includes('href="homepage.css?v=1"') &&
-      homeHtml.includes('href="hero-lines.css?v=1"') &&
-      homeHtml.includes('src="homepage.js?v=1"'),
-  'Homepage must load production styles and script');
+check(homeHtml.includes('href="homepage.css?v=4"') &&
+      !homeHtml.includes('hero-lines.css') &&
+      homeHtml.includes('src="homepage.js?v=3"'),
+  'Homepage must load its single production stylesheet and JavaScript');
 check(homeHtml.includes('href="Flow/"') &&
       homeHtml.includes('href="3D%20Navigation%20Bar/"') &&
       homeHtml.includes('href="Enzo/"'),
@@ -405,8 +404,8 @@ check(homeCss.includes('.menu-panel') &&
       homeCss.includes('.projects-grid') &&
       homeCss.includes('prefers-reduced-motion:reduce'),
   'Homepage must retain mobile nav, project layout and low-motion support');
-check(heroCss.includes('.hero-display-line-secondary') &&
-      !heroCss.includes('.hero-display-type'),
+check(homeCss.includes('.hero-display-line-secondary') &&
+      !homeCss.includes('.hero-display-type'),
   'Homepage must preserve approved line-only hero design');
 check(homeJs.includes("toggle.addEventListener('click'") &&
       homeJs.includes("event.key==='Escape'"),
@@ -415,7 +414,7 @@ for(const path of [
  'design-upgrade.css','project-showcase.css','script.js','styles.css',
  'visual-details.js','water-hero.css','water-hero.js','home-preview',
  'assets/flow-card.svg','assets/solar-card.svg','assets/enzo-card.svg',
- 'assets/water-aj.webp'
+ 'assets/water-aj.webp','hero-lines.css'
 ]){
  check(!existsSync(join(root,path)),'Removed legacy homepage content must not return: '+path);
 }
