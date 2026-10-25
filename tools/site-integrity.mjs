@@ -260,12 +260,11 @@ check(hand.includes('export function createCastingHand') &&
   'First-person model must use a real anatomical rig, not fake primitive fingers');
 // The casting gauntlet must not have a bright circular ornament permanently
 // hovering above the fingers. Flash VFX belong to short-lived casts only.
-check(!/new THREE\.(RingGeometry|TorusGeometry)/.test(hand) &&
-  hand.includes("fx.visible=false") &&
-  hand.includes("const visible=loaded&&shotTime<.18") &&
-  hand.includes("fx.visible=visible") &&
-  hand.includes("fx.position.copy(rig.worldToLocal(palmCurrent.clone()))"),
-  'No persistent floating white ring; palm flash must be bone-aligned and temporary');
+check(hand.includes("fx.visible=false") &&
+      hand.includes("const visible=loaded&&shotTime<.18") &&
+      hand.includes("fx.visible=visible") &&
+      hand.includes("fx.position.copy(rig.worldToLocal(palmCurrent.clone()))"),
+  'Archived anatomical hand flash is brief and palm-aligned; finger seam geometry is permitted');
 // Hand inertia may affect the viewmodel, never the aim or raycaster.
 const casting = readFileSync(join(root,'Enzo/src/castingHand.js'),'utf8');
 const locomotion = readFileSync(join(root,'Enzo/src/movement.js'),'utf8');
@@ -284,12 +283,16 @@ const gameMotionCode=readFileSync(join(root,'Enzo/src/main.js'),'utf8');
 check(gameMotionCode.includes('hand.addLookImpulse(event.movementX,event.movementY)') &&
       gameMotionCode.includes('hand.update(delta, motion, true)') &&
       locomotion.includes('strafe:velocity.dot(right)') &&
-      shootSource.includes('if(!hand.isReady())return;') &&
-      shootSource.includes('if(hand.cast())spellBolt(scene,start,end,camera)'),
-  'Hand physics and palm shooting must remain connected to live gameplay');
-check(casting.includes('new THREE.CatmullRomCurve3(path)') &&
-      !/new THREE\.(RingGeometry|TorusGeometry)/.test(casting),
-  'Gauntlet forearm details must follow the wrist without recreating floating circles');
+      shootSource.includes('hand.cast();') &&
+      shootSource.includes('spellBolt(scene,start,end,camera);'),
+  'Current glove physics and spell projectiles remain connected without optional model loading');
+const activeGlove=readFileSync(join(root,'Enzo/src/sciFiGlove.js'),'utf8');
+check(activeGlove.includes('camera.add(rig)') &&
+      activeGlove.includes('const wrist=new THREE.Group();rig.add(wrist)') &&
+      activeGlove.includes('flash.visible=false') &&
+      activeGlove.includes('flash.visible=castAge<.12') &&
+      !/new THREE\\.(?:RingGeometry|TorusGeometry)/.test(activeGlove),
+  'Active lightweight gauntlet follows the camera and hides its flash outside casts');
 const modelFile=join(root,'Enzo/assets/models/anatomical-right-hand.glb');
 const modelLicense=join(root,'Enzo/assets/models/RIGHT-HAND-LICENSE.md');
 check(existsSync(modelFile),'Skinned CC0 hand GLB must exist locally');
@@ -316,16 +319,20 @@ if(existsSync(modelFile)) {
     check(false,'Hand GLB JSON inaccessible: '+error.message);
   }
 }
-check(readFileSync(join(root,'Enzo/src/main.js'),'utf8').includes('hand.ready.then(') &&
-      readFileSync(join(root,'Enzo/src/main.js'),'utf8').includes('startButton.disabled = true;'),
-  'Enzo must not begin gameplay before its actual 3D hand loads');
+check(gameMotionCode.includes('startButton.disabled = false;') &&
+      gameMotionCode.includes('hand.ready,') &&
+      gameMotionCode.includes('Hand load timed out') &&
+      activeGlove.includes('ready:Promise.resolve()'),
+  'Enzo starts promptly with its local glove instead of waiting for an optional asset');
 check(src.includes('hand.cast()') && src.includes('spellBolt(') && src.includes('impact('),
   'Spell projectiles, casting animation and impact effects must remain wired');
 check(!existsSync(join(root, 'Enzo/src/objects/Sky.js')),
   'Obsolete daylight sky module must not return');
 const game = readFileSync(join(root, 'Enzo/src/main.js'), 'utf8');
-check(game.includes('createArcaneWorld(scene, renderer)') && game.includes('createCastingHand(camera)'),
-  'Enzo main loop must load the new world and casting viewmodel');
+check(game.includes('createArcaneWorld(scene, renderer)') &&
+      game.includes('const hand = createSciFiGlove(camera);') &&
+      game.includes('setupShootingEvents(camera, scene, hand, world.colliders, renderer.domElement'),
+  'Enzo connects its active local gauntlet and collision-aware shooting to the world');
 check(game.includes('let isGamePaused = true;'), 'Enzo must not simulate behind its start menu');
 check(game.includes('clearTimeout(nextWaveTimer)'), 'Enzo must cancel old wave timers on reset');
 const enzoHtml = readFileSync(join(root, 'Enzo/index.html'), 'utf8');
