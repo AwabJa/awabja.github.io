@@ -16,7 +16,7 @@ const check = (ok, label) => {
   assertions++;
   if (!ok) problems.push(label);
 };
-const htmlPaths = ['index.html', 'Enzo/index.html', '3D Navigation Bar/index.html', 'Flow/index.html'];
+const htmlPaths = ['index.html', 'Enzo/index.html', 'Cinema/index.html', 'Flow/index.html'];
 
 const scripts = [];
 function walk(dir) {
@@ -51,7 +51,7 @@ for (const path of htmlPaths) {
     }
     check(!/unsafe-inline|unsafe-eval/i.test(csp), 'Unsafe CSP script/style permission in ' + path);
   }
-  check(/<meta[^>]*name="referrer"[^>]*content="no-referrer"/i.test(html),
+  check(/<meta[^>]*name="referrer"[^>]*content="(?:no-referrer|strict-origin-when-cross-origin)"/i.test(html),
     'Missing referrer policy: ' + path);
 
   for (const match of html.matchAll(/\b(?:href|src)="([^"]+)"/g)) {
@@ -380,23 +380,22 @@ check(game.includes("healthMeter.setAttribute('aria-valuenow'") &&
 const enzoEnemies = readFileSync(join(root, 'Enzo/src/enemies.js'), 'utf8');
 check(enzoEnemies.includes('enemy.traverse(child =>'),
   'Enzo must dispose meshes in enemy subtrees');
-const solar = readFileSync(join(root, '3D Navigation Bar/js/universe.js'), 'utf8');
-check(solar.includes("generateSpaceTexture('Moon'"),
-  'Moon should use generated texture, not the deleted photograph');
+check(existsSync(join(root,'Cinema/index.html')) && existsSync(join(root,'Cinema/app.js')) && existsSync(join(root,'Cinema/favicon.svg')), 'serivia project must remain published');
 // Assert the published homepage uses independent assets, not legacy site experiments.
 const homeHtml=readFileSync(join(root,'index.html'),'utf8');
 const homeCss=readFileSync(join(root,'homepage.css'),'utf8');
 const homeJs=readFileSync(join(root,'homepage.js'),'utf8');
-check(homeHtml.includes('href="homepage.css?v=4"') &&
+check(homeHtml.includes('href="homepage.css?v=5"') &&
       !homeHtml.includes('hero-lines.css') &&
       homeHtml.includes('src="homepage.js?v=4"'),
   'Homepage must load its single production stylesheet and JavaScript');
+check(homeHtml.includes('class="project project-serivia"') && homeHtml.includes('class="project-title">serivia') && !homeHtml.includes('project-solar') && !homeHtml.includes('Solar System Explorer'), 'Homepage must show serivia, not the retired Solar System');
 check(homeHtml.includes('href="Flow/"') &&
-      homeHtml.includes('href="3D%20Navigation%20Bar/"') &&
+      homeHtml.includes('href="Cinema/"') &&
       homeHtml.includes('href="Enzo/"'),
   'Homepage must retain live project links');
 check(homeHtml.includes('assets/homepage/flow-product.svg') &&
-      homeHtml.includes('assets/homepage/solar-interface.svg'),
+      homeHtml.includes('assets/homepage/serivia-product.svg'),
   'Homepage must retain its production artwork');
 check(!homeHtml.includes('noindex') && !homeHtml.includes('preview-pill'),
   'Published homepage must be indexable without preview chrome');
@@ -414,7 +413,7 @@ for(const path of [
  'design-upgrade.css','project-showcase.css','script.js','styles.css',
  'visual-details.js','water-hero.css','water-hero.js','home-preview',
  'assets/flow-card.svg','assets/solar-card.svg','assets/enzo-card.svg',
- 'assets/water-aj.webp','hero-lines.css'
+ 'assets/water-aj.webp','hero-lines.css','3D Navigation Bar','assets/homepage/solar-interface.svg'
 ]){
  check(!existsSync(join(root,path)),'Removed legacy homepage content must not return: '+path);
 }

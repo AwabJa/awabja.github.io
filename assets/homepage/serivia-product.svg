@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 690" role="img" aria-labelledby="title description">
+<title id="title">serivia — cinematic movie discovery</title>
+<desc id="description">Dark movie browser interface illustration with a yellow clapperboard logo, large cinematic featured film artwork, genre navigation and a row of movie posters.</desc>
+<defs>
+ <linearGradient id="background" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#23343a"/><stop offset=".48" stop-color="#142126"/><stop offset="1" stop-color="#0a1115"/></linearGradient>
+ <linearGradient id="sidebar" x1="0" x2="0.7" y1="0" y2="1"><stop stop-color="#1b2a30"/><stop offset="1" stop-color="#111b20"/></linearGradient>
+ <linearGradient id="hero" x1="0" y1="0" x2="1" y2=".9"><stop stop-color="#be865c"/><stop offset=".36" stop-color="#80694f"/><stop offset=".65" stop-color="#354044"/><stop offset="1" stop-color="#16262b"/></linearGradient>
+ <linearGradient id="heroShadow" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#091318" stop-opacity=".09"/><stop offset=".5" stop-color="#10191a" stop-opacity=".05"/><stop offset="1" stop-color="#091115" stop-opacity=".98"/></linearGradient>
+ <linearGradient id="p1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#937a4d"/><stop offset=".55" stop-color="#39444c"/><stop offset="1" stop-color="#111a26"/></linearGradient>
+ <linearGradient id="p2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#2d6474"/><stop offset=".6" stop-color="#1c323e"/><stop offset="1" stop-color="#091419"/></linearGradient>
+ <linearGradient id="p3" x1="0" y1="0" x2=".5" y2="1"><stop stop-color="#875153"/><stop offset=".7" stop-color="#49272e"/><stop offset="1" stop-color="#182024"/></linearGradient>
+ <linearGradient id="p4" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b18c54"/><stop offset=".64" stop-color="#6e675c"/><stop offset="1" stop-color="#21262a"/></linearGradient>
+ <radialGradient id="sun"><stop stop-color="#fff1b1"/><stop offset=".32" stop-color="#ffa945"/><stop offset=".8" stop-color="#e97a3c"/><stop offset="1" stop-color="#e97539" stop-opacity="0"/></radialGradient>
+ <filter id="blur"><feGaussianBlur stdDeviation="30"/></filter>
+ <clipPath id="heroClip"><rect x="266" y="102" width="678" height="336" rx="20"/></clipPath>
+ <clipPath id="clip"><rect width="1200" height="690" rx="0"/></clipPath>
+</defs>
+<g clip-path="url(#clip)">
+ <rect width="1200" height="690" fill="url(#background)"/>
+ <rect x="0" y="0" width="227" height="690" fill="url(#sidebar)"/>
+ <path d="M227 0V690" stroke="#405158" stroke-opacity=".34"/>
+ <g font-family="Arial, Helvetica, sans-serif">
+  <!-- Logo -->
+  <g transform="translate(34 30)" stroke="#ffd11b" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" fill="none">
+   <rect x="0" y="13" width="31" height="25" rx="3"/><path d="m0 13-1.8-7.4a2.8 2.8 0 0 1 2-3.4l26-5a2.8 2.8 0 0 1 3.4 2l2 7.8Z"/><path d="M5 0 10 10M16-2 21 8M27-4 31 5M0 20h31"/><path d="m12 22 11 6-11 6Z" fill="#ffd11b" stroke="none"/>
+  </g>
+  <text x="79" y="59" font-size="28" letter-spacing="-1.3" font-weight="700" fill="#f5f5f5">serivia</text>
+  <!-- Sidebar nav -->
+  <g fill="#a0afb5" font-size="16" font-weight="600">
+   <rect x="22" y="122" width="182" height="48" rx="12" fill="#ffffff" fill-opacity=".07"/>
+   <text x="56" y="153" fill="#fff">Home</text><text x="56" y="217">Favorites</text><text x="56" y="281">Coming soon</text><text x="56" y="345">Trending</text>
+   <text x="56" y="431" font-size="14">Settings</text><text x="56" y="479" font-size="14">Support</text>
+  </g>
+  <g stroke="#c3ccd0" stroke-width="2" fill="none" opacity=".88" stroke-linecap="round" stroke-linejoin="round">
+   <path d="m32 145 9-8 9 8v13h-6v-9h-6v9h-6Z" stroke="#fff"/>
+   <path d="M36 199c-6-7-13 3-6 9l11 11 11-11c7-6 0-16-6-9l-5 4Z"/>
+   <rect x="30" y="262" width="20" height="19" rx="2"/><path d="M34 258v8m12-8v8m-15 2h18"/>
+   <path d="m30 347 6-6 5 4 9-11m-6 0h6v6"/>
+   <circle cx="40" cy="426" r="7"/><circle cx="40" cy="426" r="2"/><path d="M31 464h18v12H39l-4 5v-5h-4Z"/>
+  </g>
+  <path d="M23 550H203" stroke="#596870" stroke-opacity=".38"/>
+  <text x="32" y="585" font-size="11" letter-spacing="1.3" fill="#82939b">DISCOVER WHAT'S NEXT</text>
+  <text x="32" y="608" font-size="13" fill="#a1afb3">Great films, one place.</text>
+  <!-- Toolbar -->
+  <rect x="262" y="26" width="120" height="49" rx="13" fill="#303c41"/>
+  <text x="281" y="57" font-size="15" font-weight="700" fill="#f4f5f5">Movies</text>
+  <path d="m353 47 6 6 6-6" fill="none" stroke="#b1bec1" stroke-width="2"/>
+  <rect x="394" y="26" width="607" height="49" rx="13" fill="#303c41"/>
+  <g fill="none" stroke="#adb8bc" stroke-width="2.1"><circle cx="420" cy="50" r="7"/><path d="m425 56 7 7"/><path d="M957 43h18m-18 8h18m-18 8h18"/></g>
+  <text x="451" y="56" font-size="14" fill="#9caeb6">Movies, genres, stories...</text>
+  <path d="M935 36V65" stroke="#ffffff" stroke-opacity=".13"/>
+  <rect x="1018" y="26" width="51" height="49" rx="13" fill="#303c41"/>
+  <g stroke="#d9dcdf" fill="none" stroke-width="2"><path d="M1043 37c-5 0-8 3-8 9v7l-3 5h22l-3-5v-7c0-6-3-9-8-9ZM1040 64h6"/></g>
+  <rect x="1080" y="26" width="92" height="49" rx="13" fill="#303c41"/>
+  <rect x="1089" y="33" width="34" height="34" rx="10" fill="#ffd11b"/>
+  <text x="1100" y="56" fill="#111f25" font-size="17" font-weight="700">S</text>
+  <path d="m1145 47 7 7 7-7" stroke="#b8c5c7" stroke-width="2" fill="none"/>
+  <!-- Hero distant cards -->
+  <rect x="922" y="145" width="117" height="245" rx="19" fill="url(#p4)"/>
+  <rect x="961" y="162" width="104" height="210" rx="19" fill="#20353b" opacity=".8"/>
+  <rect x="1008" y="173" width="108" height="185" rx="19" fill="url(#p2)" opacity=".8"/>
+  <!-- Featured cinematic hero -->
+  <g clip-path="url(#heroClip)">
+   <rect x="266" y="102" width="678" height="336" fill="url(#hero)"/>
+   <circle cx="557" cy="217" r="150" fill="url(#sun)" opacity=".54"/>
+   <ellipse cx="642" cy="157" rx="155" ry="65" fill="#e6b77e" opacity=".13" filter="url(#blur)"/>
+   <!-- Ridge silhouettes -->
+   <path d="M266 340 366 258 426 298 527 213 602 290 687 231 787 307 869 251 944 298V438H266Z" fill="#52616a" opacity=".61"/>
+   <path d="M266 371 358 330 426 343 522 273 582 332 691 298 762 332 848 287 944 331V438H266Z" fill="#263841" opacity=".83"/>
+   <path d="M266 412 400 345 478 371 568 308 662 369 782 344 873 373 944 334V438H266Z" fill="#14262b"/>
+   <!-- Large cinematic figure -->
+   <ellipse cx="617" cy="389" rx="100" ry="16" fill="#0b1517" opacity=".6"/>
+   <path d="M605 264q-30 5-36 47l-13 73h118l-20-85q-10-33-49-35Z" fill="#0c171b"/>
+   <ellipse cx="611" cy="248" rx="23" ry="28" fill="#0d1a1e"/>
+   <path d="M594 284 540 317l-13-11 59-51Z" fill="#0d1a1e"/>
+   <path d="M639 284 686 309l12-16-48-41Z" fill="#0d1a1e"/>
+   <rect x="266" y="102" width="678" height="336" fill="url(#heroShadow)"/>
+  </g>
+  <!-- Featured metadata -->
+  <g fill="#e8e8e8" font-size="12">
+   <rect x="290" y="122" width="78" height="28" rx="14" fill="#15252a" fill-opacity=".65" stroke="#fff" stroke-opacity=".25"/><text x="310" y="140">2h 45m</text>
+   <rect x="375" y="122" width="91" height="28" rx="14" fill="#15252a" fill-opacity=".65" stroke="#fff" stroke-opacity=".25"/><text x="394" y="140">Adventure</text>
+   <rect x="473" y="122" width="65" height="28" rx="14" fill="#15252a" fill-opacity=".65" stroke="#fff" stroke-opacity=".25"/><text x="491" y="140">Movie</text>
+   <rect x="545" y="122" width="62" height="28" rx="14" fill="#15252a" fill-opacity=".65" stroke="#fff" stroke-opacity=".25"/><text x="558" y="140">2026</text>
+  </g>
+  <circle cx="307" cy="397" r="22" fill="#fafafa" fill-opacity=".25" stroke="#fafafa" stroke-opacity=".4"/>
+  <path d="m300 385 18 12-18 12Z" fill="#fff"/>
+  <text x="344" y="391" font-size="17" fill="#fff" font-weight="700">Find your next favorite</text>
+  <text x="344" y="412" font-size="13" fill="#ced9dd">Discover movies worth watching</text>
+  <g fill="none" stroke="#ffffff" stroke-width="2.4">
+   <circle cx="891" cy="396" r="21" fill="#14252a" fill-opacity=".46"/>
+   <path d="M882 395c-6-8-13 4-6 10l15 12 15-12c7-6 0-18-6-10l-9 7Z" transform="translate(0 -4) scale(1 .77)"/>
+  </g>
+  <!-- Dots -->
+  <g fill="#71888d"><circle cx="868" cy="93" r="4"/><circle cx="882" cy="93" r="4"/><circle cx="896" cy="93" r="4"/><circle cx="910" cy="93" r="4"/></g>
+  <circle cx="868" cy="93" r="4" fill="#fff"/>
+  <!-- Genre pills -->
+  <g font-size="14" font-weight="600">
+   <rect x="265" y="460" width="110" height="42" rx="21" fill="#f4f5f5"/><text x="287" y="486" fill="#1a2126">Trending</text>
+   <rect x="383" y="460" width="119" height="42" rx="21" fill="#2c343b"/><text x="405" y="486" fill="#e9edee">Adventure</text>
+   <rect x="510" y="460" width="98" height="42" rx="21" fill="#2c343b"/><text x="534" y="486" fill="#e9edee">Action</text>
+   <rect x="616" y="460" width="110" height="42" rx="21" fill="#2c343b"/><text x="639" y="486" fill="#e9edee">Comedy</text>
+   <rect x="734" y="460" width="86" height="42" rx="21" fill="#2c343b"/><text x="757" y="486" fill="#e9edee">Drama</text>
+   <rect x="828" y="460" width="91" height="42" rx="21" fill="#2c343b"/><text x="848" y="486" fill="#e9edee">Sci-Fi</text>
+  </g>
+  <text x="266" y="535" font-size="14" fill="#b9c4c6" font-weight="700">Featured for you</text>
+  <text x="1030" y="535" font-size="13" fill="#8d9a9d">Explore more</text>
+  <!-- Poster grid: original abstract art, no external photos -->
+  <g>
+   <rect x="265" y="551" width="150" height="213" rx="14" fill="url(#p1)"/>
+   <circle cx="344" cy="610" r="46" fill="#eaba69" opacity=".5" filter="url(#blur)"/>
+   <path d="m265 728 65-130 45 70 40-36v132H265Z" fill="#121d21" opacity=".8"/>
+   <text x="284" y="594" font-size="11" fill="#f5e5c1" letter-spacing="2">DISCOVER</text>
+   <rect x="428" y="551" width="150" height="213" rx="14" fill="url(#p2)"/>
+   <circle cx="504" cy="614" r="45" fill="#8edce1" opacity=".4" filter="url(#blur)"/>
+   <path d="M428 735q76-190 150 0Z" fill="#081c22" opacity=".85"/>
+   <text x="445" y="594" font-size="11" fill="#d2e4e7" letter-spacing="2">BEYOND</text>
+   <rect x="591" y="551" width="150" height="213" rx="14" fill="url(#p3)"/>
+   <circle cx="675" cy="639" r="56" fill="#dd8f77" opacity=".4" filter="url(#blur)"/>
+   <path d="M625 764c-9-91 61-181 93 0Z" fill="#20171e" opacity=".85"/>
+   <text x="607" y="594" font-size="11" fill="#ffdbd0" letter-spacing="2">AFTER DARK</text>
+   <rect x="754" y="551" width="150" height="213" rx="14" fill="url(#p4)"/>
+   <path d="m754 707 70-100 80 121v40H754Z" fill="#29383c"/>
+   <text x="770" y="594" font-size="11" fill="#f4e3ce" letter-spacing="2">NEW WORLDS</text>
+   <rect x="917" y="551" width="150" height="213" rx="14" fill="url(#p2)"/>
+  </g>
+ </g>
+</g>
+</svg>

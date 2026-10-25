@@ -7,7 +7,7 @@ Personal portfolio showcasing web development, user interfaces and interactive p
 ## Featured projects
 
 - **[Flow](https://awabja.github.io/Flow/)** — Productivity workspace for projects, tasks and weekly planning.
-- **[Solar System Explorer](https://awabja.github.io/3D%20Navigation%20Bar/)** — Interactive 3D exploration of the Sun, planets and Moon.
+- **[serivia](https://awabja.github.io/Cinema/)** — Cinematic movie discovery app with genre browsing, movie details and personal watchlist; optional TMDB connection.
 - **[Enzo](https://awabja.github.io/Enzo/)** — Browser-based first-person game prototype.
 
 Each project has its own directory. The homepage links to the existing project URLs.
@@ -19,9 +19,9 @@ Each project has its own directory. The homepage links to the existing project U
 | `index.html` | Published homepage |
 | `homepage.css` | Black-theme layout and general styles |
 | `homepage.js` | Navigation, scroll progress, and animation |
-| `assets/homepage/` | Homepage-specific project artwork |
+| `assets/homepage/` | Homepage artwork, including the serivia interface illustration |
 | `favicon.svg` | Shared favicon |
-| `Flow/`, `Enzo/`, `3D Navigation Bar/` | Independent projects |
+| `Flow/`, `Enzo/`, `Cinema/` | Independent projects |
 | `tools/homepage-browser-check.mjs` | Production responsive and navigation QA |
 | `tools/site-integrity.mjs` | Static site and project regression audit |
 

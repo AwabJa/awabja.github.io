@@ -2,7 +2,7 @@
 
 **Preview:** https://awabja.github.io/Cinema/
 
-A standalone, responsive, no-build movie discovery prototype inspired by the supplied dashboard reference. It is deliberately isolated from the portfolio homepage and the existing Solar System, Enzo, and Flow projects.
+A standalone, responsive, no-build movie discovery prototype inspired by the supplied dashboard reference. It is featured as project 02 on the portfolio homepage, alongside Flow and Enzo.
 
 ## Implemented
 
@@ -33,4 +33,4 @@ Changes are tested with \`tools/cinema-browser-check.mjs\` in the \`Cinema previ
 
 ## Portfolio
 
-The existing Solar System Explorer card stays on the homepage until this prototype is approved. After that, replace the card's title, description, image, and URL in root \`index.html\`, while leaving other project pages intact.
+serivia is featured on the homepage as project 02. The retired Solar System Explorer directory and its homepage illustration have been removed from the published repository.

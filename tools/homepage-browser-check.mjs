@@ -80,7 +80,10 @@ try{
    assert(security.includes("script-src 'self';")&&security.includes("object-src 'none'"),'Strict homepage CSP');
    assert.equal(await production.locator('.project').count(),3,'Existing project cards remain intact');
    assert.equal(await production.locator('.project-flow a').getAttribute('href'),'Flow/','Published Flow link is correct');
-   assert.equal(await production.locator('.project-solar a').getAttribute('href'),'3D%20Navigation%20Bar/','Published Solar link is correct');
+   assert.equal(await production.locator('.project-serivia a').getAttribute('href'),'Cinema/','serivia project links to Cinema');
+   assert.equal(await production.locator('.project-serivia .project-title').innerText(),'serivia','serivia branding is lowercase');
+   assert.equal(await production.locator('.project-serivia img').getAttribute('src'),'assets/homepage/serivia-product.svg','Local serivia card artwork');
+   assert.equal(await production.locator('.project-solar').count(),0,'Old Solar project card removed');
    assert.equal(await production.locator('.project-enzo a').getAttribute('href'),'Enzo/','Published Enzo link is correct');
    assert.equal(await production.locator('.project-flow img').getAttribute('src'),'assets/homepage/flow-product.svg','Published Flow image is production-owned');
    assert.equal(await production.locator('.contact-cta').getAttribute('href'),'mailto:awabjahmed@gmail.com','Email Me contact button is preserved');
@@ -105,7 +108,7 @@ try{
    await production.locator('.menu-panel a[href="#work"]').click();
    assert.equal(await liveMenu.getAttribute('aria-expanded'),'false','Published hamburger closes');
    assert.deepEqual(prodErrors,[],'Published homepage has no browser JavaScript errors');
-   for(const href of ['Flow/','3D%20Navigation%20Bar/','Enzo/']){
+   for(const href of ['Flow/','Cinema/','Enzo/']){
      assert.equal((await production.request.get(origin+'/'+href)).status(),200,'Live project '+href+' resolves');
    }
    assert.equal(await production.locator('body').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(9, 9, 9)','Near-black theme is retained');
@@ -160,7 +163,7 @@ try{
  assert.equal(await reduced.locator('.hero-display-line').count(),1);
  assert.equal(await reduced.locator('.project').count(),3);
  await reduced.close();
- for(const legacy of ['index.previous.html','home-preview/','water-hero.js','styles.css','assets/water-aj.webp']){
+ for(const legacy of ['index.previous.html','home-preview/','water-hero.js','styles.css','assets/water-aj.webp','3D%20Navigation%20Bar/','assets/homepage/solar-interface.svg']){
    const response=await browser.newPage();
    assert.equal((await response.goto(origin+'/'+legacy,{waitUntil:'domcontentloaded'})).status(),404,'Obsolete file no longer served: '+legacy);
    await response.close();
