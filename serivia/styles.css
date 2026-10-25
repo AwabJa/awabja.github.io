@@ -967,3 +967,10 @@
   .sidebar .side-nav-secondary{margin-top:10px}
   .sidebar .side-activity{margin-top:8px}
 }
+/* Keep the reference home dashboard to a single visible desktop page. */
+@media(min-width:761px){
+  /* On the hero landing screen the tiny legal footer adds unwanted height.
+     Attribution is still accessible from Settings and the Credits dialog;
+     secondary views retain the footer. */
+  .main-area:has(.featured-section:not([hidden])) > .app-footer{display:none}
+}
