@@ -46,19 +46,21 @@ try{
   assert(data.scroll<=data.vw+2,`${width}px viewport must not overflow horizontally: ${data.scroll}px`);
   assert(data.imgs.every(x=>x.complete&&x.width>0),'All project artwork must load');
   assert.equal(data.projects,3,'All three projects must appear');
+  assert.equal(await page.locator('.side-rail').isVisible(),true,'Fixed sidebar navigation must be visible');
+  assert.equal(await page.locator('#work-title').innerText(),'Projects','Editorial project heading is visible');
+  assert.equal(await page.locator('.manifesto-strip').count(),0,'Old ticker must be gone');
+  assert.equal(await page.locator('.hero-orbit').count(),0,'Old orbital decoration must be gone');
   assert.equal(errors.length,0,'No browser JS errors: '+errors.join('; '));
   for(const href of ['../Flow/index.html','../Enzo/index.html','../3D%20Navigation%20Bar/index.html']){
    assert(await page.locator(`a[href="${href}"]`).count()>0,`Project link missing: ${href}`);
   }
-  if(width<=390){
-   const toggle=page.locator('.nav-toggle');
-   assert.equal(await toggle.isVisible(),true,'Mobile nav toggle visible');
-   await toggle.click();assert.equal(await toggle.getAttribute('aria-expanded'),'true');
-   await page.locator('.nav-panel a[href="#work"]').click();
-   assert.equal(await toggle.getAttribute('aria-expanded'),'false','Mobile nav closes on navigation');
-  }else{
-   assert.equal(await page.locator('.nav-panel').isVisible(),true,'Desktop navigation visible');
-  }
+  const toggle=page.locator('.rail-toggle');
+  assert.equal(await toggle.isVisible(),true,'Fixed rail toggle is visible at every width');
+  await toggle.click();
+  assert.equal(await toggle.getAttribute('aria-expanded'),'true','Rail menu must open');
+  assert.equal(await page.locator('.rail-menu').isVisible(),true,'Expanded menu is visible');
+  await page.locator('.rail-menu a[href="#work"]').click();
+  assert.equal(await toggle.getAttribute('aria-expanded'),'false','Rail menu closes after navigation');
   checks.push({width,result:'PASS'});
   await page.close();
  }
