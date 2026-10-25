@@ -55,7 +55,7 @@ try{
    assert.equal(await page.locator('#mobileMenu').isVisible(),true,'Mobile has navigation toggle');
    await page.locator('#mobileMenu').click();
    assert.equal(await page.locator('#mobileMenu').getAttribute('aria-expanded'),'true','Mobile navigation opens');
-   assert.equal(await page.locator('.sidebar').evaluate(el=>getComputedStyle(el).visibility),'visible');
+   await page.waitForFunction(()=>getComputedStyle(document.querySelector('.sidebar')).visibility==='visible');
    await page.locator('.side-link[data-view="home"]').click();
    assert.equal(await page.locator('#mobileMenu').getAttribute('aria-expanded'),'false','Mobile navigation closes on selection');
   }else{
