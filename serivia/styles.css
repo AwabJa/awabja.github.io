@@ -505,29 +505,32 @@
    rather than hiding controls, results or metadata. */
 @media (min-width:761px){
   :root{
-    --screen-pad:clamp(16px,1.55vw,26px);
-    --banner-h:clamp(265px,min(44dvh,24.3vw),405px);
-    --poster-gap:clamp(10px,1vw,18px);
+    --screen-pad:clamp(13px,1.6vw,30px);
+    --poster-gap:clamp(10px,1.02vw,18px);
+    /* Match the physical 2:3 film-poster artwork, not an artificial crop. */
+    --poster-w:clamp(116px,min(11.8vw,18.2dvh),202px);
+    /* Fit the hero and first full poster row into the same desktop viewport.
+       Smaller monitors can still scroll rather than clipping actions. */
+    --banner-h:clamp(235px,min(45dvh,30vw,calc(100dvh - var(--poster-w)*1.5 - 198px)),510px);
   }
   body{
-    background:radial-gradient(ellipse 110% 110% at 50% 50%,#26454e 0%,#17353e 58%,#0f2a33 100%);
+    background:#0b1b21;
   }
   .site-wrap{
-    display:grid;
-    place-items:stretch;
+    display:block;
     width:100%;
-    height:100dvh;
     min-height:100dvh;
-    padding:clamp(12px,4.8dvh,46px) clamp(12px,2.22vw,40px) clamp(12px,3.6dvh,35px);
+    height:100dvh;
+    padding:0;
   }
   .app-shell{
-    grid-template-columns:clamp(234px,20.3%,326px) minmax(0,1fr);
+    grid-template-columns:clamp(230px,19.4vw,350px) minmax(0,1fr);
     width:100%;
     max-width:none;
-    height:100%;
+    height:100dvh;
     min-height:0;
-    border-radius:16px;
-    box-shadow:0 30px 90px #07181d80,0 1px 12px #05131940;
+    border-radius:0;
+    box-shadow:none;
     overflow:hidden;
     background:linear-gradient(115deg,#10242b,#0b1c22 54%,#09181e);
   }
@@ -664,7 +667,7 @@
     min-width:0;
     min-height:0;
     height:100%;
-    padding:clamp(14px,1.85dvh,19px) var(--screen-pad) 12px 0;
+    padding:clamp(14px,1.85dvh,20px) var(--screen-pad) 8px clamp(12px,1.9vw,36px);
     overflow-y:auto;
     overflow-x:clip;
     overscroll-behavior-y:contain;
@@ -722,6 +725,13 @@
   .main-area .featured{
     border-radius:19px;
     box-shadow:0 12px 34px #0006;
+  }
+  /* Use natural film-frame scaling rather than stretching the image.
+     Backdrops fill their cinematic window; portrait-only artwork retains
+     the preexisting letterboxed treatment. */
+  .main-area .featured:not(.portrait-art) .feature-art{
+    object-fit:cover;
+    object-position:center 45%;
   }
   .main-area .peek-front{
     width:calc(var(--fan-space) * .76);
@@ -828,18 +838,21 @@
     padding-bottom:7px;
   }
   #main .movie-card{
-    flex:0 0 clamp(134px,calc((100% - 5 * var(--poster-gap)) / 6),202px);
-    width:clamp(134px,calc((100% - 5 * var(--poster-gap)) / 6),202px);
-    max-width:202px;
+    flex:0 0 var(--poster-w);
+    width:var(--poster-w);
+    max-width:var(--poster-w);
     min-height:0;
   }
   #main .poster-wrap{
-    aspect-ratio:0.87;
+    aspect-ratio:2/3;
     border-radius:14px;
+    background:#152329;
   }
   #main .poster-wrap>img{
-    object-fit:cover;
-    object-position:center 46%;
+    object-fit:contain;
+    object-position:center;
+    width:100%;
+    height:100%;
   }
   #main .movie-name{
     display:block;
@@ -891,12 +904,13 @@
 @media(min-width:761px) and (max-width:1199px){
   :root{
     --screen-pad:16px;
-    --banner-h:clamp(240px,min(38dvh,27vw),355px);
+    --poster-w:clamp(112px,min(12.2vw,17.7dvh),166px);
+    --banner-h:clamp(220px,min(42dvh,32vw,calc(100dvh - var(--poster-w)*1.5 - 190px)),380px);
     --poster-gap:clamp(9px,.9vw,13px);
   }
   .app-shell{grid-template-columns:clamp(190px,20vw,240px) minmax(0,1fr)}
   .sidebar{padding-left:18px;padding-right:11px}
-  .main-area{padding-left:0}
+  .main-area{padding-left:clamp(12px,1.5vw,20px)}
   .main-area .toolbar{
     grid-template-columns:105px minmax(135px,1fr) 44px 48px;
     gap:9px;
@@ -913,7 +927,8 @@
    scroll fallback rather than collisions at unusual browser zoom levels. */
 @media(min-width:761px) and (max-height:740px){
   :root{
-    --banner-h:clamp(215px,min(35dvh,24vw),293px);
+    --poster-w:clamp(98px,min(11vw,17dvh),140px);
+    --banner-h:clamp(190px,min(37dvh,29vw,calc(100dvh - var(--poster-w)*1.5 - 176px)),310px);
     --poster-gap:10px;
   }
   .sidebar .side-nav{margin-top:12px;gap:2px}
@@ -946,19 +961,19 @@
 /* Smaller tablets use the native mobile drawer before the dense desktop
    toolbar becomes too narrow for accessible controls. */
 @media(min-width:761px) and (max-width:900px){
-  .site-wrap{padding:10px}
+  .site-wrap{padding:0}
   .app-shell{grid-template-columns:205px minmax(0,1fr)}
-  .main-area{padding-right:12px}
+  .main-area{padding-right:12px;padding-left:12px}
   .main-area .featured-stack{--fan-space:86px}
   .main-area .toolbar{gap:7px}
 }
-/* Mobile maintains the existing poster ratio and native document scrolling. */
+/* Mobile maintains the native document scroll and full poster art. */
 @media(max-width:760px){
   #main .poster-wrap{aspect-ratio:2/3}
   #main .poster-wrap>img{object-fit:contain}
 }
 
-/* Reference 1672x941 finishing touches — preserve click targets and scroll. */
+/* Cinematic full-viewport finishing touches — preserve click targets and scroll. */
 @media(min-width:1200px){
   .sidebar .portfolio-link{display:none}
 }
