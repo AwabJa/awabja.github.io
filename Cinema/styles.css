@@ -125,3 +125,10 @@
 .tmdb-connect-error{color:#ffbd8c;font-size:12px;line-height:1.55}
 .tmdb-disconnect{margin-top:12px;border:1px solid #607176;background:#27373d;border-radius:10px;color:#fff;padding:10px 14px;font-size:12px}
 @media(max-width:480px){.catalog-notice{padding:10px;gap:7px}.catalog-notice-text strong{font-size:11px}.catalog-notice-text{font-size:10px}.catalog-notice button{font-size:10px;padding:9px;max-width:102px}.pagination{flex-wrap:wrap}}
+
+/* Full catalog mode uses a vertically browsable, multi-row grid. The demo
+   preserves the original single-row cinematic screenshot composition. */
+.movie-strip.is-live{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));align-items:start;gap:19px 15px;overflow:visible;scroll-snap-type:none;margin-right:0;padding:4px 3px 22px}
+.movie-strip.is-live .movie-card{width:100%;min-width:0;max-width:100%;flex-basis:auto;scroll-snap-align:none}
+.movie-strip.is-live .poster-wrap{width:100%}
+@media(max-width:480px){.movie-strip.is-live{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 10px}}

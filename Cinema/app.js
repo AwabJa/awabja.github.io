@@ -154,6 +154,11 @@ function setArt(img,movie,role='poster'){
  container?.classList.remove('image-failed','portrait-art');
  if(landscape&&!movie.backdrop)container?.classList.add('portrait-art');
  if(container)container.dataset.artTitle=movie.title;
+ if(!file){
+  img.hidden=true;img.removeAttribute('srcset');img.removeAttribute('src');
+  container?.classList.add('image-failed');
+  return;
+ }
  img.hidden=false;
  img.alt=role==='poster'?movie.title+' movie poster':movie.title+' movie artwork';
  img.decoding='async';

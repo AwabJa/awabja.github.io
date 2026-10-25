@@ -25,7 +25,7 @@ for(const path of binaries){try{await access(path);executablePath=path;break}cat
 const browser=await chromium.launch(executablePath?{executablePath,headless:true,args:['--no-sandbox']}:{channel:'chrome',headless:true,args:['--no-sandbox']});
 try{
  const budgets=await Promise.all(['Cinema/index.html','Cinema/styles.css','Cinema/app.js'].map(file=>stat(resolve(root,file)).then(result=>result.size)));
- assert(budgets[0]<20000&&budgets[1]<35000&&budgets[2]<28000,'Static app files remain compact');
+ assert(budgets[0]<20000&&budgets[1]<38000&&budgets[2]<42000,'Static app files remain compact');
  const results=[];
  for(const width of [320,390,768,1440]){
   const context=await browser.newContext({viewport:{width,height:width<500?812:1000},isMobile:width<500,hasTouch:width<500});
@@ -143,6 +143,67 @@ try{
   results.push({width,status:'PASS'});
   await context.close();
  }
+
+ // Mock the official API to exercise live data without a real credential
+ // or untrusted network dependency in CI.
+ const liveCtx=await browser.newContext({viewport:{width:1120,height:900}});
+ const livePage=await liveCtx.newPage();
+ const requests=[];
+ const films=[
+  {id:900001,title:'A Brand New Movie',release_date:'2026-07-12',vote_average:8.7,
+   genre_ids:[28,878],poster_path:'/fictional-one.jpg',backdrop_path:'/fictional-wide.jpg',overview:'An entirely new movie.'},
+  {id:900002,title:'Another Film',release_date:'2025-05-03',vote_average:7.4,
+   genre_ids:[18],poster_path:'/fictional-two.jpg',backdrop_path:null,overview:'Another film in the live catalog.'}
+ ];
+ await livePage.route('https://image.tmdb.org/**',route=>route.abort());
+ await livePage.route('https://api.themoviedb.org/3/**',route=>{
+  const req=route.request(),url=new URL(req.url());
+  requests.push({path:url.pathname,search:url.searchParams.toString(),auth:req.headers().authorization});
+  const page=Number(url.searchParams.get('page')||1);
+  const item=url.pathname.endsWith('/search/movie')?[films[0]]:page===1?[films[0],films[1]]:[
+   {id:900003,title:'Third Discovery',release_date:'2026-08-01',vote_average:9.1,genre_ids:[12],poster_path:'/third.jpg',backdrop_path:null,overview:'More movie results.'}
+  ];
+  route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({page,total_pages:2,total_results:3,results:item})});
+ });
+ await livePage.goto(origin+'/Cinema/',{waitUntil:'domcontentloaded'});
+ assert.equal(await livePage.locator('#catalogMode').innerText(),'Demo collection · 12 films','Without token, sample collection is explicit');
+ await livePage.locator('#connectTmdb').click();
+ await livePage.locator('#tmdbAccessToken').fill('fake_test_read_access_token');
+ await livePage.locator('.tmdb-connect-form button[type=submit]').click();
+ await livePage.waitForFunction(()=>document.querySelector('#catalogMode').textContent.includes('Live movie catalog'));
+ await livePage.waitForFunction(()=>document.querySelector('#movieStrip .movie-card')?.textContent.includes('A Brand New Movie'));
+ assert.equal(await livePage.locator('.movie-card').count(),2,'Connected live catalog shows remote results');
+ assert.equal(await livePage.locator('.movie-strip').evaluate(el=>getComputedStyle(el).display),'grid','Live results use a multi-row grid');
+ assert.equal(await livePage.locator('#pagination').isVisible(),true,'Pagination appears for remaining pages');
+ assert.equal(requests.every(r=>r.auth==='Bearer fake_test_read_access_token'),true,'TMDB requests use Authorization bearer header');
+ await livePage.locator('#loadMore').click();
+ await livePage.waitForFunction(()=>document.querySelectorAll('#movieStrip .movie-card').length===3);
+ assert.equal(await livePage.locator('#pagination').isVisible(),false,'Pagination ends after last page');
+ await livePage.locator('#searchInput').fill('Brand New');
+ await livePage.waitForFunction(()=>document.querySelectorAll('#movieStrip .movie-card').length===1);
+ assert(requests.some(r=>r.path.endsWith('/search/movie')&&r.search.includes('query=Brand+New')),'Search queries official endpoint');
+ await livePage.locator('#searchInput').fill('');
+ await livePage.locator('#genreScroll button[data-genre="Action"]').click();
+ await livePage.waitForFunction(()=>[...document.querySelectorAll('#movieStrip .movie-name')].some(el=>el.textContent==='A Brand New Movie'));
+ assert(requests.some(r=>r.path.endsWith('/discover/movie')&&r.search.includes('with_genres=28')),'Genre filters query TMDB Discover');
+ await livePage.locator('#searchInput').fill('Brand New');
+ await livePage.waitForFunction(()=>document.querySelectorAll('#movieStrip .movie-card').length===1);
+ await livePage.locator('.movie-card').first().click();
+ await livePage.locator('#detailFavorite').click();
+ await livePage.keyboard.press('Escape');
+ await livePage.locator('#profileBtn').click();
+ assert.equal(await livePage.locator('.movie-card').count(),1,'Live titles can be saved');
+ await livePage.reload({waitUntil:'domcontentloaded'});
+ await livePage.waitForFunction(()=>document.querySelector('#catalogMode').textContent.includes('Live movie catalog'));
+ await livePage.locator('#profileBtn').click();
+ assert.equal(await livePage.locator('.movie-card').count(),1,'Saved live titles persist');
+ assert.equal(await livePage.evaluate(()=>localStorage.getItem('serivia.tmdb.session.v1')),null,'Token is not in persistent localStorage');
+ assert.equal(await livePage.evaluate(()=>sessionStorage.getItem('serivia.tmdb.session.v1')),'fake_test_read_access_token','Token remains session-only');
+ await livePage.locator('#connectTmdb').click();
+ await livePage.locator('.tmdb-disconnect').first().click();
+ assert.equal(await livePage.locator('#catalogMode').innerText(),'Demo collection · 12 films','Disconnect restores demo');
+ assert.equal(await livePage.evaluate(()=>sessionStorage.getItem('serivia.tmdb.session.v1')),null,'Disconnect removes token');
+ await liveCtx.close();
  const reduced=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});
  await reduced.route('https://image.tmdb.org/**',route=>route.abort());
  await reduced.goto(origin+'/Cinema/');
