@@ -88,14 +88,16 @@ try{
   assert(fan.back.right<=fan.main.right+3,'Fanned covers fit inside the main content at '+width+'px');
   assert(fan.hero.width>fan.front.width*2.5,'Main hero remains much larger than fanned preview cards');
   if(width>=1440){
-   // Preserve the original 750px featured card instead of scaling it
-   // with large monitors.
-   assert(Math.abs(fan.hero.width-750)<6,
-     'Featured movie remains 750px at desktop sizes');
-   assert(fan.hero.width/fan.front.width>5.7,
-     'Fanned preview covers remain smaller than the main movie');
-   assert(fan.hero.width<fan.main.width*.85,
-     'Main banner leaves room for its fanned previews');
+   // The 750px reference art was taken from a 1232px dashboard.
+   // A 1920px viewport should proportionally enlarge BOTH art and previews.
+   const expected=750*width/1232;
+   assert(Math.abs(fan.hero.width-expected)<65,
+     'Hero scales proportionally from the reference instead of stopping at 750px: '+fan.hero.width+' vs '+expected);
+   assert(Math.abs(fan.hero.width/fan.front.width-6.3)<.85,
+     'Fan maintains the relative scale of the original composition');
+   assert(fan.hero.width<fan.main.width*.85,'Featured banner still leaves room for previews');
+   assert(Math.abs((fan.main.right-width*.0227)-fan.back.right)<30,
+     'Fanned stack fills the content width without a blank strip');
   }
   await page.locator('#peekFront').click();
   assert.equal(await page.locator('#featuredTitle').innerText(),'Dune: Part Two','Clicking first fanned card changes the hero movie');
@@ -131,16 +133,13 @@ try{
    return {left:rect.left,right:rect.right,width:rect.width,height:rect.height,viewport:innerWidth,viewportHeight:innerHeight,
     radius:getComputedStyle(el).borderTopLeftRadius};
   });
-  if(width<=760){
-   assert(Math.abs(shellGeometry.width-width)<3,'Phone layout spans browser width');
-   assert(Math.abs(shellGeometry.left)<2,'Phone layout begins at screen edge');
-   assert.equal(shellGeometry.radius,'0px','Phone has no outer frame');
-  }else{
-   assert(shellGeometry.width<=1232+2,'Desktop frame is reference sized');
-   assert(shellGeometry.width<=width-30,'Desktop has visible outside margins');
-   assert(Math.abs(shellGeometry.left-(width-shellGeometry.width)/2)<3,'Dashboard centered in viewport');
-   assert.equal(shellGeometry.radius,'23px','Desktop dashboard has rounded corners');
-   assert(shellGeometry.height<=883,'Desktop frame stays within the reference height');
+  assert(Math.abs(shellGeometry.width-width)<3,
+    'Application spans the full browser width at '+width+'px');
+  assert(Math.abs(shellGeometry.left)<2,'Application begins at the viewport edge');
+  assert(shellGeometry.radius==='0px','Application has no floating frame');
+  if(width>760){
+   assert(Math.abs(shellGeometry.height-shellGeometry.viewportHeight)<3,
+     'Desktop application fills viewport height');
   }
   assert(doc.area>180,'Content pane is usable');
   await page.waitForFunction(()=>document.querySelector('.poster-wrap')?.classList.contains('image-failed'));
