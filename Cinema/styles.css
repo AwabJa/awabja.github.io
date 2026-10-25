@@ -76,3 +76,6 @@
  .featured-stack{margin-right:48px}
  .peek-front{right:-40px;width:54px}
 }
+
+/* A closing off-canvas drawer must never intercept carousel swipes or taps. */
+@media(max-width:760px){.sidebar:not(.is-open){pointer-events:none}}
