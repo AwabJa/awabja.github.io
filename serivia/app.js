@@ -118,7 +118,6 @@ async function loadLive(append=false){
   }
   movies.forEach(m=>byId.set(m.id,m));
   liveMovies=append?[...liveMovies,...movies.filter(m=>!liveMovies.some(old=>old.id===m.id))]:movies;
-  sortMovies(liveMovies,true);
   livePage=Number(data.page)||page;livePages=Math.min(500,Number(data.total_pages)||1);
   liveTotal=Number(data.total_results)||liveMovies.length;
  }catch(error){
@@ -150,7 +149,7 @@ const imageSizes={poster:'(max-width:480px) 145px, (max-width:1000px) 155px, 180
 function setArt(img,movie,role='poster'){
  const landscape=role!=='poster';
  const file=landscape?widescreen(movie):movie.poster;
- const sizes=role==='recent'?['w300','w780']:landscape?['w780','w1280']:['w342','w500','w780'];
+ const sizes=landscape?['w780','w1280']:['w342','w500','w780'];
  const container=img.parentElement;
  container?.classList.remove('image-failed','portrait-art');
  if(landscape&&!movie.backdrop)container?.classList.add('portrait-art');
@@ -164,8 +163,8 @@ function setArt(img,movie,role='poster'){
  img.alt=role==='poster'?movie.title+' movie poster':movie.title+' movie artwork';
  img.decoding='async';
  img.sizes=imageSizes[role]||imageSizes.backdrop;
- img.srcset=sizes.map((size,i)=>pic(file,size)+' '+(role==='recent'?[300,780][i]:landscape?[780,1280][i]:[342,500,780][i])+'w').join(', ');
- img.src=pic(file,role==='recent'?'w300':landscape?'w1280':'w780');
+ img.srcset=sizes.map((size,i)=>pic(file,size)+' '+(landscape?[780,1280][i]:[342,500,780][i])+'w').join(', ');
+ img.src=pic(file,landscape?'w1280':'w780');
  img.onerror=()=>{
   img.onerror=null;img.removeAttribute('srcset');
   // A CDN error must leave an intentional, readable movie-title tile.
@@ -211,16 +210,11 @@ function filters(){
   if(m.rating<state.rating)return false;
   return true;
  });
- return sortMovies(out,false);
-}
-function sortMovies(items,live=false){
- // Search preserves TMDB relevance by default; explicit sorting applies to
- // all loaded results, including subsequent pages.
- if(!live&&state.view==='trending'&&state.sort==='featured')items.sort((a,b)=>b.rating-a.rating);
- else if(state.sort==='rating')items.sort((a,b)=>b.rating-a.rating);
- else if(state.sort==='year')items.sort((a,b)=>b.year-a.year);
- else if(state.sort==='az')items.sort((a,b)=>a.title.localeCompare(b.title));
- return items;
+ if(state.view==='trending')out.sort((a,b)=>b.rating-a.rating);
+ else if(state.sort==='rating')out.sort((a,b)=>b.rating-a.rating);
+ else if(state.sort==='year')out.sort((a,b)=>b.year-a.year);
+ else if(state.sort==='az')out.sort((a,b)=>a.title.localeCompare(b.title));
+ return out;
 }
 function drawMovieCard(movie){
  const card=node('button','movie-card');card.type='button';card.setAttribute('aria-label','View details for '+movie.title);
@@ -385,7 +379,7 @@ function openInfo(kind){
    });body.appendChild(disconnect);
   }else{
    const form=node('form','tmdb-connect-form'),label=node('label','','TMDB API Read Access Token');
-   const input=node('input');input.type='password';input.required=true;input.autocomplete='off';input.spellcheck=false;input.maxLength=512;
+   const input=node('input');input.type='password';input.required=true;input.autocomplete='off';input.spellcheck=false;
    input.placeholder='Paste your TMDB API Read Access Token';input.id='tmdbAccessToken';
    label.htmlFor=input.id;
    const note=node('small','', 'Get a noncommercial API token from your TMDB account’s Settings → API page. It is not stored in the repository.');
@@ -400,24 +394,16 @@ function openInfo(kind){
      const data=await tmdb('movie/popular',{page:1},candidate);
      if(!Array.isArray(data.results))throw Error('Unexpected TMDB response.');
      token=candidate;try{sessionStorage.setItem(TOKEN_KEY,token)}catch{}
-      input.value='';
      state.view='home';state.genre='Trending';state.query='';$('searchInput').value='';
      $('infoDialog').close();updateCatalogNotice();loadLive(false);
     }catch(err){error.textContent=err.message==='Failed to fetch'?'Unable to reach TMDB. Check your network.':err.message}
-    finally{connect.disabled=false;connect.textContent='Connect and browse movies'}
+    finally{connect.disabled=false;connect.textContent='Connect and browse movies';input.value=''}
    });
    body.appendChild(form);
   }
   const tmdbLink=node('a','', 'Get a TMDB developer token ↗');tmdbLink.href='https://www.themoviedb.org/settings/api';tmdbLink.target='_blank';tmdbLink.rel='noopener noreferrer';body.appendChild(tmdbLink);
   const button=node('button','tmdb-disconnect','Clear saved movies');
-  button.addEventListener('click',()=>{
-    if(!favorites.size){button.textContent='Watchlist is already empty';return}
-    if(button.dataset.confirm!=='true'){
-     button.dataset.confirm='true';button.textContent='Confirm clear watchlist';return;
-    }
-    favorites.clear();storageWrite(FAV_KEY,[]);saveMovieSnapshots();renderMovies();feature();
-    button.textContent='Watchlist cleared';button.disabled=true;
-   });
+  button.addEventListener('click',()=>{favorites.clear();storageWrite(FAV_KEY,[]);saveMovieSnapshots();renderMovies();feature();button.textContent='Watchlist cleared'});
   body.appendChild(button);
  }else{
   $('infoTitle').textContent='Welcome to Serivia';
@@ -436,20 +422,11 @@ function closeMobileNav(){
  document.body.style.overflow='';
 }
 function switchView(view){
- // Switching pages must not inherit hidden filters or pending network searches.
- if(queryDelay){clearTimeout(queryDelay);queryDelay=null}
- if(aborter)aborter.abort();
- requestId++;loading=false;
- state.view=view;state.genre='Trending';state.query='';state.year='all';state.rating=0;state.sort='featured';
- $('searchInput').value='';
- $('yearFilter').value='all';$('ratingFilter').value='0';$('sortFilter').value='featured';
- $('typeBtn').firstChild.textContent=view==='favorites'?'Saved ':'Movies ';
- if(token&&view!=='favorites'){
-  liveMovies=[];livePage=0;livePages=0;liveTotal=0;liveError='';loading=true;
- }
+ state.view=view;
+ if(view==='favorites'||view==='soon')state.genre='Trending';
+ state.query='';$('searchInput').value='';
+ if(view==='home'||view==='trending'){state.year='all';state.rating=0;state.sort='featured';$('yearFilter').value='all';$('ratingFilter').value='0';$('sortFilter').value='featured'}
  closeMobileNav();renderMovies();refreshLive();
- // Start a newly selected page at the top, even after scrolling through films.
- document.querySelector('.main-area').scrollTop=0;
  $('main').focus({preventScroll:true});
 }
 function initialize(){
