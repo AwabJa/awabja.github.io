@@ -124,7 +124,7 @@ try{
     const first=document.querySelector('#movieStrip .movie-meta').getBoundingClientRect();
     const viewport=el.getBoundingClientRect();
     return {scrollExcess:el.scrollHeight-el.clientHeight,
-     metadataInView:first.bottom<=viewport.bottom-20,posterVisible:first.top>=viewport.top,
+     metadataInView:first.bottom<=viewport.bottom-8,posterVisible:first.top>=viewport.top,
      footerInView:document.querySelector('.app-footer').getBoundingClientRect().bottom<=viewport.bottom+1};
    });
    console.log('SERIVIA_FIT '+width+' '+JSON.stringify(fit));
