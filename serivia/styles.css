@@ -1075,3 +1075,26 @@
   #main .poster-wrap{aspect-ratio:2/3;border-radius:16px}
   #main .poster-wrap>img{object-fit:contain;object-position:center}
 }
+
+
+/* Fit entire poster artwork inside the widened movie tiles. */
+/* Keep the rounded/wide tile dimensions, but show the whole source poster
+   rather than cutting off film titles, faces or key art at either edge. */
+@media(min-width:761px){
+  #main .poster-wrap{
+    background:radial-gradient(ellipse at center,#29383e 0%,#18282e 74%,#122127 100%);
+  }
+  #main .poster-wrap>img{
+    object-fit:contain;
+    object-position:center;
+  }
+  /* A recent film without a landscape backdrop uses a portrait poster.
+     Letterbox only those posters; genuine widescreen stills fill the card. */
+  .sidebar .mini-movie.portrait-art{
+    background:linear-gradient(130deg,#273941,#142329 75%);
+  }
+  .sidebar .mini-movie.portrait-art img{
+    object-fit:contain;
+    object-position:center;
+  }
+}
