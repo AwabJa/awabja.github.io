@@ -41,7 +41,14 @@ try{
   const page=await context.newPage();
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   // The curated app is tested offline from TMDB; poster failures must be graceful.
-  await page.route('https://image.tmdb.org/**',route=>route.abort('failed'));
+  const verifiedStill=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO0pD4sAAAAASUVORK5CYII=','base64');
+  await page.route('https://image.tmdb.org/**',route=>{
+   const url=route.request().url();
+   if(url.includes('fovkdObjss9Qa5UnqdTRh0nendD.jpg')
+     ||url.includes('7RyHsO4yDXtBv1zUU3mTpHeQ0d5.jpg'))
+     return route.fulfill({status:200,contentType:'image/png',body:verifiedStill});
+   return route.abort('failed');
+  });
   const response=await page.goto(origin+'/serivia/',{waitUntil:'domcontentloaded'});
   assert.equal(response.status(),200,'serivia opens');
   assert.equal(new URL(page.url()).pathname,'/serivia/','App lives at the lowercase project route');
@@ -147,7 +154,7 @@ try{
    assert(Math.abs(layout.frameLeft)<2,'Full-screen layout has zero desktop gutter');
    assert(layout.heroHeight>350&&layout.heroHeight<485,'Featured banner responds to screen height');
    assert(layout.heroRatio>2.1&&layout.heroRatio<3.2,'Banner retains wide cinematic proportions');
-   assert(Math.abs(layout.posterRatio-.80)<.02,'Slightly narrower movie tiles match the refined artwork proportions');
+   assert(Math.abs(layout.posterRatio-.85)<.02,'Slightly narrower movie tiles match the refined artwork proportions');
    assert(layout.fiveVisible,'Five full rounded movie tiles fit on desktop');
    const sidebar=await page.locator('#recentList .mini-movie').first().evaluate(el=>{
     const box=el.getBoundingClientRect(),style=getComputedStyle(el);
@@ -179,7 +186,7 @@ try{
     ||artSrc.includes('/w780/53dsJ3oEnBhTBVMigWJ9tkA5bzJ.jpg'),
     'Featured artwork uses a backdrop or a valid-sized poster when blocked');
   assert((await page.locator('.movie-card').first().locator('img').getAttribute('src')).includes('/w780/'),'Posters request a crisp 780px master image');
-  assert.equal(await page.locator('.movie-card .poster-wrap').first().evaluate(el=>getComputedStyle(el).aspectRatio),width>760?'0.8 / 1':'2 / 3','Movie frames match wide desktop and portrait mobile silhouettes');
+  assert.equal(await page.locator('.movie-card .poster-wrap').first().evaluate(el=>getComputedStyle(el).aspectRatio),width>760?'0.85 / 1':'2 / 3','Movie frames match wide desktop and portrait mobile silhouettes');
   assert.equal(await page.locator('.movie-card img').first().evaluate(el=>getComputedStyle(el).objectFit),'contain','Source poster art fits fully into the rounded movie frames');
   const heroFit=await page.locator('#featureArt').evaluate(el=>({
    fit:getComputedStyle(el).objectFit,portrait:el.parentElement.classList.contains('portrait-art')
@@ -256,13 +263,13 @@ try{
   await page.locator('.movie-card').first().click();
   assert.equal(await page.locator('#detailDialog').evaluate(el=>el.open),true,'Movie details dialog opens');
   assert.equal(await page.locator('#detailTitle').innerText(),'Lilo & Stitch');
-  assert.equal(await page.locator('#detailPoster').evaluate(el=>el.parentElement.classList.contains('portrait-art')),true,
-    'Poster-only detail display preserves portrait image aspect');
-  const fallback=await page.locator('#detailPoster').evaluate(el=>el.parentElement.style.getPropertyValue('--art-fallback'));
-  assert(fallback.includes('/w500/j9yv60GA4T2b7ts5BZEWju9UEeP.jpg'),
-    'Portrait fallback uses matching blurred movie-poster background');
-  assert((await page.locator('#detailPoster').getAttribute('src')).includes('/w780/j9yv60GA4T2b7ts5BZEWju9UEeP.jpg'),
-    'Poster-only movie detail uses TMDB-supported poster sizes, never w1280');
+  assert.equal(await page.locator('#detailPoster').evaluate(el=>el.parentElement.classList.contains('portrait-art')),false,
+    'Lilo and Stitch now uses verified landscape artwork instead of its vertical poster');
+  assert((await page.locator('#detailPoster').getAttribute('src')).includes('/w1280/fovkdObjss9Qa5UnqdTRh0nendD.jpg'),
+    'Lilo and Stitch details use the verified TMDB widescreen artwork');
+  await page.waitForFunction(()=>document.querySelector('#detailPoster')?.complete&&document.querySelector('#detailPoster')?.naturalWidth>0);
+  assert.equal(await page.locator('#detailPoster').evaluate(el=>getComputedStyle(el).objectFit),'cover',
+    'Landscape movie artwork fills its detail frame without distortion');
   assert((await page.locator('#detailTrailer').getAttribute('href')).includes('themoviedb.org/movie/552524/videos'));
   await page.locator('#detailFavorite').click();
   assert.equal(await page.locator('#detailFavorite').innerText(),'Saved to watchlist');
