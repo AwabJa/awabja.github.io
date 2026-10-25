@@ -27,14 +27,15 @@ const GENRES=['Trending','Adventure','Action','Comedy','Crime','Drama','Fantasy'
 const FEATURE_IDS=[1087192,693134,762509,1241982];
 const HOME_SHOWCASE_IDS=[552524,823219,575265,762509,693134,670292];
 const byId=new Map(MOVIES.map(m=>[m.id,m]));
-// TMDB does not permit unauthenticated movie search. Public GitHub Pages has no
-// secure server-side secrets, so users opt into live browsing per browser session.
+// Public token entry is disabled. A future live catalog needs a server-side proxy or feed,
+// never an owner API key embedded in GitHub Pages or solicited from site visitors.
 const API='https://api.themoviedb.org/3/';
 const TOKEN_KEY='serivia.tmdb.session.v1',SAVED_DATA_KEY='serivia.savedMovieData.v1';
 const GENRE_IDS={Action:28,Adventure:12,Animation:16,Comedy:35,Crime:80,Drama:18,Family:10751,Fantasy:14,Horror:27,'Sci-Fi':878};
 const ID_GENRES=Object.fromEntries(Object.entries(GENRE_IDS).map(([name,id])=>[id,name]));
+// Retire any credentials left from the former public BYO-token flow.
 let token=null;
-try{token=sessionStorage.getItem(TOKEN_KEY)||null}catch{}
+try{sessionStorage.removeItem(TOKEN_KEY)}catch{}
 let liveMovies=[],livePage=0,livePages=0,liveTotal=0,loading=false,liveError='',aborter=null,requestId=0,queryDelay=null;
 try{
  const snapshots=JSON.parse(localStorage.getItem(SAVED_DATA_KEY)||'[]');
@@ -65,11 +66,10 @@ async function tmdb(endpoint,params={},credential=token,signal){
  return response.json();
 }
 function updateCatalogNotice(){
- const connected=Boolean(token);
- $('catalogNotice').classList.toggle('is-connected',connected);
- $('catalogMode').textContent=connected?'TMDB · Live movie catalog':'Demo collection · '+MOVIES.length+' films';
- $('catalogHelp').textContent=connected?(liveError||'Browse thousands of movies. Search, filter, and load more results.'):'Connect TMDB to search and browse its full movie database.';
- $('connectTmdb').textContent=connected?'Connection settings':'Connect TMDB';
+ $('catalogNotice').classList.remove('is-connected');
+ $('catalogMode').textContent='Demo collection · '+MOVIES.length+' films';
+ $('catalogHelp').textContent='Browse curated films. An expanded live catalog is planned.';
+ $('connectTmdb').textContent='About catalog';
 }
 function buildQuery(page){
  const params={page,language:'en-US',include_adult:false};
@@ -436,50 +436,21 @@ function openInfo(kind){
   const small=node('p','credit-note','Movie artwork belongs to its respective owners. No copyrighted images are included in this repository; images are displayed from TMDB CDN.');
   body.appendChild(small);
  }else if(kind==='settings'){
-  $('infoTitle').textContent=token?'TMDB connection & preferences':'Connect the full TMDB catalog';
-  p(token?'Live movie browsing is enabled for this browser tab. You can search TMDB films, browse genres and load more pages.':'Serivia starts with 12 sample movies. To search TMDB’s much larger film database, connect your own TMDB API Read Access Token.');
-  p('The access token stays in this browser session only, and is sent directly to api.themoviedb.org using HTTPS. Do not paste passwords. This static site cannot hide a token from someone using your browser.');
-  if(token){
-   const disconnect=node('button','tmdb-disconnect','Disconnect TMDB');
-   disconnect.type='button';
-   disconnect.addEventListener('click',()=>{
-    token=null;try{sessionStorage.removeItem(TOKEN_KEY)}catch{}
-    if(aborter)aborter.abort();requestId++;loading=false;liveMovies=[];livePage=0;livePages=0;liveTotal=0;liveError='';
-    $('infoDialog').close();renderMovies();updateCatalogNotice();
-   });body.appendChild(disconnect);
-  }else{
-   const form=node('form','tmdb-connect-form'),label=node('label','','TMDB API Read Access Token');
-   const input=node('input');input.type='password';input.required=true;input.autocomplete='off';input.spellcheck=false;
-   input.placeholder='Paste your TMDB API Read Access Token';input.id='tmdbAccessToken';
-   label.htmlFor=input.id;
-   const note=node('small','', 'Get a noncommercial API token from your TMDB account’s Settings → API page. It is not stored in the repository.');
-   const error=node('div','tmdb-connect-error');error.setAttribute('role','alert');
-   const connect=node('button','primary-action','Connect and browse movies');connect.type='submit';
-   form.append(label,input,note,error,connect);
-   form.addEventListener('submit',async e=>{
-    e.preventDefault();
-    const candidate=input.value.trim();if(!candidate)return;
-    connect.disabled=true;connect.textContent='Checking connection…';error.textContent='';
-    try{
-     const data=await tmdb('movie/popular',{page:1},candidate);
-     if(!Array.isArray(data.results))throw Error('Unexpected TMDB response.');
-     token=candidate;try{sessionStorage.setItem(TOKEN_KEY,token)}catch{}
-     state.view='home';state.genre='Trending';state.query='';$('searchInput').value='';
-     $('infoDialog').close();updateCatalogNotice();loadLive(false);
-    }catch(err){error.textContent=err.message==='Failed to fetch'?'Unable to reach TMDB. Check your network.':err.message}
-    finally{connect.disabled=false;connect.textContent='Connect and browse movies';input.value=''}
-   });
-   body.appendChild(form);
-  }
-  const tmdbLink=node('a','', 'Get a TMDB developer token ↗');tmdbLink.href='https://www.themoviedb.org/settings/api';tmdbLink.target='_blank';tmdbLink.rel='noopener noreferrer';body.appendChild(tmdbLink);
+  $('infoTitle').textContent='Serivia settings';
+  p('Browse all '+MOVIES.length+' curated movies without an account or API key.');
+  p('Expanded movie browsing may be added later without asking visitors for credentials.');
   const button=node('button','tmdb-disconnect','Clear saved movies');
-  button.addEventListener('click',()=>{favorites.clear();storageWrite(FAV_KEY,[]);saveMovieSnapshots();renderMovies();feature();button.textContent='Watchlist cleared'});
+  button.type='button';
+  button.addEventListener('click',()=>{
+   favorites.clear();storageWrite(FAV_KEY,[]);saveMovieSnapshots();
+   renderMovies();feature();button.textContent='Watchlist cleared';
+  });
   body.appendChild(button);
  }else{
   $('infoTitle').textContent='Welcome to Serivia';
   p('Browse the curated catalog, search by title, narrow by genre, explore movie details and save films for later.');
-  p('This is not a streaming service. Connect TMDB in Settings for live movie search, broader discovery, ratings and paginated browsing. Trailer buttons link to TMDB movie video pages.');
-  p('The demo has '+MOVIES.length+' titles. With a connected TMDB token, explore many more movies. Your watchlist stays in local browser storage.');
+  p('This is not a streaming service. Trailer links lead to TMDB movie video pages. An expanded live catalog may be added later.');
+  p('The demo has '+MOVIES.length+' titles. Your saved movies stay in local browser storage. No API token is needed.');
   link('TMDB developer documentation ↗','https://developer.themoviedb.org/');
  }
  $('infoDialog').showModal();
