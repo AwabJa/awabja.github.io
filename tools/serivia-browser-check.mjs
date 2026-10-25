@@ -321,98 +321,78 @@ try{
   'Short screens either fit movie metadata or allow scrolling to it');
  await shortCtx.close();
 
- // Mock the official API to exercise live data without a real credential
- // or untrusted network dependency in CI.
- const liveCtx=await browser.newContext({viewport:{width:1120,height:900}});
- const livePage=await liveCtx.newPage();
- const requests=[];
- const films=[
-  {id:900001,title:'A Brand New Movie',release_date:'2026-07-12',vote_average:8.7,
-   genre_ids:[28,878],poster_path:'/fictional-one.jpg',backdrop_path:'/fictional-wide.jpg',overview:'An entirely new movie.'},
-  {id:900002,title:'Another Film',release_date:'2025-05-03',vote_average:7.4,
-   genre_ids:[18],poster_path:'/fictional-two.jpg',backdrop_path:null,overview:'Another film in the live catalog.'}
- ];
- const mockStill=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO0pD4sAAAAASUVORK5CYII=','base64');
- await livePage.route('https://image.tmdb.org/**',route=>{
-  if(route.request().url().includes('fictional-enriched.jpg')){
-   route.fulfill({status:200,contentType:'image/png',body:mockStill});
-  }else route.abort();
- });
- await livePage.route('https://api.themoviedb.org/3/**',route=>{
-  const req=route.request(),url=new URL(req.url());
-  requests.push({path:url.pathname,search:url.searchParams.toString(),auth:req.headers().authorization});
-  if(url.pathname.endsWith('/movie/900002')){
-   return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({id:900002,backdrop_path:'/fictional-enriched.jpg'})});
-  }
-  const page=Number(url.searchParams.get('page')||1);
-  const item=url.pathname.endsWith('/search/movie')?[films[0]]:page===1?[films[0],films[1]]:[
-   {id:900003,title:'Third Discovery',release_date:'2026-08-01',vote_average:9.1,genre_ids:[12],poster_path:'/third.jpg',backdrop_path:null,overview:'More movie results.'}
-  ];
-  route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({page,total_pages:2,total_results:3,results:item})});
- });
- await livePage.goto(origin+'/serivia/',{waitUntil:'domcontentloaded'});
- assert.equal(await livePage.locator('#catalogMode').innerText(),'Demo collection · 15 films','Without token, sample collection is explicit');
- assert.equal(await livePage.locator('.brand').getAttribute('href'),'#main','Brand points at a real local section');
- await livePage.locator('#settingsBtn').click();
- await livePage.locator('#tmdbAccessToken').fill('fake_test_read_access_token');
- await livePage.locator('.tmdb-connect-form button[type=submit]').click();
- await livePage.waitForFunction(()=>document.querySelector('#catalogMode').textContent.includes('Live movie catalog'));
- await livePage.waitForFunction(()=>document.querySelector('#movieStrip .movie-card')?.textContent.includes('A Brand New Movie'));
- assert.equal(await livePage.locator('.movie-card').count(),2,'Connected live catalog shows remote results');
- assert.equal(await livePage.locator('.movie-strip').evaluate(el=>getComputedStyle(el).display),'grid','Live results use a multi-row grid');
- // Opening a live result upgrades missing art from its TMDB movie details.
- await livePage.locator('.movie-card').nth(1).click();
- await livePage.waitForFunction(()=>document.querySelector('#detailPoster')?.getAttribute('src')?.includes('fictional-enriched.jpg'));
- assert(requests.some(r=>r.path.endsWith('/movie/900002')),'Details fetch missing real widescreen backdrop');
- assert.equal(await livePage.locator('#detailPoster').evaluate(el=>el.parentElement.classList.contains('portrait-art')),false,
-  'Details upgrade from vertical poster to real landscape backdrop');
- assert.equal(await livePage.locator('#recentList .mini-movie').first().evaluate(el=>el.classList.contains('portrait-art')),false,
-  'Recently explored upgrades to the same real backdrop');
- await livePage.keyboard.press('Escape');
- const liveLayout=await livePage.evaluate(()=>{
-  const grid=document.querySelector('#movieStrip');
-  const first=grid.querySelector('.movie-card');
-  const name=first.querySelector('.movie-name'),rating=first.querySelector('.movie-meta b');
-  return {gridHeight:grid.clientHeight,scrollHeight:grid.scrollHeight,
-    nameWrap:getComputedStyle(name).whiteSpace,nameHeight:name.getBoundingClientRect().height,
-    ratingVisible:rating.getBoundingClientRect().width>0,
-    ratingBottom:rating.getBoundingClientRect().bottom,
-    cardBottom:first.getBoundingClientRect().bottom};
- });
- assert(liveLayout.gridHeight+3>=liveLayout.scrollHeight,'Live grid cannot crop bottom labels');
- assert(liveLayout.nameWrap==='normal'&&liveLayout.nameHeight>0&&liveLayout.ratingVisible&&liveLayout.ratingBottom<=liveLayout.cardBottom+1,
-   'Live TMDB grid displays titles and star ratings');
+ // Demo-only production mode: no visitor token input, no client API traffic,
+ // and no reuse of stale TMDB session credentials after site upgrades.
+ const auditCtx=await browser.newContext({viewport:{width:1280,height:800}});
+ const auditPage=await auditCtx.newPage();
+ const apiRequests=[],jsErrors=[];
+ auditPage.on('request',request=>{if(request.url().startsWith('https://api.themoviedb.org/'))apiRequests.push(request.url())});
+ auditPage.on('pageerror',error=>jsErrors.push(error.message));
+ await auditPage.route('https://api.themoviedb.org/**',route=>route.abort());
+ await auditPage.route('https://image.tmdb.org/**',route=>route.abort());
+ await auditPage.goto(origin+'/serivia/',{waitUntil:'domcontentloaded'});
+ await auditPage.evaluate(()=>sessionStorage.setItem('serivia.tmdb.session.v1','legacy_token_should_be_deleted'));
+ await auditPage.reload({waitUntil:'domcontentloaded'});
+ assert.equal(await auditPage.evaluate(()=>sessionStorage.getItem('serivia.tmdb.session.v1')),null,
+   'Old BYO-TMDB credentials are erased on page load');
+ assert.equal(await auditPage.locator('#catalogMode').innerText(),'Demo collection · 15 films');
+ assert.equal(await auditPage.locator('#connectTmdb').textContent(),'About catalog',
+   'Catalog button does not ask for an API token');
+ assert((await auditPage.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content')).includes("connect-src 'self';"),
+   'Site CSP blocks outbound API requests');
+ assert.equal(await auditPage.locator('.movie-card').count(),15,'All demo movies work without an API key');
+ await auditPage.locator('#favoriteFeature').click();
+ assert.equal(await auditPage.locator('#favoriteFeature').getAttribute('aria-pressed'),'true',
+   'Featured save button responds');
+ await auditPage.locator('#settingsBtn').click();
+ assert.equal(await auditPage.locator('#infoTitle').innerText(),'Serivia settings');
+ assert.equal(await auditPage.locator('#tmdbAccessToken,.tmdb-connect-form').count(),0,
+   'Public settings contains no API credential form');
+ assert((await auditPage.locator('#infoBody').innerText()).includes('without an account or API key'),
+   'Settings explains self-contained demo mode');
+ await auditPage.locator('#infoBody button').click();
+ assert.equal(await auditPage.locator('#favoriteFeature').getAttribute('aria-pressed'),'false',
+   'Clear saved movies updates the watchlist');
+ await auditPage.keyboard.press('Escape');
+ assert.equal(await auditPage.locator('#infoDialog').evaluate(el=>el.open),false,
+   'Settings dialog dismisses with Escape');
+ await auditPage.locator('#profileBtn').click();
+ assert.equal(await auditPage.locator('#pageTitle').innerText(),'Your watchlist',
+   'Profile button navigates to watchlist');
+ await auditPage.locator('#connectTmdb').click();
+ assert.equal(await auditPage.locator('#infoTitle').innerText(),'Serivia settings',
+   'Catalog info click works without prompting for an API key');
+ await auditPage.keyboard.press('Escape');
+ await auditPage.locator('#typeBtn').click();
+ assert.equal(await auditPage.locator('#typeBtn').getAttribute('aria-expanded'),'true',
+   'Movies menu opens');
+ await auditPage.locator('#typeMenu button[data-mode="movies"]').click();
+ assert.equal(await auditPage.locator('#pageTitle').innerText(),'Discover movies',
+   'Movies menu returns to home');
+ await auditPage.locator('#notificationBtn').click();
+ assert.equal(await auditPage.locator('#infoTitle').innerText(),'Welcome to Serivia',
+   'Notification button opens helpful info');
+ await auditPage.locator('#closeInfo').click();
+ await auditPage.locator('#supportBtn').click();
+ assert.equal(await auditPage.locator('#infoDialog').evaluate(el=>el.open),true,
+   'Support opens accessible info dialog');
+ await auditPage.keyboard.press('Escape');
+ await auditPage.locator('.side-link[data-view="soon"]').click();
+ assert.equal(await auditPage.locator('#emptyState').isVisible(),true,
+   'Coming Soon displays its empty collection explanation');
+ await auditPage.locator('#emptyReset').click();
+ assert.equal(await auditPage.locator('#pageTitle').innerText(),'Discover movies',
+   'Empty state reset restores home');
+ await auditPage.locator('#filterBtn').click();
+ assert.equal(await auditPage.locator('#filterBtn').getAttribute('aria-expanded'),'true',
+   'Filter popover opens');
+ await auditPage.keyboard.press('Escape');
+ assert.equal(await auditPage.locator('#filterBtn').getAttribute('aria-expanded'),'false',
+   'Escape dismisses filters without side effects');
+ assert.deepEqual(apiRequests,[],'Public demo makes no TMDB API requests');
+ assert.deepEqual(jsErrors,[],'No JS errors in settings/navigation/security interactions');
+ await auditCtx.close();
 
- assert.equal(await livePage.locator('#pagination').isVisible(),true,'Pagination appears for remaining pages');
- assert.equal(requests.every(r=>r.auth==='Bearer fake_test_read_access_token'),true,'TMDB requests use Authorization bearer header');
- await livePage.locator('#loadMore').click();
- await livePage.waitForFunction(()=>document.querySelectorAll('#movieStrip .movie-card').length===3);
- assert.equal(await livePage.locator('#pagination').isVisible(),false,'Pagination ends after last page');
- await livePage.locator('#searchInput').fill('Brand New');
- await livePage.waitForFunction(()=>document.querySelectorAll('#movieStrip .movie-card').length===1);
- assert(requests.some(r=>r.path.endsWith('/search/movie')&&r.search.includes('query=Brand+New')),'Search queries official endpoint');
- await livePage.locator('#searchInput').fill('');
- await livePage.locator('#genreScroll button[data-genre="Action"]').click();
- await livePage.waitForFunction(()=>[...document.querySelectorAll('#movieStrip .movie-name')].some(el=>el.textContent==='A Brand New Movie'));
- assert(requests.some(r=>r.path.endsWith('/discover/movie')&&r.search.includes('with_genres=28')),'Genre filters query TMDB Discover');
- await livePage.locator('#searchInput').fill('Brand New');
- await livePage.waitForFunction(()=>document.querySelectorAll('#movieStrip .movie-card').length===1);
- await livePage.locator('.movie-card').first().click();
- await livePage.locator('#detailFavorite').click();
- await livePage.keyboard.press('Escape');
- await livePage.locator('#profileBtn').click();
- assert.equal(await livePage.locator('.movie-card').count(),1,'Live titles can be saved');
- await livePage.reload({waitUntil:'domcontentloaded'});
- await livePage.waitForFunction(()=>document.querySelector('#catalogMode').textContent.includes('Live movie catalog'));
- await livePage.locator('#profileBtn').click();
- assert.equal(await livePage.locator('.movie-card').count(),1,'Saved live titles persist');
- assert.equal(await livePage.evaluate(()=>localStorage.getItem('serivia.tmdb.session.v1')),null,'Token is not in persistent localStorage');
- assert.equal(await livePage.evaluate(()=>sessionStorage.getItem('serivia.tmdb.session.v1')),'fake_test_read_access_token','Token remains session-only');
- await livePage.locator('#settingsBtn').click();
- await livePage.locator('.tmdb-disconnect').first().click();
- assert.equal(await livePage.locator('#catalogMode').innerText(),'Demo collection · 15 films','Disconnect restores demo');
- assert.equal(await livePage.evaluate(()=>sessionStorage.getItem('serivia.tmdb.session.v1')),null,'Disconnect removes token');
- await liveCtx.close();
  const reduced=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});
  await reduced.route('https://image.tmdb.org/**',route=>route.abort());
  await reduced.goto(origin+'/serivia/');
