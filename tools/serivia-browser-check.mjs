@@ -26,6 +26,15 @@ const browser=await chromium.launch(executablePath?{executablePath,headless:true
 try{
  const budgets=await Promise.all(['serivia/index.html','serivia/styles.css','serivia/app.js'].map(file=>stat(resolve(root,file)).then(result=>result.size)));
  assert(budgets[0]<20000&&budgets[1]<65000&&budgets[2]<42000,'Static app files remain compact');
+ // Capture the live-style desktop composition for pixel-level review.
+ const visualContext=await browser.newContext({viewport:{width:1672,height:941},deviceScaleFactor:1});
+ const visualPage=await visualContext.newPage();
+ await visualPage.goto(origin+'/serivia/',{waitUntil:'domcontentloaded'});
+ await visualPage.locator('.movie-card').first().waitFor();
+ await visualPage.evaluate(()=>document.fonts.ready);
+ await visualPage.waitForTimeout(1200);
+ await visualPage.screenshot({path:'serivia-desktop-visual.png',fullPage:false});
+ await visualContext.close();
  const results=[];
  for(const width of [320,390,768,1440,1672,1920]){
   const context=await browser.newContext({viewport:{width,height:width<500?812:width===1672?941:1000},isMobile:width<500,hasTouch:width<500});
