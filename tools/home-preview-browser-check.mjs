@@ -30,6 +30,13 @@ try{
   const response=await page.goto(origin+'/home-preview/',{waitUntil:'load'});
   assert.equal(response.status(),200,'Preview page must load');
   await page.locator('h1').waitFor();
+  // Eagerly decode the preview's lazy-loaded project images before asserting.
+  await page.locator('main img').evaluateAll(async images=>{
+   await Promise.all(images.map(async image=>{
+    image.loading='eager';
+    try{await image.decode()}catch{}
+   }));
+  });
   const data=await page.evaluate(()=>({
    vw:innerWidth,scroll:document.documentElement.scrollWidth,
    imgs:[...document.images].map(img=>({complete:img.complete,width:img.naturalWidth})),
