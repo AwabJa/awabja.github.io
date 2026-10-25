@@ -177,9 +177,8 @@ const storageRead=(key,def)=>{try{const value=JSON.parse(localStorage.getItem(ke
 const readIds=(key,def)=>storageRead(key,def).filter(id=>Number.isInteger(id)&&byId.has(id)).slice(0,20);
 const storageWrite=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value))}catch{/* Storage may be unavailable in private browsing. */}};
 const FAV_KEY='serivia.watchlist.v1',RECENT_KEY='serivia.recent.v1';
- const MAX_RECENT=12;
 let favorites=new Set(readIds(FAV_KEY,[]));
-let recent=readIds(RECENT_KEY,[693134,762509,1087192]).slice(0,MAX_RECENT);
+let recent=readIds(RECENT_KEY,[693134,762509,1087192]);
 const node=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n};
 const svg=(name)=>{const s=document.createElementNS('http://www.w3.org/2000/svg','svg'),u=document.createElementNS('http://www.w3.org/2000/svg','use');u.setAttribute('href','#ic-'+name);s.appendChild(u);s.setAttribute('aria-hidden','true');return s};
 const image=(movie,role='poster')=>{
@@ -266,7 +265,7 @@ function renderMovies(){
 }
 function renderRecent(){
  const list=$('recentList');list.replaceChildren();
- for(const id of recent.slice(0,MAX_RECENT)){
+ for(const id of recent.slice(0,4)){
   const movie=byId.get(id);if(!movie)continue;
   const b=node('button','mini-movie');b.type='button';b.setAttribute('aria-label','Explore '+movie.title);
   const cover=image(movie,'recent');cover.alt='';b.dataset.artTitle=movie.title;b.appendChild(cover);
@@ -328,7 +327,7 @@ function drawDots(){
  }
 }
 function visit(id){
- recent=[id,...recent.filter(x=>x!==id)].slice(0,MAX_RECENT);storageWrite(RECENT_KEY,recent);renderRecent();
+ recent=[id,...recent.filter(x=>x!==id)].slice(0,4);storageWrite(RECENT_KEY,recent);renderRecent();
 }
 function updateDetailFavorite(){
  const id=state.activeMovie;if(id===null)return;
