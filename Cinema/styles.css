@@ -132,3 +132,47 @@
 .movie-strip.is-live .movie-card{width:100%;min-width:0;max-width:100%;flex-basis:auto;scroll-snap-align:none}
 .movie-strip.is-live .poster-wrap{width:100%}
 @media(max-width:480px){.movie-strip.is-live{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 10px}}
+
+/* Keep the information under every poster visible. The earlier flex layout
+   could shrink its horizontal scroll viewport below the card content height. */
+.browse-section{flex:0 0 auto;min-height:max-content}
+.movie-strip{
+  flex:0 0 auto;
+  min-height:max-content;
+  align-items:stretch;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding-bottom:16px;
+}
+.movie-card{
+  flex-shrink:0;
+  min-height:max-content;
+  align-self:stretch;
+}
+.movie-name{
+  display:block;
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  overflow-wrap:break-word;
+  line-height:1.38;
+  min-height:2.76em;
+  margin:11px 2px 5px;
+  font-size:13px;
+}
+.movie-meta{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:6px;
+  min-height:24px;
+  margin:0 2px;
+  padding-top:4px;
+  margin-top:auto;
+  white-space:nowrap;
+  font-size:12px;
+}
+.movie-meta b{display:inline-flex;align-items:center;gap:4px;color:#ffd11b;font-weight:800;font-variant-numeric:tabular-nums}
+.movie-meta svg{display:block;flex:none;width:15px;height:15px;fill:#ffd11b;stroke:#ffd11b}
+.movie-strip.is-live{align-items:stretch;overflow:visible;min-height:max-content}
+.movie-strip.is-live .movie-card{height:100%}

@@ -38,6 +38,35 @@ try{
   await page.locator('.movie-card').first().waitFor();
   assert.equal(await page.title(),'Serivia — Discover great movies');
   assert.equal(await page.locator('.movie-card').count(),12,'Twelve curated film cards render');
+  const assertLabels=async contextName=>{
+    const layout=await page.evaluate(()=>{
+      const strip=document.querySelector('#movieStrip');
+      const rect=strip.getBoundingClientRect();
+      const stripStyle=getComputedStyle(strip);
+      const card=[...strip.querySelectorAll('.movie-card')];
+      return {
+        stripHeight:strip.clientHeight,stripScrollHeight:strip.scrollHeight,
+        stripBottom:rect.bottom,verticalOverflow:stripStyle.overflowY,
+        labels:card.map(item=>{
+          const name=item.querySelector('.movie-name'),meta=item.querySelector('.movie-meta'),rating=meta.querySelector('b');
+          return {name:name.textContent,shownName:name.getBoundingClientRect().height>0,
+            nameBottom:name.getBoundingClientRect().bottom,metaBottom:meta.getBoundingClientRect().bottom,
+            metaHeight:meta.getBoundingClientRect().height,
+            rating:rating.textContent,starWidth:rating.querySelector('svg').getBoundingClientRect().width,
+            nameWrap:getComputedStyle(name).whiteSpace,
+            ratingWithinCard:rating.getBoundingClientRect().right<=item.getBoundingClientRect().right+1}
+        })
+      };
+    });
+    assert(layout.stripScrollHeight<=layout.stripHeight+3,
+      contextName+' poster row must not vertically clip metadata ('+layout.stripScrollHeight+' / '+layout.stripHeight+')');
+    assert(layout.labels.every(l=>l.shownName&&l.nameWrap==='normal'&&l.metaHeight>=20&&l.starWidth>=14&&l.ratingWithinCard),
+      contextName+' title and rating must render inside cards');
+    assert(layout.labels.every(l=>l.metaBottom<=layout.stripBottom+1),
+      contextName+' all movie ratings must fit inside the poster row');
+  };
+  await assertLabels('Demo '+width+'px');
+
   assert.equal(await page.locator('#slideDots button').count(),4,'Featured carousel has four slides');
   assert.equal(await page.locator('#featuredNext').isVisible(),true,'Featured next arrow is visible');
   await page.locator('#featuredNext').click();
@@ -174,6 +203,20 @@ try{
  await livePage.waitForFunction(()=>document.querySelector('#movieStrip .movie-card')?.textContent.includes('A Brand New Movie'));
  assert.equal(await livePage.locator('.movie-card').count(),2,'Connected live catalog shows remote results');
  assert.equal(await livePage.locator('.movie-strip').evaluate(el=>getComputedStyle(el).display),'grid','Live results use a multi-row grid');
+ const liveLayout=await livePage.evaluate(()=>{
+  const grid=document.querySelector('#movieStrip');
+  const first=grid.querySelector('.movie-card');
+  const name=first.querySelector('.movie-name'),rating=first.querySelector('.movie-meta b');
+  return {gridHeight:grid.clientHeight,scrollHeight:grid.scrollHeight,
+    nameWrap:getComputedStyle(name).whiteSpace,nameHeight:name.getBoundingClientRect().height,
+    ratingVisible:rating.getBoundingClientRect().width>0,
+    ratingBottom:rating.getBoundingClientRect().bottom,
+    cardBottom:first.getBoundingClientRect().bottom};
+ });
+ assert(liveLayout.gridHeight+3>=liveLayout.scrollHeight,'Live grid cannot crop bottom labels');
+ assert(liveLayout.nameWrap==='normal'&&liveLayout.nameHeight>0&&liveLayout.ratingVisible&&liveLayout.ratingBottom<=liveLayout.cardBottom+1,
+   'Live TMDB grid displays titles and star ratings');
+
  assert.equal(await livePage.locator('#pagination').isVisible(),true,'Pagination appears for remaining pages');
  assert.equal(requests.every(r=>r.auth==='Bearer fake_test_read_access_token'),true,'TMDB requests use Authorization bearer header');
  await livePage.locator('#loadMore').click();
