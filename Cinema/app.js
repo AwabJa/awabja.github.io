@@ -21,6 +21,124 @@ const MOVIES=[
 const GENRES=['Trending','Adventure','Action','Comedy','Crime','Drama','Fantasy','Horror','Sci-Fi','Animation','Family'];
 const FEATURE_IDS=[1087192,693134,762509,1241982];
 const byId=new Map(MOVIES.map(m=>[m.id,m]));
+// TMDB does not permit unauthenticated movie search. Public GitHub Pages has no
+// secure server-side secrets, so users opt into live browsing per browser session.
+const API='https://api.themoviedb.org/3/';
+const TOKEN_KEY='serivia.tmdb.session.v1',SAVED_DATA_KEY='serivia.savedMovieData.v1';
+const GENRE_IDS={Action:28,Adventure:12,Animation:16,Comedy:35,Crime:80,Drama:18,Family:10751,Fantasy:14,Horror:27,'Sci-Fi':878};
+const ID_GENRES=Object.fromEntries(Object.entries(GENRE_IDS).map(([name,id])=>[id,name]));
+let token=null;
+try{token=sessionStorage.getItem(TOKEN_KEY)||null}catch{}
+let liveMovies=[],livePage=0,livePages=0,liveTotal=0,loading=false,liveError='',aborter=null,requestId=0,queryDelay=null;
+try{
+ const snapshots=JSON.parse(localStorage.getItem(SAVED_DATA_KEY)||'[]');
+ if(Array.isArray(snapshots))snapshots.slice(0,20).forEach(m=>{
+  if(m&&Number.isInteger(m.id)&&m.id>0&&typeof m.title==='string'&&!byId.has(m.id)){
+   byId.set(m.id,{id:m.id,title:m.title.slice(0,150),year:Number(m.year)||0,rating:Number(m.rating)||0,
+    minutes:0,genres:Array.isArray(m.genres)?m.genres.filter(g=>typeof g==='string').slice(0,8):[],
+    poster:typeof m.poster==='string'?m.poster:null,backdrop:typeof m.backdrop==='string'?m.backdrop:null,
+    overview:typeof m.overview==='string'?m.overview.slice(0,900):'',certificate:'NR'});
+  }
+ });
+}catch{}
+function normalizeRemote(m){
+ const id=Number(m?.id);
+ if(!Number.isInteger(id)||id<=0||!m.title)return null;
+ const poster=typeof m.poster_path==='string'?m.poster_path.replace(/^\//,''):null;
+ const backdrop=typeof m.backdrop_path==='string'?m.backdrop_path.replace(/^\//,''):null;
+ const genres=Array.isArray(m.genre_ids)?m.genre_ids.map(id=>ID_GENRES[id]).filter(Boolean):[];
+ const year=Number(String(m.release_date||'').slice(0,4))||0;
+ return {id,title:String(m.title).slice(0,150),year,rating:Math.max(0,Math.min(10,Number(m.vote_average)||0)),minutes:0,
+   genres,poster,backdrop,overview:String(m.overview||'').slice(0,1100),certificate:'NR'};
+}
+async function tmdb(endpoint,params={},credential=token,signal){
+ const url=new URL(endpoint,API);
+ Object.entries(params).forEach(([key,value])=>{if(value!==null&&value!==undefined&&value!=='')url.searchParams.set(key,String(value))});
+ const response=await fetch(url,{headers:{Authorization:'Bearer '+credential,Accept:'application/json'},signal,cache:'no-store'});
+ if(!response.ok)throw Error(response.status===401?'TMDB denied this token. Check your API Read Access Token.':response.status===429?'TMDB is rate-limiting requests. Try again shortly.':'TMDB request failed ('+response.status+').');
+ return response.json();
+}
+function updateCatalogNotice(){
+ const connected=Boolean(token);
+ $('catalogNotice').classList.toggle('is-connected',connected);
+ $('catalogMode').textContent=connected?'TMDB · Live movie catalog':'Demo collection · 12 films';
+ $('catalogHelp').textContent=connected?(liveError||'Browse thousands of movies. Search, filter, and load more results.'):'Connect TMDB to search and browse its full movie database.';
+ $('connectTmdb').textContent=connected?'Connection settings':'Connect TMDB';
+}
+function buildQuery(page){
+ const params={page,language:'en-US',include_adult:false};
+ if(state.query){
+  params.query=state.query;
+  if(/^20\d\d$/.test(state.year))params.year=state.year;
+  return {endpoint:'search/movie',params};
+ }
+ if(state.view==='trending'&&state.genre==='Trending'&&state.year==='all'&&!state.rating&&state.sort==='featured'){
+  return {endpoint:'trending/movie/week',params:{page,language:'en-US'}};
+ }
+ if(state.view==='home'&&state.genre==='Trending'&&state.year==='all'&&!state.rating&&state.sort==='featured'){
+  return {endpoint:'movie/popular',params:{page,language:'en-US'}};
+ }
+ params.sort_by={featured:'popularity.desc',rating:'vote_average.desc',year:'primary_release_date.desc',az:'original_title.asc'}[state.sort]||'popularity.desc';
+ if(state.view==='soon'){
+  params['primary_release_date.gte']=new Date().toISOString().slice(0,10);
+  params.sort_by='primary_release_date.asc';
+ }else if(state.year==='classic'){
+  params['primary_release_date.lte']='2023-12-31';
+ }else if(state.year!=='all'){
+  params.primary_release_year=state.year;
+ }
+ if(state.genre!=='Trending')params.with_genres=GENRE_IDS[state.genre]||null;
+ if(state.rating)params['vote_average.gte']=state.rating;
+ return {endpoint:'discover/movie',params};
+}
+function updatePagination(){
+ const available=Boolean(token)&&state.view!=='favorites'&&livePage<livePages;
+ $('pagination').hidden=!available;
+ $('loadMore').disabled=loading;
+ $('loadMore').textContent=loading?'Loading movies…':'Load more movies';
+ $('pageStatus').textContent=livePage+' of '+livePages+' pages';
+}
+async function loadLive(append=false){
+ if(!token||state.view==='favorites')return;
+ if(loading&&append)return;
+ if(aborter)aborter.abort();
+ aborter=new AbortController();
+ const ownRequest=++requestId,page=append?livePage+1:1;
+ loading=true;liveError='';updateCatalogNotice();updatePagination();
+ try{
+  const {endpoint,params}=buildQuery(page);
+  const data=await tmdb(endpoint,params,token,aborter.signal);
+  if(ownRequest!==requestId)return;
+  let movies=(Array.isArray(data.results)?data.results:[]).map(normalizeRemote).filter(Boolean);
+  // TMDB search does not accept the Discover API's advanced filters.
+  if(state.query){
+   if(state.genre!=='Trending')movies=movies.filter(m=>m.genres.includes(state.genre));
+   if(state.year==='classic')movies=movies.filter(m=>m.year<2024);
+   if(state.rating)movies=movies.filter(m=>m.rating>=state.rating);
+  }
+  movies.forEach(m=>byId.set(m.id,m));
+  liveMovies=append?[...liveMovies,...movies.filter(m=>!liveMovies.some(old=>old.id===m.id))]:movies;
+  livePage=Number(data.page)||page;livePages=Math.min(500,Number(data.total_pages)||1);
+  liveTotal=Number(data.total_results)||liveMovies.length;
+ }catch(error){
+  if(error.name==='AbortError')return;
+  if(ownRequest!==requestId)return;
+  liveError=error.message==='Failed to fetch'?'Could not reach TMDB. Check your network or connection.':error.message;
+  if(!append){liveMovies=[];livePages=0;liveTotal=0;livePage=0}
+ }finally{
+  if(ownRequest===requestId){loading=false;renderMovies();updateCatalogNotice();updatePagination()}
+ }
+}
+function refreshLive(){
+ if(!token){renderMovies();updateCatalogNotice();return}
+ if(state.view==='favorites'){renderMovies();updateCatalogNotice();return}
+ loadLive(false);
+}
+function saveMovieSnapshots(){
+ const saved=[...favorites].map(id=>byId.get(id)).filter(Boolean).slice(0,20);
+ storageWrite(SAVED_DATA_KEY,saved);
+}
+
 const $=id=>document.getElementById(id);
 const state={view:'home',genre:'Trending',query:'',year:'all',rating:0,sort:'featured',slide:0,activeMovie:null};
 const pic=(file,size='w500')=>file?CDN+size+'/'+encodeURIComponent(file):'';
@@ -67,15 +185,15 @@ const image=(movie,role='poster')=>{
  queueMicrotask(()=>setArt(n,movie,role));
  return n;
 };
-const fmtTime=minutes=>Math.floor(minutes/60)+'h '+String(minutes%60).padStart(2,'0')+'min';
+const fmtTime=minutes=>minutes?Math.floor(minutes/60)+'h '+String(minutes%60).padStart(2,'0')+'min':'Runtime TBA';
 const titleFor=view=>({home:'Discover movies',favorites:'Your watchlist',soon:'Coming soon',trending:'Trending picks'})[view];
 const togglePopover=(el,btn,force)=>{
  const opening=typeof force==='boolean'?force:el.hidden;el.hidden=!opening;btn.setAttribute('aria-expanded',String(opening));
 };
 function filters(){
- let out=MOVIES.filter(m=>{
+ let out=(state.view==='favorites'?[...favorites].map(id=>byId.get(id)).filter(Boolean):MOVIES).filter(m=>{
   if(state.view==='favorites'&&!favorites.has(m.id))return false;
-  if(state.view==='soon')return false; // This seed catalog has no unreleased films.
+  if(state.view==='soon')return false; // Demo has no future release feed.
   if(state.genre!=='Trending'&&!m.genres.includes(state.genre))return false;
   if(state.query){
    const hay=(m.title+' '+m.genres.join(' ')+' '+m.overview).toLocaleLowerCase();
@@ -119,11 +237,16 @@ function updateNav(){
 }
 function renderMovies(){
  updateNav();updateGenres();
- const results=filters();const container=$('movieStrip');container.replaceChildren();
+ const liveActive=Boolean(token)&&state.view!=='favorites';
+ const results=liveActive?liveMovies:filters();const container=$('movieStrip');container.replaceChildren();
+ container.classList.toggle('is-live',liveActive);
  for(const movie of results)container.appendChild(drawMovieCard(movie));
- $('resultsCount').textContent=results.length+' movie'+(results.length===1?'':'s');
- $('emptyState').hidden=results.length!==0;
- if(state.view==='soon'){
+ $('resultsCount').textContent=liveActive?(loading?'Loading…':liveError?'Connection issue':results.length+' shown · '+liveTotal.toLocaleString()+' found'):results.length+' movie'+(results.length===1?'':'s');
+ $('emptyState').hidden=results.length!==0||loading;
+ if(liveActive){
+  $('emptyState').querySelector('h2').textContent=liveError?'Could not load movies':'No movies found';
+  $('emptyState').querySelector('p').textContent=liveError||'Try another search or loosen your filters.';
+ }else if(state.view==='soon'){
   $('emptyState').querySelector('h2').textContent='Coming soon';
   $('emptyState').querySelector('p').textContent='This hand-picked demo catalog only includes released films. An upcoming-release feed can be connected later.';
  }else if(state.view==='favorites'&&!results.length){
@@ -133,6 +256,7 @@ function renderMovies(){
   $('emptyState').querySelector('h2').textContent='No movies found';
   $('emptyState').querySelector('p').textContent='Try another title or clear your filters.';
  }
+ updatePagination();
 }
 function renderRecent(){
  const list=$('recentList');list.replaceChildren();
@@ -149,7 +273,7 @@ function renderRecent(){
 }
 function toggleFavorite(id){
  if(favorites.has(id))favorites.delete(id);else favorites.add(id);
- storageWrite(FAV_KEY,[...favorites]);
+ storageWrite(FAV_KEY,[...favorites]);saveMovieSnapshots();
  const featured=byId.get(FEATURE_IDS[state.slide]);
  $('favoriteFeature').setAttribute('aria-pressed',String(favorites.has(featured.id)));
  $('favoriteFeature').setAttribute('aria-label',favorites.has(featured.id)?'Remove '+featured.title+' from watchlist':'Save '+featured.title+' to watchlist');
@@ -211,7 +335,7 @@ function openMovie(id){
  state.activeMovie=id;visit(id);
  const art=$('detailPoster');setArt(art,movie,'backdrop');
  $('detailTitle').textContent=movie.title;
- $('detailMeta').textContent=movie.year+'  ·  '+fmtTime(movie.minutes)+'  ·  '+movie.certificate+'  ·  ★ '+movie.rating.toFixed(1);
+ $('detailMeta').textContent=(movie.year||'TBA')+'  ·  '+fmtTime(movie.minutes)+'  ·  '+(movie.certificate==='NR'?'TMDB':movie.certificate)+'  ·  ★ '+movie.rating.toFixed(1);
  $('detailSynopsis').textContent=movie.overview;
  const tags=$('detailGenres');tags.replaceChildren();
  movie.genres.forEach(g=>tags.appendChild(node('span','',g)));
@@ -225,7 +349,7 @@ function openInfo(kind){
  const link=(label,url)=>{const a=node('a','',label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';body.appendChild(a)};
  if(kind==='credits'){
   $('infoTitle').textContent='About the movie artwork';
-  p('This is a curated demonstration catalog, not a live trending feed. Movie posters, artwork and movie information reference TMDB. Ratings are sample snapshot values, not live or Rotten Tomatoes scores.');
+  p(token?'Live movie browsing is powered by the TMDB API. The featured carousel remains hand-curated; TMDB votes are not Rotten Tomatoes scores.':'The fallback is a curated 12-film catalog. Movie artwork and information reference TMDB. Sample ratings are not live or Rotten Tomatoes scores.');
   p('This product uses the TMDB API but is not endorsed or certified by TMDB.');
   const logo=node('img','tmdb-credit-logo');
   logo.src='https://www.themoviedb.org/assets/2/v4/logos/v2/blue_long_2-9665a76b1ae401a510ec1e0ca40ddcb3b0cfe45f1d51b77a308fea0845885648.svg';
@@ -236,16 +360,50 @@ function openInfo(kind){
   const small=node('p','credit-note','Movie artwork belongs to its respective owners. No copyrighted images are included in this repository; images are displayed from TMDB CDN.');
   body.appendChild(small);
  }else if(kind==='settings'){
-  $('infoTitle').textContent='Your preferences';
-  p('Saved movies and recently explored titles stay in this browser. Nothing is sent to our server.');
-  const button=node('button','primary-action','Clear saved movies');
-  button.addEventListener('click',()=>{favorites.clear();storageWrite(FAV_KEY,[]);renderMovies();feature();button.textContent='Watchlist cleared'});
+  $('infoTitle').textContent=token?'TMDB connection & preferences':'Connect the full TMDB catalog';
+  p(token?'Live movie browsing is enabled for this browser tab. You can search TMDB films, browse genres and load more pages.':'Serivia starts with 12 sample movies. To search TMDB’s much larger film database, connect your own TMDB API Read Access Token.');
+  p('The access token stays in this browser session only, and is sent directly to api.themoviedb.org using HTTPS. Do not paste passwords. This static site cannot hide a token from someone using your browser.');
+  if(token){
+   const disconnect=node('button','tmdb-disconnect','Disconnect TMDB');
+   disconnect.type='button';
+   disconnect.addEventListener('click',()=>{
+    token=null;try{sessionStorage.removeItem(TOKEN_KEY)}catch{}
+    if(aborter)aborter.abort();requestId++;loading=false;liveMovies=[];livePage=0;livePages=0;liveTotal=0;liveError='';
+    $('infoDialog').close();renderMovies();updateCatalogNotice();
+   });body.appendChild(disconnect);
+  }else{
+   const form=node('form','tmdb-connect-form'),label=node('label','','TMDB API Read Access Token');
+   const input=node('input');input.type='password';input.required=true;input.autocomplete='off';input.spellcheck=false;
+   input.placeholder='Paste your TMDB API Read Access Token';input.id='tmdbAccessToken';
+   label.htmlFor=input.id;
+   const note=node('small','', 'Get a noncommercial API token from your TMDB account’s Settings → API page. It is not stored in the repository.');
+   const error=node('div','tmdb-connect-error');error.setAttribute('role','alert');
+   const connect=node('button','primary-action','Connect and browse movies');connect.type='submit';
+   form.append(label,input,note,error,connect);
+   form.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const candidate=input.value.trim();if(!candidate)return;
+    connect.disabled=true;connect.textContent='Checking connection…';error.textContent='';
+    try{
+     const data=await tmdb('movie/popular',{page:1},candidate);
+     if(!Array.isArray(data.results))throw Error('Unexpected TMDB response.');
+     token=candidate;try{sessionStorage.setItem(TOKEN_KEY,token)}catch{}
+     state.view='home';state.genre='Trending';state.query='';$('searchInput').value='';
+     $('infoDialog').close();updateCatalogNotice();loadLive(false);
+    }catch(err){error.textContent=err.message==='Failed to fetch'?'Unable to reach TMDB. Check your network.':err.message}
+    finally{connect.disabled=false;connect.textContent='Connect and browse movies';input.value=''}
+   });
+   body.appendChild(form);
+  }
+  const tmdbLink=node('a','', 'Get a TMDB developer token ↗');tmdbLink.href='https://www.themoviedb.org/settings/api';tmdbLink.target='_blank';tmdbLink.rel='noopener noreferrer';body.appendChild(tmdbLink);
+  const button=node('button','tmdb-disconnect','Clear saved movies');
+  button.addEventListener('click',()=>{favorites.clear();storageWrite(FAV_KEY,[]);saveMovieSnapshots();renderMovies();feature();button.textContent='Watchlist cleared'});
   body.appendChild(button);
  }else{
   $('infoTitle').textContent='Welcome to Serivia';
   p('Browse the curated catalog, search by title, narrow by genre, explore movie details and save films for later.');
-  p('This portfolio concept is not a video streaming service and does not include a real-time movie API. Trailer buttons lead to movie video pages on TMDB.');
-  p('Your watchlist is stored locally on this device. Search and genre filters work across the included titles.');
+  p('This is not a streaming service. Connect TMDB in Settings for live movie search, broader discovery, ratings and paginated browsing. Trailer buttons link to TMDB movie video pages.');
+  p('The demo has 12 titles. With a connected TMDB token, explore many more movies. Your watchlist stays in local browser storage.');
   link('TMDB developer documentation ↗','https://developer.themoviedb.org/');
  }
  $('infoDialog').showModal();
@@ -262,7 +420,7 @@ function switchView(view){
  if(view==='favorites'||view==='soon')state.genre='Trending';
  state.query='';$('searchInput').value='';
  if(view==='home'||view==='trending'){state.year='all';state.rating=0;state.sort='featured';$('yearFilter').value='all';$('ratingFilter').value='0';$('sortFilter').value='featured'}
- closeMobileNav();renderMovies();
+ closeMobileNav();renderMovies();refreshLive();
  $('main').focus({preventScroll:true});
 }
 function initialize(){
@@ -329,17 +487,26 @@ function initialize(){
 
  for(const genre of GENRES){
   const b=node('button','',genre);b.type='button';b.dataset.genre=genre;
-  b.addEventListener('click',()=>{state.genre=genre;renderMovies();b.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'})});
+  b.addEventListener('click',()=>{state.genre=genre;renderMovies();refreshLive();b.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'})});
   $('genreScroll').appendChild(b);
  }
- renderMovies();
+ renderMovies();updateCatalogNotice();if(token)loadLive(false);
  document.querySelectorAll('.side-link[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
- $('searchInput').addEventListener('input',e=>{state.query=e.target.value.trim();renderMovies()});
- $('yearFilter').addEventListener('change',e=>{state.year=e.target.value;renderMovies()});
- $('ratingFilter').addEventListener('change',e=>{state.rating=Number(e.target.value);renderMovies()});
- $('sortFilter').addEventListener('change',e=>{state.sort=e.target.value;renderMovies()});
+ $('searchInput').addEventListener('input',e=>{
+  state.query=e.target.value.trim();
+  if(queryDelay)clearTimeout(queryDelay);
+  if(token){
+   // Cancel immediately; don't show stale results while the user types.
+   if(aborter)aborter.abort();requestId++;loading=false;liveMovies=[];livePage=0;livePages=0;
+   renderMovies();queryDelay=setTimeout(()=>loadLive(false),380);
+  }else renderMovies();
+ });
+ $('yearFilter').addEventListener('change',e=>{state.year=e.target.value;renderMovies();refreshLive()});
+ $('ratingFilter').addEventListener('change',e=>{state.rating=Number(e.target.value);renderMovies();refreshLive()});
+ $('sortFilter').addEventListener('change',e=>{state.sort=e.target.value;renderMovies();refreshLive()});
  const reset=()=>{state.genre='Trending';state.query='';state.year='all';state.rating=0;state.sort='featured';$('searchInput').value='';$('yearFilter').value='all';$('ratingFilter').value='0';$('sortFilter').value='featured';switchView('home');togglePopover($('filters'),$('filterBtn'),false)};
  $('resetFilters').addEventListener('click',reset);
+ $('loadMore').addEventListener('click',()=>loadLive(true));
  $('emptyReset').addEventListener('click',reset);
  $('genrePrevious').addEventListener('click',()=>$('genreScroll').scrollBy({left:-220,behavior:'smooth'}));
  $('genreNext').addEventListener('click',()=>$('genreScroll').scrollBy({left:220,behavior:'smooth'}));
@@ -349,6 +516,7 @@ function initialize(){
  $('closeDetails').addEventListener('click',()=>$('detailDialog').close());
  $('closeInfo').addEventListener('click',()=>$('infoDialog').close());
  $('settingsBtn').addEventListener('click',()=>{closeMobileNav();openInfo('settings')});
+ $('connectTmdb').addEventListener('click',()=>openInfo('settings'));
  $('supportBtn').addEventListener('click',()=>{closeMobileNav();openInfo('support')});
  $('notificationBtn').addEventListener('click',()=>openInfo('support'));
  $('creditsBtn').addEventListener('click',()=>openInfo('credits'));
