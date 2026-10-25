@@ -154,8 +154,12 @@ const imageSizes={poster:'(max-width:480px) 145px, (max-width:1000px) 155px, (ma
 // never stretch a portrait poster into a landscape backdrop.
 function setArt(img,movie,role='poster'){
  const landscape=role!=='poster';
- const file=landscape?widescreen(movie):movie.poster;
- const sizes=role==='recent'?['w300','w780']:landscape?['w780','w1280']:['w342','w500','w780'];
+ const hasBackdrop=landscape&&Boolean(movie.backdrop);
+ const file=hasBackdrop?movie.backdrop:movie.poster;
+ // TMDB has distinct allowed width presets for poster and backdrop files.
+ // A vertical poster must NEVER be requested at backdrop-only size w1280.
+ const sizes=hasBackdrop?(role==='recent'?['w300','w780']:['w780','w1280']):['w342','w500','w780'];
+ const pixelWidths=hasBackdrop?(role==='recent'?[300,780]:[780,1280]):[342,500,780];
  const container=img.parentElement;
  container?.classList.remove('image-failed','portrait-art');
  if(landscape&&!movie.backdrop)container?.classList.add('portrait-art');
@@ -175,26 +179,30 @@ function setArt(img,movie,role='poster'){
  img.alt=role==='poster'?movie.title+' movie poster':movie.title+' movie artwork';
  img.decoding='async';
  img.sizes=imageSizes[role]||imageSizes.backdrop;
- img.srcset=sizes.map((size,i)=>pic(file,size)+' '+(role==='recent'?[300,780][i]:landscape?[780,1280][i]:[342,500,780][i])+'w').join(', ');
+ img.srcset=sizes.map((size,i)=>pic(file,size)+' '+pixelWidths[i]+'w').join(', ');
  if(role==='backdrop'&&movie.id===1087192){
   // Match the approved cliffside key art without changing poster thumbnails.
   // If third-party promotional art is unavailable, restore TMDB automatically.
   img.removeAttribute('srcset');
   img.src=DRAGON_PROMO;
   img.onerror=()=>{
-   img.onerror=null;
+   img.onerror=()=>{
+    img.onerror=null;
+    movie.backdrop=null;
+    setArt(img,movie,role);
+   };
    img.srcset=sizes.map((size,i)=>pic(file,size)+' '+[780,1280][i]+'w').join(', ');
    img.src=pic(file,'w1280');
   };
   return;
  }
- img.src=pic(file,role==='recent'?'w780':landscape?'w1280':'w780');
+ img.src=pic(file,hasBackdrop?(role==='recent'?'w780':'w1280'):'w780');
  img.onerror=()=>{
   img.onerror=null;
   img.removeAttribute('srcset');
   // If a real backdrop disappears from the CDN, fall back to the centered
   // portrait composition; never leave a broken image in a detail dialog.
-  if(landscape&&movie.backdrop&&movie.poster){
+  if(hasBackdrop&&movie.poster){
    movie.backdrop=null;
    setArt(img,movie,role);
    return;
