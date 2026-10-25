@@ -261,6 +261,8 @@ try{
   const fallback=await page.locator('#detailPoster').evaluate(el=>el.parentElement.style.getPropertyValue('--art-fallback'));
   assert(fallback.includes('/w500/j9yv60GA4T2b7ts5BZEWju9UEeP.jpg'),
     'Portrait fallback uses matching blurred movie-poster background');
+  assert((await page.locator('#detailPoster').getAttribute('src')).includes('/w780/j9yv60GA4T2b7ts5BZEWju9UEeP.jpg'),
+    'Poster-only movie detail uses TMDB-supported poster sizes, never w1280');
   assert((await page.locator('#detailTrailer').getAttribute('href')).includes('themoviedb.org/movie/552524/videos'));
   await page.locator('#detailFavorite').click();
   assert.equal(await page.locator('#detailFavorite').innerText(),'Saved to watchlist');
