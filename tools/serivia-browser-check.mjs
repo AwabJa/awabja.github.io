@@ -235,7 +235,7 @@ try{
   await page.locator('#yearFilter').selectOption('2025');
   assert((await page.locator('.movie-card').count())>=1,'Year filter returns films');
   await page.locator('#ratingFilter').selectOption('8');
-  assert.equal(await page.locator('.movie-card').count(),0,'Year + rating combine');
+  assert.equal(await page.locator('.movie-card').count(),1,'Year and rating filters combine to show Mission: Impossible');
   await page.locator('#resetFilters').click();
   assert.equal(await page.locator('.movie-card').count(),15,'Reset restores all films');
   await page.locator('.movie-card').first().click();
