@@ -53,3 +53,26 @@
  .featured.slide-enter .feature-art,.featured.slide-enter .feature-bottom,.featured.slide-enter .feature-tags{animation:none}
  .peek,.feature-arrow{transition:none}
 }
+
+/* Exposed covers occupy separate hit areas; the primary slide remains on top. */
+.featured{z-index:3}
+.peek-front{width:110px;right:-90px;z-index:2}
+.peek-back{width:76px;right:-166px;z-index:1}
+@media(max-width:1300px){
+ .peek-front{right:-66px;width:85px}
+ .peek-back{right:-108px;width:42px}
+}
+@media(max-width:1000px){
+ .featured-stack{margin-right:80px}
+ .peek-front{right:-47px;width:63px}
+ .peek-back{right:-79px;width:32px}
+}
+@media(max-width:760px){
+ .featured-stack{margin-right:55px}
+ .peek-front{right:-46px;width:65px}
+ .peek-back{display:none}
+}
+@media(max-width:480px){
+ .featured-stack{margin-right:48px}
+ .peek-front{right:-40px;width:54px}
+}

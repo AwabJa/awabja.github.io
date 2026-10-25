@@ -47,8 +47,10 @@ try{
   assert.equal(await page.locator('#featuredTitle').innerText(),'How to Train Your Dragon','Previous arrow navigates backwards');
   await page.locator('#peekFront').click();
   assert.equal(await page.locator('#featuredTitle').innerText(),'Dune: Part Two','Exposed next card is clickable');
-  await page.locator('#peekBack').click();
-  assert.equal(await page.locator('#featuredTitle').innerText(),'Moana 2','Farther exposed card opens its featured slide');
+  if(width>760){
+   await page.locator('#peekBack').click();
+   assert.equal(await page.locator('#featuredTitle').innerText(),'Moana 2','Farther exposed card opens its featured slide');
+  }
   await page.locator('#slideDots button').first().click();
   assert.equal(await page.locator('#featuredTitle').innerText(),'How to Train Your Dragon','Dots select a particular movie');
   await page.locator('#featuredNext').focus();
