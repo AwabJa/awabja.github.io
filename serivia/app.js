@@ -495,6 +495,18 @@ function initialize(){
   $('genreScroll').appendChild(b);
  }
  renderMovies();updateCatalogNotice();if(token)loadLive(false);
+ // Genre arrows provide a mouse-friendly alternative to horizontal swiping.
+ const genreTrack=$('genreScroll'),back=$('genreBack'),forward=$('genreForward');
+ const updateGenrePagers=()=>{
+  const max=genreTrack.scrollWidth-genreTrack.clientWidth;
+  back.disabled=genreTrack.scrollLeft<2;
+  forward.disabled=max<=2||genreTrack.scrollLeft>=max-2;
+ };
+ back.addEventListener('click',()=>genreTrack.scrollBy({left:-Math.max(140,genreTrack.clientWidth*.65),behavior:'smooth'}));
+ forward.addEventListener('click',()=>genreTrack.scrollBy({left:Math.max(140,genreTrack.clientWidth*.65),behavior:'smooth'}));
+ genreTrack.addEventListener('scroll',updateGenrePagers,{passive:true});
+ window.addEventListener('resize',updateGenrePagers,{passive:true});
+ requestAnimationFrame(updateGenrePagers);
  document.querySelector('.brand').addEventListener('click',event=>{event.preventDefault();switchView('home')});
  document.querySelectorAll('.side-link[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
  $('searchInput').addEventListener('input',e=>{
