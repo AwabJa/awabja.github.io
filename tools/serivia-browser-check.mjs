@@ -36,7 +36,7 @@ try{
  await visualPage.screenshot({path:'serivia-desktop-visual.png',fullPage:false});
  await visualContext.close();
  const results=[];
- for(const width of [320,390,768,1440,1672,1920]){
+ for(const width of [320,390,768,900,1024,1440,1672,1920]){
   const context=await browser.newContext({viewport:{width,height:width<500?812:width===1672?941:1000},isMobile:width<500,hasTouch:width<500});
   const page=await context.newPage();
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -105,8 +105,8 @@ try{
      'Featured banner preserves space for the fanned previews');
    assert(fan.hero.width/fan.front.width>5,
      'Main film remains visually dominant over its preview covers');
-   assert(fan.hero.height<=410,
-     'Viewport-fit hero does not crowd the movie poster row');
+   assert(fan.hero.height<=510,
+     'Featured banner stays within cinematic viewport scale');
   }
   if(width>=768){
    const pagers=page.locator('.genre-pagers button');
@@ -141,11 +141,11 @@ try{
     return {frameLeft:shell.left,heroHeight:hero.height,heroRatio:hero.width/hero.height,
       posterRatio:poster.width/poster.height,sixVisible:lastPoster.right<=main.right-2};
    });
-   assert(Math.abs(layout.frameLeft-37)<10,'Reference dashboard has ~37px outer gutter');
-   assert(Math.abs(layout.heroHeight-398)<22,'Featured hero matches the screenshot height');
-   assert(layout.heroRatio>2.3&&layout.heroRatio<3.1,'Hero matches cinematic screenshot ratio');
-   assert(Math.abs(layout.posterRatio-.87)<.03,'Movie thumbnails match screenshot aspect ratio');
-   assert(layout.sixVisible,'Six movie thumbnails fit across the desktop row');
+   assert(Math.abs(layout.frameLeft)<2,'Full-screen layout has zero desktop gutter');
+   assert(layout.heroHeight>350&&layout.heroHeight<485,'Featured banner responds to screen height');
+   assert(layout.heroRatio>2.1&&layout.heroRatio<3.2,'Banner retains wide cinematic proportions');
+   assert(Math.abs(layout.posterRatio-(2/3))<.02,'Six movie posters use native source aspect');
+   assert(layout.sixVisible,'Six posters fit in the desktop artwork row');
   }
   await page.locator('#peekFront').click();
   assert.equal(await page.locator('#featuredTitle').innerText(),'Dune: Part Two','Clicking first fanned card changes the hero movie');
@@ -164,8 +164,8 @@ try{
   const artSrc=await page.locator('#featureArt').getAttribute('src');
   assert(artSrc.includes('how-to-train-your-dragon-trailer-and-poster')||artSrc.includes('/w1280/8J6UlIFcU7eZfq9iCLbgc8Auklg.jpg'),'Featured hero uses cinematic artwork with an HD fallback');
   assert((await page.locator('.movie-card').first().locator('img').getAttribute('src')).includes('/w780/'),'Posters request a crisp 780px master image');
-  assert.equal(await page.locator('.movie-card .poster-wrap').first().evaluate(el=>getComputedStyle(el).aspectRatio),width>760?'0.87 / 1':'2 / 3','Poster aspect ratios follow desktop and mobile compositions');
-  assert.equal(await page.locator('.movie-card img').first().evaluate(el=>getComputedStyle(el).objectFit),width>760?'cover':'contain','Poster art follows the screenshot desktop treatment');
+  assert.equal(await page.locator('.movie-card .poster-wrap').first().evaluate(el=>getComputedStyle(el).aspectRatio),'2 / 3','Film-cover frames preserve the native 2:3 artwork ratio');
+  assert.equal(await page.locator('.movie-card img').first().evaluate(el=>getComputedStyle(el).objectFit),'contain','Movie posters are fully visible without cropping');
   assert.equal(await page.locator('#featureArt').evaluate(el=>getComputedStyle(el).objectFit),'cover','Wide banner uses cinematic landscape art');
   assert.equal(await page.locator('#genreScroll button').count(),11,'Genre chips render');
   assert.equal((await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content')).includes("script-src 'self'"),true,'Scripts limited to same origin');
@@ -181,18 +181,13 @@ try{
    return {left:rect.left,right:rect.right,width:rect.width,height:rect.height,viewport:innerWidth,viewportHeight:innerHeight,
     radius:getComputedStyle(el).borderTopLeftRadius};
   });
-  if(width<=760){
-   assert(Math.abs(shellGeometry.width-width)<3,'Mobile app spans screen');
-   assert(Math.abs(shellGeometry.left)<2,'Mobile app starts at screen edge');
-   assert.equal(shellGeometry.radius,'0px','Mobile layout has no outer frame');
-  }else{
-   assert(shellGeometry.width<=width-18&&shellGeometry.width>=width-110,
-     'Desktop frame has the reference teal side margins');
-   assert(Math.abs(shellGeometry.left-(width-shellGeometry.width)/2)<3,
-     'Desktop frame stays centered');
-   assert.equal(shellGeometry.radius,'16px','Desktop frame has the reference corner radius');
-   assert(shellGeometry.height<shellGeometry.viewportHeight,
-     'Desktop keeps the teal background visible');
+  // Serivia fills the full browser viewport at every responsive breakpoint.
+  assert(Math.abs(shellGeometry.width-width)<3,'App fills browser width');
+  assert(Math.abs(shellGeometry.left)<2,'App starts at left edge, no outside gutter');
+  assert.equal(shellGeometry.radius,'0px','Dashboard has no outer frame');
+  if(width>760){
+   assert(Math.abs(shellGeometry.height-shellGeometry.viewportHeight)<3,
+     'Desktop dashboard fills the entire viewport height');
   }
   assert(doc.area>180,'Content pane is usable');
   await page.waitForFunction(()=>document.querySelector('.poster-wrap')?.classList.contains('image-failed'));
