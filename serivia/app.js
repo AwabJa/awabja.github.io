@@ -148,7 +148,6 @@ function saveMovieSnapshots(){
 const $=id=>document.getElementById(id);
 const state={view:'home',genre:'Trending',query:'',year:'all',rating:0,sort:'featured',slide:0,activeMovie:null};
 const pic=(file,size='w500')=>file?CDN+size+'/'+encodeURIComponent(file):'';
-const widescreen=movie=>movie.backdrop||movie.poster;
 const imageSizes={poster:'(max-width:480px) 145px, (max-width:1000px) 155px, (max-width:1800px) 185px, 215px',recent:'(max-width:1100px) 180px, 325px',backdrop:'(max-width:760px) 100vw, calc(100vw - 330px)'};
 // Prefer the largest practical TMDB image for each role; correct file paths and
 // never stretch a portrait poster into a landscape backdrop.
@@ -180,7 +179,7 @@ function setArt(img,movie,role='poster'){
  img.decoding='async';
  img.sizes=imageSizes[role]||imageSizes.backdrop;
  img.srcset=sizes.map((size,i)=>pic(file,size)+' '+pixelWidths[i]+'w').join(', ');
- if(role==='backdrop'&&movie.id===1087192){
+ if(role==='backdrop'&&movie.id===1087192&&hasBackdrop){
   // Match the approved cliffside key art without changing poster thumbnails.
   // If third-party promotional art is unavailable, restore TMDB automatically.
   img.removeAttribute('srcset');
