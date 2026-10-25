@@ -58,6 +58,7 @@ try{
   assert.equal(await toggle.isVisible(),true,'Fixed rail toggle is visible at every width');
   await toggle.click();
   assert.equal(await toggle.getAttribute('aria-expanded'),'true','Rail menu must open');
+  await page.locator('.rail-menu').waitFor({state:'visible'}); // Visibility transitions after the aria state flips.
   assert.equal(await page.locator('.rail-menu').isVisible(),true,'Expanded menu is visible');
   await page.locator('.rail-menu a[href="#work"]').click();
   assert.equal(await toggle.getAttribute('aria-expanded'),'false','Rail menu closes after navigation');
