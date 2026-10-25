@@ -96,10 +96,9 @@ body.menu-open{overflow:hidden}
 .about h2 em{font-style:normal;color:#d4d4d0}
 .quote-sign{display:block;font:500 58px/1 Georgia,serif;color:#e9e9e4;margin-bottom:2px}
 .about-copy{padding-top:12px}.about-copy p{font:400 clamp(13px,.95vw,16px)/1.85 var(--sans);color:#b9b9b6;margin:0 0 28px}.about-copy a{font:500 10px var(--mono);letter-spacing:.12em;display:inline-flex;align-items:center;color:#e7e7e4;border-bottom:1px solid #888886;padding-bottom:10px}
-.contact{border-top:1px solid #292929;margin:auto;padding:110px var(--gutter) 120px;max-width:1540px}.contact>.eyebrow{margin-bottom:25px}
+.contact{border-top:1px solid #292929;margin:auto;padding:110px var(--gutter) 100px;max-width:1540px}.contact>.eyebrow{margin-bottom:25px}
 .contact-inner{display:flex;justify-content:space-between;align-items:center;gap:30px}.contact h2{font-size:clamp(43px,7.1vw,104px);font-weight:300;letter-spacing:-.085em;line-height:1.13;margin:0}.contact h2 span{color:#c9c9c5}
 
-.email-link{display:inline-block;font:500 12px var(--mono);letter-spacing:.08em;padding:15px 0;border-bottom:1px solid #777777;margin-top:25px}
 .footer{border-top:1px solid #2d2d2d;min-height:100px;padding:30px var(--gutter) 80px;display:flex;justify-content:space-between;gap:20px;align-items:start;font:400 10px/1.6 var(--mono);letter-spacing:.1em;color:#aaaaa8}
 .footer>div{display:flex;gap:25px}.footer a:hover{color:#fff}
 .preview-pill{position:fixed;z-index:200;bottom:16px;right:17px;border:1px solid #414141;background:#111111ea;padding:10px 14px;font:400 9px var(--mono);color:#bfbfbc;letter-spacing:.07em;box-shadow:0 8px 30px #0008}.preview-pill a{color:#eeeeeb}.preview-pill span{margin:0 6px}

@@ -38,6 +38,10 @@ try{
    assert.equal(await page.locator('.circle-arrow,.project-arrow').count(),0,'Circular arrow buttons are removed');
    assert.equal(await page.locator('.project-cta').count(),3,'Projects have understated text calls to action');
    assert.equal(await page.locator('.contact-cta').innerText(),'EMAIL ME','Contact button has a clear text label');
+   assert.equal(await page.locator('.contact a[href^="mailto:"]').count(),1,'Email Me is the only visible contact email link');
+   assert.equal(await page.locator('.email-link').count(),0,'Redundant visible email address is removed');
+   assert.equal((await page.locator('.about-index').innerText()).trim(),'ABOUT ME','About sidebar uses a simple section label');
+   assert.equal(await page.locator('.about-index span').count(),2,'Old generic skills tags are removed');
    assert.equal(await page.locator('.explore-link').innerText(),'EXPLORE MY PROJECTS','Hero button is clearly labeled');
    assert((await page.locator('.hero h1').innerText()).includes("Hi, I'm A.J."),'Hero introduces the developer directly');
    assert.equal(await page.locator('.project-flow img').getAttribute('src'),'assets/flow-product.svg','Flow uses its redesigned product presentation');
