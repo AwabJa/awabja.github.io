@@ -148,15 +148,18 @@ try{
       sixth=posters[5].getBoundingClientRect();
     const main=bounds('.main-area');
     return {frameLeft:shell.left,heroHeight:hero.height,heroRatio:hero.width/hero.height,
-      posterWidth:poster.width,posterRatio:poster.width/poster.height,fiveVisible:fifth.right<=main.right-2,
+      posterWidth:poster.width,posterHeight:poster.height,posterRatio:poster.width/poster.height,fiveVisible:fifth.right<=main.right-2,
       sixthVisible:sixth.left<main.right-2};
    });
    assert(Math.abs(layout.frameLeft)<2,'Full-screen layout has zero desktop gutter');
    assert(layout.heroHeight>350&&layout.heroHeight<485,'Featured banner responds to screen height');
    assert(layout.heroRatio>2.1&&layout.heroRatio<3.2,'Banner retains wide cinematic proportions');
-   assert(Math.abs(layout.posterRatio-.7448)<.008,'Movie tiles are exactly 2% slimmer in ratio');
-   assert(Math.abs(layout.posterWidth-Math.max(142,Math.min(1672*.121,941*.20))*0.98)<1,
-     'Desktop movie covers are 2% narrower in actual pixels');
+   assert(Math.abs(layout.posterRatio-2/3)<.006,'Movie covers preserve the native 2:3 film poster ratio');
+   const oldWidth=Math.max(139.16,Math.min(1672*.11858,941*.196,197.96));
+   assert(Math.abs(layout.posterWidth-oldWidth*((2/3)/.7448))<1,
+     'Movie cover width scales down to keep the previous card height');
+   assert(Math.abs(layout.posterHeight-oldWidth/.7448)<1,
+     'Movie cover height stays visually unchanged');
    assert(layout.fiveVisible,'Five full rounded movie tiles fit on desktop');
    const sidebar=await page.locator('#recentList .mini-movie').first().evaluate(el=>{
     const box=el.getBoundingClientRect(),style=getComputedStyle(el);
@@ -188,7 +191,7 @@ try{
     ||artSrc.includes('/w780/53dsJ3oEnBhTBVMigWJ9tkA5bzJ.jpg'),
     'Featured artwork uses a backdrop or a valid-sized poster when blocked');
   assert((await page.locator('.movie-card').first().locator('img').getAttribute('src')).includes('/w780/'),'Posters request a crisp 780px master image');
-  assert.equal(await page.locator('.movie-card .poster-wrap').first().evaluate(el=>getComputedStyle(el).aspectRatio),width>760?'0.7448 / 1':'2 / 3','Movie frames match wide desktop and portrait mobile silhouettes');
+  assert.equal(await page.locator('.movie-card .poster-wrap').first().evaluate(el=>getComputedStyle(el).aspectRatio),'2 / 3','Movie frames match wide desktop and portrait mobile silhouettes');
   assert.equal(await page.locator('.movie-card img').first().evaluate(el=>getComputedStyle(el).objectFit),'contain','Source poster art fits fully into the rounded movie frames');
   const heroFit=await page.locator('#featureArt').evaluate(el=>({
    fit:getComputedStyle(el).objectFit,portrait:el.parentElement.classList.contains('portrait-art')
