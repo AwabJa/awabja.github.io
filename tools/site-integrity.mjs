@@ -381,6 +381,24 @@ const enzoEnemies = readFileSync(join(root, 'Enzo/src/enemies.js'), 'utf8');
 check(enzoEnemies.includes('enemy.traverse(child =>'),
   'Enzo must dispose meshes in enemy subtrees');
 check(existsSync(join(root,'serivia/index.html')) && existsSync(join(root,'serivia/app.js')) && existsSync(join(root,'serivia/favicon.svg')), 'serivia project must remain published');
+const seriviaIndex=readFileSync(join(root,'serivia/index.html'),'utf8');
+const seriviaScript=readFileSync(join(root,'serivia/app.js'),'utf8');
+const seriviaStyles=readFileSync(join(root,'serivia/styles.css'),'utf8');
+check(seriviaIndex.includes("connect-src 'self';") &&
+      !seriviaIndex.includes('api.themoviedb.org') &&
+      !seriviaIndex.includes('type="password"') &&
+      !seriviaScript.includes('api.themoviedb.org') &&
+      !seriviaScript.includes('sessionStorage.setItem') &&
+      !seriviaScript.includes('tmdbAccessToken'),
+  'Public Serivia must never solicit, persist or transmit visitor API credentials');
+check(seriviaScript.includes("sessionStorage.removeItem('serivia.tmdb.session.v1')") &&
+      seriviaIndex.includes('>About catalog</button>'),
+  'Serivia removes obsolete session tokens and offers catalog information instead');
+check(seriviaStyles.includes('border-radius:clamp(18px,1.47vw,24px)') &&
+      seriviaStyles.includes('aspect-ratio:0.7448') &&
+      seriviaScript.includes('const VISIBLE_RECENT=3'),
+  'Approved rounded cinematic layout and three recent-movie cards must remain intact');
+
 // Retain a minimal redirect for people who saved the former /Cinema/ URL.
 const oldCinemaHtml=readFileSync(join(root,'Cinema/index.html'),'utf8');
 check(oldCinemaHtml.includes('http-equiv="refresh" content="0; url=../serivia/"') &&
