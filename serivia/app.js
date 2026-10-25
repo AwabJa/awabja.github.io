@@ -11,13 +11,13 @@ const MOVIES=[
  movie(575265,'Mission: Impossible - The Final Reckoning',2025,8.2,170,['Action','Adventure','Thriller'],'z53D72EAOxGRqdr7KXXWp9dJiDe.jpg',null,'Ethan Hunt races against time to confront a dangerous artificial intelligence and save the future.'),
  movie(670292,'The Creator',2023,7.1,133,['Action','Drama','Sci-Fi'],'vBZ0qvaRxqEhZwl6LWmruJqWE8Z.jpg',null,'A former soldier searches for a mysterious creator in a future shaped by artificial intelligence.'),
  movie(1087192,'How to Train Your Dragon',2025,7.8,125,['Action','Adventure','Fantasy','Family'],'53dsJ3oEnBhTBVMigWJ9tkA5bzJ.jpg','8J6UlIFcU7eZfq9iCLbgc8Auklg.jpg','On the rugged island of Berk, a young Viking befriends a Night Fury dragon and begins to change how his world sees these mysterious creatures.','PG'),
- movie(823219,'Flow',2024,7.9,85,['Animation','Adventure','Fantasy'],'zeinX0xt78GgtpCQjx7d2S6Gh7g.jpg',null,'A solitary cat finds shelter on a boat after a great flood and learns to survive with an unlikely animal crew.','PG'),
+ movie(823219,'Flow',2024,7.9,85,['Animation','Adventure','Fantasy'],'zeinX0xt78GgtpCQjx7d2S6Gh7g.jpg','A6Yllp6c1AMn5qzUHQKUEH4ZSEx.jpg','A solitary cat finds shelter on a boat after a great flood and learns to survive with an unlikely animal crew.','PG'),
  movie(762509,'Mufasa: The Lion King',2024,7.3,118,['Adventure','Drama','Family'],'lurEK87kukWNaHd0zYnsi3yzJrs.jpg','1w8kutrRucTd3wlYyu5QlUDMiG1.jpg','A young, orphaned lion named Mufasa finds friendship and his destiny on an epic journey across the Pride Lands.','PG'),
  movie(693134,'Dune: Part Two',2024,8.5,166,['Action','Adventure','Drama','Sci-Fi'],'1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg','eZ239CUp1d6OryZEBPnO2n87gMG.jpg','Paul Atreides joins the Fremen, faces an impossible choice and confronts the fate of Arrakis.'),
  movie(1241982,'Moana 2',2024,7.1,100,['Animation','Adventure','Family'],'aLVkiINlIeCkcZIzb7XHzPYgO6L.jpg','vYqt6kb4lcF8wwqsMMaULkP9OEn.jpg','Moana answers an unexpected call from her ancestors and sets off across the far seas of Oceania.','PG'),
  movie(533535,'Deadpool & Wolverine',2024,7.6,128,['Action','Comedy','Sci-Fi'],'8cdWjvZQUExUUTzyp4t6EDMubfO.jpg','by8z9Fe8y7p4jo2YlW2SZDnptyT.jpg','A wisecracking antihero reluctantly teams up with a gruff mutant for a chaotic adventure across realities.','R'),
- movie(157336,'Interstellar',2014,8.7,169,['Adventure','Drama','Sci-Fi'],'gEU2QniE6E77NI6lCU6MxlNBvIx.jpg',null,'A team of explorers travels beyond the known galaxy to search for humanity’s next home.'),
- movie(27205,'Inception',2010,8.4,148,['Action','Sci-Fi','Crime'],'xlaY2zyzMfkhk0HSC5VUwzoZPU1.jpg',null,'A skilled thief enters dreams to steal secrets and faces an impossible task: planting an idea instead.'),
+ movie(157336,'Interstellar',2014,8.7,169,['Adventure','Drama','Sci-Fi'],'gEU2QniE6E77NI6lCU6MxlNBvIx.jpg','pbrkL804c8yAv3zBZR4QPEafpAR.jpg','A team of explorers travels beyond the known galaxy to search for humanity’s next home.'),
+ movie(27205,'Inception',2010,8.4,148,['Action','Sci-Fi','Crime'],'xlaY2zyzMfkhk0HSC5VUwzoZPU1.jpg','8ZTVqvKDQ8emSGUEMjsS4yHAwrp.jpg','A skilled thief enters dreams to steal secrets and faces an impossible task: planting an idea instead.'),
  movie(299534,'Avengers: Endgame',2019,8.3,181,['Action','Adventure','Sci-Fi'],'ulzhLuWrPK07P1YkdWQLZnQh1JL.jpg',null,'The remaining heroes gather for one final chance to undo an unimaginable loss.'),
  movie(122,'The Lord of the Rings: The Return of the King',2003,8.5,201,['Action','Adventure','Fantasy'],'rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg',null,'The fate of Middle-earth rests on a perilous journey to destroy a powerful ring.'),
  movie(550,'Fight Club',1999,8.4,139,['Drama','Crime'],'jSziioSwPVrOy9Yow3XhWIBDjq1.jpg',null,'An office worker encounters a charismatic outsider and becomes drawn into a secret society.','R'),
@@ -149,7 +149,7 @@ const $=id=>document.getElementById(id);
 const state={view:'home',genre:'Trending',query:'',year:'all',rating:0,sort:'featured',slide:0,activeMovie:null};
 const pic=(file,size='w500')=>file?CDN+size+'/'+encodeURIComponent(file):'';
 const widescreen=movie=>movie.backdrop||movie.poster;
-const imageSizes={poster:'(max-width:480px) 145px, (max-width:1000px) 155px, 180px',recent:'195px',backdrop:'(max-width:760px) 100vw, calc(100vw - 330px)'};
+const imageSizes={poster:'(max-width:480px) 145px, (max-width:1000px) 155px, (max-width:1800px) 185px, 215px',recent:'(max-width:1100px) 180px, 325px',backdrop:'(max-width:760px) 100vw, calc(100vw - 330px)'};
 // Prefer the largest practical TMDB image for each role; correct file paths and
 // never stretch a portrait poster into a landscape backdrop.
 function setArt(img,movie,role='poster'){
@@ -159,7 +159,13 @@ function setArt(img,movie,role='poster'){
  const container=img.parentElement;
  container?.classList.remove('image-failed','portrait-art');
  if(landscape&&!movie.backdrop)container?.classList.add('portrait-art');
- if(container)container.dataset.artTitle=movie.title;
+ if(container){
+  container.dataset.artTitle=movie.title;
+  // When no landscape still exists, blur the poster behind an intact
+  // portrait image rather than stretching it across the widescreen panel.
+  const fallback=landscape&&movie.poster?pic(movie.poster,'w500'):'';
+  container.style.setProperty('--art-fallback',fallback?'url("'+fallback+'")':'none');
+ }
  if(!file){
   img.hidden=true;img.removeAttribute('srcset');img.removeAttribute('src');
   container?.classList.add('image-failed');
@@ -189,6 +195,30 @@ function setArt(img,movie,role='poster'){
   img.hidden=true;
   container?.classList.add('image-failed');
  };
+}
+
+// Connected TMDB sessions can supply a missing real backdrop when needed.
+// No credentials are embedded in the public repository.
+const backdropRequests=new Map();
+async function ensureBackdrop(movie){
+ if(!token||!movie||movie.backdrop)return movie?.backdrop||null;
+ if(backdropRequests.has(movie.id))return backdropRequests.get(movie.id);
+ const requestedToken=token;
+ const pending=(async()=>{
+  try{
+   const detail=await tmdb('movie/'+movie.id,{},requestedToken);
+   if(requestedToken!==token)return null;
+   const filepath=typeof detail.backdrop_path==='string'?detail.backdrop_path.replace(/^\//,''):null;
+   if(!filepath)return null;
+   movie.backdrop=filepath;
+   if(favorites.has(movie.id))saveMovieSnapshots();
+   if(state.activeMovie===movie.id&&$('detailDialog').open)setArt($('detailPoster'),movie,'backdrop');
+   if(recent.includes(movie.id))renderRecent();
+   return filepath;
+  }catch{return null}
+ })();
+ backdropRequests.set(movie.id,pending);
+ return pending;
 }
 
 const storageRead=(key,def)=>{try{const value=JSON.parse(localStorage.getItem(key));return Array.isArray(value)?value:def}catch{return def}};
@@ -298,6 +328,7 @@ function renderRecent(){
   bottom.append(play,node('span','mini-year',String(movie.year)));
   b.append(t,bottom);b.addEventListener('click',()=>{closeMobileNav();openMovie(id)});
   list.appendChild(b);
+  if(token&&!movie.backdrop)void ensureBackdrop(movie);
  }
 }
 function toggleFavorite(id){
@@ -371,6 +402,7 @@ function openMovie(id){
  $('detailTrailer').href='https://www.themoviedb.org/movie/'+movie.id+'/videos';
  updateDetailFavorite();
  if(!$('detailDialog').open)$('detailDialog').showModal();
+ if(token&&!movie.backdrop)void ensureBackdrop(movie);
 }
 function openInfo(kind){
  const body=$('infoBody');body.replaceChildren();
