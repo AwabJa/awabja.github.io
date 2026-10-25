@@ -163,8 +163,16 @@ async function scenario(name,viewport,isMobile=false){
   }
   await page.locator('[data-mode="board"]').click();await page.locator('.kanban').waitFor();
   assert.equal(await page.locator('.kanban-lane').count(),3,'Board must have three stages');
-  await page.locator('[data-mode="list"]').click();await page.locator('.flow-table').waitFor();
-  if(isMobile)assert(await page.evaluate(()=>document.querySelector('.table-scroll').scrollWidth>=document.querySelector('.table-scroll').clientWidth),'Table must allow horizontal access to columns');
+  await page.locator('[data-mode="list"]').click();await page.locator('.table-view').waitFor();
+  // A new workspace intentionally shows an empty state instead of an empty HTML table.
+  if(await page.locator('.flow-table').count()){
+   if(isMobile)assert(await page.evaluate(()=>document.querySelector('.table-scroll').scrollWidth>=document.querySelector('.table-scroll').clientWidth),
+    'Populated Table must allow horizontal access to columns');
+  }else{
+   assert.equal(await page.locator('.table-view .empty-state').isVisible(),true,
+    'Empty Table must explain that there are no tasks');
+   assert.match(await page.locator('.table-view .empty-state').innerText(),/No tasks match this view/);
+  }
   await page.locator('[data-mode="week"]').click();
   // A scoped recurring edit must work on both pointer and touch devices.
   await page.locator('#addTaskTop').click();
