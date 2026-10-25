@@ -65,7 +65,7 @@ async function tmdb(endpoint,params={},credential=token,signal){
 function updateCatalogNotice(){
  const connected=Boolean(token);
  $('catalogNotice').classList.toggle('is-connected',connected);
- $('catalogMode').textContent=connected?'TMDB · Live movie catalog':'Demo collection · 12 films';
+ $('catalogMode').textContent=connected?'TMDB · Live movie catalog':'Demo collection · '+MOVIES.length+' films';
  $('catalogHelp').textContent=connected?(liveError||'Browse thousands of movies. Search, filter, and load more results.'):'Connect TMDB to search and browse its full movie database.';
  $('connectTmdb').textContent=connected?'Connection settings':'Connect TMDB';
 }
@@ -362,7 +362,7 @@ function openInfo(kind){
  const link=(label,url)=>{const a=node('a','',label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';body.appendChild(a)};
  if(kind==='credits'){
   $('infoTitle').textContent='About the movie artwork';
-  p(token?'Live movie browsing is powered by the TMDB API. The featured carousel remains hand-curated; TMDB votes are not Rotten Tomatoes scores.':'The fallback is a curated 12-film catalog. Movie artwork and information reference TMDB. Sample ratings are not live or Rotten Tomatoes scores.');
+  p(token?'Live movie browsing is powered by the TMDB API. The featured carousel remains hand-curated; TMDB votes are not Rotten Tomatoes scores.':'The fallback is a curated '+MOVIES.length+'-film catalog. Movie artwork and information reference TMDB. Sample ratings are not live or Rotten Tomatoes scores.');
   p('This product uses the TMDB API but is not endorsed or certified by TMDB.');
   const logo=node('img','tmdb-credit-logo');
   logo.src='https://www.themoviedb.org/assets/2/v4/logos/v2/blue_long_2-9665a76b1ae401a510ec1e0ca40ddcb3b0cfe45f1d51b77a308fea0845885648.svg';
@@ -416,7 +416,7 @@ function openInfo(kind){
   $('infoTitle').textContent='Welcome to Serivia';
   p('Browse the curated catalog, search by title, narrow by genre, explore movie details and save films for later.');
   p('This is not a streaming service. Connect TMDB in Settings for live movie search, broader discovery, ratings and paginated browsing. Trailer buttons link to TMDB movie video pages.');
-  p('The demo has 12 titles. With a connected TMDB token, explore many more movies. Your watchlist stays in local browser storage.');
+  p('The demo has '+MOVIES.length+' titles. With a connected TMDB token, explore many more movies. Your watchlist stays in local browser storage.');
   link('TMDB developer documentation ↗','https://developer.themoviedb.org/');
  }
  $('infoDialog').showModal();
