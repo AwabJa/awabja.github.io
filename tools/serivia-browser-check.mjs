@@ -27,8 +27,8 @@ try{
  const budgets=await Promise.all(['serivia/index.html','serivia/styles.css','serivia/app.js'].map(file=>stat(resolve(root,file)).then(result=>result.size)));
  assert(budgets[0]<20000&&budgets[1]<65000&&budgets[2]<42000,'Static app files remain compact');
  const results=[];
- for(const width of [320,390,768,1440,1920]){
-  const context=await browser.newContext({viewport:{width,height:width<500?812:1000},isMobile:width<500,hasTouch:width<500});
+ for(const width of [320,390,768,1440,1672,1920]){
+  const context=await browser.newContext({viewport:{width,height:width<500?812:width===1672?941:1000},isMobile:width<500,hasTouch:width<500});
   const page=await context.newPage();
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   // The curated app is tested offline from TMDB; poster failures must be graceful.
@@ -43,7 +43,7 @@ try{
   assert.equal(await page.locator('.brand-icon svg rect').count(),1,'Brand uses a single clapperboard body');
   assert.equal(await page.locator('.brand-icon svg path').count(),4,'Clapperboard has its hinged striped slate and play symbol');
   assert.equal(await page.locator('link[rel="icon"]').getAttribute('href'),'favicon.svg?v=1','serivia uses matching clapperboard tab icon');
-  assert.equal(await page.locator('.movie-card').count(),12,'Twelve curated film cards render');
+  assert.equal(await page.locator('.movie-card').count(),15,'Fifteen curated film cards render');
   const assertLabels=async contextName=>{
     const layout=await page.evaluate(()=>{
       const strip=document.querySelector('#movieStrip');
@@ -122,6 +122,21 @@ try{
    assert(fit.metadataInView&&fit.posterVisible,'Movie posters and metadata are visible without scrolling');
    assert(fit.footerInView,'Footer remains visible on normal desktop monitors');
   }
+  if(width===1672){
+   const layout=await page.evaluate(()=>{
+    const bounds=selector=>document.querySelector(selector).getBoundingClientRect();
+    const shell=bounds('.app-shell'),hero=bounds('#featured');
+    const poster=bounds('#movieStrip .poster-wrap'),lastPoster=document.querySelectorAll('#movieStrip .poster-wrap')[5].getBoundingClientRect();
+    const main=bounds('.main-area');
+    return {frameLeft:shell.left,heroHeight:hero.height,heroRatio:hero.width/hero.height,
+      posterRatio:poster.width/poster.height,sixVisible:lastPoster.right<=main.right-2};
+   });
+   assert(Math.abs(layout.frameLeft-37)<10,'Reference dashboard has ~37px outer gutter');
+   assert(Math.abs(layout.heroHeight-398)<22,'Featured hero matches the screenshot height');
+   assert(layout.heroRatio>2.3&&layout.heroRatio<3.1,'Hero matches cinematic screenshot ratio');
+   assert(Math.abs(layout.posterRatio-.87)<.03,'Movie thumbnails match screenshot aspect ratio');
+   assert(layout.sixVisible,'Six movie thumbnails fit across the desktop row');
+  }
   await page.locator('#peekFront').click();
   assert.equal(await page.locator('#featuredTitle').innerText(),'Dune: Part Two','Clicking first fanned card changes the hero movie');
   assert.equal(await page.locator('#slideDots button[aria-pressed="true"]').count(),1,'Current dot stays synced');
@@ -139,8 +154,8 @@ try{
   const artSrc=await page.locator('#featureArt').getAttribute('src');
   assert(artSrc.includes('/w1280/8J6UlIFcU7eZfq9iCLbgc8Auklg.jpg'),'Hero uses genuine HD landscape image, not a stretched poster');
   assert((await page.locator('.movie-card').first().locator('img').getAttribute('src')).includes('/w780/'),'Posters request a crisp 780px master image');
-  assert.equal(await page.locator('.movie-card .poster-wrap').first().evaluate(el=>getComputedStyle(el).aspectRatio),'2 / 3','All poster boxes match 2:3 movie art');
-  assert.equal(await page.locator('.movie-card img').first().evaluate(el=>getComputedStyle(el).objectFit),'contain','Poster art does not crop');
+  assert.equal(await page.locator('.movie-card .poster-wrap').first().evaluate(el=>getComputedStyle(el).aspectRatio),width>760?'0.87':'2 / 3','Poster aspect ratios follow desktop and mobile compositions');
+  assert.equal(await page.locator('.movie-card img').first().evaluate(el=>getComputedStyle(el).objectFit),width>760?'cover':'contain','Poster art follows the screenshot desktop treatment');
   assert.equal(await page.locator('#featureArt').evaluate(el=>getComputedStyle(el).objectFit),'cover','Wide banner uses cinematic landscape art');
   assert.equal(await page.locator('#genreScroll button').count(),11,'Genre chips render');
   assert.equal((await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content')).includes("script-src 'self'"),true,'Scripts limited to same origin');
@@ -156,13 +171,18 @@ try{
    return {left:rect.left,right:rect.right,width:rect.width,height:rect.height,viewport:innerWidth,viewportHeight:innerHeight,
     radius:getComputedStyle(el).borderTopLeftRadius};
   });
-  assert(Math.abs(shellGeometry.width-width)<3,
-    'Application spans the full browser width at '+width+'px');
-  assert(Math.abs(shellGeometry.left)<2,'Application begins at the viewport edge');
-  assert(shellGeometry.radius==='0px','Application has no floating frame');
-  if(width>760){
-   assert(Math.abs(shellGeometry.height-shellGeometry.viewportHeight)<3,
-     'Desktop application fills viewport height');
+  if(width<=760){
+   assert(Math.abs(shellGeometry.width-width)<3,'Mobile app spans screen');
+   assert(Math.abs(shellGeometry.left)<2,'Mobile app starts at screen edge');
+   assert.equal(shellGeometry.radius,'0px','Mobile layout has no outer frame');
+  }else{
+   assert(shellGeometry.width<width-20&&shellGeometry.width>width-105,
+     'Desktop frame has the reference teal side margins');
+   assert(Math.abs(shellGeometry.left-(width-shellGeometry.width)/2)<3,
+     'Desktop frame stays centered');
+   assert.equal(shellGeometry.radius,'16px','Desktop frame has the reference corner radius');
+   assert(shellGeometry.height<shellGeometry.viewportHeight,
+     'Desktop keeps the teal background visible');
   }
   assert(doc.area>180,'Content pane is usable');
   await page.waitForFunction(()=>document.querySelector('.poster-wrap')?.classList.contains('image-failed'));
@@ -208,11 +228,11 @@ try{
   await page.locator('#ratingFilter').selectOption('8');
   assert.equal(await page.locator('.movie-card').count(),0,'Year + rating combine');
   await page.locator('#resetFilters').click();
-  assert.equal(await page.locator('.movie-card').count(),12,'Reset restores all films');
+  assert.equal(await page.locator('.movie-card').count(),15,'Reset restores all films');
   await page.locator('.movie-card').first().click();
   assert.equal(await page.locator('#detailDialog').evaluate(el=>el.open),true,'Movie details dialog opens');
-  assert.equal(await page.locator('#detailTitle').innerText(),'How to Train Your Dragon');
-  assert((await page.locator('#detailTrailer').getAttribute('href')).includes('themoviedb.org/movie/1087192/videos'));
+  assert.equal(await page.locator('#detailTitle').innerText(),'Lilo & Stitch');
+  assert((await page.locator('#detailTrailer').getAttribute('href')).includes('themoviedb.org/movie/552524/videos'));
   await page.locator('#detailFavorite').click();
   assert.equal(await page.locator('#detailFavorite').innerText(),'Saved to watchlist');
   await page.keyboard.press('Escape');
@@ -282,7 +302,7 @@ try{
   route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({page,total_pages:2,total_results:3,results:item})});
  });
  await livePage.goto(origin+'/serivia/',{waitUntil:'domcontentloaded'});
- assert.equal(await livePage.locator('#catalogMode').innerText(),'Demo collection · 12 films','Without token, sample collection is explicit');
+ assert.equal(await livePage.locator('#catalogMode').innerText(),'Demo collection · 15 films','Without token, sample collection is explicit');
  assert.equal(await livePage.locator('.brand').getAttribute('href'),'#main','Brand points at a real local section');
  await livePage.locator('#settingsBtn').click();
  await livePage.locator('#tmdbAccessToken').fill('fake_test_read_access_token');
@@ -332,13 +352,13 @@ try{
  assert.equal(await livePage.evaluate(()=>sessionStorage.getItem('serivia.tmdb.session.v1')),'fake_test_read_access_token','Token remains session-only');
  await livePage.locator('#settingsBtn').click();
  await livePage.locator('.tmdb-disconnect').first().click();
- assert.equal(await livePage.locator('#catalogMode').innerText(),'Demo collection · 12 films','Disconnect restores demo');
+ assert.equal(await livePage.locator('#catalogMode').innerText(),'Demo collection · 15 films','Disconnect restores demo');
  assert.equal(await livePage.evaluate(()=>sessionStorage.getItem('serivia.tmdb.session.v1')),null,'Disconnect removes token');
  await liveCtx.close();
  const reduced=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});
  await reduced.route('https://image.tmdb.org/**',route=>route.abort());
  await reduced.goto(origin+'/serivia/');
- assert.equal(await reduced.locator('.movie-card').count(),12);
+ assert.equal(await reduced.locator('.movie-card').count(),15);
  await reduced.close();
  console.log('SERIVIA BROWSER CHECKS PASSED '+JSON.stringify(results));
 }finally{
