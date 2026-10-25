@@ -997,7 +997,7 @@
    Only the desktop view is adjusted; phone layout stays native and scrollable. */
 @media(min-width:901px){
   :root{
-    --poster-w:clamp(160px,min(13.2vw,24dvh),228px);
+    --poster-w:clamp(150px,min(12.5vw,22dvh),215px);
     --poster-gap:clamp(13px,1.07vw,19px);
   }
   .app-shell{
@@ -1027,10 +1027,10 @@
     object-fit:cover;
     object-position:center;
   }
-  /* Cover art fills each wider tile without stretching the source image.
-     Keep faces and main subjects centered, with softened movie-tile corners. */
+  /* Slightly narrower rounded frames; the finishing artwork rules below
+     use contain so the entire source poster stays visible. */
   #main .poster-wrap{
-    aspect-ratio:0.86;
+    aspect-ratio:0.80;
     border-radius:clamp(18px,1.47vw,24px);
     overflow:hidden;
     isolation:isolate;
@@ -1043,7 +1043,7 @@
     object-position:center 43%;
   }
   #main .movie-card{
-    max-width:228px;
+    max-width:215px;
   }
   #main .movie-name{
     margin-top:8px;
@@ -1053,7 +1053,7 @@
    hero, genre controls or metadata; the main panel can still scroll. */
 @media(min-width:761px) and (max-width:1199px){
   :root{
-    --poster-w:clamp(119px,min(14.1vw,20dvh),170px);
+    --poster-w:clamp(116px,min(13.4vw,19dvh),161px);
     --poster-gap:clamp(9px,1vw,14px);
   }
   .sidebar .mini-movie{
@@ -1063,7 +1063,7 @@
 }
 @media(min-width:761px) and (max-height:740px){
   :root{
-    --poster-w:clamp(108px,min(12vw,19dvh),157px);
+    --poster-w:clamp(105px,min(11.5vw,18dvh),150px);
   }
   .sidebar .mini-movie{
     height:clamp(68px,10.2dvh,85px);
