@@ -136,16 +136,28 @@ try{
    const layout=await page.evaluate(()=>{
     const bounds=selector=>document.querySelector(selector).getBoundingClientRect();
     const shell=bounds('.app-shell'),hero=bounds('#featured');
-    const poster=bounds('#movieStrip .poster-wrap'),lastPoster=document.querySelectorAll('#movieStrip .poster-wrap')[5].getBoundingClientRect();
+    const posters=document.querySelectorAll('#movieStrip .poster-wrap');
+    const poster=posters[0].getBoundingClientRect(),fifth=posters[4].getBoundingClientRect(),
+      sixth=posters[5].getBoundingClientRect();
     const main=bounds('.main-area');
     return {frameLeft:shell.left,heroHeight:hero.height,heroRatio:hero.width/hero.height,
-      posterRatio:poster.width/poster.height,sixVisible:lastPoster.right<=main.right-2};
+      posterRatio:poster.width/poster.height,fiveVisible:fifth.right<=main.right-2,
+      sixthPartiallyVisible:sixth.left<main.right-2&&sixth.right>main.right+2};
    });
    assert(Math.abs(layout.frameLeft)<2,'Full-screen layout has zero desktop gutter');
    assert(layout.heroHeight>350&&layout.heroHeight<485,'Featured banner responds to screen height');
    assert(layout.heroRatio>2.1&&layout.heroRatio<3.2,'Banner retains wide cinematic proportions');
-   assert(Math.abs(layout.posterRatio-(2/3))<.02,'Six movie posters use native source aspect');
-   assert(layout.sixVisible,'Six posters fit in the desktop artwork row');
+   assert(Math.abs(layout.posterRatio-.86)<.02,'Wider movie tiles match the reference aspect ratio');
+   assert(layout.fiveVisible,'Five full rounded movie tiles fit on desktop');
+   const sidebar=await page.locator('#recentList .mini-movie').first().evaluate(el=>{
+    const box=el.getBoundingClientRect(),style=getComputedStyle(el);
+    return {width:box.width,height:box.height,radius:parseFloat(style.borderTopLeftRadius)};
+   });
+   assert(sidebar.width/sidebar.height>2.1,'Recent movies display as wide landscape cards');
+   assert(sidebar.radius>=18,'Recently viewed movie cards have rounded corners');
+   const posterRadius=await page.locator('#movieStrip .poster-wrap').first().evaluate(el=>parseFloat(getComputedStyle(el).borderTopLeftRadius));
+   assert(posterRadius>=18,'Main cover tiles have the softer rounded edges from the reference');
+   assert(layout.sixthPartiallyVisible,'Next movie peeks into the horizontal movie strip');
   }
   await page.locator('#peekFront').click();
   assert.equal(await page.locator('#featuredTitle').innerText(),'Dune: Part Two','Clicking first fanned card changes the hero movie');
@@ -164,8 +176,8 @@ try{
   const artSrc=await page.locator('#featureArt').getAttribute('src');
   assert(artSrc.includes('how-to-train-your-dragon-trailer-and-poster')||artSrc.includes('/w1280/8J6UlIFcU7eZfq9iCLbgc8Auklg.jpg'),'Featured hero uses cinematic artwork with an HD fallback');
   assert((await page.locator('.movie-card').first().locator('img').getAttribute('src')).includes('/w780/'),'Posters request a crisp 780px master image');
-  assert.equal(await page.locator('.movie-card .poster-wrap').first().evaluate(el=>getComputedStyle(el).aspectRatio),'2 / 3','Film-cover frames preserve the native 2:3 artwork ratio');
-  assert.equal(await page.locator('.movie-card img').first().evaluate(el=>getComputedStyle(el).objectFit),'contain','Movie posters are fully visible without cropping');
+  assert.equal(await page.locator('.movie-card .poster-wrap').first().evaluate(el=>getComputedStyle(el).aspectRatio),width>760?'0.86 / 1':'2 / 3','Movie frames match wide desktop and portrait mobile silhouettes');
+  assert.equal(await page.locator('.movie-card img').first().evaluate(el=>getComputedStyle(el).objectFit),width>760?'cover':'contain','Cover art fills widescreen tiles without distortion');
   assert.equal(await page.locator('#featureArt').evaluate(el=>getComputedStyle(el).objectFit),'cover','Wide banner uses cinematic landscape art');
   assert.equal(await page.locator('#genreScroll button').count(),11,'Genre chips render');
   assert.equal((await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content')).includes("script-src 'self'"),true,'Scripts limited to same origin');
