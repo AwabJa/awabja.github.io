@@ -147,7 +147,7 @@ try{
    assert(Math.abs(layout.frameLeft)<2,'Full-screen layout has zero desktop gutter');
    assert(layout.heroHeight>350&&layout.heroHeight<485,'Featured banner responds to screen height');
    assert(layout.heroRatio>2.1&&layout.heroRatio<3.2,'Banner retains wide cinematic proportions');
-   assert(Math.abs(layout.posterRatio-.86)<.02,'Wider movie tiles match the reference aspect ratio');
+   assert(Math.abs(layout.posterRatio-.80)<.02,'Slightly narrower movie tiles match the refined artwork proportions');
    assert(layout.fiveVisible,'Five full rounded movie tiles fit on desktop');
    const sidebar=await page.locator('#recentList .mini-movie').first().evaluate(el=>{
     const box=el.getBoundingClientRect(),style=getComputedStyle(el);
@@ -176,8 +176,8 @@ try{
   const artSrc=await page.locator('#featureArt').getAttribute('src');
   assert(artSrc.includes('how-to-train-your-dragon-trailer-and-poster')||artSrc.includes('/w1280/8J6UlIFcU7eZfq9iCLbgc8Auklg.jpg'),'Featured hero uses cinematic artwork with an HD fallback');
   assert((await page.locator('.movie-card').first().locator('img').getAttribute('src')).includes('/w780/'),'Posters request a crisp 780px master image');
-  assert.equal(await page.locator('.movie-card .poster-wrap').first().evaluate(el=>getComputedStyle(el).aspectRatio),width>760?'0.86 / 1':'2 / 3','Movie frames match wide desktop and portrait mobile silhouettes');
-  assert.equal(await page.locator('.movie-card img').first().evaluate(el=>getComputedStyle(el).objectFit),width>760?'cover':'contain','Cover art fills widescreen tiles without distortion');
+  assert.equal(await page.locator('.movie-card .poster-wrap').first().evaluate(el=>getComputedStyle(el).aspectRatio),width>760?'0.8 / 1':'2 / 3','Movie frames match wide desktop and portrait mobile silhouettes');
+  assert.equal(await page.locator('.movie-card img').first().evaluate(el=>getComputedStyle(el).objectFit),'contain','Source poster art fits fully into the rounded movie frames');
   assert.equal(await page.locator('#featureArt').evaluate(el=>getComputedStyle(el).objectFit),'cover','Wide banner uses cinematic landscape art');
   assert.equal(await page.locator('#genreScroll button').count(),11,'Genre chips render');
   assert.equal((await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content')).includes("script-src 'self'"),true,'Scripts limited to same origin');
@@ -276,7 +276,9 @@ try{
   [1087192,823219,762509,693134,1241982,533535,157336,27205,299534,122,550,1020414]
  )));
  await shortPage.reload({waitUntil:'domcontentloaded'});
- assert.equal(await shortPage.locator('#recentList .mini-movie').count(),12,'Recent sidebar retains 12 items');
+ assert.equal(await shortPage.locator('#recentList .mini-movie').count(),3,'Only three recently explored films appear in sidebar');
+ assert.equal(await shortPage.evaluate(()=>JSON.parse(localStorage.getItem('serivia.recent.v1')).length),12,
+  'Older recently explored films remain in saved history');
  const shortLayout=await shortPage.evaluate(()=>{
   const area=document.querySelector('.side-activity'),main=document.querySelector('.main-area');
   area.style.scrollBehavior='auto';main.style.scrollBehavior='auto';
@@ -291,7 +293,7 @@ try{
    footerVisible:footer.bottom<=innerHeight+3&&footer.top>=0,
    filmVisible:film.bottom<=mainBox.bottom+6&&film.top>=mainBox.top-6};
  });
- assert(shortLayout.recentScroll>100&&shortLayout.lastVisible,'All recent movies can be reached by scrolling');
+ assert(shortLayout.recentScroll>=0&&shortLayout.lastVisible,'Three sidebar movies remain visible or scrollable');
  assert(shortLayout.navClear&&shortLayout.footerVisible,'Sidebar does not overlap navigation or portfolio link');
  assert(shortLayout.mainScroll>=0&&shortLayout.filmVisible,
   'Short screens either fit movie metadata or allow scrolling to it');
