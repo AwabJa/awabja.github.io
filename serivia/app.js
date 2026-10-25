@@ -410,7 +410,7 @@ function initialize(){
 
  for(const genre of GENRES){
   const b=node('button','',genre);b.type='button';b.dataset.genre=genre;
-  b.addEventListener('click',()=>{state.genre=genre;renderMovies();refreshLive();b.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'})});
+  b.addEventListener('click',()=>{state.genre=genre;renderMovies();b.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'})});
   $('genreScroll').appendChild(b);
  }
  renderMovies();updateCatalogNotice();
