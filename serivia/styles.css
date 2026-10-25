@@ -261,3 +261,28 @@
  .movie-card{flex-basis:132px;width:132px}
 }
 @media(prefers-reduced-motion:reduce){.peek{transition:none}}
+
+
+/* Reference-sized film stage. Keep the application full screen, but never
+   allow its feature hero to grow wider than the 750px reference artwork.
+   The remainder of the stage holds two staggered clickable cover previews. */
+.featured-section{width:100%;max-width:916px}
+.featured-stack{width:min(750px,calc(100% - 166px));max-width:750px;margin-right:0}
+@media(max-width:1300px){
+ .featured-section{max-width:870px}
+ .featured-stack{width:min(750px,calc(100% - 122px));margin-right:0}
+}
+@media(max-width:1000px){
+ .featured-section{max-width:845px}
+ .featured-stack{width:min(750px,calc(100% - 98px));margin-right:0}
+}
+@media(max-width:760px){
+ .featured-section{max-width:100%}
+ .featured-stack{width:calc(100% - 68px);margin-right:0}
+}
+@media(max-width:480px){
+ .featured-stack{width:calc(100% - 58px);margin-right:0}
+}
+@media(max-width:360px){
+ .featured-stack{width:calc(100% - 54px);margin-right:0}
+}

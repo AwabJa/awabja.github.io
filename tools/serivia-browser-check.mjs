@@ -27,7 +27,7 @@ try{
  const budgets=await Promise.all(['serivia/index.html','serivia/styles.css','serivia/app.js'].map(file=>stat(resolve(root,file)).then(result=>result.size)));
  assert(budgets[0]<20000&&budgets[1]<42000&&budgets[2]<42000,'Static app files remain compact');
  const results=[];
- for(const width of [320,390,768,1440]){
+ for(const width of [320,390,768,1440,1920]){
   const context=await browser.newContext({viewport:{width,height:width<500?812:1000},isMobile:width<500,hasTouch:width<500});
   const page=await context.newPage();
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -87,6 +87,11 @@ try{
   assert(fan.hero.right<fan.front.right&&fan.front.right<fan.back.right,'Preview covers are progressively fanned out at '+width+'px');
   assert(fan.back.right<=fan.main.right+3,'Fanned covers fit inside the main content at '+width+'px');
   assert(fan.hero.width>fan.front.width*2.5,'Main hero is much larger than the stacked covers');
+  assert(fan.hero.width<=751,'Featured banner must be no wider than the 750px reference at '+width+'px');
+  if(width>=1440){
+   assert(fan.hero.width>=735,'Feature stays close to the 750px reference at large desktop widths');
+   assert(fan.hero.width<fan.main.width*.78,'Feature must not stretch across the entire desktop');
+  }
   await page.locator('#peekFront').click();
   assert.equal(await page.locator('#featuredTitle').innerText(),'Dune: Part Two','Clicking first fanned card changes the hero movie');
   assert.equal(await page.locator('#slideDots button[aria-pressed="true"]').count(),1,'Current dot stays synced');
