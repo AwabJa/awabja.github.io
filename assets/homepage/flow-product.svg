@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1050" role="img" aria-labelledby="title desc">
+<title id="title">Flow — studio product presentation</title><desc id="desc">An elegant monochrome Flow product cover featuring a realistic illustrated weekly planning interface.</desc>
+<defs>
+  <linearGradient id="surface" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#1b1b20"/><stop offset=".6" stop-color="#0e0e12"/><stop offset="1" stop-color="#18161b"/></linearGradient>
+  <radialGradient id="light" cx=".55" cy=".62" r=".8"><stop stop-color="#47424f" stop-opacity=".66"/><stop offset=".52" stop-color="#222126" stop-opacity=".4"/><stop offset="1" stop-color="#0c0c0e" stop-opacity="0"/></radialGradient>
+  <linearGradient id="frame" x2=".65" y2="1"><stop stop-color="#f5f3f0"/><stop offset="1" stop-color="#e6e4e4"/></linearGradient>
+  <linearGradient id="sidebar" x2="0" y2="1"><stop stop-color="#f0eef1"/><stop offset="1" stop-color="#ecebf0"/></linearGradient>
+  <linearGradient id="ink" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a28dce"/><stop offset="1" stop-color="#705a9e"/></linearGradient>
+  <filter id="soft"><feGaussianBlur stdDeviation="36"/></filter>
+  <filter id="shadow" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="30" stdDeviation="30" flood-color="#000" flood-opacity=".48"/></filter>
+  <clipPath id="appclip"><rect x="0" y="0" width="1085" height="595" rx="16"/></clipPath>
+</defs>
+<rect width="1200" height="1050" fill="url(#surface)"/>
+<rect width="1200" height="1050" fill="url(#light)"/>
+<path d="M0 940 1200 622M0 1010 1200 692M0 870 1200 552" fill="none" stroke="#a5a2ad" stroke-opacity=".052"/>
+<circle cx="920" cy="380" r="265" fill="#786b7f" opacity=".075" filter="url(#soft)"/>
+<text x="87" y="103" font-family="Arial,Helvetica,sans-serif" font-size="14" letter-spacing="3.5" fill="#c7c1c8">PRODUCT / 01</text>
+<path d="M87 132H1113" stroke="#8a828b" stroke-opacity=".31" stroke-width="1"/>
+<text x="87" y="270" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="132" letter-spacing="-12" fill="#f1eeea">flow<tspan fill="#ab97d0">.</tspan></text>
+<text x="92" y="324" font-family="Arial,Helvetica,sans-serif" font-size="18" letter-spacing="1" fill="#afa7b5">A clearer way to plan your week.</text>
+<g transform="translate(75 378) rotate(-2 547 298)" filter="url(#shadow)">
+  <rect x="0" y="0" width="1085" height="595" rx="16" fill="url(#frame)" stroke="#b9b5ba" stroke-width="1.2"/>
+  <g clip-path="url(#appclip)">
+    <rect width="1085" height="595" fill="#faf9fb"/>
+    <rect width="242" height="595" fill="url(#sidebar)"/>
+    <path d="M242 0V595" stroke="#dddbe2"/>
+    <rect width="1085" height="46" fill="#f6f5f7"/>
+    <path d="M0 46H1085" stroke="#e5e4e9"/>
+    <circle cx="24" cy="22" r="4.2" fill="#d5a1a4"/><circle cx="39" cy="22" r="4.2" fill="#ddc18c"/><circle cx="54" cy="22" r="4.2" fill="#aacdb4"/>
+    <rect x="411" y="14" width="280" height="19" rx="6" fill="#ebe9ee"/>
+    <text x="552" y="27" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="9" fill="#8e8c96">flow — Personal workspace</text>
+    <rect x="24" y="70" width="33" height="33" rx="9" fill="#ffffff"/>
+    <path d="M37 95V78H48M37 86H46" fill="none" stroke="#8068aa" stroke-width="3" stroke-linecap="round"/>
+    <text x="70" y="87" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="700" fill="#34313b">FLOW<tspan fill="#8068aa">.</tspan></text>
+    <text x="70" y="100" font-family="Arial,Helvetica,sans-serif" font-size="8.5" fill="#95909c">Personal workspace</text>
+    <rect x="21" y="126" width="199" height="32" rx="6" fill="#e6e4e9"/><text x="38" y="147" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#aaa5ad">⌕  Search tasks</text>
+    <text x="26" y="198" font-family="Arial,Helvetica,sans-serif" font-size="9.5" letter-spacing="1.3" font-weight="700" fill="#a6a1a8">WORKSPACE</text>
+    <rect x="16" y="211" width="213" height="37" rx="8" fill="#e2dcec"/>
+    <rect x="33" y="221" width="14" height="15" rx="3" fill="#846ba7"/><path d="M38 225v8m4-8v8" stroke="#fff" stroke-width="1.2"/>
+    <text x="59" y="235" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="600" fill="#4d425b">Projects</text>
+    <text x="35" y="276" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#64616d">▦</text><text x="60" y="276" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#5e5c65">Calendar</text>
+    <text x="35" y="315" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#64616d">◷</text><text x="60" y="315" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#5e5c65">Today</text>
+    <text x="35" y="354" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#64616d">☷</text><text x="60" y="354" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#5e5c65">All Tasks</text>
+    <text x="26" y="402" font-family="Arial,Helvetica,sans-serif" font-size="9.5" letter-spacing="1.1" font-weight="700" fill="#a6a1a8">YOUR PROJECTS</text>
+    <circle cx="37" cy="429" r="4.3" fill="#9880c9"/><text x="51" y="433" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#5a5763">Design studio</text>
+    <circle cx="37" cy="456" r="4.3" fill="#8caf9a"/><text x="51" y="460" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#5a5763">Personal</text>
+    <rect x="22" y="491" width="196" height="32" rx="7" fill="#e9e7ec"/><text x="39" y="511" font-family="Arial,Helvetica,sans-serif" font-size="10.5" fill="#736e79">+ New project</text>
+    <text x="270" y="85" font-family="Arial,Helvetica,sans-serif" font-size="10" fill="#a19da8">Workspace / Project Board</text>
+    <text x="270" y="128" font-family="Arial,Helvetica,sans-serif" font-size="31" font-weight="700" letter-spacing="-1.5" fill="#302d35">Team Project</text>
+    <text x="270" y="153" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#99949d">Plan with clarity. Make room for what matters.</text>
+    <rect x="962" y="100" width="97" height="33" rx="8" fill="url(#ink)"/><text x="1010" y="122" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">+ Add task</text>
+    <rect x="269" y="184" width="279" height="33" rx="8" fill="#eeedf2" stroke="#e3e1e7"/>
+    <rect x="273" y="188" width="64" height="25" rx="6" fill="#fff"/>
+    <text x="304" y="205" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" font-size="10" fill="#3d3943">Week</text>
+    <text x="371" y="205" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" font-size="10" fill="#99939d">Month</text>
+    <text x="437" y="205" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" font-size="10" fill="#99939d">Board</text>
+    <text x="510" y="205" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" font-size="10" fill="#99939d">Table</text>
+    <text x="982" y="205" font-family="Arial,Helvetica,sans-serif" text-anchor="middle" font-size="10" fill="#78737d">This week  ›</text>
+    <rect x="269" y="238" width="785" height="310" rx="8" fill="#fff" stroke="#e4e2e8"/>
+    <path d="M269 282H1054M381 238V548M493 238V548M605 238V548M717 238V548M829 238V548M941 238V548" stroke="#e8e7ed"/>
+    <g font-family="Arial,Helvetica,sans-serif" font-size="10" fill="#938f99" text-anchor="middle">
+      <text x="325" y="258">MON</text><text x="437" y="258">TUE</text><text x="549" y="258">WED</text><text x="661" y="258">THU</text><text x="773" y="258">FRI</text><text x="885" y="258">SAT</text><text x="997" y="258">SUN</text>
+    </g>
+    <g font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#3e3944" text-anchor="middle">
+      <text x="325" y="276">19</text><text x="437" y="276">20</text><text x="549" y="276">21</text><text x="661" y="276">22</text><text x="773" y="276">23</text><text x="885" y="276">24</text><text x="997" y="276">25</text>
+    </g>
+    <rect x="277" y="306" width="96" height="64" rx="7" fill="#efebf6"/><path d="M284 315v45" stroke="#9075bf" stroke-width="3"/><text x="293" y="326" font-family="Arial,Helvetica,sans-serif" font-size="9" fill="#695388">09:00</text><text x="293" y="343" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#4a3d64">Review</text><text x="293" y="356" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#4a3d64">concepts</text>
+    <rect x="389" y="389" width="96" height="61" rx="7" fill="#e8efe9"/><path d="M397 398v43" stroke="#7ca58a" stroke-width="3"/><text x="407" y="409" font-family="Arial,Helvetica,sans-serif" font-size="9" fill="#63826e">11:30</text><text x="407" y="427" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#466451">Product</text><text x="407" y="440" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#466451">testing</text>
+    <rect x="501" y="321" width="96" height="69" rx="7" fill="#f4eee6"/><path d="M509 332v47" stroke="#d5a16f" stroke-width="3"/><text x="520" y="344" font-family="Arial,Helvetica,sans-serif" font-size="9" fill="#a17d5a">10:00</text><text x="520" y="361" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#795f44">Build</text><text x="520" y="374" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#795f44">prototype</text>
+    <rect x="613" y="355" width="96" height="72" rx="7" fill="#efebf6"/><path d="M621 365v51" stroke="#9075bf" stroke-width="3"/><text x="632" y="378" font-family="Arial,Helvetica,sans-serif" font-size="9" fill="#695388">14:00</text><text x="632" y="396" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#4a3d64">Polish</text><text x="632" y="410" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#4a3d64">interface</text>
+    <rect x="725" y="306" width="96" height="68" rx="7" fill="#e8efe9"/><path d="M733 317v45" stroke="#7ca58a" stroke-width="3"/><text x="744" y="330" font-family="Arial,Helvetica,sans-serif" font-size="9" fill="#63826e">09:30</text><text x="744" y="348" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#466451">Ship</text><text x="744" y="361" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#466451">update</text>
+    <rect x="389" y="459" width="208" height="42" rx="7" fill="#f3f3f6" stroke="#e6e4e9"/><text x="407" y="485" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#716b78">Weekly planning notes</text>
+  </g>
+</g>
+<path d="M75 978H1125" stroke="#a3a0a7" stroke-opacity=".25"/>
+<text x="87" y="1010" font-family="Arial,Helvetica,sans-serif" font-size="12" letter-spacing="2.5" fill="#aaa5ad">YOUR WORK, YOUR RHYTHM.</text>
+<text x="1113" y="1010" text-anchor="end" font-family="Arial,Helvetica,sans-serif" font-size="12" letter-spacing="1.5" fill="#aaa5ad">FLOW / WEB APP</text>
+</svg>

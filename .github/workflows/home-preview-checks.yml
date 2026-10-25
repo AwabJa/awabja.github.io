@@ -1,14 +1,24 @@
-name: Homepage redesign preview checks
+name: Homepage production and preview checks
 
 on:
   push:
     paths:
       - 'home-preview/**'
+      - 'index.html'
+      - 'homepage.css'
+      - 'hero-lines.css'
+      - 'homepage.js'
+      - 'assets/homepage/**'
       - 'tools/home-preview-browser-check.mjs'
       - '.github/workflows/home-preview-checks.yml'
   pull_request:
     paths:
       - 'home-preview/**'
+      - 'index.html'
+      - 'homepage.css'
+      - 'hero-lines.css'
+      - 'homepage.js'
+      - 'assets/homepage/**'
       - 'tools/home-preview-browser-check.mjs'
       - '.github/workflows/home-preview-checks.yml'
 
@@ -17,7 +27,7 @@ permissions:
 
 jobs:
   browser:
-    name: Responsive preview QA
+    name: Responsive live and preview QA
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -26,7 +36,7 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --no-save --package-lock=false playwright-core@1.56.1
-      - name: Test 4 viewport sizes and reduced-motion accessibility
+      - name: Test production and previews at 4 widths with reduced motion
         run: |
           if command -v google-chrome >/dev/null 2>&1; then
             export CHROME_BIN="$(command -v google-chrome)"

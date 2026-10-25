@@ -104,11 +104,50 @@ try{
    assert.equal(await altToggle.getAttribute('aria-expanded'),'false','Alternate hamburger closes');
    assert.deepEqual(altErrors,[],'Alternate preview has no browser JS errors');
    await alternative.close();
+   // Validate the published homepage independently from both design previews.
+   const production=await browser.newPage({viewport:{width,height:width<=390?820:900}});
+   const prodErrors=[];production.on('pageerror',err=>prodErrors.push(err.message));
+   const prodResponse=await production.goto(origin+'/',{waitUntil:'domcontentloaded'});
+   assert.equal(prodResponse.status(),200,'Published homepage responds successfully');
+   await production.locator('.hero h1').waitFor();
+   await production.locator('main img').evaluateAll(async images=>{
+     await Promise.all(images.map(async img=>{img.loading='eager';try{await img.decode()}catch{}}));
+   });
+   const prodData=await production.evaluate(()=>({
+     width:innerWidth,scrollWidth:document.documentElement.scrollWidth,
+     images:[...document.querySelectorAll('main img')].map(i=>i.naturalWidth)
+   }));
+   assert(prodData.scrollWidth<=prodData.width+2,'Published homepage fits '+width+'px ('+prodData.scrollWidth+')');
+   assert(prodData.images.every(n=>n>0),'Production project images load');
+   assert.equal(await production.locator('.hero-display-line').count(),1,'Published line-art hero is active');
+   assert.equal(await production.locator('.hero-display-line-secondary').count(),1,'Published second rule is active');
+   assert.equal(await production.locator('.hero-display-type,.studio-structure').count(),0,'Published hero has no oversized monogram or slab');
+   assert.equal(await production.locator('meta[name="robots"][content*="noindex"]').count(),0,'Published homepage is indexable');
+   assert.equal(await production.locator('.preview-pill').count(),0,'Published homepage has no preview badge');
+   assert.equal(await production.title(),'A.J. Ahmed — Creative Developer','Published page has a production title');
+   assert.equal(await production.locator('.project').count(),3,'Existing project cards remain intact');
+   assert.equal(await production.locator('.project-flow a').getAttribute('href'),'Flow/','Published Flow link is correct');
+   assert.equal(await production.locator('.project-solar a').getAttribute('href'),'3D%20Navigation%20Bar/','Published Solar link is correct');
+   assert.equal(await production.locator('.project-enzo a').getAttribute('href'),'Enzo/','Published Enzo link is correct');
+   assert.equal(await production.locator('.project-flow img').getAttribute('src'),'assets/homepage/flow-product.svg','Published Flow image is production-owned');
+   assert.equal(await production.locator('.contact-cta').getAttribute('href'),'mailto:awabjahmed@gmail.com','Email Me contact button is preserved');
+   assert.equal(await production.locator('.desktop-nav>a').count(),3,'Desktop links remain');
+   const liveMenu=production.locator('.menu-button');await liveMenu.click();
+   assert.equal(await liveMenu.getAttribute('aria-expanded'),'true','Published hamburger opens');
+   await production.locator('.menu-panel a[href="#work"]').click();
+   assert.equal(await liveMenu.getAttribute('aria-expanded'),'false','Published hamburger closes');
+   assert.deepEqual(prodErrors,[],'Published homepage has no browser JavaScript errors');
+   await production.close();
  }
  const reduced=await browser.newPage({viewport:{width:390,height:800},reducedMotion:'reduce'});
  await reduced.goto(origin+'/home-preview/');
  assert.equal(await reduced.locator('.project').count(),3);
  assert.equal(await reduced.locator('.about h2').isVisible(),true);
  await reduced.close();
- console.log('CINEMATIC HOMEPAGE PREVIEW CHECKS PASSED '+JSON.stringify(results));
+ const liveReduced=await browser.newPage({viewport:{width:390,height:800},reducedMotion:'reduce'});
+ await liveReduced.goto(origin+'/');
+ assert.equal(await liveReduced.locator('.hero-display-line').count(),1,'Production hero visible with reduced motion');
+ assert.equal(await liveReduced.locator('.project').count(),3,'Production projects visible with reduced motion');
+ await liveReduced.close();
+ console.log('HOMEPAGE PRODUCTION AND PREVIEW CHECKS PASSED '+JSON.stringify(results));
 }finally{await browser.close();await new Promise(done=>server.close(done))}

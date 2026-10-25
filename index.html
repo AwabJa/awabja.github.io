@@ -1,197 +1,109 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>A.J. Ahmed — Creative Development & Interactive Experiences</title>
-  <meta name="description" content="A.J. Ahmed creates design-led, interactive experiences for the web. Explore a 3D Solar System, Enzo FPS, and other experiments in code and motion.">
-  <meta name="theme-color" content="#0b1012">
+  <meta name="theme-color" content="#090909">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; frame-src 'none'; form-action 'self'; base-uri 'self'; upgrade-insecure-requests;">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="A.J. Ahmed — Creative Development">
-  <meta property="og:description" content="Thoughtful interfaces, interactive worlds, and experiments in code. Explore selected work by A.J. Ahmed.">
+  <meta property="og:title" content="A.J. Ahmed — Creative Developer">
+  <meta property="og:description" content="Websites, useful apps, and interactive web projects by A.J. Ahmed.">
   <meta property="og:url" content="https://awabja.github.io/">
   <meta name="twitter:card" content="summary">
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <meta name="description" content="A.J. Ahmed designs and builds websites, useful apps, and interactive web projects.">
+  <title>A.J. Ahmed — Creative Developer</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=3">
-  <link rel="stylesheet" href="design-upgrade.css?v=5">
-  <link rel="stylesheet" href="water-hero.css?v=6">
-  <link rel="stylesheet" href="project-showcase.css?v=8">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="homepage.css?v=1">
+  <link rel="stylesheet" href="hero-lines.css?v=1">
+  <script src="homepage.js?v=1" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to content</a>
-  <div class="scroll-progress" aria-hidden="true"></div>
-  <nav class="site-nav" aria-label="Main navigation">
-    <div class="nav-inner">
-      <a class="brand" href="#home" aria-label="A.J. Ahmed, back to the top">
-        <span class="brand-mark" aria-hidden="true">aj<span class="brand-period">.</span></span>
-        <span class="brand-label">A.J. AHMED <span> / PORTFOLIO</span></span>
-      </a>
-      <button class="menu-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="primary-menu">
-        <span></span><span></span><span></span>
-      </button>
-      <div class="menu" id="primary-menu">
-        <ul class="nav-links">
-          <li><a href="#projects" data-section="projects">Work <span class="nav-number">01</span></a></li>
-          <li><a href="#about" data-section="about">About <span class="nav-number">02</span></a></li>
-          <li><a href="#contact" data-section="contact">Contact <span class="nav-number">03</span></a></li>
-        </ul>
-        <a class="nav-external" href="https://github.com/AwabJa" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true"><svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M8 5h11v11"/></svg></span></a>
-      </div>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="reading-line" aria-hidden="true"></div>
+  <header class="header" id="top">
+    <a class="wordmark" href="#top" aria-label="A.J. Ahmed — top of page">A.J. AHMED</a>
+    <nav class="desktop-nav" aria-label="Main navigation">
+      <a href="#work">WORK</a>
+      <a href="#about">ABOUT</a>
+      <a href="#contact">CONTACT</a>
+    </nav>
+    <div class="header-end"><span class="header-status"><i aria-hidden="true"></i> CREATIVE DEVELOPER</span>
+      <button class="menu-button" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open menu"><span></span><span></span></button>
     </div>
+  </header>
+  <nav class="menu-panel" id="mobile-menu" aria-label="Expanded navigation" inert>
+    <span class="menu-label">THE INDEX</span>
+    <a href="#top">01 <strong>Home</strong></a>
+    <a href="#work">02 <strong>Projects</strong></a>
+    <a href="#about">03 <strong>About</strong></a>
+    <a href="#contact">04 <strong>Contact</strong></a>
+    <p>DESIGN · DEVELOPMENT · INTERACTION</p>
   </nav>
-
-  <main id="main" tabindex="-1">
-    <section class="hero" id="home" aria-labelledby="hero-title">
-      <div class="hero-grid" aria-hidden="true"></div>
-      <div class="container hero-layout">
-        <div class="hero-copy">
-          <p class="eyebrow"><span class="eyebrow-dash"></span> A.J. AHMED <span class="eyebrow-divider">/</span> CREATIVE DEVELOPMENT</p>
-          <h1 id="hero-title">I make the web <span>feel less ordinary<span class="hero-stop">.</span></span></h1>
-          <p class="hero-description">I bring design and code together to build interactive experiences—from expressive interfaces to immersive 3D worlds.</p>
-          <div class="hero-actions">
-            <a class="button button-primary" href="#projects">Explore my work <span aria-hidden="true"><svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M8 5h11v11"/></svg></span></a>
-            <a class="text-link" href="#about">A little about me <span aria-hidden="true"><svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M8 5h11v11"/></svg></span></a>
-          </div>
-        </div>
-        <div class="hero-visual water-stage" role="img" aria-label="Ocean-water splashes flowing into the letters A and J">
-          <div class="water-ambient" aria-hidden="true"></div>
-          <div class="water-coordinate water-coordinate-top" aria-hidden="true">STUDY 001 / LIQUID TYPE</div>
-          <div class="water-coordinate water-coordinate-side" aria-hidden="true">FLUID FORM / CREATIVE CODE</div>
-          <div class="water-artwork" aria-hidden="true">
-            <img class="water-art-fallback" src="assets/water-aj.webp" width="320" height="326" alt="" decoding="async" fetchpriority="high">
-            <canvas id="water-canvas" class="water-canvas" width="640" height="652"></canvas>
-          </div>
-          <div class="water-cross water-cross-a" aria-hidden="true"></div>
-          <div class="water-cross water-cross-b" aria-hidden="true"></div>
-          <div class="water-stage-footer" aria-hidden="true"><span><span class="water-live"></span>GENERATIVE / WATER</span><span>01—AJ</span></div>
-        </div>
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-display" aria-hidden="true">
+        <span class="hero-display-line"></span>
+        <span class="hero-display-line-secondary"></span>
       </div>
-      <div class="hero-bottom container">
-        <span>FRONT-END <span class="hero-bottom-separator">/</span> 3D <span class="hero-bottom-separator">/</span> EXPERIMENTS</span>
-        <a href="#projects" aria-label="Scroll down to selected work">SCROLL TO EXPLORE <span aria-hidden="true"><svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4v16m-7-7 7 7 7-7"/></svg></span></a>
+      <div class="hero-content">
+        <p class="eyebrow hero-eyebrow"><span class="eyebrow-line" aria-hidden="true"></span> DESIGN &amp; DEVELOPMENT</p>
+        <h1 id="hero-title">Hi, I'm A.J.<br>I build things<br><span>for the web.</span></h1>
+        <p class="hero-intro">I design and develop useful apps, interactive projects, and websites — with an eye for the details that make them enjoyable to use.</p>
+        <a href="#work" class="explore-link">EXPLORE MY PROJECTS</a>
+      </div>
+      <a class="scroll-marker" href="#work"><span>SCROLL</span><i aria-hidden="true"></i></a>
+      <div class="hero-bottom-fade" aria-hidden="true"></div>
+    </section>
+
+    <section class="work" id="work" aria-labelledby="work-title">
+      <div class="section-heading"><div class="heading-label"><h2 id="work-title">FEATURED WORK</h2><span aria-hidden="true"></span></div><a href="#project-grid">ALL PROJECTS</a></div>
+      <div class="projects-grid" id="project-grid">
+        <article class="project project-flow" data-reveal>
+          <a href="Flow/" class="project-image" aria-label="Explore Flow — productivity workspace">
+            <img src="assets/homepage/flow-product.svg" alt="Flow product presentation showing its weekly task planner and project navigation" width="1200" height="1050" loading="lazy" decoding="async">
+            <span class="project-number">01</span>
+            <span class="project-info"><span class="project-category">PRODUCTIVITY / WEB APPLICATION</span><span class="project-title">Flow</span><span class="project-description">Plan projects, organize tasks, and keep your week on track.</span></span>
+            <span class="project-cta" aria-hidden="true">VIEW PROJECT</span>
+          </a>
+        </article>
+        <article class="project project-solar" data-reveal>
+          <a href="3D%20Navigation%20Bar/" class="project-image" aria-label="Explore Solar System Explorer">
+            <img src="assets/homepage/solar-interface.svg" alt="Illustrated Solar System Explorer interface with planets, orbits, and navigation labels" width="1200" height="690" loading="lazy" decoding="async">
+            <span class="project-number">02</span>
+            <span class="project-info"><span class="project-category">INTERACTIVE 3D</span><span class="project-title">Solar System Explorer</span><span class="project-description">Explore the Sun and planets in an interactive 3D environment.</span></span>
+            <span class="project-cta" aria-hidden="true">VIEW PROJECT</span>
+          </a>
+        </article>
+        <article class="project project-enzo" data-reveal>
+          <a href="Enzo/" class="project-image" aria-label="Explore Enzo — first-person browser game">
+            <img src="Enzo/assets/shattered-reach-splash.webp" alt="Original Enzo Shattered Reach game splash artwork" width="1600" height="900" loading="lazy" decoding="async">
+            <span class="project-number">03</span>
+            <span class="project-info"><span class="project-category">BROWSER GAME / EXPERIMENT</span><span class="project-title">Enzo</span><span class="project-description">A browser-based first-person prototype with spellcasting and survival gameplay.</span></span>
+            <span class="project-cta" aria-hidden="true">VIEW PROJECT</span>
+          </a>
+        </article>
+      </div>
+      <p class="visual-note">INTERFACE VISUALS ARE ILLUSTRATIONS · FOLLOW THE PROJECT LINKS TO EXPLORE THE REAL WORK</p>
+    </section>
+
+    <section class="about" id="about" aria-labelledby="about-title">
+      <div class="about-art" aria-hidden="true"></div>
+      <div class="about-inner" data-reveal>
+        <div class="about-index"><span>ABOUT ME</span><span class="about-line"></span></div>
+        <h2 id="about-title"><span class="quote-sign" aria-hidden="true">“</span>I like making ideas <em>work in the real world.</em></h2>
+        <div class="about-copy"><p>I build websites and apps with a focus on the details that matter: clean design, intuitive interactions, and features that are genuinely useful.</p><a href="#contact">GET IN TOUCH</a></div>
       </div>
     </section>
 
-    <section class="projects section-pad" id="projects" aria-labelledby="projects-heading">
-      <div class="container">
-        <div class="section-header">
-          <div class="section-header-copy">
-            <p class="eyebrow section-eyebrow"><span class="eyebrow-dash"></span> 01 / SELECTED WORK</p>
-            <h2 id="projects-heading">Built to <em>explore.</em></h2>
-          </div>
-          <p class="section-intro">A selection of personal projects where I experiment with interaction, visual design, and what the browser can do.</p>
-        </div>
-        <div class="project-grid">
-          <article class="project-card">
-            <a class="project-preview solar-preview" href="/3D%20Navigation%20Bar/index.html" aria-label="Open the Solar System Explorer">
-              <img class="solar-card-art" src="assets/solar-card.svg?v=2" alt="" loading="lazy" decoding="async">
-              <span class="preview-index">PROJECT 001 / INTERACTIVE WEBGL</span>
-              <span class="preview-corner" aria-hidden="true"><svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M8 5h11v11"/></svg></span>
-            </a>
-            <div class="project-info">
-              <div class="project-topline"><span>01 / EXPLORATION</span><span class="project-state"><span></span> INTERACTIVE</span></div>
-              <h3>Solar System <span>Explorer</span></h3>
-              <p>Travel between the Sun, eight planets, and Earth’s Moon. A hands-on 3D experience with cinematic navigation, planetary facts, and space to explore.</p>
-              <div class="project-tech" role="group" aria-label="Technologies used"><span>Three.js</span><span>WebGL</span><span>JavaScript</span></div>
-              <div class="project-actions">
-                <a class="project-main-link" href="/3D%20Navigation%20Bar/index.html">Explore project <span aria-hidden="true"><svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M8 5h11v11"/></svg></span></a>
-                <a class="project-code-link" href="https://github.com/AwabJa/awabja.github.io/tree/main/3D%20Navigation%20Bar" target="_blank" rel="noopener noreferrer">Source code <span aria-hidden="true"><svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M8 5h11v11"/></svg></span></a>
-              </div>
-            </div>
-          </article>
-          <article class="project-card">
-            <a class="project-preview enzo-preview" href="/Enzo/index.html" aria-label="Open Enzo FPS">
-              <img class="enzo-card-art" src="assets/enzo-card.svg?v=2" alt="" loading="lazy" decoding="async">
-              <span class="preview-index">PROJECT 002 / GAME EXPERIMENT</span>
-              <span class="preview-corner" aria-hidden="true"><svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M8 5h11v11"/></svg></span>
-            </a>
-            <div class="project-info">
-              <div class="project-topline"><span>02 / GAME DEVELOPMENT</span><span class="project-state project-state-alpha">IN DEVELOPMENT</span></div>
-              <h3>Enzo <span>FPS</span></h3>
-              <p>An evolving first-person shooter built for the browser. Move through a 3D arena, face enemy waves, and see game mechanics come together in real time.</p>
-              <div class="project-tech" role="group" aria-label="Technologies used"><span>Three.js</span><span>JavaScript</span><span>Game mechanics</span></div>
-              <div class="project-actions">
-                <a class="project-main-link" href="/Enzo/index.html">Play the prototype <span aria-hidden="true"><svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M8 5h11v11"/></svg></span></a>
-                <a class="project-code-link" href="https://github.com/AwabJa/awabja.github.io/tree/main/Enzo" target="_blank" rel="noopener noreferrer">Source code <span aria-hidden="true"><svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M8 5h11v11"/></svg></span></a>
-              </div>
-              <p class="project-note">Best experienced with a keyboard and mouse.</p>
-            </div>
-          </article>
-          <article class="project-card">
-            <a class="project-preview flow-preview" href="/Flow/index.html" aria-label="Open FLOW productivity app">
-              <img class="flow-card-art" src="assets/flow-card.svg?v=2" alt="" loading="lazy" decoding="async">
-              <span class="preview-index">PROJECT 003 / PRODUCTIVITY WEB APP</span>
-              <span class="preview-corner" aria-hidden="true"><svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M8 5h11v11"/></svg></span>
-            </a>
-            <div class="project-info">
-              <div class="project-topline"><span>03 / WEB APPLICATION</span><span class="project-state"><span></span> LIVE</span></div>
-              <h3>FLOW <span>Workspace</span></h3>
-              <p>A beautifully simple productivity workspace. Plan your week, organize projects, manage tasks, and track progress—all saved locally in your browser.</p>
-              <div class="project-tech" role="group" aria-label="Technologies used"><span>JavaScript</span><span>Local Storage</span><span>Responsive UI</span></div>
-              <div class="project-actions">
-                <a class="project-main-link" href="/Flow/index.html">Open FLOW <span aria-hidden="true"><svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M8 5h11v11"/></svg></span></a>
-                <a class="project-code-link" href="https://github.com/AwabJa/awabja.github.io/tree/main/Flow" target="_blank" rel="noopener noreferrer">Source code <span aria-hidden="true"><svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M8 5h11v11"/></svg></span></a>
-              </div>
-            </div>
-          </article>
-        </div>
-        <div class="work-footnote"><span><svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 4v9a5 5 0 0 0 5 5h11m-5-5 5 5-5 5"/></svg></span> A portfolio of work in progress. Always learning, building, and refining.</div>
-      </div>
-    </section>
-
-    <section class="about section-pad" id="about" aria-labelledby="about-heading">
-      <div class="container about-grid">
-        <div>
-          <p class="eyebrow section-eyebrow"><span class="eyebrow-dash"></span> 02 / ABOUT ME</p>
-          <h2 id="about-heading">Curiosity meets <em>craft.</em></h2>
-        </div>
-        <div class="about-main">
-          <p class="about-lead">Hey, I’m A.J.—a developer who cares just as much about how something <em>feels</em> as how it works.</p>
-          <p>I’m drawn to the space where design, technology, and interaction overlap. Whether it’s a tiny hover detail or an entire 3D environment, I enjoy figuring out how to make an idea clear, engaging, and enjoyable to use.</p>
-          <p>Right now, I’m exploring creative front-end development, Three.js, and interactive game experiences—building things, learning from them, and making each iteration better.</p>
-          <div class="about-focus">
-            <span class="small-label">WHAT I'M EXPLORING</span>
-            <ul><li>Creative front-end</li><li>3D & WebGL</li><li>Interaction design</li><li>Game experiments</li></ul>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="contact section-pad" id="contact" aria-labelledby="contact-heading">
-      <div class="container contact-shell">
-        <div class="contact-top"><p class="eyebrow section-eyebrow"><span class="eyebrow-dash"></span> 03 / SAY HELLO</p><span class="contact-sparkle" aria-hidden="true"><svg class="ui-icon ui-icon-sparkle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14m0-14.14L4.93 19.07"/></svg></span></div>
-        <h2 id="contact-heading">Have something <em>interesting</em> in mind?</h2>
-        <div class="contact-bottom">
-          <p>A project, a collaboration, or just a conversation—I’d love to hear about it.</p>
-          <a class="contact-email" href="mailto:awabjahmed@gmail.com">Let’s talk <span aria-hidden="true"><svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M8 5h11v11"/></svg></span></a>
-        </div>
-        <p class="contact-direct">OR EMAIL DIRECTLY <a href="mailto:awabjahmed@gmail.com">awabjahmed@gmail.com</a></p>
-      </div>
+    <section class="contact" id="contact" aria-labelledby="contact-title">
+      <p class="eyebrow">HAVE SOMETHING IN MIND?</p>
+      <div class="contact-inner"><h2 id="contact-title">Have something<br><span>in mind?</span></h2><a href="mailto:awabjahmed@gmail.com" class="contact-cta">EMAIL ME</a></div>
     </section>
   </main>
-
-  <footer class="site-footer">
-    <div class="container footer-top">
-      <a class="footer-brand" href="#home">aj<span>.</span></a>
-      <p>Design-minded. Code-driven. Always curious.</p>
-      <nav class="footer-socials" aria-label="Elsewhere">
-        <a href="https://github.com/AwabJa" target="_blank" rel="noopener noreferrer">GitHub <svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M8 5h11v11"/></svg></a>
-        <a href="https://www.linkedin.com/in/awabjahmed/" target="_blank" rel="noopener noreferrer">LinkedIn <svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M8 5h11v11"/></svg></a>
-        <a href="https://www.codecademy.com/profiles/BB99a" target="_blank" rel="noopener noreferrer">Codecademy <svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M8 5h11v11"/></svg></a>
-      </nav>
-    </div>
-    <div class="container footer-bottom">
-      <span>© <span id="year">2026</span> A.J. Ahmed. Built with intention.</span>
-      <a href="#home">Back to top <svg class="ui-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20V4m-7 7 7-7 7 7"/></svg></a>
-    </div>
-  </footer>
-  <script src="script.js?v=2" defer></script>
-  <script src="visual-details.js?v=1" defer></script>
-  <script src="water-hero.js?v=3" defer></script>
+  <footer class="footer"><span>© <span id="year">2026</span> A.J. AHMED</span><a href="#top">BACK TO TOP ↑</a><div><a href="https://github.com/AwabJa" target="_blank" rel="noopener noreferrer">GITHUB ↗</a><a href="https://www.linkedin.com/in/awabjahmed/" target="_blank" rel="noopener noreferrer">LINKEDIN ↗</a></div></footer>
 </body>
 </html>
