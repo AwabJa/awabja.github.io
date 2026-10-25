@@ -1,0 +1,39 @@
+name: Homepage redesign preview checks
+
+on:
+  push:
+    paths:
+      - 'home-preview/**'
+      - 'tools/home-preview-browser-check.mjs'
+      - '.github/workflows/home-preview-checks.yml'
+  pull_request:
+    paths:
+      - 'home-preview/**'
+      - 'tools/home-preview-browser-check.mjs'
+      - '.github/workflows/home-preview-checks.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    name: Responsive preview QA
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --package-lock=false playwright-core@1.56.1
+      - name: Test 4 viewport sizes and reduced-motion accessibility
+        run: |
+          if command -v google-chrome >/dev/null 2>&1; then
+            export CHROME_BIN="$(command -v google-chrome)"
+          elif command -v chromium >/dev/null 2>&1; then
+            export CHROME_BIN="$(command -v chromium)"
+          else
+            echo "Chrome/Chromium required" >&2
+            exit 1
+          fi
+          node tools/home-preview-browser-check.mjs
