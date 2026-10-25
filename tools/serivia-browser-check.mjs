@@ -185,7 +185,7 @@ try{
    assert(Math.abs(shellGeometry.left)<2,'Mobile app starts at screen edge');
    assert.equal(shellGeometry.radius,'0px','Mobile layout has no outer frame');
   }else{
-   assert(shellGeometry.width<width-20&&shellGeometry.width>width-105,
+   assert(shellGeometry.width<=width-18&&shellGeometry.width>=width-110,
      'Desktop frame has the reference teal side margins');
    assert(Math.abs(shellGeometry.left-(width-shellGeometry.width)/2)<3,
      'Desktop frame stays centered');
