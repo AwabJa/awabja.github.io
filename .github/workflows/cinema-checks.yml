@@ -1,0 +1,39 @@
+name: Cinema preview checks
+
+on:
+  push:
+    paths:
+      - 'Cinema/**'
+      - 'tools/cinema-browser-check.mjs'
+      - '.github/workflows/cinema-checks.yml'
+  pull_request:
+    paths:
+      - 'Cinema/**'
+      - 'tools/cinema-browser-check.mjs'
+      - '.github/workflows/cinema-checks.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    name: Movie discovery responsive and functional QA
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --package-lock=false playwright-core@1.56.1
+      - name: Test browser UI at desktop, tablet, phone and reduced motion
+        run: |
+          if command -v google-chrome >/dev/null 2>&1; then
+            export CHROME_BIN="$(command -v google-chrome)"
+          elif command -v chromium >/dev/null 2>&1; then
+            export CHROME_BIN="$(command -v chromium)"
+          else
+            echo "Chromium required" >&2
+            exit 1
+          fi
+          node tools/cinema-browser-check.mjs
