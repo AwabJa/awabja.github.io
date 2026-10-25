@@ -3,14 +3,14 @@
 // Curated seed content, not a live TMDB feed. No API tokens are shipped to public GitHub Pages.
 const CDN='https://image.tmdb.org/t/p/';
 const movie=(id,title,year,rating,minutes,genres,poster,backdrop,overview,certificate='PG-13')=>
-  ({id,title,year,rating,minutes,genres,poster,backdrop:backdrop||poster,overview,certificate});
+  ({id,title,year,rating,minutes,genres,poster,backdrop:backdrop||null,overview,certificate});
 const MOVIES=[
- movie(1087192,'How to Train Your Dragon',2025,7.8,125,['Action','Adventure','Fantasy','Family'],'q5pXRYTycaeW6dEgsCrd4mYPmxM.jpg',null,'On the rugged island of Berk, a young Viking befriends a Night Fury dragon and begins to change how his world sees these mysterious creatures.','PG'),
+ movie(1087192,'How to Train Your Dragon',2025,7.8,125,['Action','Adventure','Fantasy','Family'],'53dsJ3oEnBhTBVMigWJ9tkA5bzJ.jpg','8J6UlIFcU7eZfq9iCLbgc8Auklg.jpg','On the rugged island of Berk, a young Viking befriends a Night Fury dragon and begins to change how his world sees these mysterious creatures.','PG'),
  movie(823219,'Flow',2024,7.9,85,['Animation','Adventure','Fantasy'],'zeinX0xt78GgtpCQjx7d2S6Gh7g.jpg',null,'A solitary cat finds shelter on a boat after a great flood and learns to survive with an unlikely animal crew.','PG'),
- movie(762509,'Mufasa: The Lion King',2024,7.3,118,['Adventure','Drama','Family'],'lurEK87kukWNaHd0zYnsi3yzJrs.jpg','1w8kutrRucTd3wlYyu5Q1UDMiG1.jpg','A young, orphaned lion named Mufasa finds friendship and his destiny on an epic journey across the Pride Lands.','PG'),
- movie(693134,'Dune: Part Two',2024,8.5,166,['Action','Adventure','Drama','Sci-Fi'],'1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg','vjuvZ4n1MFJk9I86b0EaG99kK8H.jpg','Paul Atreides joins the Fremen, faces an impossible choice and confronts the fate of Arrakis.'),
- movie(1241982,'Moana 2',2024,7.1,100,['Animation','Adventure','Family'],'aLVkiINlIeCkcZIzb7XHzPYg06L.jpg','zo8CIjJ2nfN0evqNajwMR06Hwka.jpg','Moana answers an unexpected call from her ancestors and sets off across the far seas of Oceania.','PG'),
- movie(533535,'Deadpool & Wolverine',2024,7.6,128,['Action','Comedy','Sci-Fi'],'8cdWjvZQUExUUTzyp4t6EDMubfO.jpg','dvBCdCohwWbsP5qAaglOXagDMtk.jpg','A wisecracking antihero reluctantly teams up with a gruff mutant for a chaotic adventure across realities.','R'),
+ movie(762509,'Mufasa: The Lion King',2024,7.3,118,['Adventure','Drama','Family'],'lurEK87kukWNaHd0zYnsi3yzJrs.jpg','1w8kutrRucTd3wlYyu5QlUDMiG1.jpg','A young, orphaned lion named Mufasa finds friendship and his destiny on an epic journey across the Pride Lands.','PG'),
+ movie(693134,'Dune: Part Two',2024,8.5,166,['Action','Adventure','Drama','Sci-Fi'],'1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg','eZ239CUp1d6OryZEBPnO2n87gMG.jpg','Paul Atreides joins the Fremen, faces an impossible choice and confronts the fate of Arrakis.'),
+ movie(1241982,'Moana 2',2024,7.1,100,['Animation','Adventure','Family'],'aLVkiINlIeCkcZIzb7XHzPYgO6L.jpg','vYqt6kb4lcF8wwqsMMaULkP9OEn.jpg','Moana answers an unexpected call from her ancestors and sets off across the far seas of Oceania.','PG'),
+ movie(533535,'Deadpool & Wolverine',2024,7.6,128,['Action','Comedy','Sci-Fi'],'8cdWjvZQUExUUTzyp4t6EDMubfO.jpg','by8z9Fe8y7p4jo2YlW2SZDnptyT.jpg','A wisecracking antihero reluctantly teams up with a gruff mutant for a chaotic adventure across realities.','R'),
  movie(157336,'Interstellar',2014,8.7,169,['Adventure','Drama','Sci-Fi'],'gEU2QniE6E77NI6lCU6MxlNBvIx.jpg',null,'A team of explorers travels beyond the known galaxy to search for humanity’s next home.'),
  movie(27205,'Inception',2010,8.4,148,['Action','Sci-Fi','Crime'],'xlaY2zyzMfkhk0HSC5VUwzoZPU1.jpg',null,'A skilled thief enters dreams to steal secrets and faces an impossible task: planting an idea instead.'),
  movie(299534,'Avengers: Endgame',2019,8.3,181,['Action','Adventure','Sci-Fi'],'ulzhLuWrPK07P1YkdWQLZnQh1JL.jpg',null,'The remaining heroes gather for one final chance to undo an unimaginable loss.'),
@@ -23,7 +23,33 @@ const FEATURE_IDS=[1087192,693134,762509,1241982];
 const byId=new Map(MOVIES.map(m=>[m.id,m]));
 const $=id=>document.getElementById(id);
 const state={view:'home',genre:'Trending',query:'',year:'all',rating:0,sort:'featured',slide:0,activeMovie:null};
-const pic=(file,size='w500')=>CDN+size+'/'+encodeURIComponent(file||'');
+const pic=(file,size='w500')=>file?CDN+size+'/'+encodeURIComponent(file):'';
+const widescreen=movie=>movie.backdrop||movie.poster;
+const imageSizes={poster:'(max-width:480px) 145px, (max-width:1000px) 155px, 180px',recent:'195px',backdrop:'(max-width:760px) 100vw, calc(100vw - 330px)'};
+// Prefer the largest practical TMDB image for each role; correct file paths and
+// never stretch a portrait poster into a landscape backdrop.
+function setArt(img,movie,role='poster'){
+ const landscape=role!=='poster';
+ const file=landscape?widescreen(movie):movie.poster;
+ const sizes=landscape?['w780','w1280']:['w342','w500','w780'];
+ const container=img.parentElement;
+ container?.classList.remove('image-failed','portrait-art');
+ if(landscape&&!movie.backdrop)container?.classList.add('portrait-art');
+ if(container)container.dataset.artTitle=movie.title;
+ img.hidden=false;
+ img.alt=role==='poster'?movie.title+' movie poster':movie.title+' movie artwork';
+ img.decoding='async';
+ img.sizes=imageSizes[role]||imageSizes.backdrop;
+ img.srcset=sizes.map((size,i)=>pic(file,size)+' '+(landscape?[780,1280][i]:[342,500,780][i])+'w').join(', ');
+ img.src=pic(file,landscape?'w1280':'w780');
+ img.onerror=()=>{
+  img.onerror=null;img.removeAttribute('srcset');
+  // A CDN error must leave an intentional, readable movie-title tile.
+  img.hidden=true;
+  container?.classList.add('image-failed');
+ };
+}
+
 const storageRead=(key,def)=>{try{const value=JSON.parse(localStorage.getItem(key));return Array.isArray(value)?value:def}catch{return def}};
 const readIds=(key,def)=>storageRead(key,def).filter(id=>Number.isInteger(id)&&byId.has(id)).slice(0,20);
 const storageWrite=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value))}catch{/* Storage may be unavailable in private browsing. */}};
@@ -32,9 +58,13 @@ let favorites=new Set(readIds(FAV_KEY,[]));
 let recent=readIds(RECENT_KEY,[693134,762509,1087192]);
 const node=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n};
 const svg=(name)=>{const s=document.createElementNS('http://www.w3.org/2000/svg','svg'),u=document.createElementNS('http://www.w3.org/2000/svg','use');u.setAttribute('href','#ic-'+name);s.appendChild(u);s.setAttribute('aria-hidden','true');return s};
-const image=(movie,size='w500')=>{
- const n=node('img');n.src=pic(movie.poster,size);n.alt=movie.title+' official poster';n.loading='lazy';n.decoding='async';
- n.addEventListener('error',()=>{n.hidden=true;n.parentElement?.classList.add('image-failed')},{once:true});
+const image=(movie,role='poster')=>{
+ const n=node('img');
+ n.loading='lazy';
+ n.width=role==='poster'?780:1280;n.height=role==='poster'?1170:720;
+ // setArt runs after insertion so the failure state belongs to the actual box.
+ n.addEventListener('load',()=>n.parentElement?.classList.remove('image-failed'));
+ queueMicrotask(()=>setArt(n,movie,role));
  return n;
 };
 const fmtTime=minutes=>Math.floor(minutes/60)+'h '+String(minutes%60).padStart(2,'0')+'min';
@@ -64,7 +94,7 @@ function filters(){
 }
 function drawMovieCard(movie){
  const card=node('button','movie-card');card.type='button';card.setAttribute('aria-label','View details for '+movie.title);
- const poster=node('span','poster-wrap');poster.appendChild(image(movie,'w342'));const cue=node('span','card-hover-icon');cue.appendChild(svg('chevron'));poster.appendChild(cue);
+ const poster=node('span','poster-wrap');poster.dataset.artTitle=movie.title;poster.appendChild(image(movie,'poster'));const cue=node('span','card-hover-icon');cue.appendChild(svg('chevron'));poster.appendChild(cue);
  const name=node('span','movie-name',movie.title);
  const meta=node('span','movie-meta');meta.appendChild(node('span','',String(movie.year)));meta.appendChild(node('span','','·'));
  const rating=node('b');rating.append(svg('star'),document.createTextNode(movie.rating.toFixed(1)));meta.appendChild(rating);
@@ -109,7 +139,7 @@ function renderRecent(){
  for(const id of recent.slice(0,4)){
   const movie=byId.get(id);if(!movie)continue;
   const b=node('button','mini-movie');b.type='button';b.setAttribute('aria-label','Explore '+movie.title);
-  const cover=image(movie,'w342');cover.alt='';b.appendChild(cover);
+  const cover=image(movie,'recent');cover.alt='';b.dataset.artTitle=movie.title;b.appendChild(cover);
   const t=node('span','mini-title',movie.title),bottom=node('span','mini-bottom');
   const play=node('span','mini-play');play.appendChild(svg('play'));
   bottom.append(play,node('span','mini-year',String(movie.year)));
@@ -146,19 +176,18 @@ function feature(){
  const movie=getFeature();
  $('featuredTitle').textContent=movie.title;
  $('featureDuration').textContent=fmtTime(movie.minutes);
- const art=$('featureArt');art.hidden=false;art.alt='Artwork for '+movie.title;art.src=pic(movie.backdrop,'w780');
+ const art=$('featureArt');setArt(art,movie,'backdrop');
  const tags=$('featureTags');tags.replaceChildren();
  for(const tag of [fmtTime(movie.minutes),movie.genres[0],'Movie',String(movie.year),movie.certificate])tags.appendChild(node('span','',tag));
  const video='https://www.themoviedb.org/movie/'+movie.id+'/videos';
  $('featureTrailer').href=video;$('featureTrailer').setAttribute('aria-label','Find trailers for '+movie.title);
  $('favoriteFeature').setAttribute('aria-pressed',String(favorites.has(movie.id)));
  $('favoriteFeature').setAttribute('aria-label',favorites.has(movie.id)?'Remove from watchlist':'Add '+movie.title+' to watchlist');
- $('featureArt').onerror=()=>{$('featureArt').hidden=true};
  $('slideDots').querySelectorAll('button').forEach((b,i)=>{b.classList.toggle('is-current',i===state.slide);b.setAttribute('aria-pressed',String(i===state.slide))});
  const peek1=byId.get(FEATURE_IDS[(state.slide+1)%FEATURE_IDS.length]);
  const peek2=byId.get(FEATURE_IDS[(state.slide+2)%FEATURE_IDS.length]);
- $('peekFront').style.backgroundImage='url("'+pic(peek1.poster,'w342')+'")';
- $('peekBack').style.backgroundImage='url("'+pic(peek2.poster,'w342')+'")';
+ $('peekFront').style.backgroundImage='url("'+pic(peek1.poster,'w780')+'")';
+ $('peekBack').style.backgroundImage='url("'+pic(peek2.poster,'w780')+'")';
  $('peekFront').setAttribute('aria-label','Show next featured movie: '+peek1.title);
  $('peekBack').setAttribute('aria-label','Show featured movie: '+peek2.title);
 }
@@ -180,7 +209,7 @@ function updateDetailFavorite(){
 function openMovie(id){
  const movie=byId.get(id);if(!movie)return;
  state.activeMovie=id;visit(id);
- const art=$('detailPoster');art.hidden=false;art.src=pic(movie.backdrop,'w780');art.alt='Art for '+movie.title;art.onerror=()=>{art.hidden=true};
+ const art=$('detailPoster');setArt(art,movie,'backdrop');
  $('detailTitle').textContent=movie.title;
  $('detailMeta').textContent=movie.year+'  ·  '+fmtTime(movie.minutes)+'  ·  '+movie.certificate+'  ·  ★ '+movie.rating.toFixed(1);
  $('detailSynopsis').textContent=movie.overview;

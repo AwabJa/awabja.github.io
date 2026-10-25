@@ -57,7 +57,13 @@ try{
   await page.keyboard.press('ArrowRight');
   assert.equal(await page.locator('#featuredTitle').innerText(),'Dune: Part Two','Keyboard arrow changes featured movie');
   await page.locator('#slideDots button').first().click();
-  assert.equal(await page.locator('#featureArt').getAttribute('alt'),'Artwork for How to Train Your Dragon');
+  assert.equal(await page.locator('#featureArt').getAttribute('alt'),'How to Train Your Dragon movie artwork');
+  const artSrc=await page.locator('#featureArt').getAttribute('src');
+  assert(artSrc.includes('/w1280/8J6UlIFcU7eZfq9iCLbgc8Auklg.jpg'),'Hero uses genuine HD landscape image, not a stretched poster');
+  assert((await page.locator('.movie-card').first().locator('img').getAttribute('srcset')).includes('/w780/'),'Posters include a crisp 780px candidate');
+  assert.equal(await page.locator('.movie-card .poster-wrap').first().evaluate(el=>getComputedStyle(el).aspectRatio),'2 / 3','All poster boxes match 2:3 movie art');
+  assert.equal(await page.locator('.movie-card img').first().evaluate(el=>getComputedStyle(el).objectFit),'contain','Poster art does not crop');
+  assert.equal(await page.locator('#featureArt').evaluate(el=>getComputedStyle(el).objectFit),'cover','Wide banner uses cinematic landscape art');
   assert.equal(await page.locator('#genreScroll button').count(),11,'Genre chips render');
   assert.equal((await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content')).includes("script-src 'self'"),true,'Scripts limited to same origin');
   const doc=await page.evaluate(()=>({
@@ -74,7 +80,9 @@ try{
    assert.equal(dimensions.radius,'0px','No desktop framed window corners');
   }
   assert(doc.area>180,'Content pane is usable');
-  assert(doc.filmSrc.startsWith('https://image.tmdb.org/t/p/w342/'),'Licensed media paths use TMDB HTTPS CDN');
+  await page.waitForFunction(()=>document.querySelector('.poster-wrap')?.classList.contains('image-failed'));
+  assert((await page.locator('.poster-wrap.image-failed').count())>0,'A blocked remote image shows a styled fallback instead of a broken poster');
+  assert(doc.filmSrc.startsWith('https://image.tmdb.org/t/p/w780/'),'Full-resolution posters use TMDB HTTPS CDN');
   if(width<=390){
    assert.equal(await page.locator('#mobileMenu').isVisible(),true,'Mobile has navigation toggle');
    await page.locator('#mobileMenu').click();
