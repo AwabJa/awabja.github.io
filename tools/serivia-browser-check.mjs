@@ -206,6 +206,36 @@ try{
   await context.close();
  }
 
+ // A short desktop viewport must show the fixed navigation and retain a
+ // scrollable history of more than four films, without clipping main content.
+ const shortCtx=await browser.newContext({viewport:{width:1440,height:620}});
+ const shortPage=await shortCtx.newPage();
+ await shortPage.route('https://image.tmdb.org/**',route=>route.abort('failed'));
+ await shortPage.goto(origin+'/serivia/',{waitUntil:'domcontentloaded'});
+ await shortPage.evaluate(()=>localStorage.setItem('serivia.recent.v1',JSON.stringify(
+  [1087192,823219,762509,693134,1241982,533535,157336,27205,299534,122,550,1020414]
+ )));
+ await shortPage.reload({waitUntil:'domcontentloaded'});
+ assert.equal(await shortPage.locator('#recentList .mini-movie').count(),12,'Recent sidebar retains 12 items');
+ const shortLayout=await shortPage.evaluate(()=>{
+  const area=document.querySelector('.side-activity'),main=document.querySelector('.main-area');
+  area.style.scrollBehavior='auto';main.style.scrollBehavior='auto';
+  area.scrollTop=area.scrollHeight;main.scrollTop=main.scrollHeight;
+  const box=area.getBoundingClientRect(),last=area.querySelector('.mini-movie:last-child').getBoundingClientRect();
+  const nav=document.querySelector('.side-nav-secondary').getBoundingClientRect();
+  const footer=document.querySelector('.sidebar .portfolio-link').getBoundingClientRect();
+  const film=main.querySelector('.movie-card .movie-meta').getBoundingClientRect();
+  const mainBox=main.getBoundingClientRect();
+  return {recentScroll:area.scrollHeight-area.clientHeight,mainScroll:main.scrollHeight-main.clientHeight,
+   lastVisible:last.bottom<=box.bottom+6,navClear:nav.bottom<=box.top+6,
+   footerVisible:footer.bottom<=innerHeight+3&&footer.top>=0,
+   filmVisible:film.bottom<=mainBox.bottom+6&&film.top>=mainBox.top-6};
+ });
+ assert(shortLayout.recentScroll>100&&shortLayout.lastVisible,'All recent movies can be reached by scrolling');
+ assert(shortLayout.navClear&&shortLayout.footerVisible,'Sidebar does not overlap navigation or portfolio link');
+ assert(shortLayout.mainScroll>50&&shortLayout.filmVisible,'Main column scrolls to movie labels and ratings');
+ await shortCtx.close();
+
  // Mock the official API to exercise live data without a real credential
  // or untrusted network dependency in CI.
  const liveCtx=await browser.newContext({viewport:{width:1120,height:900}});
