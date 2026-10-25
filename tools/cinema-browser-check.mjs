@@ -37,6 +37,10 @@ try{
   assert.equal(response.status(),200,'Cinema opens');
   await page.locator('.movie-card').first().waitFor();
   assert.equal(await page.title(),'Serivia — Discover great movies');
+  assert.equal(await page.locator('.brand').innerText(),'serivia','Wordmark stays lowercase');
+  assert.equal(await page.locator('.brand-icon svg rect').count(),1,'Brand uses a single clapperboard body');
+  assert.equal(await page.locator('.brand-icon svg path').count(),4,'Clapperboard has its hinged striped slate and play symbol');
+  assert.equal(await page.locator('link[rel="icon"]').getAttribute('href'),'favicon.svg?v=1','Cinema uses matching clapperboard tab icon');
   assert.equal(await page.locator('.movie-card').count(),12,'Twelve curated film cards render');
   const assertLabels=async contextName=>{
     const layout=await page.evaluate(()=>{
