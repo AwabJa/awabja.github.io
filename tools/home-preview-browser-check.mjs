@@ -1,82 +1,55 @@
-/** Browser QA for the unlisted home preview. `npm install --no-save playwright-core@1.56.1` first. */
+/** Browser QA for the unlisted cinematic homepage design; chromium via CHROME_BIN. */
 import assert from 'node:assert/strict';
-import {createServer} from 'node:http';
-import {readFile,access} from 'node:fs/promises';
-import {resolve,dirname,extname,sep} from 'node:path';
-import {fileURLToPath} from 'node:url';
-import {chromium} from 'playwright-core';
+import { createServer } from 'node:http';
+import { readFile, access } from 'node:fs/promises';
+import { resolve, dirname, extname, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { chromium } from 'playwright-core';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.svg':'image/svg+xml','.webp':'image/webp'};
 const server=createServer(async(req,res)=>{
  try{
-  const path=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
-  const file=resolve(root,'.'+(path.endsWith('/')?path+'index.html':path));
-  if(!file.startsWith(root+sep)){res.writeHead(403);res.end();return}
-  const contents=await readFile(file);
-  res.writeHead(200,{'content-type':mime[extname(file)]||'application/octet-stream','cache-control':'no-store'});res.end(contents)
- }catch{res.writeHead(404);res.end('Not found')}
+   const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
+   const file=resolve(root,'.'+(pathname.endsWith('/')?pathname+'index.html':pathname));
+   if(!file.startsWith(root+sep)){res.writeHead(403);res.end();return;}
+   const bytes=await readFile(file);
+   res.writeHead(200,{'content-type':mime[extname(file)]||'application/octet-stream','cache-control':'no-store'});res.end(bytes);
+ }catch{res.writeHead(404);res.end('Not found');}
 });
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const origin='http://127.0.0.1:'+server.address().port;
 const candidates=[process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chromium-browser'].filter(Boolean);
-let executablePath;
-for(const path of candidates){try{await access(path);executablePath=path;break}catch{}}
+let executablePath;for(const p of candidates){try{await access(p);executablePath=p;break;}catch{}}
 const browser=await chromium.launch(executablePath?{executablePath,headless:true,args:['--no-sandbox']}:{channel:'chrome',headless:true,args:['--no-sandbox']});
 try{
- const checks=[];
+ const results=[];
  for(const width of [320,390,768,1440]){
-  const page=await browser.newPage({viewport:{width,height:width<=390?780:900}});
-  const errors=[];page.on('pageerror',err=>errors.push(err.message));
-  const response=await page.goto(origin+'/home-preview/',{waitUntil:'load'});
-  assert.equal(response.status(),200,'Preview page must load');
-  await page.locator('h1').waitFor();
-  // Eagerly decode the preview's lazy-loaded project images before asserting.
-  await page.locator('main img').evaluateAll(async images=>{
-   await Promise.all(images.map(async image=>{
-    image.loading='eager';
-    try{await image.decode()}catch{}
-   }));
-  });
-  const data=await page.evaluate(()=>({
-   vw:innerWidth,scroll:document.documentElement.scrollWidth,
-   imgs:[...document.images].map(img=>({complete:img.complete,width:img.naturalWidth})),
-   headings:[...document.querySelectorAll('main h1,main h2')].map(x=>x.textContent.trim()),
-   projects:document.querySelectorAll('.feature-project, .editorial-card').length
-  }));
-  assert(data.scroll<=data.vw+2,`${width}px viewport must not overflow horizontally: ${data.scroll}px`);
-  assert(data.imgs.every(x=>x.complete&&x.width>0),'All project artwork must load');
-  assert.equal(data.projects,3,'All three projects must appear');
-  assert.equal(await page.locator('.side-rail').isVisible(),true,'Fixed sidebar navigation must be visible');
-  assert.equal(await page.locator('#work-title').innerText(),'Projects','Editorial project heading is visible');
-  assert.equal(await page.locator('.manifesto-strip').count(),0,'Old ticker must be gone');
-  const visual=await page.evaluate(()=>({
-   background:getComputedStyle(document.body).backgroundImage,
-   overlay:getComputedStyle(document.body,'::before').backgroundImage,
-   accent:getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(),
-  }));
-  assert(visual.background.startsWith('linear-gradient('),'Smooth charcoal base must use one restrained gradient');
-  assert(visual.overlay.startsWith('radial-gradient('),'Only one soft ambient glow should sit behind the page');
-  assert.equal(visual.accent,'#d9a17f','Accent should be warm copper, not purple');
-  assert.equal(await page.locator('.hero-orbit').count(),0,'Old orbital decoration must be gone');
-  assert.equal(errors.length,0,'No browser JS errors: '+errors.join('; '));
-  for(const href of ['../Flow/index.html','../Enzo/index.html','../3D%20Navigation%20Bar/index.html']){
-   assert(await page.locator(`a[href="${href}"]`).count()>0,`Project link missing: ${href}`);
-  }
-  const toggle=page.locator('.rail-toggle');
-  assert.equal(await toggle.isVisible(),true,'Fixed rail toggle is visible at every width');
-  await toggle.click();
-  assert.equal(await toggle.getAttribute('aria-expanded'),'true','Rail menu must open');
-  await page.locator('.rail-menu').waitFor({state:'visible'}); // Visibility transitions after the aria state flips.
-  assert.equal(await page.locator('.rail-menu').isVisible(),true,'Expanded menu is visible');
-  await page.locator('.rail-menu a[href="#work"]').click();
-  assert.equal(await toggle.getAttribute('aria-expanded'),'false','Rail menu closes after navigation');
-  checks.push({width,result:'PASS'});
-  await page.close();
+   const page=await browser.newPage({viewport:{width,height:width<=390?820:900}});
+   const errors=[];page.on('pageerror',err=>errors.push(err.message));
+   const response=await page.goto(origin+'/home-preview/',{waitUntil:'domcontentloaded'});
+   assert.equal(response.status(),200,'Preview HTML loads');
+   await page.locator('.hero h1').waitFor();
+   await page.locator('main img').evaluateAll(async images=>{await Promise.all(images.map(async img=>{img.loading='eager';try{await img.decode()}catch{}}))});
+   const data=await page.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,images:[...document.querySelectorAll('main img')].map(i=>i.naturalWidth),projects:document.querySelectorAll('.project').length,imagesVisible:[...document.querySelectorAll('.project')].map(x=>getComputedStyle(x).opacity)}));
+   assert(data.scrollWidth<=data.width+2,`${width}px viewport does not overflow (${data.scrollWidth})`);
+   assert.equal(data.projects,3,'All real projects shown');
+   assert(data.images.every(w=>w>0),'Artwork fully loads');
+   assert(data.imagesVisible.every(v=>Number(v)>.9),'Project previews are not hidden by animation');
+   assert.equal(errors.length,0,'No browser JS errors: '+errors.join('; '));
+   for(const href of ['../Flow/','../3D%20Navigation%20Bar/','../Enzo/']){
+     assert(await page.locator(`a.project-image[href="${href}"]`).count()===1,'Project link '+href+' exists');
+   }
+   const toggle=page.locator('.menu-button');await toggle.click();
+   assert.equal(await toggle.getAttribute('aria-expanded'),'true','Menu opens');
+   await page.locator('.menu-panel').waitFor({state:'visible'});
+   await page.locator('.menu-panel a[href="#work"]').click();
+   assert.equal(await toggle.getAttribute('aria-expanded'),'false','Menu closes on link');
+   results.push({width,status:'PASS'});await page.close();
  }
- const reduced=await browser.newPage({viewport:{width:390,height:840},reducedMotion:'reduce'});
+ const reduced=await browser.newPage({viewport:{width:390,height:800},reducedMotion:'reduce'});
  await reduced.goto(origin+'/home-preview/');
- assert.equal(await reduced.locator('h1').isVisible(),true,'Reduced-motion user sees hero');
- assert.equal(await reduced.locator('#work').isVisible(),true,'Reduced-motion user sees work');
+ assert.equal(await reduced.locator('.project').count(),3);
+ assert.equal(await reduced.locator('.about h2').isVisible(),true);
  await reduced.close();
- console.log('HOME PREVIEW BROWSER CHECKS PASSED '+JSON.stringify(checks));
+ console.log('CINEMATIC HOMEPAGE PREVIEW CHECKS PASSED '+JSON.stringify(results));
 }finally{await browser.close();await new Promise(done=>server.close(done))}

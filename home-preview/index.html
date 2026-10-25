@@ -1,107 +1,103 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#0d1317">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#060a0e">
+  <meta name="description" content="A.J. Ahmed — creative developer building thoughtful products, interactive experiences, and digital worlds.">
   <meta name="robots" content="noindex,nofollow">
-  <meta name="description" content="A cinematic editorial preview of the A.J. Ahmed creative development portfolio.">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-src 'none'; form-action 'self'; upgrade-insecure-requests;">
-  <title>Editorial Art Direction / Charcoal — A.J. Ahmed</title>
-  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <title>A.J. Ahmed — Creative Developer | Cinematic Concept</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="preview.css?v=3">
-  <script src="preview.js?v=2" defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="site.css?v=1">
+  <script src="site.js?v=1" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to content</a>
-  <div class="read-progress" aria-hidden="true"></div>
-  <aside class="side-rail" aria-label="Portfolio identity">
-    <button class="rail-toggle" type="button" aria-expanded="false" aria-label="Open navigation menu" aria-controls="rail-menu"><span class="rail-lines" aria-hidden="true"><i></i><i></i></span></button>
-    <a href="#top" class="rail-signature" aria-label="A.J. Ahmed, back to top">aj<span>.</span></a>
-    <span class="rail-year">© <span id="rail-year">2026</span></span>
-  </aside>
-  <div class="rail-shade" aria-hidden="true"></div>
-  <nav class="rail-menu" id="rail-menu" aria-label="Portfolio navigation" inert>
-    <p class="menu-caption">INDEX / A.J. AHMED</p>
-    <a href="#top"><small>00</small> Home</a>
-    <a href="#work"><small>01</small> Projects</a>
-    <a href="#about"><small>02</small> About</a>
-    <a href="#contact"><small>03</small> Contact</a>
-    <a class="menu-github" href="https://github.com/AwabJa" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
-    <p class="menu-foot">DESIGN × CODE × INTERACTION</p>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="reading-line" aria-hidden="true"></div>
+  <header class="header" id="top">
+    <a class="wordmark" href="#top" aria-label="A.J. Ahmed — top of page">A.J. AHMED</a>
+    <nav class="desktop-nav" aria-label="Main navigation">
+      <a href="#work">WORK</a>
+      <a href="#about">ABOUT</a>
+      <a href="#contact">CONTACT</a>
+    </nav>
+    <div class="header-end"><span class="header-status"><i aria-hidden="true"></i> CREATIVE DEVELOPER</span>
+      <button class="menu-button" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open menu"><span></span><span></span></button>
+    </div>
+  </header>
+  <nav class="menu-panel" id="mobile-menu" aria-label="Expanded navigation" inert>
+    <span class="menu-label">THE INDEX</span>
+    <a href="#top">01 <strong>Home</strong></a>
+    <a href="#work">02 <strong>Projects</strong></a>
+    <a href="#about">03 <strong>About</strong></a>
+    <a href="#contact">04 <strong>Contact</strong></a>
+    <p>DESIGN · DEVELOPMENT · INTERACTION</p>
   </nav>
-  <div class="topline" id="top"><span>A.J. AHMED / CREATIVE DEVELOPER</span><div><span>PORTFOLIO / 2026</span><span>DESIGN × INTERACTION</span></div></div>
   <main id="main">
     <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-grid">
-        <div class="hero-heading">
-          <p class="hero-kicker"><span class="slash-mark" aria-hidden="true">╱</span> INDEPENDENT CREATIVE DEVELOPER</p>
-          <h1 id="hero-title">Making the<br>digital <em>feel.</em></h1>
-        </div>
-        <div class="hero-description">
-          <p>I'm A.J. Ahmed. I turn ideas into thoughtful interfaces, expressive websites, and interactive experiences.</p>
-          <a href="#work">EXPLORE THE WORK <span aria-hidden="true">↗</span></a>
-        </div>
+      <div class="hero-scene" aria-hidden="true"><img src="assets/portal-hero.webp" width="1320" height="1040" alt="" fetchpriority="high" decoding="async"></div>
+      <div class="hero-vignette" aria-hidden="true"></div>
+      <div class="hero-content">
+        <p class="eyebrow hero-eyebrow"><span class="eyebrow-line" aria-hidden="true"></span> CREATIVE DEVELOPER</p>
+        <h1 id="hero-title">I craft digital<br>experiences that<br><span>feel alive.</span></h1>
+        <p class="hero-intro">Blending design, technology, and curiosity to make meaningful, immersive experiences on the web.</p>
+        <a href="#work" class="explore-link"><span class="circle-arrow" aria-hidden="true">↗</span><span>EXPLORE MY WORK</span></a>
       </div>
-      <div class="hero-floor"><span>CREATIVE DEVELOPMENT / WEBGL / INTERACTION</span><a href="#work">SCROLL TO PROJECTS ↓</a></div>
+      <div class="hero-side" aria-hidden="true"><span>IDEAS<br>CODE<br>EXPERIENCES</span><i></i><span>01 / 03</span><div class="side-dots"><b></b><b></b><b></b></div></div>
+      <a class="scroll-marker" href="#work"><span>SCROLL</span><i aria-hidden="true"></i></a>
+      <div class="hero-bottom-fade" aria-hidden="true"></div>
     </section>
 
-
-    <section class="work-section section-wrap" id="work" aria-labelledby="work-title">
-      <div class="section-head" data-reveal>
-        <div class="section-eyebrow"><span class="heading-stroke" aria-hidden="true">╱</span><div><h2 id="work-title">Projects</h2><span>SOME OF MY LATEST EXPERIMENTS</span></div></div>
-        <div class="section-headline"><h3>Ideas brought to life through<br><em>design and code.</em></h3><p>I explore the intersection of aesthetics and development, creating everything from everyday tools to immersive digital worlds.</p></div>
-      </div>
-
-      <article class="feature-project" aria-labelledby="flow-title" data-reveal>
-        <div class="feature-meta"><span>01 — FEATURED PROJECT</span><span><i class="live-dot" aria-hidden="true"></i> LIVE WEB APPLICATION</span></div>
-        <div class="feature-layout">
-          <div class="feature-copy">
-            <div class="feature-numeral">PROJECT 001 <span>/ 003</span></div>
-            <div class="feature-description"><p class="label">PROJECT 001 / PRODUCTIVITY WEB APP</p><h3 id="flow-title">FLOW<span class="accent-period">.</span></h3><p class="feature-tagline">A calmer way to<br><em>get things done.</em></p><p class="feature-body">An intuitive workspace for planning your days, organizing projects, and seeing progress clearly. Built for focus, not friction.</p><div class="feature-chips"><span>JAVASCRIPT</span><span>LOCAL-FIRST</span><span>RESPONSIVE UI</span></div><a class="project-go" href="../Flow/index.html">EXPLORE FLOW <span class="project-go-arrow" aria-hidden="true">↗</span></a></div>
-          </div>
-          <a class="feature-art" href="../Flow/index.html" aria-label="Explore the Flow productivity workspace">
-            <img src="../assets/flow-card.svg?v=2" alt="Atmospheric violet artwork representing Flow" width="1200" height="750" loading="lazy" decoding="async">
-            <div class="feature-art-overlay" aria-hidden="true"><span class="art-vertical">A BETTER WAY TO FIND YOUR FLOW</span><span class="art-bottom">FLOW / WORKSPACE <span>↗</span></span></div>
+    <section class="work" id="work" aria-labelledby="work-title">
+      <div class="section-heading"><div class="heading-label"><h2 id="work-title">FEATURED WORK</h2><span aria-hidden="true"></span></div><a href="#project-grid">VIEW ALL PROJECTS <b aria-hidden="true">↗</b></a></div>
+      <div class="projects-grid" id="project-grid">
+        <article class="project project-flow" data-reveal>
+          <a href="../Flow/" class="project-image" aria-label="Explore Flow — productivity workspace">
+            <img src="assets/flow-scene.webp" alt="Cinematic concept artwork of an illuminated circular portal above a reflecting pool" width="940" height="546" loading="lazy" decoding="async">
+            <span class="project-number">01</span>
+            <span class="project-info"><span class="project-category">PRODUCTIVITY / WEB APP</span><span class="project-title">Flow</span><span class="project-description">A thoughtful workspace for projects, tasks, and momentum.</span></span>
+            <span class="project-arrow" aria-hidden="true">↗</span>
           </a>
-        </div>
-        <div class="feature-tail"><span>PRODUCTIVITY REIMAGINED</span><span>CREATED WITH INTENTION</span></div>
-      </article>
-
-      <div class="work-subhead" data-reveal><span>MORE SELECTED WORK</span><span>02—03 <span aria-hidden="true">↓</span></span></div>
-      <div class="project-pair">
-        <article class="editorial-card solar-card" aria-labelledby="solar-title" data-reveal>
-          <a class="editorial-media" href="../3D%20Navigation%20Bar/index.html" aria-label="Explore the 3D Solar System">
-            <img src="../assets/solar-card.svg?v=2" alt="Illustrated planetary scene of the Solar System Explorer" width="1200" height="750" loading="lazy" decoding="async">
-            <span class="media-index">02 / INTERACTIVE 3D</span><span class="media-arrow" aria-hidden="true">↗</span>
-          </a>
-          <div class="editorial-details"><span class="editorial-type">EXPLORATION / WEBGL</span><h3 id="solar-title">The universe,<br><em>within reach.</em></h3><p>Travel through our solar system in an interactive 3D experience, from the Sun to the outer planets.</p><div class="card-bottom"><span>SOLAR SYSTEM EXPLORER</span><a href="../3D%20Navigation%20Bar/index.html" aria-label="Open Solar System Explorer">EXPLORE <span aria-hidden="true">↗</span></a></div></div>
         </article>
-        <article class="editorial-card enzo-card" aria-labelledby="enzo-title" data-reveal>
-          <a class="editorial-media" href="../Enzo/index.html" aria-label="Play the Enzo FPS prototype">
-            <img src="../assets/enzo-card.svg?v=2" alt="Cinematic dark fantasy arena and blue portal representing Enzo" width="1200" height="750" loading="lazy" decoding="async">
-            <span class="media-index">03 / GAME EXPERIMENT</span><span class="media-arrow" aria-hidden="true">↗</span>
+        <article class="project project-solar" data-reveal>
+          <a href="../3D%20Navigation%20Bar/" class="project-image" aria-label="Explore Solar System Explorer">
+            <img src="assets/solar-scene.webp" alt="Cinematic concept artwork of a ringed planet over a rocky landscape" width="940" height="585" loading="lazy" decoding="async">
+            <span class="project-number">02</span>
+            <span class="project-info"><span class="project-category">INTERACTIVE 3D</span><span class="project-title">Solar System Explorer</span><span class="project-description">An interactive journey through our cosmic neighborhood.</span></span>
+            <span class="project-arrow" aria-hidden="true">↗</span>
           </a>
-          <div class="editorial-details"><span class="editorial-type">IMMERSIVE / GAMEPLAY</span><h3 id="enzo-title">Enter<br><em>the unknown.</em></h3><p>An evolving first-person browser game exploring atmosphere, movement, and interactive systems.</p><div class="card-bottom"><span>ENZO / FPS PROTOTYPE</span><a href="../Enzo/index.html" aria-label="Open Enzo FPS">PLAY <span aria-hidden="true">↗</span></a></div></div>
+        </article>
+        <article class="project project-enzo" data-reveal>
+          <a href="../Enzo/" class="project-image" aria-label="Explore Enzo — first-person browser game">
+            <img src="assets/enzo-scene.webp" alt="Cinematic concept artwork of a dark mountain refuge at dusk" width="940" height="542" loading="lazy" decoding="async">
+            <span class="project-number">03</span>
+            <span class="project-info"><span class="project-category">BROWSER GAME / EXPERIMENT</span><span class="project-title">Enzo</span><span class="project-description">An evolving first-person experiment in immersive gameplay.</span></span>
+            <span class="project-arrow" aria-hidden="true">↗</span>
+          </a>
         </article>
       </div>
-      <div class="source-note" data-reveal><span>LIKE THE DETAILS?</span><a href="https://github.com/AwabJa" target="_blank" rel="noopener noreferrer">EXPLORE THE CODE ON GITHUB <span aria-hidden="true">↗</span></a></div>
+      <p class="visual-note">PROJECT VISUALS ARE CONCEPT ART · PROJECT LINKS OPEN THE REAL EXPERIENCES</p>
     </section>
 
-    <section class="about-section section-wrap" id="about" aria-labelledby="about-title">
-      <div class="section-eyebrow" data-reveal><span class="section-index">02 / 03</span><span class="eyebrow-rule"></span> BEHIND THE WORK</div>
-      <div class="about-layout">
-        <div class="about-left" data-reveal><h2 id="about-title">CURIOUS<br>BY <em>DEFAULT.</em></h2><div class="about-monogram" aria-hidden="true">AJ<span>✳</span></div></div>
-        <div class="about-right" data-reveal><span class="small-caption">A LITTLE ABOUT ME</span><p class="about-intro">I'm A.J. — a developer drawn to the intersection of <span>design, technology, and imagination.</span></p><p>I love the moment an idea becomes something real: an interface that just clicks, a 3D world you can explore, or a tiny interaction that makes you smile.</p><p>I approach each project with equal parts curiosity and craft, always learning and pushing what's possible in the browser.</p><div class="about-disciplines"><span>FRONT-END DEVELOPMENT</span><span>CREATIVE CODING</span><span>THREE.JS & WEBGL</span><span>INTERACTION DESIGN</span></div></div>
+    <section class="about" id="about" aria-labelledby="about-title">
+      <div class="about-art" aria-hidden="true"></div>
+      <div class="about-inner" data-reveal>
+        <div class="about-index"><span>DESIGN</span><span>DEVELOPMENT</span><span>STORYTELLING</span><span class="about-line"></span></div>
+        <h2 id="about-title"><span class="quote-sign" aria-hidden="true">“</span>The web is more powerful when it <em>feels human.</em></h2>
+        <div class="about-copy"><p>I'm A.J., a creative developer exploring the intersection of thoughtful design, useful products, and immersive technology.</p><a href="#contact">MORE ABOUT ME <b aria-hidden="true">↗</b></a></div>
       </div>
     </section>
 
-    <section class="contact-section" id="contact" aria-labelledby="contact-title"><div class="contact-inner section-wrap" data-reveal><div class="section-eyebrow"><span class="section-index">03 / 03</span><span class="eyebrow-rule"></span> WHAT'S NEXT?</div><div class="contact-content"><span class="contact-kicker">GOT SOMETHING IN MIND?</span><h2 id="contact-title">LET'S MAKE<br>SOMETHING <em>MATTER.</em></h2><a class="contact-action" href="mailto:awabjahmed@gmail.com">LET'S TALK <span aria-hidden="true">↗</span></a></div><div class="contact-footer"><span>GREAT IDEAS START WITH A CONVERSATION.</span><a href="mailto:awabjahmed@gmail.com">AWABJAHMED@GMAIL.COM</a></div></div></section>
+    <section class="contact" id="contact" aria-labelledby="contact-title">
+      <p class="eyebrow">HAVE SOMETHING IN MIND?</p>
+      <div class="contact-inner"><h2 id="contact-title">Let's make something<br><span>remarkable.</span></h2><a href="mailto:awabjahmed@gmail.com" class="contact-cta" aria-label="Email A.J. Ahmed"><span aria-hidden="true">↗</span></a></div>
+      <a class="email-link" href="mailto:awabjahmed@gmail.com">AWABJAHMED@GMAIL.COM</a>
+    </section>
   </main>
-
-  <footer class="footer section-wrap"><div class="footer-top"><a class="footer-logo" href="#top">aj<span>.</span></a><span>BUILT WITH CURIOSITY. DESIGNED WITH INTENTION.</span><a class="to-top" href="#top">BACK TO TOP ↑</a></div><div class="footer-bottom"><span>© <span id="year">2026</span> A.J. AHMED</span><div><a href="https://github.com/AwabJa" target="_blank" rel="noopener noreferrer">GITHUB ↗</a><a href="https://www.linkedin.com/in/awabjahmed/" target="_blank" rel="noopener noreferrer">LINKEDIN ↗</a></div><span>INDEPENDENT CREATIVE DEVELOPER</span></div></footer>
+  <footer class="footer"><span>© <span id="year">2026</span> A.J. AHMED</span><a href="#top">BACK TO TOP ↑</a><div><a href="https://github.com/AwabJa" target="_blank" rel="noopener noreferrer">GITHUB ↗</a><a href="https://www.linkedin.com/in/awabjahmed/" target="_blank" rel="noopener noreferrer">LINKEDIN ↗</a></div></footer>
+  <div class="preview-pill">DESIGN PREVIEW <span aria-hidden="true">·</span> <a href="../index.html">CURRENT HOMEPAGE ↗</a></div>
 </body>
 </html>
