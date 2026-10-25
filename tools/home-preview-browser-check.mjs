@@ -87,7 +87,10 @@ try{
    }));
    assert(altResult.scrollWidth<=altResult.width+2,'Alternate '+width+'px hero does not overflow ('+altResult.scrollWidth+')');
    assert(altResult.images.every(n=>n>0),'Alternate preview images load');
-   assert.equal(await alternative.locator('.hero-display-type').innerText(),'AJ.','Alternate hero has an understated personal monogram');
+   assert.equal(await alternative.locator('.hero-display-type').count(),0,'Alternative hero has no oversized initials');
+   assert.equal(await alternative.locator('.hero-display-line').count(),1,'First decorative rule remains');
+   assert.equal(await alternative.locator('.hero-display-line-secondary').count(),1,'Secondary decorative rule remains');
+   assert.equal(await alternative.locator('.hero-display-line').evaluate(el=>getComputedStyle(el).height),'1px','Fine rule is styled as a line');
    assert.equal(await alternative.locator('.studio-structure').count(),0,'Alternate hero has no architectural slab');
    assert.equal(await alternative.locator('.project').count(),3,'Project cards remain intact in alternate preview');
    assert.equal(await alternative.locator('.project-flow a').getAttribute('href'),'../../Flow/','Alternate Flow link resolves to real project');

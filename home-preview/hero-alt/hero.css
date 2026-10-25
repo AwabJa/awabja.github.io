@@ -1,4 +1,4 @@
-/* Minimal, typography-led hero concept. These overrides are scoped to the comparison page. */
+/* Minimal ruled-line hero concept. Scoped to the alternative preview only. */
 .hero{
   min-height:max(640px,min(790px,100svh));
   background:#090909;
@@ -13,45 +13,40 @@
   overflow:hidden;
   pointer-events:none;
   background:
-    radial-gradient(ellipse 53% 49% at 65% 51%,rgba(85,85,82,.18),rgba(34,34,33,.045) 61%,transparent 100%),
-    linear-gradient(90deg,#090909,#0d0d0d 73%,#090909);
+    radial-gradient(ellipse 58% 48% at 66% 47%,rgba(91,91,88,.14),rgba(33,33,32,.028) 68%,transparent 100%),
+    linear-gradient(90deg,#090909,#0d0d0d 72%,#090909);
 }
 .hero-display::before{
   content:"";
   position:absolute;
-  inset:19% 24% 14% auto;
+  inset:15% 24% 13% auto;
   width:1px;
-  background:linear-gradient(transparent,rgba(218,218,213,.14) 28%,rgba(218,218,213,.11) 78%,transparent);
+  background:linear-gradient(transparent,rgba(218,218,213,.23) 32%,rgba(218,218,213,.15) 75%,transparent);
 }
 .hero-display::after{
   content:"";
   position:absolute;
   left:16%;
   right:11%;
-  bottom:13%;
+  bottom:17%;
   height:1px;
-  background:linear-gradient(90deg,transparent,rgba(230,230,224,.08),transparent);
-}
-.hero-display-type{
-  position:absolute;
-  top:50%;
-  right:clamp(-50px,-1vw,-10px);
-  transform:translateY(-52%);
-  font:300 clamp(200px,25vw,380px)/1 'DM Sans',sans-serif;
-  letter-spacing:-.115em;
-  white-space:nowrap;
-  color:transparent;
-  -webkit-text-stroke:1px rgba(238,238,235,.16);
-  opacity:.88;
-  user-select:none;
+  background:linear-gradient(90deg,transparent,rgba(230,230,224,.19) 25%,rgba(230,230,224,.14) 65%,transparent);
 }
 .hero-display-line{
   position:absolute;
-  width:26%;
+  width:40%;
   height:1px;
-  right:12%;
-  top:26%;
-  background:linear-gradient(90deg,transparent,rgba(213,213,209,.16),transparent);
+  right:11%;
+  top:25%;
+  background:linear-gradient(90deg,transparent,rgba(213,213,209,.22) 34%,rgba(213,213,209,.12),transparent);
+}
+.hero-display-line-secondary{
+  position:absolute;
+  width:1px;
+  height:42%;
+  left:37%;
+  top:32%;
+  background:linear-gradient(transparent,rgba(209,209,204,.12),rgba(209,209,204,.08),transparent);
 }
 .hero-content{
   width:min(100%,1030px);
@@ -73,13 +68,10 @@
 @media(max-width:760px){
   .hero{min-height:770px}
   .hero-display{inset:0 0 0 0}
-  .hero-display-type{
-    top:26%;
-    right:8%;
-    transform:translateY(-50%);
-    font-size:clamp(175px,40vw,260px);
-    opacity:.52;
-  }
+  .hero-display::before{right:21%;top:9%;bottom:26%}
+  .hero-display::after{bottom:29%}
+  .hero-display-line{top:22%;width:48%;right:9%}
+  .hero-display-line-secondary{top:14%;left:28%;height:48%}
   .hero::before{
     background:linear-gradient(0deg,#090909 0%,rgba(9,9,9,.95) 28%,rgba(9,9,9,.55) 57%,rgba(9,9,9,.2) 100%);
   }
@@ -88,7 +80,7 @@
 }
 @media(max-width:500px){
   .hero{min-height:715px}
-  .hero-display-type{top:25%;right:5%;font-size:clamp(155px,47vw,210px)}
+  .hero-display-line{top:24%}
   .hero-content{padding-top:295px;padding-bottom:100px}
   .hero h1{font-size:clamp(38px,9.1vw,49px)}
 }
