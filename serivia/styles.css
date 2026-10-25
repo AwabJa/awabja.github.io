@@ -176,3 +176,88 @@
 .movie-meta svg{display:block;flex:none;width:15px;height:15px;fill:#ffd11b;stroke:#ffd11b}
 .movie-strip.is-live{align-items:stretch;overflow:visible;min-height:max-content}
 .movie-strip.is-live .movie-card{height:100%}
+
+
+/* Original reference composition: one large film card with two exposed,
+   staggered cards behind it. The covers themselves navigate; no arrows. */
+.featured-section{margin-bottom:20px}
+.featured-stack{
+ height:clamp(295px,38vh,390px);
+ margin-right:164px;
+ position:relative;
+}
+.featured{z-index:3;border-radius:20px}
+.peek{
+ display:block;
+ position:absolute;
+ height:auto;
+ background-repeat:no-repeat;
+ background-position:center;
+ background-size:cover;
+ border-radius:18px;
+ box-shadow:10px 12px 24px #02080b66;
+ cursor:pointer;
+ transition:filter .2s,transform .2s,box-shadow .2s;
+}
+.peek-front{
+ z-index:2;
+ top:26px;bottom:28px;
+ width:120px;right:-100px;
+ transform:rotate(1.3deg);
+}
+.peek-back{
+ display:block;
+ z-index:1;
+ top:45px;bottom:46px;
+ width:72px;right:-164px;
+ opacity:.82;
+ transform:rotate(2.5deg);
+}
+.peek-front:hover,.peek-front:focus-visible,
+.peek-back:hover,.peek-back:focus-visible{
+ filter:brightness(1.17) saturate(1.12);
+ transform:translateX(3px) rotate(0);
+}
+.feature-navigation,.genre-arrows{display:none!important}
+.featured-titles>span:first-child{font-size:clamp(14px,1.2vw,18px)}
+.genre-row{margin-bottom:12px}
+.genre-scroll{width:100%;min-width:0;scroll-padding-inline:4px}
+.side-activity{margin-top:37px}
+.side-section-title{margin-bottom:15px}
+.recent-list{gap:10px}
+.mini-movie{height:100px;flex:none;border-radius:17px}
+.movie-card{flex:0 0 clamp(148px,12.2vw,175px);width:clamp(148px,12.2vw,175px)}
+.movie-strip{gap:13px}
+.movie-name{margin-top:9px}
+/* Film cards have enough room for the full title, release year and yellow stars. */
+@media(max-width:1300px){
+ .featured-stack{margin-right:120px}
+ .peek-front{right:-74px;width:90px}
+ .peek-back{right:-120px;width:55px}
+}
+@media(max-width:1000px){
+ .featured-stack{height:clamp(275px,37vh,355px);margin-right:95px}
+ .peek-front{right:-58px;width:72px;top:22px;bottom:25px}
+ .peek-back{right:-95px;width:45px;top:38px;bottom:41px}
+ .mini-movie{height:96px}
+}
+@media(max-width:760px){
+ .featured-stack{height:clamp(258px,54vw,338px);margin-right:65px}
+ .peek-front{right:-43px;width:55px;top:19px;bottom:19px}
+ .peek-back{display:block;right:-65px;width:32px;top:34px;bottom:34px}
+ .movie-card{flex-basis:150px;width:150px}
+}
+@media(max-width:480px){
+ .featured-stack{height:270px;margin-right:55px}
+ .peek-front{right:-38px;width:48px;top:15px;bottom:15px}
+ .peek-back{display:block;right:-55px;width:24px;top:28px;bottom:28px}
+ .movie-card{flex-basis:144px;width:144px}
+ .feature-tags{right:16px}
+}
+@media(max-width:360px){
+ .featured-stack{height:248px;margin-right:51px}
+ .peek-front{right:-35px;width:44px}
+ .peek-back{right:-51px;width:23px}
+ .movie-card{flex-basis:132px;width:132px}
+}
+@media(prefers-reduced-motion:reduce){.peek{transition:none}}

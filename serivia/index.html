@@ -14,8 +14,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=7">
-  <script src="app.js?v=6" defer></script>
+  <link rel="stylesheet" href="styles.css?v=8">
+  <script src="app.js?v=7" defer></script>
 </head>
 <body>
   <svg class="svg-icons" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
@@ -93,10 +93,6 @@
               <button class="peek peek-back" id="peekBack" type="button" aria-label="Show featured movie two slides ahead"></button>
               <button class="peek peek-front" id="peekFront" type="button" aria-label="Show next featured movie"></button>
               <article class="featured" id="featured">
-                <div class="feature-navigation">
-                  <button class="feature-arrow feature-previous" id="featuredPrevious" type="button" aria-label="Previous featured movie"><svg class="chev-back"><use href="#ic-chevron"/></svg></button>
-                  <button class="feature-arrow feature-next" id="featuredNext" type="button" aria-label="Next featured movie"><svg><use href="#ic-chevron"/></svg></button>
-                </div>
                 <img class="feature-art" id="featureArt" src="" alt="" width="1280" height="720" fetchpriority="high">
                 <div class="feature-wash"></div>
                 <div class="feature-tags" id="featureTags"></div>
@@ -111,7 +107,7 @@
           <section class="browse-section" id="browseSection" aria-label="Browse movies">
             <div class="genre-row">
               <div class="genre-scroll" id="genreScroll" role="group" aria-label="Filter by genre"></div>
-              <div class="genre-arrows"><button id="genrePrevious" type="button" aria-label="Scroll genres left"><svg class="chev-back"><use href="#ic-chevron"/></svg></button><button id="genreNext" type="button" aria-label="Scroll genres right"><svg><use href="#ic-chevron"/></svg></button></div>
+
             </div>
             <div class="results-title"><span id="resultsHeading">Featured for you</span><span class="results-meta" id="resultsCount" role="status" aria-live="polite"></span></div>
             <div class="movie-strip" id="movieStrip" aria-label="Movie posters"></div>

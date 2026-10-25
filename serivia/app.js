@@ -430,9 +430,7 @@ function switchView(view){
 }
 function initialize(){
  drawDots();feature();renderRecent();
- // Buttons, exposed movie covers, horizontal trackpads, touch swipes and mouse dragging.
- $('featuredPrevious').addEventListener('click',()=>showSlide(state.slide-1));
- $('featuredNext').addEventListener('click',()=>showSlide(state.slide+1));
+ // The exposed fanned covers, dots, keyboard and swipe gestures navigate featured films.
  $('peekFront').addEventListener('click',()=>showSlide(state.slide+1));
  $('peekBack').addEventListener('click',()=>showSlide(state.slide+2));
  let gesture=null,touchGesture=null,lastSwipeAt=-Infinity;
@@ -514,8 +512,6 @@ function initialize(){
  $('resetFilters').addEventListener('click',reset);
  $('loadMore').addEventListener('click',()=>loadLive(true));
  $('emptyReset').addEventListener('click',reset);
- $('genrePrevious').addEventListener('click',()=>$('genreScroll').scrollBy({left:-220,behavior:'smooth'}));
- $('genreNext').addEventListener('click',()=>$('genreScroll').scrollBy({left:220,behavior:'smooth'}));
  $('favoriteFeature').addEventListener('click',()=>toggleFavorite(getFeature().id));
 
  $('detailFavorite').addEventListener('click',()=>{if(state.activeMovie!==null)toggleFavorite(state.activeMovie)});

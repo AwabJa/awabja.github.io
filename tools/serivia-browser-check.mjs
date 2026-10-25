@@ -25,7 +25,7 @@ for(const path of binaries){try{await access(path);executablePath=path;break}cat
 const browser=await chromium.launch(executablePath?{executablePath,headless:true,args:['--no-sandbox']}:{channel:'chrome',headless:true,args:['--no-sandbox']});
 try{
  const budgets=await Promise.all(['serivia/index.html','serivia/styles.css','serivia/app.js'].map(file=>stat(resolve(root,file)).then(result=>result.size)));
- assert(budgets[0]<20000&&budgets[1]<38000&&budgets[2]<42000,'Static app files remain compact');
+ assert(budgets[0]<20000&&budgets[1]<42000&&budgets[2]<42000,'Static app files remain compact');
  const results=[];
  for(const width of [320,390,768,1440]){
   const context=await browser.newContext({viewport:{width,height:width<500?812:1000},isMobile:width<500,hasTouch:width<500});
@@ -74,21 +74,29 @@ try{
   await assertLabels('Demo '+width+'px');
 
   assert.equal(await page.locator('#slideDots button').count(),4,'Featured carousel has four slides');
-  assert.equal(await page.locator('#featuredNext').isVisible(),true,'Featured next arrow is visible');
-  await page.locator('#featuredNext').click();
-  assert.equal(await page.locator('#featuredTitle').innerText(),'Dune: Part Two','Arrow navigates to next featured movie');
-  assert.equal(await page.locator('#slideDots button[aria-pressed="true"]').count(),1,'Current dot stays synced');
-  await page.locator('#featuredPrevious').click();
-  assert.equal(await page.locator('#featuredTitle').innerText(),'How to Train Your Dragon','Previous arrow navigates backwards');
+  assert.equal(await page.locator('.feature-navigation,.genre-arrows').count(),0,'No useless arrow buttons appear anywhere');
+  const fan=await page.evaluate(()=>{
+   const get=id=>document.querySelector(id).getBoundingClientRect();
+   const hero=get('#featured'),front=get('#peekFront'),back=get('#peekBack');
+   const main=get('.main-area');
+   return {hero:hero.toJSON(),front:front.toJSON(),back:back.toJSON(),main:main.toJSON(),
+     frontVisible:getComputedStyle(document.querySelector('#peekFront')).display!=='none',
+     backVisible:getComputedStyle(document.querySelector('#peekBack')).display!=='none'};
+  });
+  assert(fan.frontVisible&&fan.backVisible,'Both fanned preview covers are visible at '+width+'px');
+  assert(fan.hero.right<fan.front.right&&fan.front.right<fan.back.right,'Preview covers are progressively fanned out at '+width+'px');
+  assert(fan.back.right<=fan.main.right+3,'Fanned covers fit inside the main content at '+width+'px');
+  assert(fan.hero.width>fan.front.width*2.5,'Main hero is much larger than the stacked covers');
   await page.locator('#peekFront').click();
-  assert.equal(await page.locator('#featuredTitle').innerText(),'Dune: Part Two','Exposed next card is clickable');
-  if(width>760){
+  assert.equal(await page.locator('#featuredTitle').innerText(),'Dune: Part Two','Clicking first fanned card changes the hero movie');
+  assert.equal(await page.locator('#slideDots button[aria-pressed="true"]').count(),1,'Current dot stays synced');
+  if(width>=768){
    await page.locator('#peekBack').click();
-   assert.equal(await page.locator('#featuredTitle').innerText(),'Moana 2','Farther exposed card opens its featured slide');
+   assert.equal(await page.locator('#featuredTitle').innerText(),'Moana 2','Clicking back fanned card changes to the movie behind');
   }
   await page.locator('#slideDots button').first().click();
-  assert.equal(await page.locator('#featuredTitle').innerText(),'How to Train Your Dragon','Dots select a particular movie');
-  await page.locator('#featuredNext').focus();
+  assert.equal(await page.locator('#featuredTitle').innerText(),'How to Train Your Dragon','Dots select featured movie');
+  await page.locator('#peekFront').focus();
   await page.keyboard.press('ArrowRight');
   assert.equal(await page.locator('#featuredTitle').innerText(),'Dune: Part Two','Keyboard arrow changes featured movie');
   await page.locator('#slideDots button').first().click();
