@@ -16,11 +16,13 @@
       document.body.classList.add('menu-open');
       toggle.setAttribute('aria-expanded','true');toggle.setAttribute('aria-label','Close menu');
       // Wait until the once-hidden drawer is rendered before focusing its first link.
-      requestAnimationFrame(()=>{
+      // The drawer starts visibility:hidden; two frames let CSS reveal it
+      // before focus is moved into the menu (including on Chromium).
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
         if(toggle.getAttribute('aria-expanded')==='true'){
           panel.querySelector('a')?.focus({preventScroll:true});
         }
-      });
+      }));
     });
     panel.querySelectorAll('a').forEach(link=>link.addEventListener('click',close));
     document.addEventListener('keydown',event=>{
