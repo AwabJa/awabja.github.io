@@ -14,8 +14,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=19">
-  <script src="app.js?v=12" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20">
+  <script src="app.js?v=13" defer></script>
 </head>
 <body>
   <svg class="svg-icons" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
@@ -107,7 +107,10 @@
           <section class="browse-section" id="browseSection" aria-label="Browse movies">
             <div class="genre-row">
               <div class="genre-scroll" id="genreScroll" role="group" aria-label="Filter by genre"></div>
-
+              <div class="genre-pagers" aria-label="More genres">
+                <button type="button" id="genreBack" class="genre-prev" aria-label="Scroll genres left"><svg><use href="#ic-chevron"/></svg></button>
+                <button type="button" id="genreForward" aria-label="Scroll genres right"><svg><use href="#ic-chevron"/></svg></button>
+              </div>
             </div>
             <div class="results-title"><span id="resultsHeading">Featured for you</span><span class="results-meta" id="resultsCount" role="status" aria-live="polite"></span></div>
             <div class="movie-strip" id="movieStrip" aria-label="Movie posters"></div>
