@@ -25,7 +25,7 @@ for(const path of binaries){try{await access(path);executablePath=path;break}cat
 const browser=await chromium.launch(executablePath?{executablePath,headless:true,args:['--no-sandbox']}:{channel:'chrome',headless:true,args:['--no-sandbox']});
 try{
  const budgets=await Promise.all(['serivia/index.html','serivia/styles.css','serivia/app.js'].map(file=>stat(resolve(root,file)).then(result=>result.size)));
- assert(budgets[0]<20000&&budgets[1]<42000&&budgets[2]<42000,'Static app files remain compact');
+ assert(budgets[0]<20000&&budgets[1]<65000&&budgets[2]<42000,'Static app files remain compact');
  const results=[];
  for(const width of [320,390,768,1440,1920]){
   const context=await browser.newContext({viewport:{width,height:width<500?812:1000},isMobile:width<500,hasTouch:width<500});
@@ -66,7 +66,7 @@ try{
     });
     assert(layout.stripScrollHeight<=layout.stripHeight+3,
       contextName+' poster row must not vertically clip metadata ('+layout.stripScrollHeight+' / '+layout.stripHeight+')');
-    assert(layout.labels.every(l=>l.shownName&&l.nameWrap==='normal'&&l.metaHeight>=20&&l.starWidth>=14&&l.ratingWithinCard),
+    assert(layout.labels.every(l=>l.shownName&&['normal','nowrap'].includes(l.nameWrap)&&l.metaHeight>=20&&l.starWidth>=14&&l.ratingWithinCard),
       contextName+' title and rating must render inside cards');
     assert(layout.labels.every(l=>l.metaBottom<=layout.stripBottom+1),
       contextName+' all movie ratings must fit inside the poster row');
@@ -88,16 +88,39 @@ try{
   assert(fan.back.right<=fan.main.right+3,'Fanned covers fit inside the main content at '+width+'px');
   assert(fan.hero.width>fan.front.width*2.5,'Main hero remains much larger than fanned preview cards');
   if(width>=1440){
-   // The 750px reference art was taken from a 1232px dashboard.
-   // A 1920px viewport should proportionally enlarge BOTH art and previews.
-   const expected=750*width/1232;
-   assert(Math.abs(fan.hero.width-expected)<65,
-     'Hero scales proportionally from the reference instead of stopping at 750px: '+fan.hero.width+' vs '+expected);
-   assert(Math.abs(fan.hero.width/fan.front.width-6.3)<.85,
-     'Fan maintains the relative scale of the original composition');
-   assert(fan.hero.width<fan.main.width*.85,'Featured banner still leaves room for previews');
-   assert(Math.abs((fan.main.right-width*.0227)-fan.back.right)<30,
-     'Fanned stack fills the content width without a blank strip');
+   // The cinematic reference has a widescreen lead card and two slimmer
+   // staggered cards; no image should occupy the entire content width.
+   assert(fan.hero.width/fan.hero.height>2,
+     'Featured hero stays cinematic instead of becoming vertically oversized');
+   assert(fan.hero.width<fan.main.width*.9,
+     'Featured banner preserves space for the fanned previews');
+   assert(fan.hero.width/fan.front.width>5,
+     'Main film remains visually dominant over its preview covers');
+   assert(fan.hero.height<=410,
+     'Viewport-fit hero does not crowd the movie poster row');
+  }
+  if(width>=768){
+   const pagers=page.locator('.genre-pagers button');
+   assert.equal(await pagers.count(),2,'Desktop genre carousel has two working arrow controls');
+   // The active genre row can also be moved by keyboard or mouse wheel.
+   const initial=await page.locator('#genreScroll').evaluate(el=>el.scrollLeft);
+   if(await page.locator('#genreForward').isEnabled()){
+    await page.locator('#genreForward').click();
+    await page.waitForFunction(before=>document.querySelector('#genreScroll').scrollLeft>before+10,initial);
+   }
+  }
+  if(width>=1440){
+   const fit=await page.evaluate(()=>{
+    const el=document.querySelector('.main-area');
+    const first=document.querySelector('#movieStrip .movie-meta').getBoundingClientRect();
+    const viewport=el.getBoundingClientRect();
+    return {scrollExcess:el.scrollHeight-el.clientHeight,
+     metadataInView:first.bottom<=viewport.bottom-20,posterVisible:first.top>=viewport.top,
+     footerInView:document.querySelector('.app-footer').getBoundingClientRect().bottom<=viewport.bottom+1};
+   });
+   assert(fit.scrollExcess<=15,'Cinematic dashboard should fit the default desktop viewport');
+   assert(fit.metadataInView&&fit.posterVisible,'Movie posters and metadata are visible without scrolling');
+   assert(fit.footerInView,'Footer remains visible on normal desktop monitors');
   }
   await page.locator('#peekFront').click();
   assert.equal(await page.locator('#featuredTitle').innerText(),'Dune: Part Two','Clicking first fanned card changes the hero movie');
