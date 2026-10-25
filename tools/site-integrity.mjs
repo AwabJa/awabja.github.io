@@ -376,9 +376,42 @@ check(enzoEnemies.includes('enemy.traverse(child =>'),
 const solar = readFileSync(join(root, '3D Navigation Bar/js/universe.js'), 'utf8');
 check(solar.includes("generateSpaceTexture('Moon'"),
   'Moon should use generated texture, not the deleted photograph');
-const hero = readFileSync(join(root, 'water-hero.js'), 'utf8');
-check(hero.includes('gl.UNPACK_FLIP_Y_WEBGL,false'), 'Water hero must keep the artwork upright');
-check(hero.includes('prefers-reduced-motion: reduce'), 'Water hero needs reduced-motion fallback');
+// Assert the published homepage uses independent assets, not legacy site experiments.
+const homeHtml=readFileSync(join(root,'index.html'),'utf8');
+const homeCss=readFileSync(join(root,'homepage.css'),'utf8');
+const heroCss=readFileSync(join(root,'hero-lines.css'),'utf8');
+const homeJs=readFileSync(join(root,'homepage.js'),'utf8');
+check(homeHtml.includes('href="homepage.css?v=1"') &&
+      homeHtml.includes('href="hero-lines.css?v=1"') &&
+      homeHtml.includes('src="homepage.js?v=1"'),
+  'Homepage must load production styles and script');
+check(homeHtml.includes('href="Flow/"') &&
+      homeHtml.includes('href="3D%20Navigation%20Bar/"') &&
+      homeHtml.includes('href="Enzo/"'),
+  'Homepage must retain live project links');
+check(homeHtml.includes('assets/homepage/flow-product.svg') &&
+      homeHtml.includes('assets/homepage/solar-interface.svg'),
+  'Homepage must retain its production artwork');
+check(!homeHtml.includes('noindex') && !homeHtml.includes('preview-pill'),
+  'Published homepage must be indexable without preview chrome');
+check(homeCss.includes('.menu-panel') &&
+      homeCss.includes('.projects-grid') &&
+      homeCss.includes('prefers-reduced-motion:reduce'),
+  'Homepage must retain mobile nav, project layout and low-motion support');
+check(heroCss.includes('.hero-display-line-secondary') &&
+      !heroCss.includes('.hero-display-type'),
+  'Homepage must preserve approved line-only hero design');
+check(homeJs.includes("toggle.addEventListener('click'") &&
+      homeJs.includes("event.key==='Escape'"),
+  'Homepage menu must support clicks and Escape');
+for(const path of [
+ 'design-upgrade.css','project-showcase.css','script.js','styles.css',
+ 'visual-details.js','water-hero.css','water-hero.js','home-preview',
+ 'assets/flow-card.svg','assets/solar-card.svg','assets/enzo-card.svg',
+ 'assets/water-aj.webp'
+]){
+ check(!existsSync(join(root,path)),'Removed legacy homepage content must not return: '+path);
+}
 
 if (problems.length) {
   console.error('SITE AUDIT FAILED (' + problems.length + ' problems):');

@@ -1,33 +1,31 @@
-name: Homepage production and preview checks
+name: Homepage browser checks
 
 on:
   push:
     paths:
-      - 'home-preview/**'
       - 'index.html'
       - 'homepage.css'
       - 'hero-lines.css'
       - 'homepage.js'
       - 'assets/homepage/**'
-      - 'tools/home-preview-browser-check.mjs'
-      - '.github/workflows/home-preview-checks.yml'
+      - 'tools/homepage-browser-check.mjs'
+      - '.github/workflows/homepage-checks.yml'
   pull_request:
     paths:
-      - 'home-preview/**'
       - 'index.html'
       - 'homepage.css'
       - 'hero-lines.css'
       - 'homepage.js'
       - 'assets/homepage/**'
-      - 'tools/home-preview-browser-check.mjs'
-      - '.github/workflows/home-preview-checks.yml'
+      - 'tools/homepage-browser-check.mjs'
+      - '.github/workflows/homepage-checks.yml'
 
 permissions:
   contents: read
 
 jobs:
   browser:
-    name: Responsive live and preview QA
+    name: Responsive production QA
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -36,7 +34,7 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --no-save --package-lock=false playwright-core@1.56.1
-      - name: Test production and previews at 4 widths with reduced motion
+      - name: Test published homepage at 4 widths and reduced motion
         run: |
           if command -v google-chrome >/dev/null 2>&1; then
             export CHROME_BIN="$(command -v google-chrome)"
@@ -46,4 +44,4 @@ jobs:
             echo "Chrome/Chromium required" >&2
             exit 1
           fi
-          node tools/home-preview-browser-check.mjs
+          node tools/homepage-browser-check.mjs

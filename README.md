@@ -1,43 +1,39 @@
-# A.J. Ahmed — Creative Development
+# A.J. Ahmed — Portfolio
 
-**Design-minded. Code-driven. Always curious.**
+Personal portfolio showcasing web development, user interfaces and interactive projects.
 
-This is my personal portfolio and creative-development playground. I explore the space between design and code—building responsive interfaces, interactive 3D scenes, and browser-based game experiments.
+**Website:** https://awabja.github.io/
 
-**[Visit the portfolio →](https://awabja.github.io/)**
+## Featured projects
 
-## Selected work
+- **[Flow](https://awabja.github.io/Flow/)** — Productivity workspace for projects, tasks and weekly planning.
+- **[Solar System Explorer](https://awabja.github.io/3D%20Navigation%20Bar/)** — Interactive 3D exploration of the Sun, planets and Moon.
+- **[Enzo](https://awabja.github.io/Enzo/)** — Browser-based first-person game prototype.
 
-### [Solar System Explorer](https://awabja.github.io/3D%20Navigation%20Bar/index.html)
+Each project has its own directory. The homepage links to the existing project URLs.
 
-A 3D experience built with **Three.js, WebGL, and JavaScript**. Travel between the Sun, all eight planets, and Earth's Moon, learn about each body, and take control of a cinematic camera. The textures are procedurally generated, and the experience includes playback controls, adjustable orbital speed, and links to NASA Science.
+## Site structure
 
-*Designed for exploration: planetary sizes, distances, and orbital speeds are illustrative, not physically to scale.*
+| File or directory | Purpose |
+| --- | --- |
+| `index.html` | Published homepage |
+| `homepage.css` | Black-theme layout and general styles |
+| `hero-lines.css` | Minimal line-only hero |
+| `homepage.js` | Navigation, scroll progress, and animation |
+| `assets/homepage/` | Homepage-specific project artwork |
+| `favicon.svg` | Shared favicon |
+| `Flow/`, `Enzo/`, `3D Navigation Bar/` | Independent projects |
+| `tools/homepage-browser-check.mjs` | Production responsive and navigation QA |
+| `tools/site-integrity.mjs` | Static site and project regression audit |
 
-[Explore the source](https://github.com/AwabJa/awabja.github.io/tree/main/3D%20Navigation%20Bar)
+## Maintaining the site
 
-### [Enzo FPS](https://awabja.github.io/Enzo/index.html)
+GitHub Pages publishes the static site from `main`. The homepage is plain HTML, CSS and JavaScript with no build framework.
 
-An in-progress **arcane sci-fi survival FPS** built with JavaScript and Three.js. Explore the Shattered Reach, a storm-lit arena of shattered obelisks, glowing runes, and a towering portal. Channel energy bolts from a rigged anatomical right-hand model (CC0) with finger-driven casting, aim for weak points, and survive waves of Scouts, Sentinels, Brutes, and Support drones. The sky progresses through twilight, aurora, and eclipse atmospheres as the waves advance.
+The homepage browser test uses `playwright-core` and requires Chrome or Chromium. GitHub Actions runs it on relevant changes.
 
-**Controls:** W/A/S/D to move · Mouse to look · Left-click to cast · Space to jump · Shift to sprint · C to crouch · Esc to pause.
+## Links
 
-*Best played on desktop with a keyboard and mouse. This is a prototype in active development.*
+[GitHub](https://github.com/AwabJa) · [LinkedIn](https://www.linkedin.com/in/awabjahmed/)
 
-[Explore the source](https://github.com/AwabJa/awabja.github.io/tree/main/Enzo)
-
-## About this website
-
-The portfolio is a responsive, hand-built site using **HTML, CSS, and JavaScript**. It uses a deliberately minimal visual system: considered typography, purposeful motion, lightweight CSS illustrations, accessible navigation, and layouts built for small and large screens.
-
-It's a living portfolio. I update the projects and refine the experience as I learn.
-
-## Say hello
-
-For ideas, projects, or conversations, reach me at **[awabjahmed@gmail.com](mailto:awabjahmed@gmail.com)**.
-
-You can also find me on [GitHub](https://github.com/AwabJa), [LinkedIn](https://www.linkedin.com/in/awabjahmed/), or [Codecademy](https://www.codecademy.com/profiles/BB99a).
-
----
-
-**© A.J. Ahmed. All rights reserved.**
+*The portfolio and its featured projects will continue to evolve.*
