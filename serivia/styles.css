@@ -506,7 +506,7 @@
 @media (min-width:761px){
   :root{
     --screen-pad:clamp(16px,1.55vw,26px);
-    --banner-h:clamp(265px,min(43dvh,24vw),398px);
+    --banner-h:clamp(265px,min(44dvh,24.3vw),405px);
     --poster-gap:clamp(10px,1vw,18px);
   }
   body{
@@ -521,7 +521,7 @@
     padding:clamp(12px,4.8dvh,46px) clamp(12px,2.22vw,40px) clamp(12px,3.6dvh,35px);
   }
   .app-shell{
-    grid-template-columns:clamp(230px,19.9%,320px) minmax(0,1fr);
+    grid-template-columns:clamp(234px,20.3%,326px) minmax(0,1fr);
     width:100%;
     max-width:none;
     height:100%;
@@ -555,7 +555,7 @@
   }
   .sidebar .side-nav-secondary{
     position:relative;
-    margin-top:clamp(16px,2.8dvh,30px);
+    margin-top:clamp(12px,2dvh,23px);
     padding-top:clamp(12px,2dvh,20px);
   }
   .sidebar .side-nav-secondary::before{
@@ -570,7 +570,7 @@
   .sidebar .side-link{
     display:flex;
     min-width:0;
-    min-height:clamp(35px,4.25dvh,44px);
+    min-height:clamp(38px,5dvh,47px);
     font-size:clamp(12px,.91vw,15px);
     gap:14px;
     padding:6px 11px 6px 13px;
@@ -602,7 +602,7 @@
     gap:0;
     flex:1 1 0%;
     min-height:0;
-    margin-top:clamp(14px,2.4dvh,25px);
+    margin-top:clamp(10px,1.3dvh,15px);
     padding-top:clamp(12px,1.8dvh,20px);
     padding-right:9px;
     padding-bottom:4px;
@@ -664,7 +664,7 @@
     min-width:0;
     min-height:0;
     height:100%;
-    padding:clamp(12px,1.6dvh,17px) var(--screen-pad) 12px 0;
+    padding:clamp(14px,1.85dvh,19px) var(--screen-pad) 12px 0;
     overflow-y:auto;
     overflow-x:clip;
     overscroll-behavior-y:contain;
@@ -767,7 +767,7 @@
   }
   #main .genre-scroll button{
     min-height:clamp(39px,5.3dvh,49px);
-    padding:0 clamp(14px,1.35vw,23px);
+    padding:0 clamp(20px,2.05vw,35px);
     border-radius:50px;
     font-size:clamp(11px,.9vw,14px);
     background:#26343a;
@@ -941,7 +941,7 @@
   .main-area .app-footer{opacity:.75}
   .sidebar .recent-list{gap:12px}
   .sidebar .mini-movie{height:clamp(78px,11.25dvh,108px)}
-  .sidebar .side-activity{margin-top:clamp(11px,2dvh,19px)}
+  .sidebar .side-activity{margin-top:clamp(9px,1.35dvh,14px)}
 }
 /* Smaller tablets use the native mobile drawer before the dense desktop
    toolbar becomes too narrow for accessible controls. */
@@ -956,4 +956,14 @@
 @media(max-width:760px){
   #main .poster-wrap{aspect-ratio:2/3}
   #main .poster-wrap>img{object-fit:contain}
+}
+
+/* Reference 1672x941 finishing touches — preserve click targets and scroll. */
+@media(min-width:1200px){
+  .sidebar .portfolio-link{display:none}
+}
+@media(min-width:761px) and (max-height:780px){
+  .sidebar .side-link{min-height:34px}
+  .sidebar .side-nav-secondary{margin-top:10px}
+  .sidebar .side-activity{margin-top:8px}
 }
