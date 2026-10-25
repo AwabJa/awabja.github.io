@@ -39,6 +39,32 @@ try{
    }));
    assert(prodData.scrollWidth<=prodData.width+2,'Published homepage fits '+width+'px ('+prodData.scrollWidth+')');
    assert(prodData.images.every(n=>n>0),'Production project images load');
+   const projectLayout=await production.evaluate(()=>({
+     columns:getComputedStyle(document.querySelector('.projects-grid')).gridTemplateColumns.trim().split(/\s+/).length,
+     cards:[...document.querySelectorAll('.project')].map(card=>{
+       const image=card.querySelector('img');
+       const info=card.querySelector('.project-info');
+       const frame=card.getBoundingClientRect();
+       const infoFrame=info.getBoundingClientRect();
+       const imageStyle=getComputedStyle(image);
+       return {
+         fit:imageStyle.objectFit,
+         position:imageStyle.objectPosition,
+         infoInside:infoFrame.left>=frame.left-1&&infoFrame.right<=frame.right+1&&
+           infoFrame.top>=frame.top-1&&infoFrame.bottom<=frame.bottom+1
+       };
+     })
+   }));
+   assert(projectLayout.cards.every(x=>x.infoInside),'All project labels fit inside their cards');
+   if(width<=390){
+     assert.equal(projectLayout.columns,1,'Mobile project cards stack in one column');
+     assert(projectLayout.cards.every(x=>x.fit==='contain'&&x.position==='50% 0%'),
+       'All mobile artwork fits inside its frame without cropping');
+   }else if(width===768){
+     assert.equal(projectLayout.columns,1,'Tablet project cards stack instead of squeezing the featured image');
+   }else{
+     assert.equal(projectLayout.columns,2,'Desktop project grid layout stays unchanged');
+   }
    assert.equal(await production.locator('.hero-display-line').count(),1,'Published line-art hero is active');
    assert.equal(await production.locator('.hero-display-line-secondary').count(),1,'Published second rule is active');
    assert.equal(await production.locator('.hero-display-type,.studio-structure').count(),0,'Published hero has no oversized monogram or slab');
