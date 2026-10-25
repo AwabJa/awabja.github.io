@@ -92,7 +92,7 @@
    being enlarged into a heavily cropped blurry background. */
 .portrait-art>img{object-fit:contain;object-position:center;background:#1b272d}
 .featured.portrait-art,.detail-media.portrait-art{background:radial-gradient(ellipse at 52% 34%,#3f4140,#18242a 75%)}
-.image-failed{background:linear-gradient(140deg,#33434b 0%,#233138 52%,#111c20 100%)!important;position:relative}
+.image-failed{background:linear-gradient(140deg,#33434b 0%,#233138 52%,#111c20 100%)!important}
 .poster-wrap.image-failed:after,.mini-movie.image-failed:before,.detail-media.image-failed:after,.featured.image-failed:before{
  content:attr(data-art-title);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
  text-align:center;padding:14px;color:#dbe2e4;font-size:clamp(13px,1.5vw,19px);line-height:1.4;font-weight:750;
@@ -101,3 +101,6 @@
 .featured.image-failed:before{justify-content:flex-start;padding:20px 20px 70px}
 .mini-movie.image-failed:before{font-size:13px;justify-content:center;padding:9px}
 .detail-media.image-failed:after{font-size:23px}
+
+/* Fallback titles remain decorative and must not swallow movie clicks. */
+.image-failed::before,.image-failed::after{pointer-events:none}
