@@ -284,7 +284,7 @@ try{
  await livePage.goto(origin+'/serivia/',{waitUntil:'domcontentloaded'});
  assert.equal(await livePage.locator('#catalogMode').innerText(),'Demo collection · 12 films','Without token, sample collection is explicit');
  assert.equal(await livePage.locator('.brand').getAttribute('href'),'#main','Brand points at a real local section');
- await livePage.locator('#connectTmdb').click();
+ await livePage.locator('#settingsBtn').click();
  await livePage.locator('#tmdbAccessToken').fill('fake_test_read_access_token');
  await livePage.locator('.tmdb-connect-form button[type=submit]').click();
  await livePage.waitForFunction(()=>document.querySelector('#catalogMode').textContent.includes('Live movie catalog'));
@@ -330,7 +330,7 @@ try{
  assert.equal(await livePage.locator('.movie-card').count(),1,'Saved live titles persist');
  assert.equal(await livePage.evaluate(()=>localStorage.getItem('serivia.tmdb.session.v1')),null,'Token is not in persistent localStorage');
  assert.equal(await livePage.evaluate(()=>sessionStorage.getItem('serivia.tmdb.session.v1')),'fake_test_read_access_token','Token remains session-only');
- await livePage.locator('#connectTmdb').click();
+ await livePage.locator('#settingsBtn').click();
  await livePage.locator('.tmdb-disconnect').first().click();
  assert.equal(await livePage.locator('#catalogMode').innerText(),'Demo collection · 12 films','Disconnect restores demo');
  assert.equal(await livePage.evaluate(()=>sessionStorage.getItem('serivia.tmdb.session.v1')),null,'Disconnect removes token');
