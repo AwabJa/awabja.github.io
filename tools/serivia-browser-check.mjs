@@ -249,6 +249,11 @@ try{
   await page.locator('.movie-card').first().click();
   assert.equal(await page.locator('#detailDialog').evaluate(el=>el.open),true,'Movie details dialog opens');
   assert.equal(await page.locator('#detailTitle').innerText(),'Lilo & Stitch');
+  assert.equal(await page.locator('#detailPoster').evaluate(el=>el.parentElement.classList.contains('portrait-art')),true,
+    'Poster-only detail display preserves portrait image aspect');
+  const fallback=await page.locator('#detailPoster').evaluate(el=>el.parentElement.style.getPropertyValue('--art-fallback'));
+  assert(fallback.includes('/w500/j9yv60GA4T2b7ts5BZEWju9UEeP.jpg'),
+    'Portrait fallback uses matching blurred movie-poster background');
   assert((await page.locator('#detailTrailer').getAttribute('href')).includes('themoviedb.org/movie/552524/videos'));
   await page.locator('#detailFavorite').click();
   assert.equal(await page.locator('#detailFavorite').innerText(),'Saved to watchlist');
@@ -310,10 +315,18 @@ try{
   {id:900002,title:'Another Film',release_date:'2025-05-03',vote_average:7.4,
    genre_ids:[18],poster_path:'/fictional-two.jpg',backdrop_path:null,overview:'Another film in the live catalog.'}
  ];
- await livePage.route('https://image.tmdb.org/**',route=>route.abort());
+ const mockStill=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO0pD4sAAAAASUVORK5CYII=','base64');
+ await livePage.route('https://image.tmdb.org/**',route=>{
+  if(route.request().url().includes('fictional-enriched.jpg')){
+   route.fulfill({status:200,contentType:'image/png',body:mockStill});
+  }else route.abort();
+ });
  await livePage.route('https://api.themoviedb.org/3/**',route=>{
   const req=route.request(),url=new URL(req.url());
   requests.push({path:url.pathname,search:url.searchParams.toString(),auth:req.headers().authorization});
+  if(url.pathname.endsWith('/movie/900002')){
+   return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({id:900002,backdrop_path:'/fictional-enriched.jpg'})});
+  }
   const page=Number(url.searchParams.get('page')||1);
   const item=url.pathname.endsWith('/search/movie')?[films[0]]:page===1?[films[0],films[1]]:[
    {id:900003,title:'Third Discovery',release_date:'2026-08-01',vote_average:9.1,genre_ids:[12],poster_path:'/third.jpg',backdrop_path:null,overview:'More movie results.'}
@@ -330,6 +343,15 @@ try{
  await livePage.waitForFunction(()=>document.querySelector('#movieStrip .movie-card')?.textContent.includes('A Brand New Movie'));
  assert.equal(await livePage.locator('.movie-card').count(),2,'Connected live catalog shows remote results');
  assert.equal(await livePage.locator('.movie-strip').evaluate(el=>getComputedStyle(el).display),'grid','Live results use a multi-row grid');
+ // Opening a live result upgrades missing art from its TMDB movie details.
+ await livePage.locator('.movie-card').nth(1).click();
+ await livePage.waitForFunction(()=>document.querySelector('#detailPoster')?.getAttribute('src')?.includes('fictional-enriched.jpg'));
+ assert(requests.some(r=>r.path.endsWith('/movie/900002')),'Details fetch missing real widescreen backdrop');
+ assert.equal(await livePage.locator('#detailPoster').evaluate(el=>el.parentElement.classList.contains('portrait-art')),false,
+  'Details upgrade from vertical poster to real landscape backdrop');
+ assert.equal(await livePage.locator('#recentList .mini-movie').first().evaluate(el=>el.classList.contains('portrait-art')),false,
+  'Recently explored upgrades to the same real backdrop');
+ await livePage.keyboard.press('Escape');
  const liveLayout=await livePage.evaluate(()=>{
   const grid=document.querySelector('#movieStrip');
   const first=grid.querySelector('.movie-card');
