@@ -6,15 +6,15 @@
   <meta name="theme-color" content="#0c1518">
   <meta name="description" content="Serivia is a cinematic movie discovery prototype. Search curated films, browse genres, explore movie details and build a watchlist.">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://image.tmdb.org https://www.themoviedb.org; connect-src 'self'; upgrade-insecure-requests;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://image.tmdb.org https://www.themoviedb.org; connect-src 'self' https://api.themoviedb.org; upgrade-insecure-requests;">
   <title>Serivia — Discover great movies</title>
   <link rel="icon" type="image/svg+xml" href="../favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=5">
-  <script src="app.js?v=4" defer></script>
+  <link rel="stylesheet" href="styles.css?v=6">
+  <script src="app.js?v=5" defer></script>
 </head>
 <body>
   <svg class="svg-icons" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
@@ -85,6 +85,7 @@
         </header>
         <main id="main" tabindex="-1">
           <div class="page-heading" id="pageHeading"><h1 id="pageTitle">Discover movies</h1><span id="pageSubtitle">A little something for your next movie night.</span></div>
+          <div class="catalog-notice" id="catalogNotice"><div class="catalog-notice-text"><strong id="catalogMode">Demo collection · 12 films</strong><span id="catalogHelp">Connect TMDB to search and browse its full movie database.</span></div><button id="connectTmdb" type="button">Connect TMDB</button></div>
           <section class="featured-section" id="featuredSection" aria-label="Featured movies">
             <div class="slide-dots" id="slideDots" aria-label="Choose featured movie"></div>
             <div class="featured-stack" id="featuredStack" aria-label="Featured movie carousel">
@@ -113,10 +114,11 @@
             </div>
             <div class="results-title"><span id="resultsHeading">Featured for you</span><span class="results-meta" id="resultsCount" role="status" aria-live="polite"></span></div>
             <div class="movie-strip" id="movieStrip" aria-label="Movie posters"></div>
+            <div class="pagination" id="pagination" hidden><button id="loadMore" type="button">Load more movies <svg><use href="#ic-chevron"/></svg></button><span id="pageStatus" aria-live="polite"></span></div>
             <div class="empty-state" id="emptyState" hidden><svg><use href="#ic-search"/></svg><h2>No movies found</h2><p>Try another title or clear your filters.</p><button id="emptyReset" type="button">Show all movies</button></div>
           </section>
         </main>
-        <footer class="app-footer"><span>CURATED MOVIE DISCOVERY · NOT A STREAMING SERVICE</span><button type="button" id="creditsBtn">Movie data &amp; image credits</button></footer>
+        <footer class="app-footer"><span>MOVIE DISCOVERY · NOT A STREAMING SERVICE</span><button type="button" id="creditsBtn">Movie data &amp; image credits</button></footer>
       </div>
     </div>
   </div>

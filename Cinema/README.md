@@ -14,16 +14,16 @@ A standalone, responsive, no-build movie discovery prototype inspired by the sup
 - Responsive mobile drawer and horizontal swipeable poster strip
 - Keyboard focus and accessible dialogs, reduced-motion styling
 
-## Data and artwork
+## Movie data and artwork
 
-The app currently ships with a **small curated demonstration catalog**. It is **not** connected to a live movie API, so ratings and trending labels are illustrative snapshot values, not live ratings or Rotten Tomatoes scores. This is not a streaming service and does not invent playback progress.
+Without API connection the app displays **12 curated demo films** as a fallback. For a much larger, actively updated catalog, visitors can choose **Connect TMDB** and enter their own TMDB **API Read Access Token**. With an active connection, the app searches TMDB, browses popular/trending/upcoming films, supports genres, filters and pagination, and loads current film metadata and posters. It does not promise literally every film ever made: coverage depends on TMDB's database.
 
-Poster and backdrop filenames are drawn from published TMDB data and displayed via TMDB's HTTPS image CDN. The repository contains *no copies* of movie posters and no API keys. Some media may be unavailable if TMDB changes or blocks a remote asset; image failures leave a neutral placeholder.
+The token is used from that browser session and is stored only in `sessionStorage`, not committed to this repository. Its bearer header is sent directly over HTTPS to `api.themoviedb.org`; it is **not secure against someone with access to the same browser or its extensions**. The demo never asks for a TMDB password. To make live browsing work for *all visitors automatically*, host a separate authenticated API proxy or prebuilt data feed with a server-side secret, not a secret in GitHub Pages source.
 
-This product uses TMDB API content but is not endorsed or certified by TMDB. For use beyond a portfolio demo, review the TMDB API/image license and attribution requirements:
+Obtain an access token from [TMDB account settings](https://www.themoviedb.org/settings/api). TMDB noncommercial API terms require attribution:
 https://developer.themoviedb.org/docs/faq
 
-Adding genuinely live discovery/search requires a TMDB developer key and a protected backend/proxy (such as a serverless function); **do not publish a personal TMDB secret or bearer token inside client JavaScript or GitHub**.
+This product uses TMDB API content but is not endorsed or certified by TMDB. Image downloads are served directly by the TMDB HTTPS image CDN and can temporarily fail; fallback art is shown.
 
 ## Running
 
