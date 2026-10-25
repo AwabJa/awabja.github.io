@@ -326,88 +326,70 @@
 
 
 
-/* Fluid full-screen composition: scale the reference 1232px dashboard in
-   proportion to viewport width, not as a fixed-size floating window.
-   Shorter browser windows scroll the content rather than clip movie metadata. */
+/* Full-viewport dashboard at the approved reference scale.
+   The background, sidebar, and application extend to the edges of the screen;
+   the content stays at its original size rather than growing with monitor width. */
 @media(min-width:761px){
- .site-wrap{display:block;width:100%;min-height:100dvh;padding:0}
- .app-shell{
-  --fan-span:clamp(98px,13.48vw,280px);
-  width:100%;
-  max-width:none;
-  height:100dvh;
-  min-height:0;
-  border-radius:0;
-  box-shadow:none;
-  grid-template-columns:clamp(205px,20.94vw,420px) minmax(0,1fr);
- }
- .sidebar{
-  padding:clamp(19px,2.6vw,50px) clamp(14px,1.7vw,33px) 20px clamp(18px,2.75vw,53px);
- }
- .brand{font-size:clamp(20px,1.7vw,32px);gap:clamp(10px,1vw,19px)}
- .brand-icon{width:clamp(31px,2.76vw,51px);height:clamp(31px,2.76vw,51px)}
- .side-nav{margin-top:clamp(29px,4vw,78px);gap:clamp(4px,.5vw,10px)}
- .side-nav-secondary{margin-top:clamp(24px,3.5vw,65px)}
- .side-link{font-size:clamp(12px,1.1vw,18px);min-height:clamp(36px,3.1vw,58px);gap:clamp(10px,1.1vw,20px)}
- .side-activity{margin-top:clamp(24px,3vw,52px)}
- .side-section-title{font-size:clamp(12px,1.05vw,17px)}
- .recent-list{gap:clamp(9px,1vw,19px)}
- .mini-movie{height:clamp(90px,8.1vw,155px)}
- .mini-title{font-size:clamp(11px,.97vw,17px)}
- .main-area{
-  padding:clamp(18px,2.1vw,40px) clamp(18px,2.27vw,44px) 16px clamp(13px,2.44vw,47px);
-  overflow-x:clip;
-  overflow-y:auto;
- }
- .toolbar{
-  grid-template-columns:clamp(105px,10.7vw,206px) minmax(150px,1fr) clamp(44px,3.75vw,72px) clamp(100px,11.45vw,220px);
-  gap:clamp(9px,1.25vw,24px);
-  margin-bottom:clamp(17px,1.95vw,38px);
- }
- .type-dropdown,.search-group,.icon-button,.profile{height:clamp(44px,3.9vw,75px);border-radius:clamp(12px,1.2vw,20px)}
- .icon-button{width:100%}
- .profile-avatar{flex-basis:clamp(34px,2.76vw,53px);height:clamp(34px,2.76vw,53px)}
- .featured-section{width:100%;max-width:none;margin-bottom:clamp(15px,1.6vw,31px)}
- .featured-stack{
-  width:calc(100% - var(--fan-span));
-  max-width:none;
-  height:clamp(270px,30.8vw,610px);
-  margin-right:0;
- }
- .peek-front{
-  width:calc(var(--fan-span) * .72);
-  right:calc(var(--fan-span) * -.60);
-  top:7%;bottom:7%;
- }
- .peek-back{
-  width:calc(var(--fan-span) * .44);
-  right:calc(var(--fan-span) * -.98);
-  top:12%;bottom:12%;
- }
- .featured-titles>span:first-child{font-size:clamp(14px,1.22vw,23px)}
- .genre-row{margin-bottom:clamp(10px,1vw,19px)}
- .genre-scroll{gap:clamp(6px,.55vw,11px)}
- .genre-scroll button{font-size:clamp(12px,1.03vw,18px);min-height:clamp(41px,3.65vw,70px);padding-inline:clamp(15px,1.7vw,33px)}
- .movie-strip{gap:clamp(11px,1.07vw,21px)}
- .movie-card{
-  flex:0 0 clamp(148px,12.2vw,235px);
-  width:clamp(148px,12.2vw,235px);
- }
- .movie-name{font-size:clamp(12px,1.06vw,19px)}
- .movie-meta{font-size:clamp(11px,.99vw,18px)}
- .movie-meta svg{width:clamp(14px,1.22vw,20px);height:clamp(14px,1.22vw,20px)}
- .movie-strip.is-live{grid-template-columns:repeat(auto-fill,minmax(clamp(148px,12vw,220px),1fr));gap:clamp(14px,1.3vw,26px)}
+  .site-wrap{
+    display:block;
+    width:100%;
+    min-height:100dvh;
+    padding:0;
+  }
+  .app-shell{
+    width:100%;
+    max-width:none;
+    min-height:100dvh;
+    height:100dvh;
+    border-radius:0;
+    box-shadow:none;
+    grid-template-columns:258px minmax(0,1fr);
+  }
+  .main-area{
+    padding:26px 28px 15px 30px;
+    overflow-x:clip;
+    overflow-y:auto;
+  }
+  .main-area > .toolbar,
+  .main-area > #main,
+  .main-area > .app-footer{
+    width:100%;
+    max-width:916px;
+    margin-inline:auto;
+  }
+  .featured-section{
+    width:100%;
+    max-width:916px;
+    margin-bottom:20px;
+  }
+  .featured-stack{
+    width:min(750px,calc(100% - 166px));
+    max-width:750px;
+    height:clamp(295px,38vh,390px);
+    margin-right:0;
+  }
+  .movie-card{
+    flex:0 0 clamp(148px,12.2vw,175px);
+    width:clamp(148px,12.2vw,175px);
+  }
+  .movie-strip.is-live{
+    grid-template-columns:repeat(auto-fill,minmax(148px,175px));
+    justify-content:start;
+    gap:19px 15px;
+  }
 }
-@media(min-width:761px) and (max-width:1100px){
- .app-shell{grid-template-columns:clamp(205px,20.94vw,230px) minmax(0,1fr)}
- .toolbar{grid-template-columns:clamp(100px,10.7vw,118px) minmax(120px,1fr) 44px 48px}
- .profile-text,.profile>svg{display:none}
- .profile{justify-content:center}
- .featured-stack{height:clamp(268px,30.8vw,335px)}
+@media(min-width:761px) and (max-width:1300px){
+  .app-shell{grid-template-columns:235px minmax(0,1fr)}
+  .main-area{padding-right:22px}
+  .featured-stack{width:min(750px,calc(100% - 122px))}
 }
-@media(max-width:760px){
- /* Keep touch-friendly edge-to-edge mobile layout, independent of desktop scaling. */
- .site-wrap{padding:0;display:block}
- .app-shell{width:100%;max-width:none;min-height:100svh;height:auto;border-radius:0;box-shadow:none}
- .main-area{overflow:visible}
+@media(min-width:761px) and (max-width:1000px){
+  .app-shell{grid-template-columns:205px minmax(0,1fr)}
+  .main-area{padding:22px 18px 15px 15px}
+  .featured-stack{
+    width:min(750px,calc(100% - 98px));
+    height:clamp(275px,37vh,355px);
+  }
+  .movie-card{flex-basis:155px;width:155px}
+  .movie-strip.is-live{grid-template-columns:repeat(auto-fill,minmax(148px,155px))}
 }
