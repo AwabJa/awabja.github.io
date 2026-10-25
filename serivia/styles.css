@@ -486,15 +486,8 @@
     overflow-y:hidden;
   }
 
-  /* Width alone should not make the hero too tall on a short monitor. */
-  .featured-stack{
-    height:clamp(270px,min(31.7vw,47dvh),555px);
-  }
-}
-@media (min-width:761px) and (max-width:1100px){
-  .featured-stack{
-    height:clamp(255px,min(37vh,39vw),355px);
-  }
+  /* The featured banner and fanned previews keep their original
+     full-screen dimensions; the main column scrolls when needed. */
 }
 @media (min-width:761px) and (max-height:860px){
   /* Compact vertical rhythm only when the available screen height is short. */
