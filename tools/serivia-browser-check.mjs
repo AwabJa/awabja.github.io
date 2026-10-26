@@ -279,6 +279,22 @@ try{
   assert.equal(await page.locator('#detailFavorite').innerText(),'Saved to watchlist');
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('#detailDialog').evaluate(el=>el.open),false,'Escape closes details');
+  if(width<=390){
+   // Reproduce a phone user closing movie details and navigating Home.
+   // Keep landmark focus for screen readers without a blue page outline.
+   await page.locator('#mobileMenu').click();
+   await page.locator('.side-link[data-view="home"]').click();
+   const mainFocus=await page.locator('#main').evaluate(el=>({
+    focused:document.activeElement===el,
+    outline:getComputedStyle(el).outlineStyle
+   }));
+   assert(mainFocus.focused,'Home navigation moves accessibility focus to main');
+   assert.equal(mainFocus.outline,'none','Mobile home after movie details has no blue page-sized outline');
+   const focusButton=await page.locator('.movie-card').first().evaluate(el=>{
+    el.focus();return el.matches(':focus-visible')?getComputedStyle(el).outlineStyle:null;
+   });
+   if(focusButton!==null)assert.notEqual(focusButton,'none','Buttons still have visible keyboard focus');
+  }
   await page.locator('#profileBtn').click();
   assert.equal(await page.locator('#pageTitle').innerText(),'Your watchlist');
   assert.equal(await page.locator('.movie-card').count(),1,'Favorites view shows saved movie');
