@@ -161,7 +161,7 @@ function filters(){
  if(state.view==='home'&&state.sort==='featured'&&state.genre==='Trending'&&!state.query){
   const order=new Map(HOME_SHOWCASE_IDS.map((id,index)=>[id,index]));
   out.sort((a,b)=>(order.get(a.id)??999)-(order.get(b.id)??999));
- }else if(state.view==='trending')out.sort((a,b)=>b.rating-a.rating);
+ }else if(state.view==='trending'&&state.sort==='featured')out.sort((a,b)=>b.rating-a.rating);
  else if(state.sort==='rating')out.sort((a,b)=>b.rating-a.rating);
  else if(state.sort==='year')out.sort((a,b)=>b.year-a.year);
  else if(state.sort==='az')out.sort((a,b)=>a.title.localeCompare(b.title));
@@ -333,12 +333,14 @@ function openInfo(kind){
  }
  $('infoDialog').showModal();
 }
-function closeMobileNav(){
+function closeMobileNav(restoreFocus=false){
+ const wasOpen=$('sidebar').classList.contains('is-open');
  $('sidebar').classList.remove('is-open');
  $('overlay').hidden=true;
  $('mobileMenu').setAttribute('aria-expanded','false');
  $('mobileMenu').setAttribute('aria-label','Open navigation');
  document.body.style.overflow='';
+ if(wasOpen&&restoreFocus)$('mobileMenu').focus({preventScroll:true});
 }
 function switchView(view){
  state.view=view;
@@ -461,9 +463,16 @@ function initialize(){
   $('mobileMenu').setAttribute('aria-label',open?'Close navigation':'Open navigation');
   document.body.style.overflow=open?'hidden':'';
  });
- $('overlay').addEventListener('click',closeMobileNav);
+ $('overlay').addEventListener('click',()=>closeMobileNav(true));
  document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){closeMobileNav();togglePopover($('filters'),$('filterBtn'),false);togglePopover($('typeMenu'),$('typeBtn'),false)}
+  if(e.key==='Escape'){closeMobileNav(true);togglePopover($('filters'),$('filterBtn'),false);togglePopover($('typeMenu'),$('typeBtn'),false)}
+  if(e.key==='Tab'&&$('sidebar').classList.contains('is-open')){
+   const items=[...$('sidebar').querySelectorAll('a[href],button:not(:disabled)')];
+   const first=items[0],last=items[items.length-1],active=document.activeElement;
+   if(first&&(!$('sidebar').contains(active)||(e.shiftKey&&active===first)||(!e.shiftKey&&active===last))){
+    e.preventDefault();(e.shiftKey?last:first).focus();
+   }
+  }
   if(e.target.closest('.featured-section')&&e.key==='ArrowRight'){e.preventDefault();showSlide(state.slide+1)}
   if(e.target.closest('.featured-section')&&e.key==='ArrowLeft'){e.preventDefault();showSlide(state.slide-1)}
  });
