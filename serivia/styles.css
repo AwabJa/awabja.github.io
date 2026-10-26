@@ -1189,3 +1189,10 @@
 @media(max-width:760px){
   #main .poster-wrap>img{object-fit:contain}
 }
+
+/* Programmatic page focus is for screen-reader navigation, not a blue frame. */
+/* main[tabindex=-1] is focused after selecting Home/Favorites so assistive
+   technology can follow the new view. Mobile browsers otherwise draw a blue
+   UA focus outline around the entire dashboard. Keep all interactive focus
+   indicators unchanged (buttons, links, inputs and form controls). */
+#main:focus{outline:none}
