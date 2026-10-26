@@ -229,6 +229,21 @@ try{
    await page.locator('#mobileMenu').click();
    assert.equal(await page.locator('#mobileMenu').getAttribute('aria-expanded'),'true','Mobile navigation opens');
    await page.waitForFunction(()=>getComputedStyle(document.querySelector('.sidebar')).visibility==='visible');
+   await page.keyboard.press('Tab');
+   assert.equal(await page.locator('.sidebar .brand').evaluate(el=>document.activeElement===el),true,
+     'Tab from mobile toggle enters the open navigation');
+   await page.keyboard.press('Shift+Tab');
+   assert.equal(await page.locator('.sidebar .portfolio-link').evaluate(el=>document.activeElement===el),true,
+     'Reverse Tab wraps to the final mobile navigation link');
+   await page.keyboard.press('Tab');
+   assert.equal(await page.locator('.sidebar .brand').evaluate(el=>document.activeElement===el),true,
+     'Forward Tab remains in the mobile drawer');
+   await page.keyboard.press('Escape');
+   assert.equal(await page.locator('#mobileMenu').getAttribute('aria-expanded'),'false',
+     'Escape closes the mobile drawer');
+   assert.equal(await page.locator('#mobileMenu').evaluate(el=>document.activeElement===el),true,
+     'Escape restores keyboard focus to the menu toggle');
+   await page.locator('#mobileMenu').click();
    await page.locator('.side-link[data-view="home"]').click();
    assert.equal(await page.locator('#mobileMenu').getAttribute('aria-expanded'),'false','Mobile navigation closes on selection');
   }else{
@@ -388,6 +403,17 @@ try{
  await auditPage.locator('#typeMenu button[data-mode="movies"]').click();
  assert.equal(await auditPage.locator('#pageTitle').innerText(),'Discover movies',
    'Movies menu returns to home');
+ await auditPage.locator('.side-link[data-view="trending"]').click();
+ await auditPage.locator('#filterBtn').click();
+ await auditPage.locator('#sortFilter').selectOption('az');
+ const sortedNames=await auditPage.locator('.movie-card .movie-name').allTextContents();
+ assert.deepEqual(sortedNames,[...sortedNames].sort((a,b)=>a.localeCompare(b)),
+   'Trending respects the selected A-to-Z sort instead of overriding it by rating');
+ await auditPage.locator('#sortFilter').selectOption('year');
+ const sortedYears=(await auditPage.locator('.movie-card .movie-meta > span:first-child').allTextContents()).map(Number);
+ assert.deepEqual(sortedYears,[...sortedYears].sort((a,b)=>b-a),
+   'Trending respects the selected newest-first sort');
+ await auditPage.locator('#resetFilters').click();
  await auditPage.locator('#notificationBtn').click();
  assert.equal(await auditPage.locator('#infoTitle').innerText(),'Welcome to Serivia',
    'Notification button opens helpful info');
