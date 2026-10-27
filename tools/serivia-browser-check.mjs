@@ -451,6 +451,11 @@ try{
  assert((await recovery.locator('#detailPoster').getAttribute('src')).includes('/w780/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg'),
    'A failed backdrop uses the original portrait poster for this image only');
  await recovery.locator('#closeDetails').click();
+ // Chromium caches failed image loads within a page; disable that cache so
+ // the next request tests the restored network rather than stale failure.
+ const recoveryNetwork=await recoveryCtx.newCDPSession(recovery);
+ await recoveryNetwork.send('Network.enable');
+ await recoveryNetwork.send('Network.setCacheDisabled',{cacheDisabled:true});
  await recovery.unroute('https://image.tmdb.org/**');
  const goodImage=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO0pD4sAAAAASUVORK5CYII=','base64');
  await recovery.route('https://image.tmdb.org/**',route=>route.fulfill({status:200,contentType:'image/png',body:goodImage}));
