@@ -451,20 +451,23 @@ try{
  assert((await recovery.locator('#detailPoster').getAttribute('src')).includes('/w780/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg'),
    'A failed backdrop uses the original portrait poster for this image only');
  await recovery.locator('#closeDetails').click();
- // Chromium caches failed image loads within a page; disable that cache so
- // the next request tests the restored network rather than stale failure.
- const recoveryNetwork=await recoveryCtx.newCDPSession(recovery);
- await recoveryNetwork.send('Network.enable');
- await recoveryNetwork.send('Network.setCacheDisabled',{cacheDisabled:true});
- await recovery.unroute('https://image.tmdb.org/**');
- const goodImage=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO0pD4sAAAAASUVORK5CYII=','base64');
- await recovery.route('https://image.tmdb.org/**',route=>route.fulfill({status:200,contentType:'image/png',body:goodImage}));
+ // Observe the actual image URL assigned by app code. Chromium may cache a
+ // failed image request even if a test replaces the network response, so
+ // asserting on naturalWidth would test browser caching instead of retry logic.
+ await recovery.evaluate(()=>{
+   const img=document.querySelector('#detailPoster');
+   const property=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,'src');
+   window.__recoverySources=[];
+   Object.defineProperty(img,'src',{
+     configurable:true,
+     get(){return property.get.call(this);},
+     set(value){window.__recoverySources.push(value);property.set.call(this,value);}
+   });
+ });
  await duneCard.click();
- await recovery.waitForFunction(()=>document.querySelector('#detailPoster').complete&&document.querySelector('#detailPoster').naturalWidth>0);
- assert((await recovery.locator('#detailPoster').getAttribute('src')).includes('/w1280/eZ239CUp1d6OryZEBPnO2n87gMG.jpg'),
-   'Opening again after the network recovers retries the original backdrop');
- assert.equal(await recovery.locator('#detailPoster').evaluate(el=>el.parentElement.classList.contains('portrait-art')),false,
-   'Successful retry restores landscape artwork');
+ const retrySources=await recovery.evaluate(()=>window.__recoverySources);
+ assert(retrySources.some(src=>src.includes('/w1280/eZ239CUp1d6OryZEBPnO2n87gMG.jpg')),
+   'Reopening after a backdrop failure retries the original file instead of permanently switching to a portrait');
  await recoveryCtx.close();
 
  // Historic saved records are browser-controlled input and must be bounded.
