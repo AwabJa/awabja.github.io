@@ -30,14 +30,24 @@ const byId=new Map(MOVIES.map(m=>[m.id,m]));
 // The public app is a curated demo. Live catalog APIs require a future
 // server-side feed and must never expose an owner token in browser source.
 const SAVED_DATA_KEY='serivia.savedMovieData.v1';
+// Old locally saved catalog entries are untrusted browser data. Keep artwork
+// paths on TMDB and bound text/numbers before they reach the UI.
+const validArtFile=value=>{
+ if(typeof value!=='string')return null;
+ const file=value.replace(/^\//,'');
+ return /^[A-Za-z0-9_-]{1,120}\.(?:jpg|jpeg|png|webp)$/i.test(file)?file:null;
+};
 try{sessionStorage.removeItem('serivia.tmdb.session.v1')}catch{}
 try{
  const snapshots=JSON.parse(localStorage.getItem(SAVED_DATA_KEY)||'[]');
  if(Array.isArray(snapshots))snapshots.slice(0,20).forEach(m=>{
   if(m&&Number.isInteger(m.id)&&m.id>0&&typeof m.title==='string'&&!byId.has(m.id)){
-   byId.set(m.id,{id:m.id,title:m.title.slice(0,150),year:Number(m.year)||0,rating:Number(m.rating)||0,
-    minutes:0,genres:Array.isArray(m.genres)?m.genres.filter(g=>typeof g==='string').slice(0,8):[],
-    poster:typeof m.poster==='string'?m.poster:null,backdrop:typeof m.backdrop==='string'?m.backdrop:null,
+   const year=Number(m.year),rating=Number(m.rating);
+   byId.set(m.id,{id:m.id,title:m.title.slice(0,150),
+    year:Number.isInteger(year)&&year>=1888&&year<=2100?year:0,
+    rating:Number.isFinite(rating)?Math.max(0,Math.min(10,rating)):0,
+    minutes:0,genres:Array.isArray(m.genres)?m.genres.filter(g=>typeof g==='string'&&g.length<=40).slice(0,8):[],
+    poster:validArtFile(m.poster),backdrop:validArtFile(m.backdrop),
     overview:typeof m.overview==='string'?m.overview.slice(0,900):'',certificate:'NR'});
   }
  });
@@ -59,9 +69,10 @@ const pic=(file,size='w500')=>file?CDN+size+'/'+encodeURIComponent(file):'';
 const imageSizes={poster:'(max-width:480px) 145px, (max-width:1000px) 155px, (max-width:1800px) 185px, 215px',recent:'(max-width:1100px) 180px, 325px',backdrop:'(max-width:760px) 100vw, calc(100vw - 330px)'};
 // Prefer the largest practical TMDB image for each role; correct file paths and
 // never stretch a portrait poster into a landscape backdrop.
-function setArt(img,movie,role='poster'){
+function setArt(img,movie,role='poster',forcePoster=false){
+ img.onerror=null;
  const landscape=role!=='poster';
- const hasBackdrop=landscape&&Boolean(movie.backdrop);
+ const hasBackdrop=landscape&&!forcePoster&&Boolean(movie.backdrop);
  const file=hasBackdrop?movie.backdrop:movie.poster;
  // TMDB has distinct allowed width presets for poster and backdrop files.
  // A vertical poster must NEVER be requested at backdrop-only size w1280.
@@ -69,7 +80,7 @@ function setArt(img,movie,role='poster'){
  const pixelWidths=hasBackdrop?(role==='recent'?[300,780]:[780,1280]):[342,500,780];
  const container=img.parentElement;
  container?.classList.remove('image-failed','portrait-art');
- if(landscape&&!movie.backdrop)container?.classList.add('portrait-art');
+ if(landscape&&!hasBackdrop)container?.classList.add('portrait-art');
  if(container){
   container.dataset.artTitle=movie.title;
   // When no landscape still exists, blur the poster behind an intact
@@ -91,33 +102,27 @@ function setArt(img,movie,role='poster'){
   // Match the approved cliffside key art without changing poster thumbnails.
   // If third-party promotional art is unavailable, restore TMDB automatically.
   img.removeAttribute('srcset');
-  img.src=DRAGON_PROMO;
   img.onerror=()=>{
-   img.onerror=()=>{
-    img.onerror=null;
-    movie.backdrop=null;
-    setArt(img,movie,role);
-   };
+   img.onerror=()=>setArt(img,movie,role,true);
    img.srcset=sizes.map((size,i)=>pic(file,size)+' '+[780,1280][i]+'w').join(', ');
    img.src=pic(file,'w1280');
   };
+  img.src=DRAGON_PROMO;
   return;
  }
- img.src=pic(file,hasBackdrop?(role==='recent'?'w780':'w1280'):'w780');
  img.onerror=()=>{
   img.onerror=null;
   img.removeAttribute('srcset');
-  // If a real backdrop disappears from the CDN, fall back to the centered
-  // portrait composition; never leave a broken image in a detail dialog.
+  // A failed backdrop affects only this image. Keep the source catalog intact
+  // so revisiting the film retries its backdrop when the network recovers.
   if(hasBackdrop&&movie.poster){
-   movie.backdrop=null;
-   setArt(img,movie,role);
+   setArt(img,movie,role,true);
    return;
   }
-  // Missing poster too: a readable title tile is safer than a broken image.
   img.hidden=true;
   container?.classList.add('image-failed');
  };
+ img.src=pic(file,hasBackdrop?(role==='recent'?'w780':'w1280'):'w780');
 }
 
 const storageRead=(key,def)=>{try{const value=JSON.parse(localStorage.getItem(key));return Array.isArray(value)?value:def}catch{return def}};
@@ -264,8 +269,9 @@ function feature(){
  $('slideDots').querySelectorAll('button').forEach((b,i)=>{b.classList.toggle('is-current',i===state.slide);b.setAttribute('aria-pressed',String(i===state.slide))});
  const peek1=byId.get(FEATURE_IDS[(state.slide+1)%FEATURE_IDS.length]);
  const peek2=byId.get(FEATURE_IDS[(state.slide+2)%FEATURE_IDS.length]);
- $('peekFront').style.backgroundImage='url("'+pic(peek1.poster,'w780')+'")';
- $('peekBack').style.backgroundImage='url("'+pic(peek2.poster,'w780')+'")';
+ // Preview covers are only 130 CSS pixels wide; avoid full-size poster downloads.
+ $('peekFront').style.backgroundImage='url("'+pic(peek1.poster,'w500')+'")';
+ $('peekBack').style.backgroundImage='url("'+pic(peek2.poster,'w500')+'")';
  $('peekFront').setAttribute('aria-label','Show next featured movie: '+peek1.title);
  $('peekBack').setAttribute('aria-label','Show featured movie: '+peek2.title);
 }
