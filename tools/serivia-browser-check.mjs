@@ -319,6 +319,13 @@ try{
   await page.locator('.movie-card').first().waitFor();
   await page.locator('#profileBtn').click();
   assert.equal(await page.locator('.movie-card').count(),1,'Watchlist persists after reload');
+  await page.locator('#filterBtn').click();
+  await page.locator('#yearFilter').selectOption('classic');
+  assert.equal(await page.locator('.movie-card').count(),0,'Watchlist filters can hide saved titles');
+  assert.equal(await page.locator('#emptyState h2').innerText(),'No movies found',
+    'Filtered watchlist never incorrectly claims all saved titles were lost');
+  await page.locator('#yearFilter').selectOption('all');
+  assert.equal(await page.locator('.movie-card').count(),1,'Clearing a watchlist filter restores saved titles');
   assert.deepEqual(errors,[],'No JavaScript errors at '+width+'px: '+errors.join(','));
   results.push({width,status:'PASS'});
   await context.close();
@@ -436,6 +443,9 @@ try{
  await auditPage.keyboard.press('Escape');
  assert.equal(await auditPage.locator('#filterBtn').getAttribute('aria-expanded'),'false',
    'Escape dismisses filters without side effects');
+ const sampleHtml=await (await auditPage.request.get(origin+'/serivia/sample/')).text();
+ assert(sampleHtml.includes("connect-src 'self';")&&!sampleHtml.includes("connect-src 'self' https://api.themoviedb.org"),
+   'The published legacy sample also blocks third-party API requests');
  assert.deepEqual(apiRequests,[],'Public demo makes no TMDB API requests');
  assert.deepEqual(jsErrors,[],'No JS errors in settings/navigation/security interactions');
  await auditCtx.close();
