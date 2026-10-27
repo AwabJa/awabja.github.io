@@ -90,6 +90,8 @@ try{
   await assertLabels('Demo '+width+'px');
 
   assert.equal(await page.locator('#slideDots button').count(),4,'Featured carousel has four slides');
+  assert((await page.locator('#peekFront').evaluate(el=>el.style.backgroundImage)).includes('/w500/'),
+    'Small preview covers avoid downloading full-size poster images');
   assert.equal(await page.locator('.feature-navigation,.genre-arrows').count(),0,'No useless arrow buttons appear anywhere');
   const fan=await page.evaluate(()=>{
    const get=id=>document.querySelector(id).getBoundingClientRect();
@@ -437,6 +439,51 @@ try{
  assert.deepEqual(apiRequests,[],'Public demo makes no TMDB API requests');
  assert.deepEqual(jsErrors,[],'No JS errors in settings/navigation/security interactions');
  await auditCtx.close();
+
+ // A temporary CDN outage should not permanently replace a film's backdrop.
+ const recoveryCtx=await browser.newContext({viewport:{width:1280,height:800}});
+ const recovery=await recoveryCtx.newPage();
+ await recovery.route('https://image.tmdb.org/**',route=>route.abort('failed'));
+ await recovery.goto(origin+'/serivia/',{waitUntil:'domcontentloaded'});
+ const duneCard=recovery.locator('.movie-card').filter({hasText:'Dune: Part Two'});
+ await duneCard.click();
+ await recovery.waitForFunction(()=>document.querySelector('#detailPoster').parentElement.classList.contains('portrait-art'));
+ assert((await recovery.locator('#detailPoster').getAttribute('src')).includes('/w780/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg'),
+   'A failed backdrop uses the original portrait poster for this image only');
+ await recovery.locator('#closeDetails').click();
+ await recovery.unroute('https://image.tmdb.org/**');
+ const goodImage=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO0pD4sAAAAASUVORK5CYII=','base64');
+ await recovery.route('https://image.tmdb.org/**',route=>route.fulfill({status:200,contentType:'image/png',body:goodImage}));
+ await duneCard.click();
+ await recovery.waitForFunction(()=>document.querySelector('#detailPoster').complete&&document.querySelector('#detailPoster').naturalWidth>0);
+ assert((await recovery.locator('#detailPoster').getAttribute('src')).includes('/w1280/eZ239CUp1d6OryZEBPnO2n87gMG.jpg'),
+   'Opening again after the network recovers retries the original backdrop');
+ assert.equal(await recovery.locator('#detailPoster').evaluate(el=>el.parentElement.classList.contains('portrait-art')),false,
+   'Successful retry restores landscape artwork');
+ await recoveryCtx.close();
+
+ // Historic saved records are browser-controlled input and must be bounded.
+ const savedCtx=await browser.newContext({viewport:{width:1280,height:800}});
+ const savedPage=await savedCtx.newPage();
+ await savedPage.route('https://image.tmdb.org/**',route=>route.abort());
+ await savedPage.goto(origin+'/serivia/',{waitUntil:'domcontentloaded'});
+ await savedPage.evaluate(()=>{
+   localStorage.setItem('serivia.savedMovieData.v1',JSON.stringify([{
+     id:99881235,title:'Old locally saved movie',year:'Infinity',rating:'Infinity',
+     genres:['Drama','X'.repeat(1000)],poster:'javascript:alert(1)',backdrop:'../../admin',
+     overview:'Previously saved movie'
+   }]));
+   localStorage.setItem('serivia.watchlist.v1',JSON.stringify([99881235]));
+ });
+ await savedPage.reload({waitUntil:'domcontentloaded'});
+ await savedPage.locator('#profileBtn').click();
+ assert.equal(await savedPage.locator('.movie-card').count(),1,'Old saved movie remains available');
+ assert.equal(await savedPage.locator('.movie-card .movie-meta b').innerText(),'0.0','Nonfinite saved ratings are rejected');
+ assert.equal(await savedPage.locator('.movie-card img').first().getAttribute('src'),null,
+   'Untrusted stored artwork path never becomes an image request');
+ await savedPage.locator('.movie-card').first().click();
+ assert.equal(await savedPage.locator('#detailGenres span').count(),1,'Oversized saved genres are rejected');
+ await savedCtx.close();
 
  const reduced=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});
  await reduced.route('https://image.tmdb.org/**',route=>route.abort());
