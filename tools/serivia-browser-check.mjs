@@ -90,6 +90,8 @@ try{
   await assertLabels('Demo '+width+'px');
 
   assert.equal(await page.locator('#slideDots button').count(),4,'Featured carousel has four slides');
+  assert((await page.locator('#peekFront').evaluate(el=>el.style.backgroundImage)).includes('/w500/'),
+    'Small preview covers avoid downloading full-size poster images');
   assert.equal(await page.locator('.feature-navigation,.genre-arrows').count(),0,'No useless arrow buttons appear anywhere');
   const fan=await page.evaluate(()=>{
    const get=id=>document.querySelector(id).getBoundingClientRect();
@@ -229,6 +231,21 @@ try{
    await page.locator('#mobileMenu').click();
    assert.equal(await page.locator('#mobileMenu').getAttribute('aria-expanded'),'true','Mobile navigation opens');
    await page.waitForFunction(()=>getComputedStyle(document.querySelector('.sidebar')).visibility==='visible');
+   await page.keyboard.press('Tab');
+   assert.equal(await page.locator('.sidebar .brand').evaluate(el=>document.activeElement===el),true,
+     'Tab from mobile toggle enters the open navigation');
+   await page.keyboard.press('Shift+Tab');
+   assert.equal(await page.locator('.sidebar .portfolio-link').evaluate(el=>document.activeElement===el),true,
+     'Reverse Tab wraps to the final mobile navigation link');
+   await page.keyboard.press('Tab');
+   assert.equal(await page.locator('.sidebar .brand').evaluate(el=>document.activeElement===el),true,
+     'Forward Tab remains in the mobile drawer');
+   await page.keyboard.press('Escape');
+   assert.equal(await page.locator('#mobileMenu').getAttribute('aria-expanded'),'false',
+     'Escape closes the mobile drawer');
+   assert.equal(await page.locator('#mobileMenu').evaluate(el=>document.activeElement===el),true,
+     'Escape restores keyboard focus to the menu toggle');
+   await page.locator('#mobileMenu').click();
    await page.locator('.side-link[data-view="home"]').click();
    assert.equal(await page.locator('#mobileMenu').getAttribute('aria-expanded'),'false','Mobile navigation closes on selection');
   }else{
@@ -302,6 +319,13 @@ try{
   await page.locator('.movie-card').first().waitFor();
   await page.locator('#profileBtn').click();
   assert.equal(await page.locator('.movie-card').count(),1,'Watchlist persists after reload');
+  await page.locator('#filterBtn').click();
+  await page.locator('#yearFilter').selectOption('classic');
+  assert.equal(await page.locator('.movie-card').count(),0,'Watchlist filters can hide saved titles');
+  assert.equal(await page.locator('#emptyState h2').innerText(),'No movies found',
+    'Filtered watchlist never incorrectly claims all saved titles were lost');
+  await page.locator('#yearFilter').selectOption('all');
+  assert.equal(await page.locator('.movie-card').count(),1,'Clearing a watchlist filter restores saved titles');
   assert.deepEqual(errors,[],'No JavaScript errors at '+width+'px: '+errors.join(','));
   results.push({width,status:'PASS'});
   await context.close();
@@ -388,6 +412,17 @@ try{
  await auditPage.locator('#typeMenu button[data-mode="movies"]').click();
  assert.equal(await auditPage.locator('#pageTitle').innerText(),'Discover movies',
    'Movies menu returns to home');
+ await auditPage.locator('.side-link[data-view="trending"]').click();
+ await auditPage.locator('#filterBtn').click();
+ await auditPage.locator('#sortFilter').selectOption('az');
+ const sortedNames=await auditPage.locator('.movie-card .movie-name').allTextContents();
+ assert.deepEqual(sortedNames,[...sortedNames].sort((a,b)=>a.localeCompare(b)),
+   'Trending respects the selected A-to-Z sort instead of overriding it by rating');
+ await auditPage.locator('#sortFilter').selectOption('year');
+ const sortedYears=(await auditPage.locator('.movie-card .movie-meta > span:first-child').allTextContents()).map(Number);
+ assert.deepEqual(sortedYears,[...sortedYears].sort((a,b)=>b-a),
+   'Trending respects the selected newest-first sort');
+ await auditPage.locator('#resetFilters').click();
  await auditPage.locator('#notificationBtn').click();
  assert.equal(await auditPage.locator('#infoTitle').innerText(),'Welcome to Serivia',
    'Notification button opens helpful info');
@@ -408,9 +443,65 @@ try{
  await auditPage.keyboard.press('Escape');
  assert.equal(await auditPage.locator('#filterBtn').getAttribute('aria-expanded'),'false',
    'Escape dismisses filters without side effects');
+ const sampleHtml=await (await auditPage.request.get(origin+'/serivia/sample/')).text();
+ assert(sampleHtml.includes("connect-src 'self';")&&!sampleHtml.includes("connect-src 'self' https://api.themoviedb.org"),
+   'The published legacy sample also blocks third-party API requests');
  assert.deepEqual(apiRequests,[],'Public demo makes no TMDB API requests');
  assert.deepEqual(jsErrors,[],'No JS errors in settings/navigation/security interactions');
  await auditCtx.close();
+
+ // A temporary CDN outage should not permanently replace a film's backdrop.
+ const recoveryCtx=await browser.newContext({viewport:{width:1280,height:800}});
+ const recovery=await recoveryCtx.newPage();
+ await recovery.route('https://image.tmdb.org/**',route=>route.abort('failed'));
+ await recovery.goto(origin+'/serivia/',{waitUntil:'domcontentloaded'});
+ const duneCard=recovery.locator('.movie-card').filter({hasText:'Dune: Part Two'});
+ await duneCard.click();
+ await recovery.waitForFunction(()=>document.querySelector('#detailPoster').parentElement.classList.contains('portrait-art'));
+ assert((await recovery.locator('#detailPoster').getAttribute('src')).includes('/w780/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg'),
+   'A failed backdrop uses the original portrait poster for this image only');
+ await recovery.locator('#closeDetails').click();
+ // Observe the actual image URL assigned by app code. Chromium may cache a
+ // failed image request even if a test replaces the network response, so
+ // asserting on naturalWidth would test browser caching instead of retry logic.
+ await recovery.evaluate(()=>{
+   const img=document.querySelector('#detailPoster');
+   const property=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,'src');
+   window.__recoverySources=[];
+   Object.defineProperty(img,'src',{
+     configurable:true,
+     get(){return property.get.call(this);},
+     set(value){window.__recoverySources.push(value);property.set.call(this,value);}
+   });
+ });
+ await duneCard.click();
+ const retrySources=await recovery.evaluate(()=>window.__recoverySources);
+ assert(retrySources.some(src=>src.includes('/w1280/eZ239CUp1d6OryZEBPnO2n87gMG.jpg')),
+   'Reopening after a backdrop failure retries the original file instead of permanently switching to a portrait');
+ await recoveryCtx.close();
+
+ // Historic saved records are browser-controlled input and must be bounded.
+ const savedCtx=await browser.newContext({viewport:{width:1280,height:800}});
+ const savedPage=await savedCtx.newPage();
+ await savedPage.route('https://image.tmdb.org/**',route=>route.abort());
+ await savedPage.goto(origin+'/serivia/',{waitUntil:'domcontentloaded'});
+ await savedPage.evaluate(()=>{
+   localStorage.setItem('serivia.savedMovieData.v1',JSON.stringify([{
+     id:99881235,title:'Old locally saved movie',year:'Infinity',rating:'Infinity',
+     genres:['Drama','X'.repeat(1000)],poster:'javascript:alert(1)',backdrop:'../../admin',
+     overview:'Previously saved movie'
+   }]));
+   localStorage.setItem('serivia.watchlist.v1',JSON.stringify([99881235]));
+ });
+ await savedPage.reload({waitUntil:'domcontentloaded'});
+ await savedPage.locator('#profileBtn').click();
+ assert.equal(await savedPage.locator('.movie-card').count(),1,'Old saved movie remains available');
+ assert.equal(await savedPage.locator('.movie-card .movie-meta b').innerText(),'0.0','Nonfinite saved ratings are rejected');
+ assert.equal(await savedPage.locator('.movie-card img').first().getAttribute('src'),null,
+   'Untrusted stored artwork path never becomes an image request');
+ await savedPage.locator('.movie-card').first().click();
+ assert.equal(await savedPage.locator('#detailGenres span').count(),1,'Oversized saved genres are rejected');
+ await savedCtx.close();
 
  const reduced=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});
  await reduced.route('https://image.tmdb.org/**',route=>route.abort());
