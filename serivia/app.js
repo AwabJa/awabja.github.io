@@ -208,7 +208,7 @@ function renderMovies(){
  if(state.view==='soon'){
   $('emptyState').querySelector('h2').textContent='Coming soon';
   $('emptyState').querySelector('p').textContent='This hand-picked demo catalog only includes released films. An upcoming-release feed can be connected later.';
- }else if(state.view==='favorites'&&!results.length){
+ }else if(state.view==='favorites'&&!results.length&&favorites.size===0){
   $('emptyState').querySelector('h2').textContent='Your list is empty';
   $('emptyState').querySelector('p').textContent='Tap the heart on a featured movie to save it here.';
  }else{
