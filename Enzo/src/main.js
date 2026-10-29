@@ -1,6 +1,6 @@
 // src/main.js
 
-import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
+import * as THREE from './vendor/three.module.js';
 import { enemies, createEnemy, updateEnemies, initializeEnemies, clearEnemies } from './enemies.js';
 import { createArcaneWorld } from './arcaneWorld.js';
 import { createWorldPolish } from './worldPolish.js';
