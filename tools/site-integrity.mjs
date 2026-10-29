@@ -34,6 +34,21 @@ for (const path of scripts) {
   check(syntax.status === 0,
     'Invalid JavaScript: ' + path.slice(root.length + 1) + '\n' + (syntax.stderr || '').trim());
 }
+// Security regression guard: executable client code must not add injection
+// sinks, remote module imports, or credential-like secrets. Vendor JS is
+// included because it executes in the same origin as FLOW's browser data.
+for (const path of scripts) {
+  const localName = path.slice(root.length + 1).replaceAll('\\', '/');
+  if (localName.startsWith('tools/')) continue;
+  const source = readFileSync(path, 'utf8');
+  check(!/\beval\s*\(|\bnew\s+Function\s*\(|\bdocument\.write\s*\(|\.(?:innerHTML|outerHTML)\s*=|\.insertAdjacentHTML\s*\(/.test(source),
+    'Dynamic code or HTML injection sink in client code: ' + localName);
+  check(!/\bfrom\s*['"]https?:\/\/|\bimport\s*\(\s*['"]https?:\/\//.test(source),
+    'Third-party executable module imported in client code: ' + localName);
+  check(!/AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9_]{24,}|sk-[A-Za-z0-9_-]{24,}|-----BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY-----|AIza[0-9A-Za-z_-]{30,}/.test(source),
+    'Possible hard-coded credential in client code: ' + localName);
+}
+
 const seen = new Set();
 
 for (const path of htmlPaths) {
@@ -50,6 +65,8 @@ for (const path of htmlPaths) {
       check(csp.includes(directive), 'CSP missing ' + directive + ': ' + path);
     }
     check(!/unsafe-inline|unsafe-eval/i.test(csp), 'Unsafe CSP script/style permission in ' + path);
+    check(/(?:^|;)\s*script-src\s+'(?:self|none)'\s*(?:;|$)/.test(csp),
+      'CSP must restrict executable scripts to this origin or none: ' + path);
   }
   check(/<meta[^>]*name="referrer"[^>]*content="(?:no-referrer|strict-origin-when-cross-origin)"/i.test(html),
     'Missing referrer policy: ' + path);
@@ -71,6 +88,11 @@ for (const path of htmlPaths) {
     check(destination.startsWith(root) && existsSync(destination),
       'Broken local asset/link "' + ref + '" in ' + path);
   }
+
+  check(!/<script\b(?![^>]*\bsrc=)[^>]*>/i.test(html),
+    'Inline executable script in ' + path);
+  check(!/<[a-z][^>]*\son[a-z]+\s*=/i.test(html),
+    'Inline event handler attribute in ' + path);
 
   // Opening an untrusted page in a new tab must not expose window.opener.
   for (const tag of html.matchAll(/<a\b[^>]+>/g)) {
