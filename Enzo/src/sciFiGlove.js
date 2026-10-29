@@ -1,4 +1,4 @@
-import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
+import * as THREE from './vendor/three.module.js';
 
 // Lightweight first-person sci-fi glove. No network-loaded mesh or external assets.
 // Three.js r128 predates CapsuleGeometry. Build a compatible capsule from a cylinder and spheres.

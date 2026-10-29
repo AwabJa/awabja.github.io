@@ -1,4 +1,4 @@
-import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
+import * as THREE from './vendor/three.module.js';
 
 // Arena movement — camera pitch must never push WASD movement into the sky.
 // The jump offset is accumulated separately from the crouch/eye height.

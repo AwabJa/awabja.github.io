@@ -1,4 +1,4 @@
-import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
+import * as THREE from './vendor/three.module.js';
 
 /* In-game visual polish: local stone materials, weather, volumetric-feeling
    motes and an animated portal. No external images or additional libraries. */

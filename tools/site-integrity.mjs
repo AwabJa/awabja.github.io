@@ -336,6 +336,26 @@ check(game.includes('createArcaneWorld(scene, renderer)') &&
 check(game.includes('let isGamePaused = true;'), 'Enzo must not simulate behind its start menu');
 check(game.includes('clearTimeout(nextWaveTimer)'), 'Enzo must cancel old wave timers on reset');
 const enzoHtml = readFileSync(join(root, 'Enzo/index.html'), 'utf8');
+
+const enzoThreePath='Enzo/src/vendor/three.module.js';
+const enzoThreeFile=join(root,enzoThreePath);
+const enzoThree=existsSync(enzoThreeFile)?readFileSync(enzoThreeFile,'utf8'):'';
+check(enzoThree.includes("const REVISION = '128';") &&
+      enzoThree.includes('SPDX-License-Identifier: MIT') &&
+      !enzoThree.includes("from 'https://") && !enzoThree.includes('from "https://'),
+  'Enzo must load a licensed, pinned, self-hosted Three.js r128 module');
+check(enzoHtml.includes("script-src 'self';") &&
+      enzoHtml.includes("connect-src 'self';") &&
+      !enzoHtml.includes('unpkg.com'),
+  'Enzo CSP must not permit third-party executable scripts or CDN network access');
+for(const enzoPath of ["Enzo/src/arcaneWorld.js","Enzo/src/castingHand.js","Enzo/src/enemies.js","Enzo/src/fpsCamera.js","Enzo/src/main.js","Enzo/src/movement.js","Enzo/src/sciFiGlove.js","Enzo/src/shooting.js","Enzo/src/worldPolish.js","Enzo/src/vendor/GLTFLoader.js"]) {
+  const enzoSource=readFileSync(join(root,enzoPath),'utf8');
+  const importPath=enzoPath.includes('/vendor/')?'./three.module.js':'./vendor/three.module.js';
+  check(enzoSource.includes("from '"+importPath+"'") &&
+        !enzoSource.includes("from 'https://") && !enzoSource.includes('from "https://'),
+    'Enzo must resolve its Three.js dependency locally: '+enzoPath);
+}
+
 const splashCss = readFileSync(join(root, 'Enzo/styles/splash.css'), 'utf8');
 check(existsSync(join(root, 'Enzo/assets/shattered-reach-splash.webp')),
   'Cinematic Enzo title artwork must exist locally');
