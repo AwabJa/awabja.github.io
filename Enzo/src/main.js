@@ -121,7 +121,10 @@ function showSplashScreen() {
 function showPauseScreen() {
     pauseScreen.classList.add('active');
     const defeated=health===0;
-    document.getElementById('pauseTitle').innerHTML=defeated?'YOUR LIGHT <em>FADES.</em>':'THE REACH <em>AWAITS.</em>';
+    const pauseTitle=document.getElementById('pauseTitle');
+    const pauseEmphasis=document.createElement('em');
+    pauseEmphasis.textContent=defeated?'FADES.':'AWAITS.';
+    pauseTitle.replaceChildren(document.createTextNode(defeated?'YOUR LIGHT ':'THE REACH '),pauseEmphasis);
     document.getElementById('pauseDescription').textContent=defeated?'The sentinels overwhelmed your last stand. The Reach will remember.':"Your fight isn't over. Return to the arena when you're ready.";
     document.getElementById('resumeButton').firstChild.textContent=defeated?'RESTART GAME ':'RESUME GAME ';
     hideWaveBanner();
