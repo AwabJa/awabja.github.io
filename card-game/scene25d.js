@@ -12,12 +12,72 @@
   window.MoonfallScene={render(){},cue(){},reset(){},getStats(){return {mode:'unavailable',actors:0}}};return;
  }
  const W=1600,H=800,TAU=Math.PI*2;
- const background=new Image();background.decoding='async';background.src='assets/backdrop2.webp?v=moonfall-fixed-world-1';
- const actors=new Image();actors.decoding='async';actors.src='assets/characters.webp?v=moonfall-fixed-world-1';
+ const background=new Image();background.decoding='async';background.src='assets/backdrop2.webp?v=moonfall-clean-sprites-1';
+ const actors=new Image();actors.decoding='async';actors.src='assets/characters.webp?v=moonfall-clean-sprites-1';
  const frameAtlases=[new Image(),new Image()];
  frameAtlases.forEach(image=>image.decoding='async');
- frameAtlases[0].src='assets/frames-allies.webp?v=moonfall-fixed-world-1';
- frameAtlases[1].src='assets/frames-enemies.webp?v=moonfall-fixed-world-1';
+ frameAtlases[0].src='assets/frames-allies.webp?v=moonfall-clean-sprites-1';
+ frameAtlases[1].src='assets/frames-enemies.webp?v=moonfall-clean-sprites-1';
+
+ // Clean foreground-only silhouettes traced from the real character illustrations.
+ // The source atlases contain leftover castle pixels. These contours remove those
+ // pixels at render time, without adding another large texture download.
+ const encodedCutouts=["AgfrAAgB6QAKAekAEwHsABYB7AAbAfAAHgHxABgBXZ4ARAChAEYAmQBLAJYAUACXAFMAkwBYAJsAWwCiAFoApABUAKcAWACnAGIAogBrAJEAfgCEAIIAcwB/AHIAeQB0AHYAcgB1AGwAfABmAHwAYACBAGMAhwBWAJUAVgCbAFkAnwBTAKQAVACpAFEArwBOAMEAVQDHAFcAwwBdAMIAXgDEAFkAyQBTANgAUwDdAFcA4gBMAOYASwDtAEgA8QBRAPIAUwD2AFoA9gBkAO4AaQDuAGsA8wB4APAAfQD9AIgACAGHAA0BiQAPAYYAEgGIACEBmwAoAZ8ALQGmACwBqgAoAaoAJQGyACYBuQAsAcEALAHDAC4ByQAuAcwAJgHVACcB2AArAd0AKgHiACUB2wDhANwAzADZAMMA3AC1ANYApgDWAJ0A2QCaANoAkQDPAIgAzACCANAAfADQAHYAzQBwANMAaQDTAGAA0ABZAMgAUgDCAE8AvABPALsATAC9AEkAuQBIALYAQwCvAEYArABDAA==","AV6pAFUAnQBXAJIAXQCMAGQAjgByAIgAdgCAAHUAewB5AHoAgQB/AIoAeACNAHkAkQByAJoAcwCfAG8ArABnALQAZgC4AGoAvABmAMQAYQDGAF4AywBSANUAUQDmAE0A6gBMAPAARgD1AD0AAgE3AA4BNwAXAUAAIgFEACMBRQAoAUkAKAFSAC8BXwAuAWcANQFzADgBdgAnAXoAJwF8ACsBhAAsAYYALgGAADoBggA+AZAAPAGQADMBlgApAZsAKQGjAC8BqAAvAawAKwGrACcBrgAlAbYAJwG5ADABwwAwAcUAKAHHACsB0QArAdMAKQHTACQB1gAjAdwAJQHhACsB4QA2AeUAMwHoACwB6AAfAeQAGwHdAAIB3gD8ANkA+ADSAOQA0gDgANgA3ADYANYA2gDUANIAygDSAMIA3QCyANoAsQDYALQAywC0AMgAsADEAKEAxQCSAL8AiwDCAIQAuQB/ALkAegDBAHIAwgBnALsAWgC1AFoA","AVeVAFIAhwBYAHsAYwB5AGoAegB0AHIAdQBwAHcAcgB8AGgAeABlAHoAaAB+AGYAggB6AIIAdgCHAHcAkQBxAJwAegCfAG8AogBkAKgAWwCwAFcAuABYAMEAYgDGAFsA0ABbANYAXwDZAGAA4gBkAOUAaADlAGwA6QBlAPIAZQD4AGgA/ABYAAcBXgAKAV4AEgFiABYBYgAaAWoAIwF1ACsBhAAtAYcAMwGJADEBkAAxAZUANgGhADYBoQAtAaMAKQGzAB4BtwAfAcAAGAHEABkByQAMAdMAFQHRABwB1QAaAdYADwHQAP4A1wD5ANkA8wDRAOUA0QDgAMwA3gDJANYAygDMAMcAxwDJAMMAwQCwAMEArADFAKcAvwCjAMQAlwDBAJIAvACPAL4AiwC8AIYAvAB7AMAAdwC6AGMAvQBeALoAWwC1AFsAswBVAK8AVwCrAFQAqABYAJ4AUwA=","AVeYAGAAlABlAIwAZQCNAGoAhgBsAIkAcACHAHQAhwB9AIIAfwB6AH4AeQCDAHsAhgB5AIgAdgCGAHIAiwB1AI8AcwCVAHgAmwB9AJoAggCeAH8AoQB+AKcAeACsAHoAsQByALkAbgC4AGoAvwBqAMIAbgDEAHYAwQB2AMgAcwDLAHAA2ABhAPEAYQD1AFgAAQFUAAIBTgAIAUgAFAFJABgBUgAfAVEAJgFZAC8BXQAtAV0AKAFhACUBZAAnAWMALgFxADcBdgA1AXcAJgF9ACgBgQAtAYcALgGMACYBkAAmAZUALAGeACwBogAkAagAJQGrACkBtwAoAboAKwHCACsBxgAlAcwAJwHSACUByQD6AMIA6wC/ANcAugDRALwAyQC1AL0AtgC2ALQAswC0AKsAsQCnALIAowCuAKEAsgCUALIAjACuAIgAqQCHAKoAgwCzAHoAsgBvAKsAZgA=","AgW0ADkBtgA7Ab8AOgG9ADYBtwA2AUuuAGYAqABmAJgAcACWAH0AmACMAJUAjgCUAJYAkQCYAJEAnwCLAKMAiwCmAJIAqgCSAK4AjAC1AIYAyACDAMMAfQDGAH0A1gB7ANgAfQDfAEYAKgFHAC0BTAApAVkAFQF7AOkAhQDsAIMA8QCMAPsAjQALAYsADQGJABwBkgAhAZgAHwGjACQBqgAiAa8AJwG2ACcBugAkAb0AJwHFACYByAApAdIAKQHWACIB2QAiAd0AHgHhAB4B4wAiAeIAKgHlACsB7AAnAfUAHAH2ABIB6wD9AOsA+gDzAPQA8wDtAOEA1gDgANAA2ADMANUAxwDZAMIA1QC/ANEAtQDVALIA3ACzAN0AsADUAKUA1QChAMwAmgDKAIgAvwCDAMEAgQDAAHsAuwB2ALkAbQA=","AVykADYAogA5AKIAQACdAEMAmQA/AJcAQACYAEQAkABIAIMAWACCAGUAegBpAIMAbACGAHcAjwCCAHwAjwBzAI8AbgCTAGQAlQBYAJsAUwChAFwAtABeALUAZgCwAGkAsQBgAL4AWgDCAF8AxQBfAM8AZADXAE4A4gBQAOYARwDuAEsA8ABJAPQASQD9AEsAAgFVAAkBYgAcAWYAHAF3AC4BewAqAYMANAGJADgBjgA0Aa8ANAGxADYBtwA0AboANwHAADUBwwA5AckANAHOADgB2AAwAfsAKgH7ACcB8wAbAfgAGQH9ABMB/gACAfwA/QAEAfUABAHrAAkB5QAOAeUAEwHfABMB2AAQAdAAAAG8AP0AvAD6ALcA9wC3AO8AsADrAK8A6QCqAOoAngDmAJYA3wCQANkAkADWAI0A0ACMAMQAfwDKAHIAzABhAMcAVQC+AEsAwwBAALkARQC0AEIAtAA9AK4AQgCmADwApgA3AA==","AVh0AFwAbABmAGwAcQBoAHYAbAB2AG0AegBiAIQAYgCPAF4AmwBjAKQAXQCxAFkAtQBTANAAUwDcAFcA3wBbAN4AXgDiAFcA7QBPAAEBUAAFAVUA/QBaAP8AVwALAVcAFwFQACMBWwAqAWIANQFqADUBcQAqAXcALgF7ACwBfgAoAX4AJAGHACEBiQAnAY4AKgGVACoBmgAkAZ4AJAGkACcBqQAuAawALgG0ACgBvwAmAcUAHgHHACIBzwAoAdkAKAHhAB4B7gAdAfQAJwH6ACcBAQEbAQEBEgH+AA8B/gAKAQcBAgENAfkADQH1ABQB8wAUAekADwHgAAsB3QAMAdkAAgHSAAIByQD9AMUA8ADDAOcAtwDqALYA7gC4AO8AtgDsALMA5wCzAN4ArwDRAKUA0AChAMkAmwDJAJYAxACTAL8AiwDCAIUAwQCDALcAfQCnAHgAlQBcAIkAVQCBAFoA"];
+ function unpackCutout(b64){
+  const bytes=atob(b64);let p=0;const rings=[],n=bytes.charCodeAt(p++);
+  for(let i=0;i<n;i++){
+   const ring=[],count=bytes.charCodeAt(p++);
+   for(let j=0;j<count;j++){
+    const x=bytes.charCodeAt(p++)|bytes.charCodeAt(p++)<<8;
+    const y=bytes.charCodeAt(p++)|bytes.charCodeAt(p++)<<8;
+    ring.push([x,y]);
+   }
+   rings.push(ring);
+  }
+  return rings;
+ }
+ const cutouts=encodedCutouts.map(unpackCutout);
+ function clipActor(i,pose,left,top,w,h){
+  const f=pose.frame,state=pose.state,u=f/5,wave=Math.sin(2*Math.PI*f/6);
+  ctx.beginPath();
+  for(const ring of cutouts[i]){
+   for(let j=0;j<ring.length;j++){
+    const [x,y]=ring[j],torso=clamp((235-y)/165,0,1),
+       legs=clamp((y-176)/125,0,1),
+       hair=clamp((192-y)/153,0,1)*clamp((150-x)/88,0,1),
+       right=clamp((x-152)/90,0,1)*clamp((y-115)/75,0,1)*clamp((240-y)/60,0,1),
+       leftArm=clamp((152-x)/90,0,1)*clamp((y-112)/70,0,1)*clamp((248-y)/70,0,1),
+       dress=clamp((y-185)/135,0,1);
+    let dx=0,dy=0;
+    if(state==='idle'){
+     dx=1.2*wave*torso+3.2*Math.sin(f*.60+y*.039+i*.7)*hair+2*Math.sin(f*.69+y*.045)*dress;
+     dy=-1.3*Math.sin(f*.56)*torso;
+    }else if(state==='walk'){
+     dx=2.4*wave*torso+4*Math.sin(f*.82+y*.037+i*.4)*hair
+        +6.4*wave*legs*Math.tanh((x-150)/23)+4.5*Math.sin(f*1.13+i*.3)*dress;
+     dy=-3*Math.abs(wave)*(1-legs*.4)+1.7*Math.sin(f*2.2)*legs;
+    }else if(state==='attack'){
+     const shift=[-9,-14,2,27,16,0][f];
+     dx=shift+[-9,-13,0,12,7,0][f]*torso
+        +(f===2||f===3?8:f===1?-4:0)*right
+        -3.3*Math.sin(y*.06+f*1.1)*hair-shift*.30*dress;
+     dy=(f===1||f===2?-2:f===3?-5:1)*torso;
+    }else if(state==='cast'){
+     dy=[0,-3,-7,-10,-7,-1][f]*(1-legs*.65);
+     dx=3.3*Math.sin(f*.74+y*.043)*hair+7*Math.sin(Math.PI*u)*right
+        -4*Math.sin(Math.PI*u)*leftArm+4.8*Math.sin(f*.85+y*.057)*dress;
+    }else if(state==='hurt'){
+     dx=[0,-10,-22,-13,-6,0][f]+[-1,-5,-13,-7,-4,0][f]*torso
+        +4*Math.sin(f*1.7+y*.06)*dress;
+     dy=[0,2,7,5,2,0][f]*(1-legs*.6);
+    }
+    const px=left+(x+dx)*w/300,py=top+(y+dy)*h/320;
+    if(j===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+   }
+   ctx.closePath();
+  }
+  ctx.clip('evenodd');
+ }
  const ACTION_NAMES=['idle','walk','attack','cast','hurt'];
  const FRAME_COUNT=6,FRAME_W=300,FRAME_H=320;
  const currentClips=Array(7).fill('idle'),currentFrames=Array(7).fill(0),actorOffsets=Array(7).fill(0);
@@ -186,12 +246,14 @@
    const localIndex=i<4?i:i-4;
    const row=(localIndex*ACTION_NAMES.length+ACTION_NAMES.indexOf(pose.state))*FRAME_H;
    const col=pose.frame*FRAME_W;
-   ctx.drawImage(sheet,col,row,FRAME_W,FRAME_H,left,top,w,h);
+   ctx.save();clipActor(i,pose,left,top,w,h);
+   ctx.drawImage(sheet,col,row,FRAME_W,FRAME_H,left,top,w,h);ctx.restore();
    ctx.globalAlpha=1;
   }else if(ready(actors)){
    // Initial-load fallback only. Normal combat draws a separately pre-rendered frame.
    ctx.globalAlpha=alive?1:.32;
-   ctx.drawImage(actors,i*300,0,300,320,left,top,w,h);
+   ctx.save();clipActor(i,{state:'idle',frame:0},left,top,w,h);
+   ctx.drawImage(actors,i*300,0,300,320,left,top,w,h);ctx.restore();
    ctx.globalAlpha=1;
   }else{ctx.fillStyle='#787490';ctx.beginPath();ctx.ellipse(0,-h*.5,w*.22,h*.44,0,0,TAU);ctx.fill()}
   if(move.flash>0){ctx.globalCompositeOperation='screen';ctx.globalAlpha=move.flash*.62;ctx.fillStyle=i<4?'#d4fff4':'#ffb7c0';ctx.fillRect(left,top,w,h);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1}
@@ -272,5 +334,5 @@
   }
   drawSpells(now);foreground(t);frames++;nowClock=now;
  }
- window.MoonfallScene={render,cue,reset,getStats(){return {mode:'layered-2.5D',actors:7,backgroundLoaded:ready(background),backgroundFixed:true,backgroundPaints,atmosphereFrames,layerCount:4,spritesLoaded:ready(actors),frames,activeEffects:activeCueCount,lastCue,reducedMotion:reduced,atlasLoaded:frameAtlases.map(ready),framesPerAction:FRAME_COUNT,actionNames:ACTION_NAMES,animationStates:[...currentClips],frameIndices:[...currentFrames],actorOffsets:[...actorOffsets]}}};
+ window.MoonfallScene={render,cue,reset,getStats(){return {mode:'layered-2.5D',actors:7,backgroundLoaded:ready(background),backgroundFixed:true,backgroundPaints,atmosphereFrames,layerCount:4,spritesLoaded:ready(actors),frames,activeEffects:activeCueCount,lastCue,reducedMotion:reduced,atlasLoaded:frameAtlases.map(ready),framesPerAction:FRAME_COUNT,cutouts:cutouts.length,cutoutMode:'foreground-only animated silhouettes',actionNames:ACTION_NAMES,animationStates:[...currentClips],frameIndices:[...currentFrames],actorOffsets:[...actorOffsets]}}};
 })();

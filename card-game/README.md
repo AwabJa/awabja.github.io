@@ -43,3 +43,7 @@ All gameplay lives in the existing browser-side game logic; the card rules remai
 The gothic courtyard is now a dedicated **static `sceneBackground` canvas**, rendered only after the background asset loads or the screen resolution changes. The separate `sceneAtmosphere` canvas holds moving fog and torchlight; `sceneWorld` contains characters, spells, particles, and hit reactions; the `game` canvas contains health bars, hand, card previews, and controls. No animation translates or repositions the architecture.
 
 The mobile browser test checks that the static canvas does not repaint while the other layers animate and while a card is played. Browser-based fullscreen depends on the operating system; the card battle remains landscape-first.
+
+## Foreground-only sprite masks
+
+All seven character sprites now use manually refined silhouette masks to remove fragments of the original castle, pillars and waterfall that were accidentally embedded in the sprite atlases. Masks deform along with the existing idle, walking, attacking, casting and damage frames, keeping the actor separate from the fixed courtyard without downloading new large textures. Source character artwork remains concept quality and will need dedicated clean drawings for production.

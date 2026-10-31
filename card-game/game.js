@@ -6,7 +6,7 @@ const loading=document.getElementById('loadMessage');
 const cardsArt=new Image();
 cardsArt.decoding='async';
 const artwork=[cardsArt];
-cardsArt.src='assets/cards-hd.webp?v=moonfall-fixed-world-1';
+cardsArt.src='assets/cards-hd.webp?v=moonfall-clean-sprites-1';
 const W=1600,H=800,THEME={gold:'#f1d4a1',cream:'#f7e7d0',muted:'#bac0cb',blue:'#a6cbff',red:'#ef8799',green:'#9be3b6'};
 const CARDS=[
  {id:'shadow',name:'Shadow Step',rarity:'Rare',cost:1,kind:'attack',description:'Deal 135 damage to your selected enemy. If this defeats it, regain 1 energy.',amount:135,flavor:'Disappear into the night. Return as a blade.',symbol:'✧',hue:'#c4a6ff'},
