@@ -6,7 +6,7 @@ const loading=document.getElementById('loadMessage');
 const cardsArt=new Image();
 cardsArt.decoding='async';
 const artwork=[cardsArt];
-cardsArt.src='assets/cards-hd.webp?v=moonfall-5-stage';
+cardsArt.src='assets/cards-hd.webp?v=moonfall-25d-1';
 const W=1600,H=800,THEME={gold:'#f1d4a1',cream:'#f7e7d0',muted:'#bac0cb',blue:'#a6cbff',red:'#ef8799',green:'#9be3b6'};
 const CARDS=[
  {id:'shadow',name:'Shadow Step',rarity:'Rare',cost:1,kind:'attack',description:'Deal 135 damage to your selected enemy. If this defeats it, regain 1 energy.',amount:135,flavor:'Disappear into the night. Return as a blade.',symbol:'✧',hue:'#c4a6ff'},
@@ -51,7 +51,7 @@ function drawHeader(){
  ctx.fillStyle=grad;ctx.fillRect(0,0,W,106);
  text('✧',31,37,42,THEME.gold,'Georgia');
  text('ARCANA DUEL',79,35,31,THEME.cream,'Georgia','left','700');
- text('LIVE 3D',322,39,15,'#e7d4b2','system-ui','left','700');
+ text('2.5D ART',322,39,15,'#e7d4b2','system-ui','left','700');
  pill(`TURN ${game.turn}`,758,15,155,40,'#211e2bdb','#d6b78d',21);
  const live=game.foes.filter(f=>f.hp>0).length;
  pill(`${live} ENEMIES`,927,15,155,40,'#231b2bd8','#c58e9d',16);
@@ -89,7 +89,8 @@ function cardFrame(index,slot,x,y,w,h,large=false){
  const c=CARDS[index];const active=game.energy>=c.cost;
  ctx.save();ctx.shadowColor=(slot===game.hover?'#f7dc98':'#000a');ctx.shadowBlur=slot===game.hover?22:12;
  rr(x,y,w,h,11,gradient(x,y,w,h,[[0,'#dfc48d'],[.32,'#4e4b72'],[1,'#d5ac78']]),slot===game.hover?'#fff2ca':'#dcbb81',3);ctx.restore();
- rr(x+6,y+6,w-12,h-12,7,'#161624','#726277',1);
+ rr(x+6,y+6,w-12,h-12,7,'#161624','#c3a578',1.4);
+ rr(x+9,y+9,w-18,h-18,5,null,'#997a59',.7);
  rr(x+10,y+12,w-20,h-24,6,gradient(x+10,y,w-20,h,[[0,'#3b324b'],[1,'#171727']]));
  if(cardsArt.complete&&cardsArt.naturalWidth>0){
    const dx=x+12,dy=y+39,dw=w-24,dh=h-105,srcW=276,srcH=272;
@@ -104,7 +105,8 @@ function cardFrame(index,slot,x,y,w,h,large=false){
  rr(x+14,y+12,39,37,20,'#27213e','#f9d8aa',2);
  text(c.cost,x+34,y+31,25,THEME.cream,'Georgia','center','700');
  text(c.rarity.toUpperCase(),x+w-12,y+24,large?11:9,'#fbe0bb','system-ui','right','900');
- rr(x+10,y+h-66,w-20,54,5,'#151424ee','#ab896c80',1);
+ rr(x+10,y+h-66,w-20,54,5,'#171423f5','#d3b889aa',1.5);
+ for(const o of [15,w-15]){text('✧',x+o,y+h-59,11,THEME.gold,'Georgia','center')}
  text(c.name,x+w/2,y+h-49,large?23:14,THEME.cream,'Georgia','center');
  text(c.kind.toUpperCase()+' · '+c.cost+' ENERGY',x+w/2,y+h-24,large?13:9,c.hue,'system-ui','center','800');
  if(!large&&!active){rr(x+6,y+6,w-12,h-12,7,'#0a0a1666')}
@@ -231,7 +233,7 @@ function draw(now=performance.now()){
    canvas.dataset.foes=game.foes.map(x=>x.hp).join(',');canvas.dataset.allies=game.allies.map(x=>x.hp).join(',');
    canvas.dataset.phase=game.ended||'playing';lastSnapshotAt=now;
  }
- zones.length=0;window.Moonfall3D?.render(now,game);ctx.clearRect(0,0,W,H);scene();drawHeader();drawTable(now);drawParticles(now);
+ zones.length=0;window.MoonfallScene?.render(now,game);ctx.clearRect(0,0,W,H);scene();drawHeader();drawTable(now);drawParticles(now);
  if(game.preview?.type==='card')drawPreview();else if(game.preview?.type==='deck')drawDeck();else if(game.preview?.type==='guide')drawGuide();
  if(game.ended)drawResult();
  requestAnimationFrame(draw);
@@ -296,7 +298,7 @@ function chooseAction(x,y){
 window.__moonfallHitTest=(x,y)=>{const z=chooseAction(x,y);return z?{action:z.action,meta:z.meta}:null};
 window.__moonfallPreviewSize=()=>{const stretch=(canvas.clientWidth/W)/(canvas.clientHeight/H);return {width:419*(2/3)/stretch,height:419}};
 window.__moonfallFanLayout=()=>handLayout().map(c=>({slot:c.slot,card:CARDS[game.hand[c.slot]]?.id,x:c.x,y:c.y,w:c.w,h:c.h,angle:c.angle,polygon:cardPolygon(c)}));
-window.__moonfallTestState=()=>({models:window.Moonfall3D?.getStats?.()||null,turn:game.turn,energy:game.energy,maxEnergy:game.maxEnergy,hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,allies:game.allies.map(a=>({hp:a.hp,shield:a.shield})),foes:game.foes.map(f=>({hp:f.hp,burnTurns:f.burnTurns})),ended:game.ended,previewCard:game.preview?.type==='card'?CARDS[game.preview.index].id:null});
+window.__moonfallTestState=()=>({models:window.MoonfallScene?.getStats?.()||null,turn:game.turn,energy:game.energy,maxEnergy:game.maxEnergy,hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,allies:game.allies.map(a=>({hp:a.hp,shield:a.shield})),foes:game.foes.map(f=>({hp:f.hp,burnTurns:f.burnTurns})),ended:game.ended,previewCard:game.preview?.type==='card'?CARDS[game.preview.index].id:null});
 function activate(z){if(!z)return;
  if(game.ended){if(z.action==='restart'){game=freshGame();game.draw=game.draw.slice(5);announce('New battle started.');}return}
  if(game.preview){

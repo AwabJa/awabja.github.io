@@ -262,17 +262,20 @@ const cardsHtml=readFileSync(join(root,'card-game/index.html'),'utf8');
 const cardsApp=readFileSync(join(root,'card-game/game.js'),'utf8');
 check(cardsHtml.includes('src="game.js?v=') &&
       cardsHtml.includes('href="style.css?v=') &&
-      cardsHtml.includes('src="scene3d.js?v=') &&
-      cardsHtml.includes('src="fallback-scene.js?v=') &&
-      cardsHtml.includes('id="scene3d"') &&
+      cardsHtml.includes('src="scene25d.js?v=') &&
+      cardsHtml.includes('id="sceneWorld"') &&
       cardsHtml.includes('id="game"'), 'Moonfall game must load the illustrated landscape canvas');
-check(existsSync(join(root,'card-game/scene3d.js')) &&
-      existsSync(join(root,'card-game/fallback-scene.js')) &&
+check(existsSync(join(root,'card-game/scene25d.js')) &&
+      existsSync(join(root,'card-game/assets/backdrop2.webp')) &&
+      existsSync(join(root,'card-game/assets/characters.webp')) &&
       existsSync(join(root,'card-game/assets/cards-hd.webp')) &&
       existsSync(join(root,'card-game/manifest.webmanifest')) &&
       !existsSync(join(root,'card-game/assets/battle-hd.webp')) &&
       !existsSync(join(root,'card-game/assets/atlas.webp')),
-      '3D renderer, procedural fallback, card art and fullscreen metadata ship without the old bitmap battlefield');
+      'Illustrated 2.5D layers and fullscreen metadata ship without old 3D renderer');
+check(!existsSync(join(root,'card-game/scene3d.js')) &&
+      !existsSync(join(root,'card-game/fallback-scene.js')),
+      'Old low-poly renderers must remain removed');
 check(!existsSync(join(root,'card-game/app.js')), 'Retired card-game prototype must be removed');
 check(cardsApp.includes('selectedEnemy') && cardsApp.includes('game.hand') &&
       cardsApp.includes('preview') && cardsApp.includes('requestFullscreen') &&

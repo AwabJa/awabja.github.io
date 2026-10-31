@@ -22,6 +22,7 @@ jobs:
         with:
           node-version: '22'
       - run: node --check card-game/game.js
+      - run: node --check card-game/scene25d.js
       - run: node --check card-game/browser.test.mjs
       - run: npm install --no-save --package-lock=false playwright-core@1.56.1
       - name: Test landscape mobile, portrait mobile, and desktop controls

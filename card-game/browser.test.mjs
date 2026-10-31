@@ -1,4 +1,4 @@
-/** Moonfall live-model scene: 3D or geometry fallback plus complete card actions. */
+/** Moonfall 2.5D illustrated layers and complete playable card actions. */
 import assert from 'node:assert/strict';
 import {readFile, access} from 'node:fs/promises';
 import {dirname, join} from 'node:path';
@@ -9,22 +9,23 @@ const root=dirname(fileURLToPath(import.meta.url));
 const htmlRaw=await readFile(join(root,'index.html'),'utf8');
 const css=await readFile(join(root,'style.css'),'utf8');
 const jsRaw=await readFile(join(root,'game.js'),'utf8');
-const sceneJS=await readFile(join(root,'scene3d.js'),'utf8');
-const fallbackJS=await readFile(join(root,'fallback-scene.js'),'utf8');
+const sceneJS=await readFile(join(root,'scene25d.js'),'utf8');
+const background=(await readFile(join(root,'assets/backdrop2.webp'))).toString('base64');
+const actors=(await readFile(join(root,'assets/characters.webp'))).toString('base64');
 const cards=(await readFile(join(root,'assets/cards-hd.webp'))).toString('base64');
 const manifest=JSON.parse(await readFile(join(root,'manifest.webmanifest'),'utf8'));
-assert.match(htmlRaw,/src="game\.js\?v=moonfall-5-stage"/);
-assert.match(htmlRaw,/src="scene3d\.js\?v=moonfall-5-stage"/);
-assert.match(htmlRaw,/src="fallback-scene\.js\?v=moonfall-5-stage"/);
-assert.match(htmlRaw,/<canvas id="scene3d"/);
+assert.match(htmlRaw,/src="game\.js\?v=moonfall-25d-1"/);
+assert.match(htmlRaw,/src="scene25d\.js\?v=moonfall-25d-1"/);
+assert.match(htmlRaw,/<canvas id="sceneWorld"/);
 assert.match(htmlRaw,/apple-mobile-web-app-capable/);
-assert.match(htmlRaw,/href="style\.css\?v=moonfall-5-stage"/);
+assert.match(htmlRaw,/href="style\.css\?v=moonfall-25d-1"/);
 assert.doesNotMatch(jsRaw,/sceneArt|battle-hd|atlas\.webp/,'Old painted battlefield not used');
-assert.match(sceneJS,/getContext\('webgl'/);
-assert.match(sceneJS,/humanoid\(/);
-assert.match(fallbackJS,/environment\(/);
-assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-5-stage'/);
-assert(cards.length>100000,'High-resolution illustrated card art must be present');
+assert.match(sceneJS,/layered illustration/);
+assert.match(sceneJS,/drawActor\(/);
+assert.doesNotMatch(sceneJS,/getContext\('webgl'/);
+assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-25d-1'/);
+assert(cards.length>100000,'Card art must be present');
+assert(background.length>150000 && actors.length>100000,'High-resolution illustration layers must be present');
 assert.equal(manifest.display,'fullscreen');
 assert.equal(manifest.orientation,'landscape');
 assert.match(css,/\.game-shell\{position:relative;width:100vw!important;height:100dvh!important/);
@@ -33,7 +34,9 @@ assert.match(css,/\.game-shell\{position:relative;width:100vw!important;height:1
 const html=htmlRaw.replace(/<meta http-equiv="Content-Security-Policy"[^>]+>/,'')
   .replace(/<link rel="stylesheet"[^>]+>/,`<style>${css}</style>`)
   .replace(/<script src="[^"]+" defer><\/script>/g,'');
-const js=jsRaw.replace("cardsArt.src='assets/cards-hd.webp?v=moonfall-5-stage';",`cardsArt.src='data:image/webp;base64,${cards}';`);
+const js=jsRaw.replace("cardsArt.src='assets/cards-hd.webp?v=moonfall-25d-1';",`cardsArt.src='data:image/webp;base64,${cards}';`);
+const scene=sceneJS.replace("background.src='assets/backdrop2.webp?v=moonfall-25d-1';",`background.src='data:image/webp;base64,${background}';`)
+ .replace("actors.src='assets/characters.webp?v=moonfall-25d-1';",`actors.src='data:image/webp;base64,${actors}';`);
 let executablePath;
 for (const candidate of [process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/chromium'].filter(Boolean)) {
   try {await access(candidate);executablePath=candidate;break;} catch {}
@@ -47,16 +50,16 @@ try {
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
     await page.setContent(html);
-    await page.addScriptTag({content:fallbackJS});
-    await page.addScriptTag({content:sceneJS});
+    await page.addScriptTag({content:scene});
     await page.addScriptTag({content:js});
     await page.locator('#loadMessage').waitFor({state:'hidden'});
     const canvas=page.locator('#game');
     const box=await canvas.boundingBox();
     assert(box && box.width>=100 && box.height>=50,'Canvas must render at '+width+'×'+height);
-    assert.equal(await page.locator('#scene3d').count(),1,'Independent 3D model canvas is present');
-    const modelStats=await page.evaluate(()=>window.Moonfall3D?.getStats());
-    assert.equal(modelStats?.models,7,'Seven separately rendered character models or fallback equivalents');
+    assert.equal(await page.locator('#sceneWorld').count(),1,'Separate illustration canvas is present');
+    const modelStats=await page.evaluate(()=>window.MoonfallScene?.getStats());
+    assert.equal(modelStats?.actors,7,'Seven independently rendered anime character sprites');
+    assert.equal(modelStats?.mode,'layered-2.5D','Renderer is an illustrated 2.5D scene');
     assert(Math.abs(box.width-width)<=1 && Math.abs(box.height-height)<=1,'Canvas fills entire viewport');
     const raster=await page.evaluate(()=>({w:document.getElementById('game').width,h:document.getElementById('game').height}));
     assert(raster.w>=1600 && raster.h>=800,'Canvas draws above baseline logical resolution');
@@ -88,7 +91,7 @@ try {
       assert(fan[0].x+fan[0].w>fan[1].x,'Cards overlap like a real hand');
       assert(fan[2].y<fan[0].y,'Middle of the hand is raised');
       assert.match(jsRaw,/const gaugeY=447/,'Health bars are anchored under characters');
-      assert.match(sceneJS,/perspectiveOrtho\(-10\.9,10\.9,-5\.6,4\.25/,'Camera is zoomed out');
+      assert.match(sceneJS,/positions=\[/,'Sprites are laid out on the battlefield');
       const visiblePoint=async slot=>{
         return page.evaluate(slot=>{
           const c=window.__moonfallFanLayout()[slot];
@@ -104,7 +107,7 @@ try {
       assert.equal((await state()).preview,'guide','Help overlay opens');
       await click(800,650);
       assert.equal((await state()).preview,null,'Help overlay closes');
-      await click(1220,330);
+      await click(1261,330);
       assert.equal((await state()).selectedEnemy,1,'Center enemy is independently targetable');
       const center=await visiblePoint(2);
       assert(center,'The center card exposes a tappable face');
@@ -144,5 +147,5 @@ try {
     assert.deepEqual(errors,[],'No browser JavaScript errors at '+width+'×'+height);
     await page.close();
   }
-  console.log('MOONFALL MODEL SCENE CHECKS PASSED: procedural characters and environment, controls and mobile layout');
+  console.log('MOONFALL 2.5D CHECKS PASSED: illustration layers, seven sprites, cards, turns and mobile layout');
 } finally {await browser.close();}

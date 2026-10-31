@@ -9,21 +9,20 @@
 <meta name="apple-mobile-web-app-title" content="Arcana Duel">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.webmanifest?v=moonfall-3">
-<meta name="description" content="Arcana Duel: an live-3D landscape strategy card battle. Play cards, defeat three enemies, and protect your party.">
+<meta name="description" content="Arcana Duel: an 2.5D anime landscape strategy card battle. Play cards, defeat three enemies, and protect your party.">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; frame-src 'none'; form-action 'self'; base-uri 'self'">
 <title>Arcana Duel | The Moonfall Battle</title>
-<link rel="stylesheet" href="style.css?v=moonfall-5-stage">
-<script src="fallback-scene.js?v=moonfall-5-stage" defer></script>
-<script src="scene3d.js?v=moonfall-5-stage" defer></script>
-<script src="game.js?v=moonfall-5-stage" defer></script>
+<link rel="stylesheet" href="style.css?v=moonfall-25d-1">
+<script src="scene25d.js?v=moonfall-25d-1" defer></script>
+<script src="game.js?v=moonfall-25d-1" defer></script>
 </head>
 <body>
 <main class="experience" aria-label="Arcana Duel game">
   <div class="game-shell" id="gameShell">
     <button id="fullscreenButton" type="button" class="fullscreen-button" aria-label="Enter full screen">⛶ FULLSCREEN</button>
     <div id="fullscreenHint" class="fullscreen-hint" hidden role="status"><strong>iPhone fullscreen</strong><span>In Safari, tap Share → Add to Home Screen, then open Arcana Duel from its icon. The installed game can use the full available display.</span><button id="dismissFullscreenHint" type="button">Got it</button></div>
-    <canvas id="scene3d" aria-hidden="true"></canvas>
+    <canvas id="sceneWorld" aria-hidden="true"></canvas>
     <canvas id="game" width="1600" height="800" tabindex="0" aria-label="Zoomed-out party battle with health bars below characters and a compact fanned card hand. Tap a card to preview, then play it. Select enemy portraits to target.">Your browser must support canvas to play this game.</canvas>
     <div class="orientation-panel" id="orientationPanel" aria-live="polite">
       <span class="rotate-glyph" aria-hidden="true">↻</span>
