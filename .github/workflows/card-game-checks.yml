@@ -24,3 +24,15 @@ jobs:
       - run: node --check card-game/app.js
       - run: node --check card-game/engine.mjs
       - run: node --test card-game/game.test.mjs
+      - run: npm install --no-save --package-lock=false playwright-core@1.56.1
+      - name: Browser smoke test at mobile, tablet and desktop widths
+        run: |
+          if command -v google-chrome >/dev/null 2>&1; then
+            export CHROME_BIN="$(command -v google-chrome)"
+          elif command -v chromium >/dev/null 2>&1; then
+            export CHROME_BIN="$(command -v chromium)"
+          else
+            echo 'Chrome/Chromium required' >&2
+            exit 1
+          fi
+          node card-game/browser.test.mjs
