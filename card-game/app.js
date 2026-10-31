@@ -73,106 +73,134 @@ function stat(name,value){
   const line=el('div','stat-line');add(line,el('span','',name),el('strong','',value));return line;
 }
 
-function fighter(id,name,side,{hp,maxHp,shield,intent,leader=false}={}){
-  const unit=el('div','fighter fighter-'+side+(leader?' fighter-leader':''));
-  const figure=el('div','fighter-figure');
-  figure.appendChild(characterArt(id));unit.appendChild(figure);
-  const plate=el('div','fighter-plate');
-  const title=el('strong','fighter-name',name);
-  const line=el('div','fighter-life');
-  if(Number.isFinite(hp)){
-    const health=el('div','health-track fighter-health');
-    health.setAttribute('role','progressbar');health.setAttribute('aria-valuemin','0');
-    health.setAttribute('aria-valuemax',String(maxHp));health.setAttribute('aria-valuenow',String(hp));
-    const bar=el('span','health-fill'+(side==='ally'?' player':''));
-    bar.style.width=(hp/maxHp*100)+'%';health.appendChild(bar);
-    add(line,el('span','',hp+' / '+maxHp),health);
-  }else add(line,el('span','fighter-tag',side==='ally'?'ALLY · TEAM HEALTH':'SPECTRAL ECHO · VISUAL'));
-  add(plate,title,line);
-  if(shield)plate.appendChild(el('small','fighter-shield','◆ '+shield+' shield'));
-  if(intent)plate.appendChild(el('small','fighter-intent','NEXT: '+intent));
-  unit.appendChild(plate);
-  return unit;
+
+const TUTORIAL_KEY='arcana-duel-tutorial-v2';
+const LESSONS=[
+ {heading:'1. Play a card',body:'Tap any glowing card in your hand. The number in its corner is its energy cost. Attack cards reduce enemy health.'},
+ {heading:'2. Watch the numbers',body:'Your energy goes down when you play cards. Green is your health, red is enemy health, and a shield blocks damage.'},
+ {heading:'3. End your turn',body:'The enemy moves after you press End Turn. Read its NEXT ATTACK before deciding which cards to play.'}
+];
+let lesson=0;
+let guideOpen=true;
+try{if(localStorage.getItem(TUTORIAL_KEY)==='done'){lesson=3;guideOpen=false}}catch{}
+function closeGuide(){
+  guideOpen=false;lesson=3;
+  try{localStorage.setItem(TUTORIAL_KEY,'done')}catch{}
+}
+function barFor(value,max,friend){
+  const track=el('div','duel-hp-track');
+  track.setAttribute('role','progressbar');
+  track.setAttribute('aria-label',friend?'Hero health':'Enemy health');
+  track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax',String(max));
+  track.setAttribute('aria-valuenow',String(value));
+  const fill=el('span',friend?'duel-hp-fill ally':'duel-hp-fill enemy');
+  fill.style.width=(100*value/Math.max(1,max))+'%';
+  track.appendChild(fill);return track;
+}
+function combatant(id,name,role,hp,max,shield,friend){
+  const unit=el('div','combatant '+(friend?'combatant-ally':'combatant-enemy'));
+  const visual=el('div','combatant-visual');
+  const halo=el('div','combatant-halo');halo.setAttribute('aria-hidden','true');
+  visual.appendChild(halo);
+  visual.appendChild(characterArt(id));
+  const summary=el('div','combatant-summary');
+  add(summary,el('span','combatant-role',role),el('h2','combatant-name',name),
+      el('span','combatant-hp-number',hp+' / '+max+' HP'),barFor(hp,max,friend));
+  if(shield>0)summary.appendChild(el('span','combatant-shield','◆ '+shield+' shield'));
+  add(unit,visual,summary);return unit;
+}
+function renderGuide(){
+  if(!guideOpen||lesson>=3)return null;
+  const item=LESSONS[lesson];
+  const guide=el('aside','battle-guide');
+  guide.setAttribute('aria-label','How to play');
+  add(guide,el('span','guide-count','HOW TO PLAY · '+(lesson+1)+' OF 3'),
+      el('h3','guide-heading',item.heading),
+      el('p','guide-copy',item.body));
+  const actions=el('div','guide-actions');
+  actions.appendChild(button(lesson===2?'Got it':'Next tip','guideNext','guide-next'));
+  actions.appendChild(button('Skip guide','guideSkip','guide-skip'));
+  guide.appendChild(actions);
+  return guide;
 }
 function renderBattle(){
   const shell=el('div','duel-shell');
   const header=el('div','duel-heading');
   const intro=el('div','duel-heading-left');
-  add(intro,label('CHAPTER I  ·  THE SHATTERED CONSTELLATION'),el('h1','duel-title','The Hollow Cathedral'));
+  add(intro,el('p','eyebrow','CHAPTER 01 · THE SHATTERED CONSTELLATION'),
+    el('h1','duel-title','The Hollow Cathedral'));
   const meta=el('div','duel-meta');
   add(meta,el('span','duel-stat','WAVE '+(battle.wave+1)+' / '+ENEMIES.length),
-    el('span','duel-stat','TURN '+battle.turn));
+    el('span','duel-stat','TURN '+battle.turn),
+    button('? How to play','guideOpen','guide-launch'));
   add(header,intro,meta);shell.appendChild(header);
   const arena=el('section','duel-arena');
-  arena.setAttribute('aria-label','Battlefield: your party faces the enemy');
-  const stageHead=el('div','stage-title');
-  add(stageHead,el('span','','✦  '+ENEMIES[battle.wave].title),
-    el('span','','TURN '+battle.turn));
-  arena.appendChild(stageHead);
-  const roster=el('div','duel-roster');
-  const allies=el('div','duel-team duel-allies');
-  add(allies,
-    fighter('healer','Aurelia','ally',{hp:battle.hp,maxHp:battle.maxHp}),
-    fighter('kitsune','Mika','ally'),
-    fighter('ronin','Caelum','ally'),
-    fighter('oracle','Luna','ally'));
-  const enemies=el('div','duel-team duel-enemies');
-  const foeIds=['wisp','stalker','queen'];
-  const foeId=foeIds[battle.wave];
+  arena.setAttribute('aria-label','Battlefield');
+  const matchup=el('div','duel-matchup');
+  matchup.appendChild(combatant('ronin','Caelum','YOU · ARCANE VANGUARD',
+    battle.hp,battle.maxHp,battle.shield,true));
+  const center=el('div','duel-center');
+  add(center,el('span','duel-versus','VS'),
+    el('span','duel-round','TURN '+battle.turn));
+  matchup.appendChild(center);
+  const enemy=ENEMIES[battle.wave];
+  const enemyId=['wisp','stalker','queen'][battle.wave];
+  matchup.appendChild(combatant(enemyId,enemy.name,'ENEMY · '+enemy.title,
+    battle.enemy.hp,battle.enemy.maxHp,battle.enemy.shield,false));
+  arena.appendChild(matchup);
   const intent=enemyIntent(battle);
-  const badge=el('div','enemy-name',ENEMIES[battle.wave].name);
-  add(enemies,
-    fighter('phantom','Shade','enemy'),
-    fighter(foeId,ENEMIES[battle.wave].name,'enemy',{hp:battle.enemy.hp,maxHp:battle.enemy.maxHp,shield:battle.enemy.shield,intent:intent.label,leader:true}),
-    fighter('empress','Echo','enemy'));
-  const mark=el('div','duel-vs','✧');mark.setAttribute('aria-hidden','true');
-  add(roster,allies,mark,enemies);arena.appendChild(roster);
-  const status=el('div','duel-status');
-  const hero=el('div','team-stat');
-  add(hero,el('span','team-stat-icon','◈'),el('span','', 'HERO '+battle.hp+'/'+battle.maxHp+' HP'+(battle.shield?' · '+battle.shield+' SHIELD':'')));
-  const enemy=el('div','team-stat enemy-stat');
-  add(enemy,el('span','team-stat-icon','✦'),el('span','',ENEMIES[battle.wave].name+' '+battle.enemy.hp+'/'+battle.enemy.maxHp+' HP'));
-  add(status,hero,enemy);arena.appendChild(status);
+  const attack=el('div','duel-forecast');
+  add(attack,el('span','forecast-eye','◈'),
+    el('span','forecast-label','ENEMY NEXT MOVE'),
+    el('strong','',intent.label));
+  if(battle.weak>0)attack.appendChild(el('span','forecast-debuff','WEAKENED'));
+  if(battle.burn>0)attack.appendChild(el('span','forecast-debuff','BURN '+battle.burn));
+  arena.appendChild(attack);
   shell.appendChild(arena);
   if(battle.phase!=='playing'){
-    const result=el('section','duel-result result');
-    const failed=battle.phase==='defeat',completed=battle.phase==='victory';
-    add(result,el('div','result-glyph',failed?'☽':completed?'✷':'✦'),
-      el('h2','',failed?'The stars fade':completed?'Legend Ascendant':'Trial complete'),
-      el('p','',failed?'Your party has fallen. Rearrange your deck and try again.':completed?'All three trials cleared. Your rewards have been added to the collection.':'You defeated '+ENEMIES[battle.wave].name+'. You recover 10 HP before the next battle.'));
-    const controls=el('div','result-actions');
-    if(battle.phase==='cleared')controls.appendChild(button('Continue to next trial','next','primary'));
-    controls.appendChild(button('Restart run','restart','secondary'));
-    controls.appendChild(button('Edit deck','collection','secondary'));
-    result.appendChild(controls);shell.appendChild(result);main.appendChild(shell);return;
+    const failed=battle.phase==='defeat',finished=battle.phase==='victory';
+    const panel=el('section','duel-result result');
+    add(panel,el('div','result-glyph',failed?'☽':finished?'✷':'✦'),
+      el('h2','',failed?'Try another strategy':finished?'Victory!':'Enemy defeated!'),
+      el('p','',failed?'The enemy took your final health point. Use shields, heals, and damage cards to survive.':finished?'All three enemies defeated. Your rewards are saved on this device.':'Your next enemy is stronger. You restore 10 HP before the next round.'));
+    const actions=el('div','result-actions');
+    if(battle.phase==='cleared')actions.appendChild(button('Next enemy','next','primary'));
+    actions.appendChild(button('Restart battle','restart','secondary'));
+    actions.appendChild(button('Edit deck','collection','secondary'));
+    panel.appendChild(actions);shell.appendChild(panel);main.appendChild(shell);return;
   }
-  const command=el('div','duel-command');
-  const support=el('div','duel-hero');
-  const avatar=el('div','duel-avatar');avatar.appendChild(characterArt('ronin'));
-  const heroCopy=el('div','duel-hero-copy');
-  add(heroCopy,el('strong','','CAELUM'),el('span','', 'Level 01 · Arcane Vanguard'),
-    el('small','', 'Draw '+battle.draw.length+'  ·  Discard '+battle.discard.length));
-  add(support,avatar,heroCopy);
-  const mana=el('div','duel-mana');
-  add(mana,el('strong','',battle.energy+' / '+battle.maxEnergy),el('span','','ENERGY'));
-  const gems=el('div','duel-gems');
-  for(let i=0;i<Math.max(battle.maxEnergy,battle.energy);i++)gems.appendChild(el('i',i<battle.energy?'lit':''));
-  gems.setAttribute('aria-label',battle.energy+' energy points remaining');mana.appendChild(gems);
-  const actionBar=el('div','duel-actions');
-  actionBar.appendChild(button('End Turn','end','duel-end'));
-  actionBar.appendChild(button('↺ Restart','restart','duel-restart'));
-  add(command,support,mana,actionBar);shell.appendChild(command);
-  const handBlock=el('section','duel-hand-section');
-  const handHead=el('div','hand-heading');add(handHead,el('h2','','YOUR HAND'),el('span','',battle.hand.length+' CARDS  ·  TAP TO CAST'));
+  const guide=renderGuide();
+  if(guide)shell.appendChild(guide);
+  const controls=el('section','duel-controls');
+  const mana=el('div','duel-energy');
+  add(mana,el('span','energy-heading','YOUR ENERGY'),el('strong','',battle.energy+' / '+battle.maxEnergy));
+  const jewels=el('div','duel-gems');
+  for(let i=0;i<battle.maxEnergy;i++){
+    const gem=el('i',i<battle.energy?'lit':'');
+    jewels.appendChild(gem);
+  }
+  mana.appendChild(jewels);
+  const info=el('div','duel-turn-explain');
+  add(info,el('strong','','YOUR TURN'),
+    el('span','', 'Play cards to attack, defend, or heal. Then end your turn.'));
+  const endButton=button('End Turn  →','end','duel-end');
+  endButton.setAttribute('aria-label','End your turn and let the enemy act');
+  add(controls,mana,info,endButton);shell.appendChild(controls);
+  const handSection=el('section','duel-hand-section');
+  const handHeader=el('div','hand-heading');
+  add(handHeader,el('h2','','YOUR CARDS — TAP TO PLAY'),
+    el('span','',battle.hand.length+' CARDS · '+battle.energy+' ENERGY'));
   const hand=el('div','hand');
-  if(!battle.hand.length)hand.appendChild(el('p','empty','Your hand is empty. End turn to draw five cards.'));
-  battle.hand.forEach((id,index)=>hand.appendChild(cardFace(BY_ID[id],true,index)));
-  const message=el('p','battle-message',battle.message);
-  message.setAttribute('role','status');message.setAttribute('aria-live','polite');
-  add(handBlock,handHead,hand,message);
-  shell.appendChild(handBlock);
-  const bottomNote=el('p','duel-note','Shield protects one enemy attack · Burn damages at end of turn · Your 4 allies share the hero health pool. Spectral echoes are visual only.');
-  shell.appendChild(bottomNote);main.appendChild(shell);
+  if(battle.hand.length===0)hand.appendChild(el('p','empty','No cards left in hand. Press End Turn to draw new ones.'));
+  battle.hand.forEach((id,i)=>hand.appendChild(cardFace(BY_ID[id],true,i)));
+  const feedback=el('p','battle-message',battle.message);
+  feedback.setAttribute('aria-live','polite');
+  add(handSection,handHeader,hand,feedback);shell.appendChild(handSection);
+  const foot=el('div','battle-bottom');
+  add(foot,el('span','', 'WIN: RED ENEMY HP REACHES 0'),
+    el('span','', 'LOSE: GREEN HERO HP REACHES 0'),
+    button('↺ Restart battle','restart','duel-restart'));
+  shell.appendChild(foot);main.appendChild(shell);
 }
 function renderCollection(){
   const head=el('div','section-head');
@@ -237,8 +265,11 @@ main.addEventListener('click',event=>{
   const target=event.target.closest('button[data-action]');
   if(!target||target.disabled)return;
   const action=target.dataset.action;const value=target.dataset.value;
-  if(action==='play'&&battle){const old=battle.phase;playCard(battle,Number(value));resolveRewards(old);render();return}
-  if(action==='end'&&battle){const old=battle.phase;endTurn(battle);resolveRewards(old);render();return}
+  if(action==='guideOpen'){guideOpen=true;lesson=0;render();return}
+  if(action==='guideSkip'){closeGuide();render();return}
+  if(action==='guideNext'){if(lesson>=2)closeGuide();else lesson++;render();return}
+  if(action==='play'&&battle){const old=battle.phase;const played=playCard(battle,Number(value));if(played&&guideOpen&&lesson===0)lesson=1;resolveRewards(old);render();return}
+  if(action==='end'&&battle){const old=battle.phase;endTurn(battle);if(guideOpen&&lesson<2)lesson=2;resolveRewards(old);render();return}
   if(action==='next'&&battle&&battle.phase==='cleared'){battle=nextEncounter(battle,progress.deck);render();return}
   if(action==='restart'||action==='start'){startBattle();return}
   if(action==='collection'){switchScreen('collection');return}

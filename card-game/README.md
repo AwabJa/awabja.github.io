@@ -13,11 +13,18 @@ A zero-dependency, mobile-first, single-player strategic collectible card game p
 - Deck shuffle/discard cycle, persistent collection, shards and card unlock packs
 - No payment system, server, analytics, third-party scripts, or external assets
 - Responsive touch-friendly cards, mouse and keyboard controls, reduced-motion mode
-- Cinematic cathedral battle with a four-character allied lineup, enemy and decorative spectral echoes, inline hand of illustrated cards, energy gems and End Turn button; combat still uses one shared hero health pool and one enemy health pool per encounter
+- Clear one-on-one cathedral battle with the hero and actual enemy, obvious health/energy bars, visible next enemy move, swipeable hand, and End Turn button
+
+## How to play
+
+1. Open the game in a browser. The first battle shows a 3-step tutorial; the “How to play” button reopens it at any time.
+2. Tap a highlighted card in your hand. Its number is the energy cost. Attack cards hurt the enemy, guard cards add a shield, and heal cards restore health.
+3. Read the enemy's upcoming move above your cards. End your turn when you run out of energy or have played enough cards. The enemy attacks, then you draw a new hand.
+4. Reduce the enemy's HP to zero before your HP reaches zero. Survive three consecutive encounters, unlock more cards and customize your deck.
 
 ## Status and limitations
 
-Card artwork now uses **original SVG anime-inspired character illustrations**, with character lineups and a painted-vector cathedral battlefield. These are early vector concepts, not the final fully illustrated character art shown in the visual mockup. The prototype is PvE only; there is no matchmaking or account sync. LocalStorage progress belongs to each browser/device and is not backed up online. Card rarity has no monetization attached.
+Card artwork now uses **original SVG anime-inspired character illustrations**, with character lineups and a painted-vector cathedral battlefield. These are early vector placeholders, **not** the fully illustrated anime character art shown in the visual mockup. The prototype is PvE only; there is no matchmaking or account sync. LocalStorage progress belongs to each browser/device and is not backed up online. Card rarity has no monetization attached.
 
 ## Run and test
 
