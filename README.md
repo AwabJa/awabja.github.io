@@ -8,9 +8,8 @@ Personal portfolio showcasing web development, user interfaces and interactive p
 
 - **[Flow](https://awabja.github.io/Flow/)** — Productivity workspace for projects, tasks and weekly planning.
 - **[serivia](https://awabja.github.io/serivia/)** — Cinematic movie discovery app with genre browsing, movie details and personal watchlist; optional TMDB connection.
-- **[Enzo](https://awabja.github.io/Enzo/)** — Browser-based first-person game prototype.
 
-Each project has its own directory. The homepage links to the existing project URLs.
+Flow and serivia remain featured on the homepage. The card game is being developed separately before a portfolio launch.
 
 ## Site structure
 
@@ -21,7 +20,8 @@ Each project has its own directory. The homepage links to the existing project U
 | `homepage.js` | Navigation, scroll progress, and animation |
 | `assets/homepage/` | Homepage artwork, including the serivia interface illustration |
 | `favicon.svg` | Shared favicon |
-| `Flow/`, `Enzo/`, `serivia/` | Independent projects |
+| `Flow/`, `serivia/` | Featured portfolio projects |
+| `card-game/` | In-development mobile-first collectible card battle prototype (not yet featured) |
 | `tools/homepage-browser-check.mjs` | Production responsive and navigation QA |
 | `tools/site-integrity.mjs` | Static site and project regression audit |
 

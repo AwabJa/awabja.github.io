@@ -16,7 +16,7 @@ const check = (ok, label) => {
   assertions++;
   if (!ok) problems.push(label);
 };
-const htmlPaths = ['index.html', 'Enzo/index.html', 'serivia/index.html', 'Cinema/index.html', 'Flow/index.html'];
+const htmlPaths = ['index.html', 'card-game/index.html', 'serivia/index.html', 'Cinema/index.html', 'Flow/index.html'];
 
 const scripts = [];
 function walk(dir) {
@@ -256,172 +256,15 @@ for(const id of ['undoBar','undoTask','recurrenceChoice','editOneOccurrence',
  check(flowHtml.includes('id="'+id+'"'), 'FLOW missing safety/accessibility control #'+id);
 }
 
-// The game only generates its ground maps in JS; the original ~35 MB
-// texture pair and the obsolete Moon photo must not silently return.
-for (const path of [
-  'Enzo/assets/textures/Ground037_2K-PNG_Color.png',
-  'Enzo/assets/textures/Ground037_2K-PNG_NormalGL.png',
-  '3D Navigation Bar/assets/moon.jpg'
-]) {
-  check(!existsSync(join(root, path)), 'Unused legacy asset reappeared: ' + path);
-}
+// Enzo has been retired; the new strategy card prototype has no external runtime dependencies.
+check(!existsSync(join(root,'Enzo')), 'Retired Enzo directory must stay removed');
+const cardsHtml=readFileSync(join(root,'card-game/index.html'),'utf8');
+const cardsApp=readFileSync(join(root,'card-game/app.js'),'utf8');
+check(cardsHtml.includes('src="app.js"') && cardsHtml.includes('href="style.css"') &&
+      cardsHtml.includes('id="app"'), 'Card game must be a standalone static app');
+check(cardsApp.includes('localStorage') && cardsApp.includes('startBattle'),
+      'Card game must retain local collection and battle controls');
 
-const src = readFileSync(join(root, 'Enzo/src/shooting.js'), 'utf8');
-check(/while\s*\(\s*hitObject\s*&&\s*!roots\.has\(hitObject\)\s*\)/.test(src) && src.includes('hit.object.userData.weakPoint'),
-  'Enzo must resolve child hits to their registered roots and detect the exposed core');
-// Phase-two world/weapon wiring must remain connected to the FPS loop.
-const world = readFileSync(join(root, 'Enzo/src/arcaneWorld.js'), 'utf8');
-const hand = readFileSync(join(root, 'Enzo/src/castingHand.js'), 'utf8');
-check(world.includes('export function createArcaneWorld') &&
-  world.includes('ShaderMaterial') && world.includes('InstancedMesh'),
-  'Enzo must keep the procedural arena, storm sky and low-draw-call stones');
-check(hand.includes('export function createCastingHand') &&
-  hand.includes('muzzlePosition') && hand.includes('new GLTFLoader().load(MODEL_URL') &&
-  hand.includes('bones.set(obj.name,obj)') && hand.includes('BEND_AXIS') &&
-  !/new THREE\.(CylinderGeometry|BoxGeometry|IcosahedronGeometry)/.test(hand),
-  'First-person model must use a real anatomical rig, not fake primitive fingers');
-// The casting gauntlet must not have a bright circular ornament permanently
-// hovering above the fingers. Flash VFX belong to short-lived casts only.
-check(hand.includes("fx.visible=false") &&
-      hand.includes("const visible=loaded&&shotTime<.18") &&
-      hand.includes("fx.visible=visible") &&
-      hand.includes("fx.position.copy(rig.worldToLocal(palmCurrent.clone()))"),
-  'Archived anatomical hand flash is brief and palm-aligned; finger seam geometry is permitted');
-// Hand inertia may affect the viewmodel, never the aim or raycaster.
-const casting = readFileSync(join(root,'Enzo/src/castingHand.js'),'utf8');
-const locomotion = readFileSync(join(root,'Enzo/src/movement.js'),'utf8');
-const shootSource = readFileSync(join(root,'Enzo/src/shooting.js'),'utf8');
-check(casting.includes('function palmWorldPosition(target)') &&
-      casting.includes('palmWorldPosition(new THREE.Vector3())') &&
-      casting.includes('fx.position.copy(rig.worldToLocal(palmCurrent.clone()))') &&
-      !casting.includes('distalBone.getWorldPosition(new THREE.Vector3())'),
-  'Muzzle and casting flash must share the actual palm, not a fingertip/back-of-hand origin');
-check(casting.includes('function settle(s,target,omega,dt)') &&
-      casting.includes('function addLookImpulse(dx,dy)') &&
-      casting.includes('settle(fingerSpring,target') &&
-      casting.includes('secondary.kick.v+=3.75'),
-  'Hand must retain frame-rate-stable wrist inertia and delayed finger recovery');
-const gameMotionCode=readFileSync(join(root,'Enzo/src/main.js'),'utf8');
-check(gameMotionCode.includes('hand.addLookImpulse(event.movementX,event.movementY)') &&
-      gameMotionCode.includes('hand.update(delta, motion, true)') &&
-      locomotion.includes('strafe:velocity.dot(right)') &&
-      shootSource.includes('hand.cast();') &&
-      shootSource.includes('spellBolt(scene,start,end,camera);'),
-  'Current glove physics and spell projectiles remain connected without optional model loading');
-const activeGlove=readFileSync(join(root,'Enzo/src/sciFiGlove.js'),'utf8');
-check(activeGlove.includes('camera.add(rig)') &&
-      activeGlove.includes('const wrist=new THREE.Group();rig.add(wrist)') &&
-      activeGlove.includes('flash.visible=false') &&
-      activeGlove.includes('flash.visible=castAge<.12') &&
-      !/new THREE\\.(?:RingGeometry|TorusGeometry)/.test(activeGlove),
-  'Active lightweight gauntlet follows the camera and hides its flash outside casts');
-const modelFile=join(root,'Enzo/assets/models/anatomical-right-hand.glb');
-const modelLicense=join(root,'Enzo/assets/models/RIGHT-HAND-LICENSE.md');
-check(existsSync(modelFile),'Skinned CC0 hand GLB must exist locally');
-check(existsSync(modelLicense) &&
-  readFileSync(modelLicense,'utf8').includes('Creative Commons Zero'),
-  'The GLB must retain its CC0 provenance');
-if(existsSync(modelFile)) {
-  const glb=readFileSync(modelFile);
-  check(glb.toString('ascii',0,4)==='glTF' &&
-      glb.readUInt32LE(4)===2 && glb.readUInt32LE(8)===glb.length,
-    'Hand GLB must have valid binary glTF 2.0 header');
-  try {
-    const length=glb.readUInt32LE(12);
-    const info=JSON.parse(glb.toString('utf8',20,20+length));
-    const skinned=(info.skins||[]).some(s=>(s.joints||[]).length>=16);
-    const position=(info.meshes||[]).flatMap(m=>m.primitives||[])
-      .map(p=>info.accessors[p.attributes.POSITION])
-      .some(p=>p&&p.count>=4000);
-    const names=new Set((info.nodes||[]).map(n=>n.name));
-    check(skinned&&position&&names.has('hand_r')&&
-      names.has('index_01_r')&&names.has('middle_03_r'),
-      'Hand model must contain anatomical mesh and usable finger skeleton');
-  } catch(error) {
-    check(false,'Hand GLB JSON inaccessible: '+error.message);
-  }
-}
-check(gameMotionCode.includes('startButton.disabled = false;') &&
-      gameMotionCode.includes('hand.ready,') &&
-      gameMotionCode.includes('Hand load timed out') &&
-      activeGlove.includes('ready:Promise.resolve()'),
-  'Enzo starts promptly with its local glove instead of waiting for an optional asset');
-check(src.includes('hand.cast()') && src.includes('spellBolt(') && src.includes('impact('),
-  'Spell projectiles, casting animation and impact effects must remain wired');
-check(!existsSync(join(root, 'Enzo/src/objects/Sky.js')),
-  'Obsolete daylight sky module must not return');
-const game = readFileSync(join(root, 'Enzo/src/main.js'), 'utf8');
-check(game.includes('createArcaneWorld(scene, renderer)') &&
-      game.includes('const hand = createSciFiGlove(camera);') &&
-      game.includes('setupShootingEvents(camera, scene, hand, world.colliders, renderer.domElement'),
-  'Enzo connects its active local gauntlet and collision-aware shooting to the world');
-check(game.includes('let isGamePaused = true;'), 'Enzo must not simulate behind its start menu');
-check(game.includes('clearTimeout(nextWaveTimer)'), 'Enzo must cancel old wave timers on reset');
-const enzoHtml = readFileSync(join(root, 'Enzo/index.html'), 'utf8');
-
-const enzoThreePath='Enzo/src/vendor/three.module.js';
-const enzoThreeFile=join(root,enzoThreePath);
-const enzoThree=existsSync(enzoThreeFile)?readFileSync(enzoThreeFile,'utf8'):'';
-check(enzoThree.includes("const REVISION = '128';") &&
-      enzoThree.includes('SPDX-License-Identifier: MIT') &&
-      !enzoThree.includes("from 'https://") && !enzoThree.includes('from "https://'),
-  'Enzo must load a licensed, pinned, self-hosted Three.js r128 module');
-check(enzoHtml.includes("script-src 'self';") &&
-      enzoHtml.includes("connect-src 'self';") &&
-      !enzoHtml.includes('unpkg.com'),
-  'Enzo CSP must not permit third-party executable scripts or CDN network access');
-for(const enzoPath of ["Enzo/src/arcaneWorld.js","Enzo/src/castingHand.js","Enzo/src/enemies.js","Enzo/src/fpsCamera.js","Enzo/src/main.js","Enzo/src/movement.js","Enzo/src/sciFiGlove.js","Enzo/src/shooting.js","Enzo/src/worldPolish.js","Enzo/src/vendor/GLTFLoader.js"]) {
-  const enzoSource=readFileSync(join(root,enzoPath),'utf8');
-  const importPath=enzoPath.includes('/vendor/')?'./three.module.js':'./vendor/three.module.js';
-  check(enzoSource.includes("from '"+importPath+"'") &&
-        !enzoSource.includes("from 'https://") && !enzoSource.includes('from "https://'),
-    'Enzo must resolve its Three.js dependency locally: '+enzoPath);
-}
-
-const splashCss = readFileSync(join(root, 'Enzo/styles/splash.css'), 'utf8');
-check(existsSync(join(root, 'Enzo/assets/shattered-reach-splash.webp')),
-  'Cinematic Enzo title artwork must exist locally');
-check(!existsSync(join(root, 'Enzo/logo.png')),
-  'The obsolete Enzo splash logo must not return');
-check(enzoHtml.includes('id="howToPlayDialog"') && enzoHtml.includes('id="startButton"') &&
-  enzoHtml.includes('id="menuStatusText"') && enzoHtml.includes('id="howToPlayButton"'),
-  'Splash must retain working Start and How to Play controls');
-check(game.includes("document.addEventListener('pointerlockerror'") &&
-  game.includes('function requestGameplayLock()') && game.includes("helpDialog.showModal()"),
-  'Splash needs working pointer-lock start and accessible How to Play modal');
-check(splashCss.includes('prefers-reduced-motion:reduce') &&
-  splashCss.includes('.enzo-splash .splash-art') &&
-  splashCss.includes('.howto-dialog'),
-  'New splash needs its responsive artwork and reduced-motion menu styles');
-// The in-game art and combat HUD must stay connected to actual gameplay.
-const polish = readFileSync(join(root, 'Enzo/src/worldPolish.js'), 'utf8');
-const gameplayCss = readFileSync(join(root, 'Enzo/styles/gameplay.css'), 'utf8');
-for(const id of ['healthMeter','healthFill','killFill','waveState','waveBanner',
-                 'pauseDescription','healthState','crosshair']) {
-  check(enzoHtml.includes('id="' + id + '"'),
-    'Cinematic Enzo HUD missing #' + id);
-}
-check(enzoHtml.includes('styles/gameplay.css?v=1') &&
-      game.includes("import { createWorldPolish } from './worldPolish.js'") &&
-      game.includes('worldPolish.update(delta)') &&
-      game.includes('worldPolish.setMood(wave)'),
-  'Enzo must load the cinematic HUD and update world effects with survival waves');
-check(polish.includes('scene.environment=environment') &&
-      polish.includes('new THREE.ShaderMaterial(') &&
-      polish.includes('new THREE.Points('),
-  'In-game visual polish requires reflective materials, living portal and atmosphere');
-check(gameplayCss.includes('.hud-health-fill') &&
-      gameplayCss.includes('.hud-kill-fill') &&
-      gameplayCss.includes('.pause-panel') &&
-      gameplayCss.includes('prefers-reduced-motion:reduce'),
-  'Cinematic HUD must retain meter, pause and low-motion styles');
-check(game.includes("healthMeter.setAttribute('aria-valuenow'") &&
-      game.includes("healthFill.style.width=hp+'%'") &&
-      game.includes('showWaveBanner('),
-  'Cinematic health, mission and wave HUD must reflect gameplay state');
-const enzoEnemies = readFileSync(join(root, 'Enzo/src/enemies.js'), 'utf8');
-check(enzoEnemies.includes('enemy.traverse(child =>'),
-  'Enzo must dispose meshes in enemy subtrees');
 check(existsSync(join(root,'serivia/index.html')) && existsSync(join(root,'serivia/app.js')) && existsSync(join(root,'serivia/favicon.svg')), 'serivia project must remain published');
 const seriviaIndex=readFileSync(join(root,'serivia/index.html'),'utf8');
 const seriviaScript=readFileSync(join(root,'serivia/app.js'),'utf8');

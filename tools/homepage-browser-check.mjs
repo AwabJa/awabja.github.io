@@ -78,13 +78,13 @@ try{
    assert.equal(await production.locator('link[rel="canonical"]').getAttribute('href'),'https://awabja.github.io/','Canonical URL');
    const security=await production.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
    assert(security.includes("script-src 'self';")&&security.includes("object-src 'none'"),'Strict homepage CSP');
-   assert.equal(await production.locator('.project').count(),3,'Existing project cards remain intact');
+   assert.equal(await production.locator('.project').count(),2,'Only Flow and serivia remain featured');
    assert.equal(await production.locator('.project-flow a').getAttribute('href'),'Flow/','Published Flow link is correct');
    assert.equal(await production.locator('.project-serivia a').getAttribute('href'),'serivia/','serivia project links to named route');
    assert.equal(await production.locator('.project-serivia .project-title').innerText(),'serivia','serivia branding is lowercase');
    assert.equal(await production.locator('.project-serivia img').getAttribute('src'),'assets/homepage/serivia-product.svg','Local serivia card artwork');
    assert.equal(await production.locator('.project-solar').count(),0,'Old Solar project card removed');
-   assert.equal(await production.locator('.project-enzo a').getAttribute('href'),'Enzo/','Published Enzo link is correct');
+   assert.equal(await production.locator('.project-enzo').count(),0,'Retired Enzo card is removed');
    assert.equal(await production.locator('.project-flow img').getAttribute('src'),'assets/homepage/flow-product.svg','Published Flow image is production-owned');
    assert.equal(await production.locator('.contact-cta').getAttribute('href'),'mailto:awabjahmed@gmail.com','Email Me contact button is preserved');
    assert.equal(await production.locator('.desktop-nav>a').count(),3,'Desktop links remain');
@@ -108,9 +108,10 @@ try{
    await production.locator('.menu-panel a[href="#work"]').click();
    assert.equal(await liveMenu.getAttribute('aria-expanded'),'false','Published hamburger closes');
    assert.deepEqual(prodErrors,[],'Published homepage has no browser JavaScript errors');
-   for(const href of ['Flow/','serivia/','Enzo/']){
+   for(const href of ['Flow/','serivia/']){
      assert.equal((await production.request.get(origin+'/'+href)).status(),200,'Live project '+href+' resolves');
    }
+   assert.equal((await production.request.get(origin+'/Enzo/')).status(),404,'Retired Enzo route is removed');
    const legacyHtml=await production.request.get(origin+'/Cinema/',{maxRedirects:0});
    assert.equal(legacyHtml.status(),200,'Previous Cinema link still responds');
    assert((await legacyHtml.text()).includes('url=../serivia/'),'Old Cinema URL redirects to serivia');

@@ -2,7 +2,7 @@
 
 **Preview:** https://awabja.github.io/serivia/
 
-A standalone, responsive, no-build movie discovery prototype inspired by the supplied dashboard reference. It is featured as project 02 on the portfolio homepage, alongside Flow and Enzo.
+A standalone, responsive, no-build movie discovery prototype inspired by the supplied dashboard reference. It is featured as project 02 on the portfolio homepage, alongside Flow.
 
 ## Implemented
 
