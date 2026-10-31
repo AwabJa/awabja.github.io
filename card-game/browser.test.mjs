@@ -12,11 +12,11 @@ const jsRaw=await readFile(join(root,'game.js'),'utf8');
 const scene=(await readFile(join(root,'assets/battle-hd.webp'))).toString('base64');
 const cards=(await readFile(join(root,'assets/cards-hd.webp'))).toString('base64');
 const manifest=JSON.parse(await readFile(join(root,'manifest.webmanifest'),'utf8'));
-assert.match(htmlRaw,/src="game\.js\?v=moonfall-2"/);
+assert.match(htmlRaw,/src="game\.js\?v=moonfall-3"/);
 assert.match(htmlRaw,/apple-mobile-web-app-capable/);
-assert.match(htmlRaw,/href="style\.css\?v=moonfall-2"/);
-assert.match(jsRaw,/sceneArt\.src='assets\/battle-hd\.webp\?v=moonfall-2'/);
-assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-2'/);
+assert.match(htmlRaw,/href="style\.css\?v=moonfall-3"/);
+assert.match(jsRaw,/sceneArt\.src='assets\/battle-hd\.webp\?v=moonfall-3'/);
+assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-3'/);
 assert(scene.length>150000,'High-resolution illustrated background must be present');
 assert(cards.length>100000,'High-resolution illustrated card art must be present');
 assert.equal(manifest.display,'fullscreen');
@@ -26,10 +26,10 @@ assert.match(css,/\.game-shell\{position:relative;width:100vw!important;height:1
 // Inline only in tests to avoid network dependencies and guarantee the tested source is this commit.
 const html=htmlRaw.replace(/<meta http-equiv="Content-Security-Policy"[^>]+>/,'')
   .replace(/<link rel="stylesheet"[^>]+>/,`<style>${css}</style>`)
-  .replace(/<script src="game\.js\?v=moonfall-2" defer><\/script>/,'');
+  .replace(/<script src="game\.js\?v=moonfall-3" defer><\/script>/,'');
 const js=jsRaw
-  .replace("sceneArt.src='assets/battle-hd.webp?v=moonfall-2';",`sceneArt.src='data:image/webp;base64,${scene}';`)
-  .replace("cardsArt.src='assets/cards-hd.webp?v=moonfall-2';",`cardsArt.src='data:image/webp;base64,${cards}';`);
+  .replace("sceneArt.src='assets/battle-hd.webp?v=moonfall-3';",`sceneArt.src='data:image/webp;base64,${scene}';`)
+  .replace("cardsArt.src='assets/cards-hd.webp?v=moonfall-3';",`cardsArt.src='data:image/webp;base64,${cards}';`);
 let executablePath;
 for (const candidate of [process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/chromium'].filter(Boolean)) {
   try {await access(candidate);executablePath=candidate;break;} catch {}
@@ -68,6 +68,13 @@ try {
       const state=()=>page.evaluate(()=>window.__moonfallTestState());
       const before=await state();
       assert.equal(before.hand.length,5,'Five opening cards');
+      const fan=await page.evaluate(()=>window.__moonfallFanLayout());
+      assert.equal(fan.length,5,'Hand fans exactly five cards');
+      const screenRatio=width/height;
+      assert(fan.every(c=>Math.abs((c.w/c.h)*(screenRatio/2)-2/3)<.025),'The rendered cards maintain physical 2:3 proportions');
+      assert(fan[0].angle<fan[1].angle&&fan[1].angle<0&&fan[2].angle===0&&fan[4].angle>0,'Cards are physically fanned');
+      assert(fan[0].x+fan[0].w>fan[1].x,'Neighboring cards overlap like a held hand');
+      assert(fan[2].y<fan[0].y,'Center card is raised in the fan');
       assert.equal(before.foes.length,3,'Three actual enemy combatants');
       assert.equal(before.allies.length,4,'Four allied characters');
       // The first-run guide is unavailable on about:blank; open it explicitly and verify close.

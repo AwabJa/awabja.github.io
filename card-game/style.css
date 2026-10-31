@@ -48,3 +48,6 @@ canvas{display:block;width:100%!important;height:100%!important;touch-action:non
  .orientation-panel{z-index:6}
  .fullscreen-button{z-index:5}
 }
+
+/* Moonfall 3: the illustrated battlefield and the fanned hand occupy one uninterrupted canvas. */
+.game-shell{background:#080d19}
