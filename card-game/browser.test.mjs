@@ -14,16 +14,19 @@ const background=(await readFile(join(root,'assets/backdrop2.webp'))).toString('
 const actors=(await readFile(join(root,'assets/characters.webp'))).toString('base64');
 const cards=(await readFile(join(root,'assets/cards-hd.webp'))).toString('base64');
 const manifest=JSON.parse(await readFile(join(root,'manifest.webmanifest'),'utf8'));
-assert.match(htmlRaw,/src="game\.js\?v=moonfall-25d-1"/);
-assert.match(htmlRaw,/src="scene25d\.js\?v=moonfall-25d-1"/);
+assert.match(htmlRaw,/src="game\.js\?v=moonfall-motion-1"/);
+assert.match(htmlRaw,/src="scene25d\.js\?v=moonfall-motion-1"/);
 assert.match(htmlRaw,/<canvas id="sceneWorld"/);
 assert.match(htmlRaw,/apple-mobile-web-app-capable/);
-assert.match(htmlRaw,/href="style\.css\?v=moonfall-25d-1"/);
+assert.match(htmlRaw,/href="style\.css\?v=moonfall-motion-1"/);
 assert.doesNotMatch(jsRaw,/sceneArt|battle-hd|atlas\.webp/,'Old painted battlefield not used');
-assert.match(sceneJS,/layered illustration/);
+assert.match(sceneJS,/independently layered illustrated actors/);
+assert.match(sceneJS,/function cue\(e\)/,'Renderer exposes event-based action animation');
+assert.match(sceneJS,/function drawSpells\(now\)/,'Renderer draws spell and attack effects');
+assert.match(sceneJS,/function actorMove\(i,now\)/,'Sprites have wind-up and hit reactions');
 assert.match(sceneJS,/drawActor\(/);
 assert.doesNotMatch(sceneJS,/getContext\('webgl'/);
-assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-25d-1'/);
+assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-motion-1'/);
 assert(cards.length>100000,'Card art must be present');
 assert(background.length>150000 && actors.length>100000,'High-resolution illustration layers must be present');
 assert.equal(manifest.display,'fullscreen');
@@ -34,9 +37,9 @@ assert.match(css,/\.game-shell\{position:relative;width:100vw!important;height:1
 const html=htmlRaw.replace(/<meta http-equiv="Content-Security-Policy"[^>]+>/,'')
   .replace(/<link rel="stylesheet"[^>]+>/,`<style>${css}</style>`)
   .replace(/<script src="[^"]+" defer><\/script>/g,'');
-const js=jsRaw.replace("cardsArt.src='assets/cards-hd.webp?v=moonfall-25d-1';",`cardsArt.src='data:image/webp;base64,${cards}';`);
-const scene=sceneJS.replace("background.src='assets/backdrop2.webp?v=moonfall-25d-1';",`background.src='data:image/webp;base64,${background}';`)
- .replace("actors.src='assets/characters.webp?v=moonfall-25d-1';",`actors.src='data:image/webp;base64,${actors}';`);
+const js=jsRaw.replace("cardsArt.src='assets/cards-hd.webp?v=moonfall-motion-1';",`cardsArt.src='data:image/webp;base64,${cards}';`);
+const scene=sceneJS.replace("background.src='assets/backdrop2.webp?v=moonfall-motion-1';",`background.src='data:image/webp;base64,${background}';`)
+ .replace("actors.src='assets/characters.webp?v=moonfall-motion-1';",`actors.src='data:image/webp;base64,${actors}';`);
 let executablePath;
 for (const candidate of [process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/chromium'].filter(Boolean)) {
   try {await access(candidate);executablePath=candidate;break;} catch {}
@@ -130,6 +133,8 @@ try {
       const played=await state();
       assert.equal(played.energy,2,'Confirm spends energy');
       assert.equal(played.foes[1].hp,165,'Card damages selected enemy');
+      const attackStats=await page.evaluate(()=>window.MoonfallScene.getStats());
+      assert.equal(attackStats.lastCue,'strike','Playing Shadow Step triggers its attack animation');
       assert.equal(played.hand.length,4,'Played card is removed from hand');
       assert.equal(played.discard.length,1,'Card enters discard');
       await click(75,715);
@@ -139,6 +144,8 @@ try {
       await click(1492,700);
       const next=await state();
       assert.equal(next.turn,2,'End Turn advances combat');
+      const enemyStats=await page.evaluate(()=>window.MoonfallScene.getStats());
+      assert.equal(enemyStats.lastCue,'enemy','End Turn triggers enemy attack motion');
       assert.equal(next.energy,next.maxEnergy,'Turn refills energy');
       assert.equal(next.hand.length,5,'New hand drawn');
       await click(1280,35);
