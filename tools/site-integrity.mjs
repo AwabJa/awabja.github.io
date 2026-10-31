@@ -260,8 +260,8 @@ for(const id of ['undoBar','undoTask','recurrenceChoice','editOneOccurrence',
 check(!existsSync(join(root,'Enzo')), 'Retired Enzo directory must stay removed');
 const cardsHtml=readFileSync(join(root,'card-game/index.html'),'utf8');
 const cardsApp=readFileSync(join(root,'card-game/app.js'),'utf8');
-check(/src="app\\.js(?:\\?[^"]+)?"/.test(cardsHtml) &&
-      /href="style\\.css(?:\\?[^"]+)?"/.test(cardsHtml) &&
+check(cardsHtml.includes('src="app.js?v=') &&
+      cardsHtml.includes('href="style.css?v=') &&
       cardsHtml.includes('href="board-v5.css?v=') &&
       cardsHtml.includes('id="app"'), 'Card game must be a standalone static app');
 check(cardsApp.includes('localStorage') && cardsApp.includes('startBattle'),
