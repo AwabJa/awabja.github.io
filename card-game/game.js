@@ -3,7 +3,11 @@ const canvas=document.getElementById('game');
 const ctx=canvas.getContext('2d',{alpha:false});
 const messageNode=document.getElementById('announcer');
 const loading=document.getElementById('loadMessage');
-const atlas=new Image();atlas.decoding='async';atlas.src='assets/atlas.webp?v=moonfall-1';
+const sceneArt=new Image(),cardsArt=new Image();
+sceneArt.decoding='async';cardsArt.decoding='async';
+const artwork=[sceneArt,cardsArt];
+sceneArt.src='assets/battle-hd.webp?v=moonfall-2';
+cardsArt.src='assets/cards-hd.webp?v=moonfall-2';
 const W=1600,H=800,THEME={gold:'#f1d4a1',cream:'#f7e7d0',muted:'#bac0cb',blue:'#a6cbff',red:'#ef8799',green:'#9be3b6'};
 const CARDS=[
  {id:'shadow',name:'Shadow Step',rarity:'Rare',cost:1,kind:'attack',description:'Deal 135 damage to your selected enemy. If this defeats it, regain 1 energy.',amount:135,flavor:'Disappear into the night. Return as a blade.',symbol:'✧',hue:'#c4a6ff'},
@@ -46,19 +50,19 @@ function drawHeader(){
  line(0,70,W,'#bf9c76a6',2);
  text('✧',31,36,42,THEME.gold,'Georgia');text('ARCANA',75,34,32,THEME.cream,'Georgia','left','700');
  text('DUEL',226,34,32,THEME.gold,'Georgia');
- text('MOONFALL  ·  NEW BATTLE BUILD',405,37,18,'#d1d4df','system-ui','left','650');
- pill(`TURN ${game.turn}`,841,16,147,41,'#241d2ce8','#d2af88',21);
+ text('MOONFALL · HD',405,37,17,'#d1d4df','system-ui','left','650');
+ pill('HOW TO PLAY  ?',625,16,170,41,'#332b38ee','#e0c18b',15);
+ pill(`TURN ${game.turn}`,814,16,151,41,'#241d2ce8','#d2af88',21);
  const live=game.foes.filter(f=>f.hp>0).length;
- pill(`${live} ENEMIES`,1010,16,169,41,'#1c1a27e8','#ba8492',17);
- pill('↺ RESTART',1213,16,172,41,'#221d2be8','#a28b84',16);
- pill('HOW TO PLAY  ?',1400,16,178,41,'#332b38ee','#e0c18b',15);
- register(1213,16,172,41,'restart');register(1400,16,178,41,'guide');
+ pill(`${live} ENEMIES`,985,16,174,41,'#1c1a27e8','#ba8492',17);
+ pill('↺ RESTART',1190,16,177,41,'#221d2be8','#a28b84',16);
+ register(1190,16,177,41,'restart');register(625,16,170,41,'guide');
 }
 function scene(){
  ctx.fillStyle='#171b2b';ctx.fillRect(0,72,W,415);
- if(atlas.complete&&atlas.naturalWidth>0){ctx.drawImage(atlas,0,0,960,228,0,73,W,418)}
+ if(sceneArt.complete&&sceneArt.naturalWidth>0){ctx.drawImage(sceneArt,0,0,1672,470,0,73,W,418)}
  else{const g=gradient(0,72,W,418,[[0,'#303546'],[1,'#0e1420']]);ctx.fillStyle=g;ctx.fillRect(0,72,W,418)}
- const shade=gradient(0,325,W,168,[[0,'#0c102600'],[1,'#070a15f5']]);ctx.fillStyle=shade;ctx.fillRect(0,325,W,168);
+ const shade=gradient(0,325,W,168,[[0,'#0c102600'],[.67,'#070a15c9'],[1,'#070a15ff']]);ctx.fillStyle=shade;ctx.fillRect(0,325,W,168);
  for(let i=0;i<4;i++){
    const a=game.allies[i],x=a.x;
    const isSelected=i===game.selectedAlly;
@@ -90,7 +94,7 @@ function cardFrame(index,slot,x,y,w,h,large=false){
  rr(x,y,w,h,11,gradient(x,y,w,h,[[0,'#dfc48d'],[.32,'#4e4b72'],[1,'#d5ac78']]),slot===game.hover?'#fff2ca':'#dcbb81',3);ctx.restore();
  rr(x+6,y+6,w-12,h-12,7,'#161624','#726277',1);
  rr(x+10,y+12,w-20,h-24,6,gradient(x+10,y,w-20,h,[[0,'#3b324b'],[1,'#171727']]));
- if(atlas.complete&&atlas.naturalWidth>0)ctx.drawImage(atlas,8+190*index,236,176,194,x+12,y+39,w-24,h-105);
+ if(cardsArt.complete&&cardsArt.naturalWidth>0)ctx.drawImage(cardsArt,276*index,0,276,272,x+12,y+39,w-24,h-105);
  else{glow(x+w/2,y+125,70,c.hue);text(c.symbol,x+w/2,y+120,64,c.hue,'Georgia','center')}
  rr(x+14,y+12,39,37,20,'#27213e','#f9d8aa',2);
  text(c.cost,x+34,y+31,25,THEME.cream,'Georgia','center','700');
@@ -120,13 +124,21 @@ function drawTable(now){
  cardBack(45,603,105,124,'DECK',game.draw.length);
  cardBack(166,603,93,124,'DISCARD',game.discard.length);
  register(42,577,109,180,'deck');register(162,577,104,180,'discard');
- // Clip the card row so it never overlaps the End Turn button.
- ctx.save();ctx.beginPath();ctx.rect(278,524,1035,254);ctx.clip();
- for(let i=0;i<game.hand.length;i++){
-   const x=297+i*198-game.handScroll, y=533+(game.hover===i?-9:0);
-   if(x>1330||x+174<278)continue;
-   cardFrame(game.hand[i],i,x,y,174,238);
-   register(x,533,174,238,'card',i);
+ // A fanned hand: cards overlap, tilt around their lower edges, and the center card sits on top.
+ ctx.save();ctx.beginPath();ctx.rect(282,512,1039,272);ctx.clip();
+ const n=game.hand.length,mid=(n-1)/2,spacing=n<=5?158:146;
+ const width=192,height=230,total=width+Math.max(0,n-1)*spacing;
+ const first=Math.max(291,809-total/2)-game.handScroll;
+ const order=Array.from({length:n},(_,i)=>i).sort((a,b)=>Math.abs(b-mid)-Math.abs(a-mid));
+ for(const i of order){
+   const x=first+i*spacing,offset=i-mid;
+   const y=521+Math.abs(offset)*12-(game.hover===i?24:0);
+   if(x>1328||x+width<278)continue;
+   const angle=offset*.083;
+   ctx.save();ctx.translate(x+width/2,y+height*.82);ctx.rotate(angle);
+   cardFrame(game.hand[i],i,-width/2,-height*.82,width,height);
+   ctx.restore();
+   register(x-9,y-12,width+18,height+18,'card',i);
  }
  ctx.restore();
  ctx.save();ctx.shadowColor='#f0b57178';ctx.shadowBlur=24;
@@ -246,7 +258,7 @@ function endTurn(){if(game.ended||game.preview)return;
  announce('Enemies dealt '+hits+' damage; shields blocked '+blocked+'. Your hand is refilled.');
 }
 function chooseAction(x,y){const z=[...zones].reverse().find(t=>t.enabled&&x>=t.x&&x<=t.x+t.w&&y>=t.y&&y<=t.y+t.h);return z||null}
-window.__moonfallTestState=()=>({turn:game.turn,energy:game.energy,maxEnergy:game.maxEnergy,hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,allies:game.allies.map(a=>({hp:a.hp,shield:a.shield})),foes:game.foes.map(f=>({hp:f.hp,burnTurns:f.burnTurns})),ended:game.ended});
+window.__moonfallTestState=()=>({turn:game.turn,energy:game.energy,hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,allies:game.allies.map(a=>({hp:a.hp,shield:a.shield})),foes:game.foes.map(f=>({hp:f.hp,burnTurns:f.burnTurns})),ended:game.ended,previewCard:game.preview?.type==='card'?CARDS[game.preview.index].id:null});
 function activate(z){if(!z)return;
  if(game.ended){if(z.action==='restart'){game=freshGame();game.draw=game.draw.slice(5);announce('New battle started.');}return}
  if(game.preview){
@@ -272,11 +284,11 @@ function activate(z){if(!z)return;
 }
 function xy(event){const box=canvas.getBoundingClientRect();return {x:(event.clientX-box.left)/box.width*W,y:(event.clientY-box.top)/box.height*H}}
 canvas.addEventListener('pointerdown',e=>{const p=xy(e);pointer={id:e.pointerId,x:p.x,y:p.y,scroll:game.handScroll,moved:false};canvas.setPointerCapture(e.pointerId);});
-canvas.addEventListener('pointermove',e=>{const p=xy(e);if(pointer&&pointer.id===e.pointerId){const dx=p.x-pointer.x,dy=p.y-pointer.y;if(Math.abs(dx)>13&&pointer.y>=520&&pointer.y<775&&pointer.x>=275&&pointer.x<1325){pointer.moved=true;const total=game.hand.length*198,visible=1034,max=Math.max(0,total-visible);game.handScroll=Math.max(0,Math.min(max,pointer.scroll-dx));return}}
+canvas.addEventListener('pointermove',e=>{const p=xy(e);if(pointer&&pointer.id===e.pointerId){const dx=p.x-pointer.x,dy=p.y-pointer.y;if(Math.abs(dx)>13&&pointer.y>=520&&pointer.y<775&&pointer.x>=275&&pointer.x<1325){pointer.moved=true;const total=192+Math.max(0,game.hand.length-1)*(game.hand.length<=5?158:146),visible=1034,max=Math.max(0,total-visible);game.handScroll=Math.max(0,Math.min(max,pointer.scroll-dx));return}}
  const zone=chooseAction(p.x,p.y);game.hover=zone?.action==='card'?zone.meta:-1;});
 canvas.addEventListener('pointerup',e=>{if(!pointer||pointer.id!==e.pointerId)return;const p=xy(e);const moved=pointer.moved;pointer=null;if(!moved)activate(chooseAction(p.x,p.y));});
 canvas.addEventListener('pointercancel',()=>pointer=null);
-canvas.addEventListener('wheel',e=>{const r=canvas.getBoundingClientRect();const p=xy(e);if(!game.preview&&p.y>515&&p.x>273&&p.x<1330){e.preventDefault();const max=Math.max(0,game.hand.length*198-1034);game.handScroll=Math.max(0,Math.min(max,game.handScroll+e.deltaY+e.deltaX))}},{passive:false});
+canvas.addEventListener('wheel',e=>{const r=canvas.getBoundingClientRect();const p=xy(e);if(!game.preview&&p.y>515&&p.x>273&&p.x<1330){e.preventDefault();const max=Math.max(0,192+Math.max(0,game.hand.length-1)*(game.hand.length<=5?158:146)-1034);game.handScroll=Math.max(0,Math.min(max,game.handScroll+e.deltaY+e.deltaX))}},{passive:false});
 window.addEventListener('keydown',e=>{
  if(e.key==='Escape'){game.preview=null;return}
  if(game.ended){if(e.key==='Enter'){game=freshGame();game.draw=game.draw.slice(5)}return}
@@ -285,9 +297,44 @@ window.addEventListener('keydown',e=>{
  if(e.key.toLowerCase()==='e'){endTurn();return}
  if(e.key.toLowerCase()==='h'){game.preview={type:'guide'};return}
  });
+function configureResolution(){
+ const box=canvas.getBoundingClientRect();
+ const scale=Math.min(1.65,Math.max(1,(window.devicePixelRatio||1)*box.width/W));
+ const bw=Math.round(W*scale),bh=Math.round(H*scale);
+ if(canvas.width!==bw||canvas.height!==bh){canvas.width=bw;canvas.height=bh;}
+ ctx.setTransform(bw/W,0,0,bh/H,0,0);
+ ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+}
+window.addEventListener('resize',()=>requestAnimationFrame(configureResolution));
+window.addEventListener('orientationchange',()=>requestAnimationFrame(configureResolution));
 let started=false;
-function start(){if(started)return;started=true;loading.classList.add('hidden');try{if(localStorage.getItem('arcana-slice-guide-v1')!=='done'){game.preview={type:'guide'};localStorage.setItem('arcana-slice-guide-v1','done')}}catch{}requestAnimationFrame(draw)}
-atlas.addEventListener('load',start,{once:true});
-if(atlas.complete&&atlas.naturalWidth>0)start();atlas.addEventListener('error',()=>{loading.textContent='Artwork unavailable: the battle can still be played.';setTimeout(()=>{loading.classList.add('hidden');requestAnimationFrame(draw)},1200)},{once:true});
+function start(){if(started)return;started=true;configureResolution();loading.classList.add('hidden');
+ try{if(localStorage.getItem('arcana-slice-guide-v1')!=='done'){game.preview={type:'guide'};localStorage.setItem('arcana-slice-guide-v1','done')}}catch{}
+ requestAnimationFrame(draw)}
+let assetsSettled=0;
+function settleAsset(){if(++assetsSettled>=artwork.length)start()}
+for(const img of artwork){
+ if(img.complete)settleAsset();
+ else{img.addEventListener('load',settleAsset,{once:true});img.addEventListener('error',settleAsset,{once:true})}
+}
+const fsButton=document.getElementById('fullscreenButton');
+const fsHint=document.getElementById('fullscreenHint');
+fsButton.addEventListener('click',async()=>{
+ if(document.fullscreenElement){try{await document.exitFullscreen()}catch{}return}
+ try{
+   if(typeof document.getElementById('gameShell').requestFullscreen==='function'){
+     await document.getElementById('gameShell').requestFullscreen({navigationUI:'hide'});
+     if(screen.orientation?.lock)screen.orientation.lock('landscape').catch(()=>{});
+     return;
+   }
+ }catch{}
+ fsHint.hidden=false;
+ announce('iPhone fullscreen: Share → Add to Home Screen, then open Arcana Duel from its icon.');
+});
+document.getElementById('dismissFullscreenHint').addEventListener('click',()=>fsHint.hidden=true);
+document.addEventListener('fullscreenchange',()=>{
+ fsButton.textContent=document.fullscreenElement?'⛶ EXIT FULLSCREEN':'⛶ FULLSCREEN';
+ configureResolution();
+});
 document.getElementById('portraitContinue').addEventListener('click',()=>document.getElementById('orientationPanel').classList.add('dismissed'));
 })();

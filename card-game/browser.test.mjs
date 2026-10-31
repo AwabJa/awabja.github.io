@@ -9,18 +9,27 @@ const root=dirname(fileURLToPath(import.meta.url));
 const htmlRaw=await readFile(join(root,'index.html'),'utf8');
 const css=await readFile(join(root,'style.css'),'utf8');
 const jsRaw=await readFile(join(root,'game.js'),'utf8');
-const atlas=(await readFile(join(root,'assets/atlas.webp'))).toString('base64');
-assert.match(htmlRaw,/src="game\.js\?v=moonfall-1"/);
-assert.match(htmlRaw,/href="style\.css\?v=moonfall-1"/);
-assert.match(jsRaw,/atlas\.src='assets\/atlas\.webp\?v=moonfall-1'/);
-assert(atlas.length>20000,'Original illustrated atlas must be present');
+const scene=(await readFile(join(root,'assets/battle-hd.webp'))).toString('base64');
+const cards=(await readFile(join(root,'assets/cards-hd.webp'))).toString('base64');
+const manifest=JSON.parse(await readFile(join(root,'manifest.webmanifest'),'utf8'));
+assert.match(htmlRaw,/src="game\.js\?v=moonfall-2"/);
+assert.match(htmlRaw,/apple-mobile-web-app-capable/);
+assert.match(htmlRaw,/href="style\.css\?v=moonfall-2"/);
+assert.match(jsRaw,/sceneArt\.src='assets\/battle-hd\.webp\?v=moonfall-2'/);
+assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-2'/);
+assert(scene.length>150000,'High-resolution illustrated background must be present');
+assert(cards.length>100000,'High-resolution illustrated card art must be present');
+assert.equal(manifest.display,'fullscreen');
+assert.equal(manifest.orientation,'landscape');
+assert.match(css,/\.game-shell\{position:relative;width:100vw!important;height:100dvh!important/);
 
 // Inline only in tests to avoid network dependencies and guarantee the tested source is this commit.
 const html=htmlRaw.replace(/<meta http-equiv="Content-Security-Policy"[^>]+>/,'')
   .replace(/<link rel="stylesheet"[^>]+>/,`<style>${css}</style>`)
-  .replace(/<script src="game\.js\?v=moonfall-1" defer><\/script>/,'');
-const js=jsRaw.replace("atlas.src='assets/atlas.webp?v=moonfall-1';",
-  `atlas.src='data:image/webp;base64,${atlas}';`);
+  .replace(/<script src="game\.js\?v=moonfall-2" defer><\/script>/,'');
+const js=jsRaw
+  .replace("sceneArt.src='assets/battle-hd.webp?v=moonfall-2';",`sceneArt.src='data:image/webp;base64,${scene}';`)
+  .replace("cardsArt.src='assets/cards-hd.webp?v=moonfall-2';",`cardsArt.src='data:image/webp;base64,${cards}';`);
 let executablePath;
 for (const candidate of [process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/chromium'].filter(Boolean)) {
   try {await access(candidate);executablePath=candidate;break;} catch {}
@@ -39,6 +48,10 @@ try {
     const canvas=page.locator('#game');
     const box=await canvas.boundingBox();
     assert(box && box.width>=100 && box.height>=50,'Canvas must render at '+width+'×'+height);
+    assert(Math.abs(box.width-width)<=1 && Math.abs(box.height-height)<=1,'Canvas fills entire viewport');
+    const raster=await page.evaluate(()=>({w:document.getElementById('game').width,h:document.getElementById('game').height}));
+    assert(raster.w>=1600 && raster.h>=800,'Canvas draws above baseline logical resolution');
+    assert.equal(await page.locator('#fullscreenButton').count(),1,'Fullscreen control is present');
     assert(box.x>=0 && box.x+box.width<=width+2,'Canvas fits screen width');
     if(width===390){
       assert.equal(await page.locator('#orientationPanel').isVisible(),true,'Portrait gives a clear rotate instruction');
@@ -64,13 +77,17 @@ try {
       assert.equal((await state()).preview,null,'Help overlay closes');
       await click(1305,300);
       assert.equal((await state()).selectedEnemy,1,'Player can target the center enemy');
-      await click(380,625);
+      await click(846,630);
+      assert.equal((await state()).previewCard,'bloom','Topmost middle fanned card receives taps');
+      await click(1120,628);
+      await click(438,648);
       assert.equal((await state()).preview,'card','Tapping a card inspects it; does not immediately play');
+      assert.equal((await state()).previewCard,'shadow','Left fan card opens the proper original illustration');
       assert.equal((await state()).energy,3,'Preview costs no energy');
       await click(1112,628);
       assert.equal((await state()).preview,null,'Keep in hand closes preview');
       assert.equal((await state()).hand.length,5,'Cancel does not discard card');
-      await click(380,625);
+      await click(438,648);
       await click(820,628);
       const played=await state();
       assert.equal(played.energy,2,'Confirming a 1-energy card spends 1 energy');
@@ -86,7 +103,7 @@ try {
       assert.equal(next.turn,2,'End Turn advances actual turn');
       assert.equal(next.energy,next.maxEnergy,'Energy refills on next turn');
       assert.equal(next.hand.length,5,'A new playable hand is drawn');
-      await click(1293,35);
+      await click(1280,35);
       assert.equal((await state()).turn,1,'Restart resets battle state');
     }
     assert.deepEqual(errors,[],'No browser JavaScript errors at '+width+'×'+height);

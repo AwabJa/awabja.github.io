@@ -263,10 +263,16 @@ const cardsApp=readFileSync(join(root,'card-game/game.js'),'utf8');
 check(cardsHtml.includes('src="game.js?v=') &&
       cardsHtml.includes('href="style.css?v=') &&
       cardsHtml.includes('id="game"'), 'Moonfall game must load the illustrated landscape canvas');
-check(existsSync(join(root,'card-game/assets/atlas.webp')), 'Card game illustrated atlas must ship locally');
+check(existsSync(join(root,'card-game/assets/battle-hd.webp')) &&
+      existsSync(join(root,'card-game/assets/cards-hd.webp')) &&
+      existsSync(join(root,'card-game/manifest.webmanifest')) &&
+      !existsSync(join(root,'card-game/assets/atlas.webp')),
+      'HD battlefield, card paintings and installable fullscreen metadata must ship without the old atlas');
 check(!existsSync(join(root,'card-game/app.js')), 'Retired card-game prototype must be removed');
 check(cardsApp.includes('selectedEnemy') && cardsApp.includes('game.hand') &&
-      cardsApp.includes('preview'), 'Card game must retain targeting, hand and card previews');
+      cardsApp.includes('preview') && cardsApp.includes('requestFullscreen') &&
+      cardsApp.includes('ctx.rotate(angle)'),
+      'Card game must retain targeting, previews, fullscreen and curved hand rendering');
 
 check(existsSync(join(root,'serivia/index.html')) && existsSync(join(root,'serivia/app.js')) && existsSync(join(root,'serivia/favicon.svg')), 'serivia project must remain published');
 const seriviaIndex=readFileSync(join(root,'serivia/index.html'),'utf8');
