@@ -52,7 +52,7 @@ try{
   await page.locator('[data-action="guideOpen"]').click();
   assert.equal(await page.locator('.guide-heading').innerText(),'1. Play a card','Tutorial can be replayed');
   await page.locator('[data-action="guideSkip"]').click();
-  assert((await page.locator('.stage-title').innerText()).includes('TURN 2'),'End turn advances turn');
+  assert((await page.locator('.duel-round').innerText()).includes('TURN 2'),'End turn advances turn');
   await page.locator('#collectionTab').click();
   assert.equal(await page.locator('.collection-grid .collect-item').count(),16,'All cards appear in collection');
   assert.equal(await page.locator('.deck-count').innerText(),'12 / 12');
@@ -85,7 +85,7 @@ try{
  assert.equal(await landscape.locator('.combatant').count(),2,'Landscape shows only active fighters');
  await landscape.locator('.hand button.card:not(:disabled)').first().click();
  await landscape.locator('.duel-end').click();
- assert((await landscape.locator('.stage-title').innerText()).includes('TURN 2'),'Landscape controls are usable');
+ assert((await landscape.locator('.duel-round').innerText()).includes('TURN 2'),'Landscape controls are usable');
  await landscape.close();
  console.log('ARCANA DUEL BROWSER CHECKS PASSED');
 }finally{await browser.close();server.close()}
