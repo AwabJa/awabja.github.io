@@ -20,7 +20,7 @@ function rotZ(a){const m=mat(),c=Math.cos(a),s=Math.sin(a);m[0]=c;m[1]=s;m[4]=-s
 function xform(base,x,y,z,sx=1,sy=1,sz=1,rx=0,ry=0,rz=0){return mul(base,mul(trans(x,y,z),mul(rotZ(rz),mul(rotY(ry),mul(rotX(rx),scale(sx,sy,sz))))));}
 function perspectiveOrtho(l,r,b,t,n,f){const m=mat();m[0]=2/(r-l);m[5]=2/(t-b);m[10]=-2/(f-n);m[12]=-(r+l)/(r-l);m[13]=-(t+b)/(t-b);m[14]=-(f+n)/(f-n);return m;}
 function lookAt(eye,target){const norm=a=>{const d=Math.hypot(...a)||1;return a.map(v=>v/d)}, sub=(a,b)=>a.map((v,i)=>v-b[i]),cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],dot=(a,b)=>a.reduce((s,v,i)=>s+v*b[i],0);const z=norm(sub(eye,target)),x=norm(cross([0,1,0],z)),y=cross(z,x);const m=mat();m[0]=x[0];m[4]=x[1];m[8]=x[2];m[12]=-dot(x,eye);m[1]=y[0];m[5]=y[1];m[9]=y[2];m[13]=-dot(y,eye);m[2]=z[0];m[6]=z[1];m[10]=z[2];m[14]=-dot(z,eye);return m;}
-const VP=mul(perspectiveOrtho(-8.35,8.35,-3.4,4.95,.1,65),lookAt([0,5,18],[0,1.1,0]));
+const VP=mul(perspectiveOrtho(-10.9,10.9,-5.6,4.25,.1,65),lookAt([0,5.8,22],[0,1.32,0]));
 function mesh(verts){const v=new Float32Array(verts);const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,v,gl.STATIC_DRAW);return {buffer:b,count:v.length/6};}
 function pushTri(out,a,b,c){const u=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],v=[c[0]-a[0],c[1]-a[1],c[2]-a[2]];let n=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];const len=Math.hypot(...n)||1;n=n.map(x=>x/len);for(const p of [a,b,c])out.push(...p,...n);}
 function makeBox(){const o=[];const ps=[[[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]],[[1,-1,-1],[-1,-1,-1],[-1,1,-1],[1,1,-1]],[[-1,-1,-1],[-1,-1,1],[-1,1,1],[-1,1,-1]],[[1,-1,1],[1,-1,-1],[1,1,-1],[1,1,1]],[[-1,1,1],[1,1,1],[1,1,-1],[-1,1,-1]],[[-1,-1,-1],[1,-1,-1],[1,-1,1],[-1,-1,1]]];for(const q of ps){pushTri(o,q[0],q[1],q[2]);pushTri(o,q[0],q[2],q[3]);}return mesh(o);}
@@ -70,19 +70,19 @@ for(let i=0;i<25;i++){const x=Math.sin(i*16.1)*8,z=-6-(i%6)*.9,y=3.8+(i%4)*.4;
  add('sphere',x,y,z,.18+(i%3)*.1,.14,.2,i%3?'#87374f':'#ad5265',.19);}
 // Character palettes and mesh-based rig designs. All seven are independent dynamic meshes.
 const figures=[
- {x:-6.35,z:.4,coat:'#efe4da',dark:'#303143',trim:'#e5c398',hair:'#f1e4f3',skin:'#ead0c2',eyes:'#9daccd',weapon:'spear',hairStyle:1,hat:false},
- {x:-4.25,z:.48,coat:'#332639',dark:'#211e35',trim:'#d8717d',hair:'#30293d',skin:'#e9c7bb',eyes:'#c9708e',weapon:'blade',hairStyle:2,hat:false},
- {x:-2.18,z:.6,coat:'#e9dfcd',dark:'#4e4550',trim:'#e6bf83',hair:'#c9ae7d',skin:'#f0d6c7',eyes:'#9a7d6a',weapon:'staff',hairStyle:1,hat:true},
- {x:-.25,z:.55,coat:'#263b5a',dark:'#20283e',trim:'#93b7df',hair:'#b1c1df',skin:'#e0c7c0',eyes:'#8caadd',weapon:'blade',hairStyle:0,hat:false},
- {x:2.8,z:.1,coat:'#28283b',dark:'#161827',trim:'#9888b7',hair:'#272739',skin:'#bfa3a6',eyes:'#e48ab1',weapon:'scythe',hairStyle:2,hat:false},
- {x:4.92,z:.1,coat:'#d8c2cb',dark:'#622e48',trim:'#e4aab2',hair:'#e7dce2',skin:'#e8b9b9',eyes:'#b46285',weapon:'staff',hairStyle:1,hat:false,halo:true},
- {x:6.98,z:.2,coat:'#2b3043',dark:'#1e2333',trim:'#d7b87a',hair:'#353340',skin:'#b7a8a4',eyes:'#b6a090',weapon:'spear',hairStyle:0,hat:false,armor:true}
+ {x:-7.95,z:.4,coat:'#efe4da',dark:'#303143',trim:'#e5c398',hair:'#f1e4f3',skin:'#ead0c2',eyes:'#9daccd',weapon:'spear',hairStyle:1,hat:false},
+ {x:-5.72,z:.48,coat:'#332639',dark:'#211e35',trim:'#d8717d',hair:'#30293d',skin:'#e9c7bb',eyes:'#c9708e',weapon:'blade',hairStyle:2,hat:false},
+ {x:-3.48,z:.6,coat:'#e9dfcd',dark:'#4e4550',trim:'#e6bf83',hair:'#c9ae7d',skin:'#f0d6c7',eyes:'#9a7d6a',weapon:'staff',hairStyle:1,hat:true},
+ {x:-1.35,z:.55,coat:'#263b5a',dark:'#20283e',trim:'#93b7df',hair:'#b1c1df',skin:'#e0c7c0',eyes:'#8caadd',weapon:'blade',hairStyle:0,hat:false},
+ {x:3.45,z:.1,coat:'#28283b',dark:'#161827',trim:'#9888b7',hair:'#272739',skin:'#bfa3a6',eyes:'#e48ab1',weapon:'scythe',hairStyle:2,hat:false},
+ {x:5.65,z:.1,coat:'#d8c2cb',dark:'#622e48',trim:'#e4aab2',hair:'#e7dce2',skin:'#e8b9b9',eyes:'#b46285',weapon:'staff',hairStyle:1,hat:false,halo:true},
+ {x:7.8,z:.2,coat:'#2b3043',dark:'#1e2333',trim:'#d7b87a',hair:'#353340',skin:'#b7a8a4',eyes:'#b6a090',weapon:'spear',hairStyle:0,hat:false,armor:true}
 ];
 function segment(base,type,x,y,z,sx,sy,sz,color,rx=0,ry=0,rz=0,em=0){draw(type,xform(base,x,y,z,sx,sy,sz,rx,ry,rz),color,em)}
 function humanoid(p,i,t,health,selected){
  const living=health>0, fall=living?0:1,phase=t*1.15+i*.7;
  const bob=living?Math.sin(phase)*.065:0,sway=living?Math.sin(phase*.55)*.055:0;
- const base=mul(trans(p.x,-.04+bob-fall*.7,p.z),mul(rotY(i<4?-.12:.12),rotZ(sway+fall*.48)));
+ const base=mul(trans(p.x,-.04+bob*.68-fall*.46,p.z),mul(rotY(i<4?-.12:.12),mul(rotZ(sway+fall*.48),scale(.86,.86,.86))));
  const skin=p.skin,cloth=p.coat,trim=p.trim,dark=p.dark,mainHair=p.hair;
  // shadow on ground and boots
  segment(mat(),'sphere',p.x,-.16,p.z,.57,.027,.32,'#0a0e17',0,0,0,.4);

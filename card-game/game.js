@@ -6,7 +6,7 @@ const loading=document.getElementById('loadMessage');
 const cardsArt=new Image();
 cardsArt.decoding='async';
 const artwork=[cardsArt];
-cardsArt.src='assets/cards-hd.webp?v=moonfall-4-models';
+cardsArt.src='assets/cards-hd.webp?v=moonfall-5-stage';
 const W=1600,H=800,THEME={gold:'#f1d4a1',cream:'#f7e7d0',muted:'#bac0cb',blue:'#a6cbff',red:'#ef8799',green:'#9be3b6'};
 const CARDS=[
  {id:'shadow',name:'Shadow Step',rarity:'Rare',cost:1,kind:'attack',description:'Deal 135 damage to your selected enemy. If this defeats it, regain 1 energy.',amount:135,flavor:'Disappear into the night. Return as a blade.',symbol:'✧',hue:'#c4a6ff'},
@@ -16,10 +16,10 @@ const CARDS=[
  {id:'bolt',name:'Arcane Bolt',rarity:'Common',cost:1,kind:'attack',description:'Deal 115 lightning damage to the selected enemy.',amount:115,flavor:'A spark can shatter the darkness.',symbol:'ϟ',hue:'#a6bbff'}
 ];
 const ALLIES=[
- {name:'Seraphine',maxHp:190,x:126},{name:'Akari',maxHp:180,x:345},{name:'Elowen',maxHp:185,x:540},{name:'Kael',maxHp:195,x:718}
+ {name:'Seraphine',maxHp:190,x:220},{name:'Akari',maxHp:180,x:380},{name:'Elowen',maxHp:185,x:540},{name:'Kael',maxHp:195,x:700}
 ];
 const FOES=[
- {name:'Dusk Reaper',maxHp:250,x:1105,attack:34},{name:'Blood Oracle',maxHp:300,x:1305,attack:39},{name:'Night Knight',maxHp:340,x:1500,attack:44}
+ {name:'Dusk Reaper',maxHp:250,x:1060,attack:34},{name:'Blood Oracle',maxHp:300,x:1220,attack:39},{name:'Night Knight',maxHp:340,x:1380,attack:44}
 ];
 function freshGame(){return {
  allies:ALLIES.map(x=>({...x,hp:x.maxHp,shield:0})),foes:FOES.map(x=>({...x,hp:x.maxHp,burn:0,burnTurns:0})),
@@ -60,29 +60,29 @@ function drawHeader(){
  register(1096,15,154,40,'guide');register(1260,15,140,40,'restart');
 }
 function scene(){
- // Real WebGL models and a generated 3D cathedral are rendered behind this transparent UI.
- // No full-frame bitmap or character sprite atlas is drawn in the battle scene.
- for(let i=0;i<4;i++){
-   const a=game.allies[i],x=a.x,selected=i===game.selectedAlly;
-   if(selected&&a.hp>0){glow(x,400,66,'#8dbedd50');rr(x-80,374,160,4,2,'#e7d0a6')}
-   rr(x-91,402,182,53,7,'#0b1122d7',selected?'#eed3a8':'#b8a1a070',selected?2:1);
-   text(a.name,x,415,16,THEME.cream,'Georgia','center','600');
-   hpBar(x-77,428,154,11,a.hp,a.maxHp,true);
-   text(`${a.hp} / ${a.maxHp}`,x,448,12,'#dcefdc','system-ui','center','700');
-   if(a.shield>0)text(`◆ ${a.shield}`,x+79,415,12,'#b9d8ff','system-ui','right');
-   if(a.hp<=0){rr(x-91,402,182,53,7,'#080c18b8');text('FALLEN',x,429,18,THEME.red,'Georgia','center')}
-   register(x-88,113,176,338,'ally',i,a.hp>0);
+ // Character gauges are grounded directly below each independently positioned model.
+ const gaugeY=447;
+ for(let i=0;i<game.allies.length;i++){
+  const a=game.allies[i],x=a.x,selected=i===game.selectedAlly;
+  if(selected&&a.hp>0){glow(x,gaugeY-5,50,'#7df0cb30');rr(x-62,gaugeY-8,124,3,2,'#bde6d3');}
+  rr(x-70,gaugeY,140,45,6,'#0c1425e7',selected?'#e9d5aa':'#7b99a58c',selected?2:1);
+  text(a.name,x,gaugeY+11,15,THEME.cream,'Georgia','center','600');
+  hpBar(x-60,gaugeY+22,120,10,a.hp,a.maxHp,true);
+  text(a.hp+' / '+a.maxHp,x,gaugeY+39,12,'#dcf7e2','system-ui','center','700');
+  if(a.shield>0)text('◆'+a.shield,x+62,gaugeY+10,10,'#a9d5ff','system-ui','right');
+  if(a.hp===0){rr(x-70,gaugeY,140,45,6,'#0a0e17a9');text('FALLEN',x,gaugeY+20,13,THEME.red,'Georgia','center');}
+  register(x-70,190,140,gaugeY+45-190,'ally',i,a.hp>0);
  }
- for(let i=0;i<3;i++){
-   const e=game.foes[i],x=e.x,selected=i===game.selectedEnemy;
-   if(selected&&e.hp>0){glow(x,386,80,'#f0ad8570');rr(x-86,375,172,5,2,'#f6d89b')}
-   rr(x-96,402,192,53,7,selected?'#281623ec':'#131321e2',selected?'#f1cf96':'#ab87938c',selected?2:1);
-   text(e.name,x,415,16,THEME.cream,'Georgia','center','600');
-   hpBar(x-80,428,160,11,e.hp,e.maxHp,false);
-   text(`${e.hp} / ${e.maxHp}`,x,448,12,'#ffe0e3','system-ui','center','700');
-   if(e.burnTurns>0)text('✦',x+79,415,15,'#f9ae76','Georgia','right');
-   if(e.hp<=0){rr(x-96,402,192,53,7,'#060914bd');text('DEFEATED',x,429,17,'#ffd0bb','Georgia','center')}
-   register(x-91,113,182,338,'enemy',i,e.hp>0);
+ for(let i=0;i<game.foes.length;i++){
+  const e=game.foes[i],x=e.x,selected=i===game.selectedEnemy;
+  if(selected&&e.hp>0){glow(x,gaugeY-4,50,'#e69ca54a');rr(x-67,gaugeY-8,134,3,2,'#f9ce9e');}
+  rr(x-71,gaugeY,142,45,6,selected?'#291b2be8':'#181822e7',selected?'#f1cf96':'#aa81908c',selected?2:1);
+  text(e.name,x,gaugeY+11,15,THEME.cream,'Georgia','center','600');
+  hpBar(x-61,gaugeY+22,122,10,e.hp,e.maxHp,false);
+  text(e.hp+' / '+e.maxHp,x,gaugeY+39,12,'#ffe3e8','system-ui','center','700');
+  if(e.burnTurns>0)text('✦',x+62,gaugeY+10,13,'#f8ad75','Georgia','right');
+  if(e.hp===0){rr(x-71,gaugeY,142,45,6,'#0b0d17b8');text('DEFEATED',x,gaugeY+20,12,'#ffd0bb','Georgia','center');}
+  register(x-72,190,144,gaugeY+45-190,'enemy',i,e.hp>0);
  }
 }
 function cardFrame(index,slot,x,y,w,h,large=false){
@@ -103,10 +103,10 @@ function cardFrame(index,slot,x,y,w,h,large=false){
  else{glow(x+w/2,y+125,70,c.hue);text(c.symbol,x+w/2,y+120,64,c.hue,'Georgia','center')}
  rr(x+14,y+12,39,37,20,'#27213e','#f9d8aa',2);
  text(c.cost,x+34,y+31,25,THEME.cream,'Georgia','center','700');
- text(c.rarity.toUpperCase(),x+w-16,y+24,11,'#fbe0bb','system-ui','right','900');
+ text(c.rarity.toUpperCase(),x+w-12,y+24,large?11:9,'#fbe0bb','system-ui','right','900');
  rr(x+10,y+h-66,w-20,54,5,'#151424ee','#ab896c80',1);
- text(c.name,x+w/2,y+h-49,large?23:17,THEME.cream,'Georgia','center');
- text(c.kind.toUpperCase()+'  ·  '+c.cost+' ENERGY',x+w/2,y+h-24,large?13:11,c.hue,'system-ui','center','800');
+ text(c.name,x+w/2,y+h-49,large?23:14,THEME.cream,'Georgia','center');
+ text(c.kind.toUpperCase()+' · '+c.cost+' ENERGY',x+w/2,y+h-24,large?13:9,c.hue,'system-ui','center','800');
  if(!large&&!active){rr(x+6,y+6,w-12,h-12,7,'#0a0a1666')}
 }
 function cardBack(x,y,w,h,label,count){
@@ -119,17 +119,19 @@ function cardBack(x,y,w,h,label,count){
 }
 // Finger-fan layout: preserved 2:3 card ratio, overlapping edges and curved baseline.
 function handLayout(){
- const n=game.hand.length,mid=(n-1)/2,height=292;
- // Canvas is edge-to-edge on every phone ratio: correct the card width in logical space
- // so its *physical* on-screen aspect always remains 2:3.
- const pixelStretch=(canvas.clientWidth/W)/(canvas.clientHeight/H);
- const width=height*(2/3)/pixelStretch;
- const spacing=n<=5?148:Math.max(105,Math.min(148,740/Math.max(1,n-1)));
+ const n=game.hand.length,mid=(n-1)/2;
+ // Cards are 2:3 in *physical* phone pixels, even when the scene is stretched.
+ const height=186;
+ const xScale=Math.max(.2,canvas.clientWidth/W),yScale=Math.max(.2,canvas.clientHeight/H);
+ const width=height*(2/3)*(yScale/xScale);
+ const spacing= n<=5?78:Math.max(55,Math.min(78,425/Math.max(1,n-1)));
  const total=width+Math.max(0,n-1)*spacing;
- const first=820-total/2-game.handScroll;
+ const first=824-total/2-game.handScroll;
  return Array.from({length:n},(_,i)=>{
    const d=i-mid;
-   return {slot:i,x:first+i*spacing,y:467+Math.abs(d)*17-(game.hover===i?19:0),w:width,h:height,angle:d*.145};
+   // Tangential fan angles: low outer cards, center raised for inspection.
+   return {slot:i,x:first+i*spacing,y:535+Math.abs(d)*13-(game.hover===i?14:0),
+      w:width,h:height,angle:d*.16};
  });
 }
 function cardPolygon(c){
@@ -139,42 +141,39 @@ function cardPolygon(c){
  return [corner(c.x,c.y),corner(c.x+c.w,c.y),corner(c.x+c.w,c.y+c.h),corner(c.x,c.y+c.h)];
 }
 function drawTable(now){
- // Shadow follows the fanned cards over the scene instead of a bottom menu panel.
- const glowAtBase=ctx.createRadialGradient(818,777,80,818,777,640);
- glowAtBase.addColorStop(0,'#0c1022a6');glowAtBase.addColorStop(.55,'#0a0e1b48');glowAtBase.addColorStop(1,'#0a0e1b00');
- ctx.fillStyle=glowAtBase;ctx.fillRect(170,460,1300,340);
- // HUD elements float directly on the battlefield.
- rr(31,497,242,84,13,'#101528cc','#d0b07f93',1.5);
- text('✧  ENERGY',47,521,17,'#e7cfad','system-ui','left','850');
- text(`${game.energy} / ${game.maxEnergy}`,55,559,30,THEME.cream,'Georgia');
+ // A minimal vignette behind a real fan of cards; no separate bottom menu.
+ const vignette=ctx.createLinearGradient(0,544,0,800);
+ vignette.addColorStop(0,'#080d1900');vignette.addColorStop(1,'#070b18a2');
+ ctx.fillStyle=vignette;ctx.fillRect(0,544,W,256);
+ // Compact, non-overlapping controls pinned to both bottom corners.
+ rr(28,591,184,53,9,'#111728d5','#c2ad82a1',1.3);
+ text('✧ ENERGY',43,608,13,THEME.gold,'system-ui','left','850');
+ text(game.energy+' / '+game.maxEnergy,49,631,24,THEME.cream,'Georgia');
  for(let i=0;i<game.maxEnergy;i++){
-   ctx.fillStyle=i<game.energy?'#aee7f9':'#343a53';ctx.beginPath();
-   const x=166+i*28,y=555;ctx.moveTo(x,y-11);ctx.lineTo(x+9,y);ctx.lineTo(x,y+11);ctx.lineTo(x-9,y);ctx.closePath();ctx.fill();
+  const x=130+i*22,y=625;ctx.fillStyle=i<game.energy?'#a2eaf9':'#41455b';
+  ctx.beginPath();ctx.moveTo(x,y-8);ctx.lineTo(x+7,y);ctx.lineTo(x,y+8);ctx.lineTo(x-7,y);ctx.closePath();ctx.fill();
  }
- cardBack(53,628,91,111,'DECK',game.draw.length);
- cardBack(171,628,91,111,'DISCARD',game.discard.length);
- register(43,609,108,167,'deck');register(163,609,108,167,'discard');
- // Outer cards are painted first, the raised center card is painted last.
- const layout=handLayout(),middle=(layout.length-1)/2;
- const order=layout.slice().sort((a,b)=>Math.abs(b.slot-middle)-Math.abs(a.slot-middle));
+ cardBack(45,691,56,68,'DECK',game.draw.length);
+ cardBack(126,691,56,68,'DISCARD',game.discard.length);
+ register(27,660,83,140,'deck');register(111,660,84,140,'discard');
+ // Draw back-to-front. Raised center cards win overlapping hit tests.
+ const fan=handLayout(),middle=(fan.length-1)/2;
+ const order=fan.slice().sort((a,b)=>Math.abs(b.slot-middle)-Math.abs(a.slot-middle));
  for(const c of order){
    ctx.save();ctx.translate(c.x+c.w/2,c.y+c.h*.88);ctx.rotate(c.angle);
-   ctx.shadowColor=game.hover===c.slot?'#ffe0a4bb':'#000a';ctx.shadowBlur=game.hover===c.slot?23:13;
    cardFrame(game.hand[c.slot],c.slot,-c.w/2,-c.h*.88,c.w,c.h);
    ctx.restore();
-   register(c.x-30,c.y-30,c.w+60,c.h+60,'card',c.slot,true,cardPolygon(c));
+   register(c.x,c.y,c.w,c.h,'card',c.slot,true,cardPolygon(c));
  }
- ctx.save();ctx.shadowColor='#f3b06d8a';ctx.shadowBlur=23;
- rr(1370,604,193,99,16,gradient(1370,604,193,99,[[0,'#603548'],[1,'#251929']]),'#ffdfa3',3);ctx.restore();
- text('END TURN',1466,648,28,THEME.cream,'Georgia','center','650');
- text('→',1466,679,22,THEME.gold,'Georgia','center');
- text('Enemy acts next',1466,730,15,'#e0c9b5','system-ui','center','700');
- register(1368,599,198,114,'end');
+ ctx.save();ctx.shadowColor='#e2a97777';ctx.shadowBlur=17;
+ rr(1410,673,165,73,12,gradient(1410,673,165,73,[[0,'#603247'],[1,'#2a1c2b']]),'#f9d3a0',2.5);ctx.restore();
+ text('END TURN',1492,701,22,THEME.cream,'Georgia','center','650');
+ text('→',1492,729,19,THEME.gold,'Georgia','center');
+ register(1397,657,190,108,'end');
  const age=now-game.toastAt;
- rr(414,464,799,28,10,'#0d1425bb');
- text(game.toast,814,478,15,age<9000?'#fae7c9':'#bcafbd','system-ui','center','700');
+ rr(534,496,560,26,8,'#111827b9');
+ text(game.toast,814,509,13,age<9000?'#f6dbb6':'#b6b6bd','system-ui','center','700');
 }
-
 function wrap(value,x,y,maxW,sz=24,color=THEME.cream,lineHeight=35){const words=value.split(' ');let line='';let row=0;ctx.font=`600 ${sz}px system-ui`;for(const word of words){const next=line?line+' '+word:word;if(ctx.measureText(next).width>maxW&&line){text(line,x,y+row*lineHeight,sz,color);line=word;row++}else line=next}if(line)text(line,x,y+row*lineHeight,sz,color);return row+1}
 function overlayFrame(title,sub){ctx.fillStyle='#070a15d9';ctx.fillRect(0,0,W,H);rr(245,95,1110,615,18,gradient(245,95,1110,615,[[0,'#2c2739'],[1,'#121727']]),'#d7b68b',3);text(title,300,142,36,THEME.cream,'Georgia');if(sub)text(sub,300,183,18,'#cbbdcb');pill('✕ CLOSE',1132,112,180,51,'#2a2b3b','#bca17c',19);register(1132,112,180,51,'close')}
 function drawPreview(){
@@ -294,8 +293,10 @@ function chooseAction(x,y){
  return [...zones].reverse().find(t=>t.enabled&&(t.polygon?insidePolygon(x,y,t.polygon):
     x>=t.x&&x<=t.x+t.w&&y>=t.y&&y<=t.y+t.h))||null;
 }
+window.__moonfallHitTest=(x,y)=>{const z=chooseAction(x,y);return z?{action:z.action,meta:z.meta}:null};
+window.__moonfallPreviewSize=()=>{const stretch=(canvas.clientWidth/W)/(canvas.clientHeight/H);return {width:419*(2/3)/stretch,height:419}};
 window.__moonfallFanLayout=()=>handLayout().map(c=>({slot:c.slot,card:CARDS[game.hand[c.slot]]?.id,x:c.x,y:c.y,w:c.w,h:c.h,angle:c.angle,polygon:cardPolygon(c)}));
-window.__moonfallTestState=()=>({models:window.Moonfall3D?.getStats?.()||null,turn:game.turn,energy:game.energy,maxEnergy:game.maxEnergy,hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,allies:game.allies.map(a=>({hp:a.hp,shield:a.shield})),foes:game.foes.map(f=>({hp:f.hp,burnTurns:f.burnTurns})),ended:game.ended,previewCard:game.preview?.type==='card'?CARDS[game.preview.index].id:null});
+window.__moonfallTestState=()=>({models:window.Moonfall3D?.getStats?.()||null,turn:game.turn,energy:game.energy,hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,allies:game.allies.map(a=>({hp:a.hp,shield:a.shield})),foes:game.foes.map(f=>({hp:f.hp,burnTurns:f.burnTurns})),ended:game.ended,previewCard:game.preview?.type==='card'?CARDS[game.preview.index].id:null});
 function activate(z){if(!z)return;
  if(game.ended){if(z.action==='restart'){game=freshGame();game.draw=game.draw.slice(5);announce('New battle started.');}return}
  if(game.preview){

@@ -48,7 +48,7 @@ window.MoonfallFallback=(canvas)=>{
  }
  function model(x,y,p,t,alive,selected,i){
   ctx.save();ctx.translate(x,y-(alive?Math.sin(t*1.4+i)*4:-36));ctx.rotate(alive?Math.sin(t*.8+i)*.025:-.27);
-  const left=i<4,sc=(i===0||i===6)?1.07:1;
+  const left=i<4,sc=.78*((i===0||i===6)?1.04:1);
   ctx.scale(sc,sc);ellipse(0,4,68,14,'#050817aa');
   if(selected&&alive){ellipse(0,-4,70,15,left?'#85e8cf75':'#f5a8b475');ctx.strokeStyle='#f3d29a';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,-4,70,15,0,0,Math.PI*2);ctx.stroke()}
   // Long hair and fabric cloaks are discrete articulated shapes.
@@ -88,11 +88,11 @@ window.MoonfallFallback=(canvas)=>{
   if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
   ctx.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);
   environment(now/1000);
-  const xs=[126,345,540,718,1105,1305,1500];
+  const xs=[220,380,540,700,1060,1220,1380];
   for(let i=0;i<7;i++){
    const health=i<4?state.allies[i]?.hp:state.foes[i-4]?.hp;
    const selected=i<4?state.selectedAlly===i:state.selectedEnemy===i-4;
-   model(xs[i],412,colors[i],now/1000,health>0,selected,i);
+   model(xs[i],450,colors[i],now/1000,health>0,selected,i);
   }
  },getStats(){return stats}};
 };

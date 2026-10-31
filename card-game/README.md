@@ -2,7 +2,7 @@
 
 **Live game:** https://awabja.github.io/card-game/
 
-This is the **HD Hand Edition**, a landscape-first single-battle vertical slice. It replaces the low-resolution prototype artwork with a larger illustrated battlefield and five updated original card paintings. It remains an early game demo, not a finished commercial title.
+This is the **Zoomed-Out Stage & Card Fan Edition**, a landscape-first single-battle vertical slice. It replaces the low-resolution prototype artwork with a larger illustrated battlefield and five updated original card paintings. It remains an early game demo, not a finished commercial title.
 
 ## What works
 
@@ -43,3 +43,7 @@ The updated artwork retains detail significantly better than the tiny previous a
 ## Model quality and limitations
 
 These characters are **procedural low-poly, toon-shaded 3D models**, not imported hand-authored anime-quality GLB assets. They are real independently animated meshes and are not painted into the background, but a production-grade anime look will require professionally created, rigged models and animation clips. The renderer falls back to a plain gradient on devices with WebGL disabled; battle controls continue to work. No third-party assets or JavaScript runtime dependencies are fetched.
+
+## Stage-composition revision (Moonfall 5)
+
+Zoomed-out camera, tighter seven-character stage spacing, individual health plates immediately underneath each model, and a physically proportionate 2:3 compact card fan along the bottom. Cards still open in a large, separate preview; a tap does not spend energy. The 3D scene is procedural low-poly, not professional anime meshes.

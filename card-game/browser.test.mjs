@@ -13,17 +13,17 @@ const sceneJS=await readFile(join(root,'scene3d.js'),'utf8');
 const fallbackJS=await readFile(join(root,'fallback-scene.js'),'utf8');
 const cards=(await readFile(join(root,'assets/cards-hd.webp'))).toString('base64');
 const manifest=JSON.parse(await readFile(join(root,'manifest.webmanifest'),'utf8'));
-assert.match(htmlRaw,/src="game\.js\?v=moonfall-4-models"/);
-assert.match(htmlRaw,/src="scene3d\.js\?v=moonfall-4-models"/);
-assert.match(htmlRaw,/src="fallback-scene\.js\?v=moonfall-4-models"/);
+assert.match(htmlRaw,/src="game\.js\?v=moonfall-5-stage"/);
+assert.match(htmlRaw,/src="scene3d\.js\?v=moonfall-5-stage"/);
+assert.match(htmlRaw,/src="fallback-scene\.js\?v=moonfall-5-stage"/);
 assert.match(htmlRaw,/<canvas id="scene3d"/);
 assert.match(htmlRaw,/apple-mobile-web-app-capable/);
-assert.match(htmlRaw,/href="style\.css\?v=moonfall-4-models"/);
+assert.match(htmlRaw,/href="style\.css\?v=moonfall-5-stage"/);
 assert.doesNotMatch(jsRaw,/sceneArt|battle-hd|atlas\.webp/,'Old painted battlefield not used');
 assert.match(sceneJS,/getContext\('webgl'/);
 assert.match(sceneJS,/humanoid\(/);
 assert.match(fallbackJS,/environment\(/);
-assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-4-models'/);
+assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-5-stage'/);
 assert(cards.length>100000,'High-resolution illustrated card art must be present');
 assert.equal(manifest.display,'fullscreen');
 assert.equal(manifest.orientation,'landscape');
@@ -33,7 +33,7 @@ assert.match(css,/\.game-shell\{position:relative;width:100vw!important;height:1
 const html=htmlRaw.replace(/<meta http-equiv="Content-Security-Policy"[^>]+>/,'')
   .replace(/<link rel="stylesheet"[^>]+>/,`<style>${css}</style>`)
   .replace(/<script src="[^"]+" defer><\/script>/g,'');
-const js=jsRaw.replace("cardsArt.src='assets/cards-hd.webp?v=moonfall-4-models';",`cardsArt.src='data:image/webp;base64,${cards}';`);
+const js=jsRaw.replace("cardsArt.src='assets/cards-hd.webp?v=moonfall-5-stage';",`cardsArt.src='data:image/webp;base64,${cards}';`);
 let executablePath;
 for (const candidate of [process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/chromium'].filter(Boolean)) {
   try {await access(candidate);executablePath=candidate;break;} catch {}
@@ -42,7 +42,7 @@ const browser=await chromium.launch(executablePath?
   {executablePath,headless:true,args:['--no-sandbox']}:
   {channel:'chrome',headless:true,args:['--no-sandbox']});
 try {
-  for(const [width,height] of [[844,390],[390,844],[1440,800]]) {
+  for(const [width,height] of [[844,390],[932,430],[390,844],[1440,800]]) {
     const page=await browser.newPage({viewport:{width,height},isMobile:width<900,hasTouch:width<900});
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
@@ -67,60 +67,79 @@ try {
       await page.locator('#portraitContinue').click();
       assert.equal(await page.locator('#orientationPanel').isVisible(),false,'Portrait preview opt-out works');
     }
-    if(width===844){
-      assert(box.height<=height+1,'Landscape canvas fits the phone height');
+    if(width===844||width===932){
+      assert(box.height<=height+1,'Landscape canvas fits phone height');
       const click=async(x,y)=>{
         const rect=await canvas.boundingBox();
         await page.mouse.click(rect.x+x/1600*rect.width,rect.y+y/800*rect.height);
-        await page.waitForTimeout(30);
+        await page.waitForTimeout(65);
       };
       const state=()=>page.evaluate(()=>window.__moonfallTestState());
       const before=await state();
       assert.equal(before.hand.length,5,'Five opening cards');
+      assert.equal(before.foes.length,3,'Three actual enemy models');
+      assert.equal(before.allies.length,4,'Four separate allied models');
       const fan=await page.evaluate(()=>window.__moonfallFanLayout());
-      assert.equal(fan.length,5,'Hand fans exactly five cards');
-      const screenRatio=width/height;
-      assert(fan.every(c=>Math.abs((c.w/c.h)*(screenRatio/2)-2/3)<.025),'The rendered cards maintain physical 2:3 proportions');
-      assert(fan[0].angle<fan[1].angle&&fan[1].angle<0&&fan[2].angle===0&&fan[4].angle>0,'Cards are physically fanned');
-      assert(fan[0].x+fan[0].w>fan[1].x,'Neighboring cards overlap like a held hand');
-      assert(fan[2].y<fan[0].y,'Center card is raised in the fan');
-      assert.equal(before.foes.length,3,'Three actual enemy combatants');
-      assert.equal(before.allies.length,4,'Four allied characters');
-      // The first-run guide is unavailable on about:blank; open it explicitly and verify close.
+      assert.equal(fan.length,5,'Five cards form the opening hand');
+      assert(fan.every(c=>Math.abs((c.w/c.h)*((width/height)/2)-2/3)<.025),'Each physical card has an unsquished 2:3 ratio');
+      assert(fan.every(c=>Math.max(...c.polygon.map(p=>p.y))<800),'The entire card hand fits inside the screen');
+      assert(fan.every(c=>Math.min(...c.polygon.map(p=>p.y))>500),'Cards stay below character health bars');
+      assert(fan[0].angle<fan[1].angle&&fan[2].angle===0&&fan[4].angle>0,'Hand has realistic left-to-right fan angles');
+      assert(fan[0].x+fan[0].w>fan[1].x,'Cards overlap like a real hand');
+      assert(fan[2].y<fan[0].y,'Middle of the hand is raised');
+      assert.match(jsRaw,/const gaugeY=447/,'Health bars are anchored under characters');
+      assert.match(sceneJS,/perspectiveOrtho\(-10\.9,10\.9,-5\.6,4\.25/,'Camera is zoomed out');
+      const visiblePoint=async slot=>{
+        return page.evaluate(slot=>{
+          const c=window.__moonfallFanLayout()[slot];
+          for(let fy=.36;fy<.80;fy+=.07)for(let fx=.09;fx<.87;fx+=.08){
+            const x=c.x+c.w*fx,y=c.y+c.h*fy,action=window.__moonfallHitTest(x,y);
+            if(action?.action==='card'&&action.meta===slot)return {x,y};
+          }
+          return null;
+        },slot);
+      };
+      // Reveal guide with keyboard and dismiss without affecting the battle.
       await page.keyboard.press('h');
-      assert.equal((await state()).preview,'guide','Help overlay can open');
+      assert.equal((await state()).preview,'guide','Help overlay opens');
       await click(800,650);
       assert.equal((await state()).preview,null,'Help overlay closes');
-      await click(1305,300);
-      assert.equal((await state()).selectedEnemy,1,'Player can target the center enemy');
-      await click(846,630);
-      assert.equal((await state()).previewCard,'bloom','Topmost middle fanned card receives taps');
-      await click(1120,628);
-      await click(438,648);
-      assert.equal((await state()).preview,'card','Tapping a card inspects it; does not immediately play');
-      assert.equal((await state()).previewCard,'shadow','Left fan card opens the proper original illustration');
-      assert.equal((await state()).energy,3,'Preview costs no energy');
+      await click(1220,330);
+      assert.equal((await state()).selectedEnemy,1,'Center enemy is independently targetable');
+      const center=await visiblePoint(2);
+      assert(center,'The center card exposes a tappable face');
+      await click(center.x,center.y);
+      assert.equal((await state()).previewCard,'bloom','Center card expands to correct full card preview');
+      const preview=await page.evaluate(()=>window.__moonfallPreviewSize());
+      assert(Math.abs((preview.width/preview.height)*((width/height)/2)-2/3)<.025,'Expanded card keeps physical 2:3 ratio');
+      assert.equal((await state()).energy,3,'Preview does not spend energy');
       await click(1112,628);
-      assert.equal((await state()).preview,null,'Keep in hand closes preview');
-      assert.equal((await state()).hand.length,5,'Cancel does not discard card');
-      await click(438,648);
+      assert.equal((await state()).preview,null,'Cancel closes preview');
+      const left=await visiblePoint(0);
+      assert(left,'The outermost left card remains tappable despite overlap');
+      await click(left.x,left.y);
+      assert.equal((await state()).previewCard,'shadow','Outermost card expands to correct preview');
+      await click(1112,628);
+      assert.equal((await state()).hand.length,5,'Cancel keeps card in hand');
+      const leftAgain=await visiblePoint(0);
+      await click(leftAgain.x,leftAgain.y);
       await click(820,628);
       const played=await state();
-      assert.equal(played.energy,2,'Confirming a 1-energy card spends 1 energy');
-      assert.equal(played.foes[1].hp,165,'Selected enemy actually takes damage');
-      assert.equal(played.hand.length,4,'Played card moves out of hand');
-      assert.equal(played.discard.length,1,'Played card enters discard');
-      await click(89,640);
-      assert.equal((await state()).preview,'deck','Deck stack opens collection view');
+      assert.equal(played.energy,2,'Confirm spends energy');
+      assert.equal(played.foes[1].hp,165,'Card damages selected enemy');
+      assert.equal(played.hand.length,4,'Played card is removed from hand');
+      assert.equal(played.discard.length,1,'Card enters discard');
+      await click(75,715);
+      assert.equal((await state()).preview,'deck','Draw pile can be inspected');
       await click(1190,136);
-      assert.equal((await state()).preview,null,'Deck view closes');
-      await click(1460,635);
+      assert.equal((await state()).preview,null,'Deck closes');
+      await click(1492,700);
       const next=await state();
-      assert.equal(next.turn,2,'End Turn advances actual turn');
-      assert.equal(next.energy,next.maxEnergy,'Energy refills on next turn');
-      assert.equal(next.hand.length,5,'A new playable hand is drawn');
+      assert.equal(next.turn,2,'End Turn advances combat');
+      assert.equal(next.energy,next.maxEnergy,'Turn refills energy');
+      assert.equal(next.hand.length,5,'New hand drawn');
       await click(1280,35);
-      assert.equal((await state()).turn,1,'Restart resets battle state');
+      assert.equal((await state()).turn,1,'Restart resets battle');
     }
     assert.deepEqual(errors,[],'No browser JavaScript errors at '+width+'×'+height);
     await page.close();
