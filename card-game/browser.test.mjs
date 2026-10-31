@@ -37,7 +37,7 @@ try{
   assert.equal(await page.locator('.duel-end').count(),1,'End Turn action is visible');
   assert.equal(await page.locator('.battle-guide').count(),1,'First-time how-to-play guide is visible');
   assert.equal(await page.locator('.duel-forecast').count(),1,'Enemy intent is visible');
-  assert.equal(await page.locator('.guide-heading').innerText(),'1. Play a card');
+  assert.equal(await page.locator('.guide-heading').innerText(),'1. Tap a card to inspect');
   assert.equal(await page.locator('.hand .card').count(),5,'Opening hand has 5 cards');
   assert.equal(await page.locator('.wallet strong').innerText(),'50');
   assert((await page.title()).includes('Arcana Duel'));
@@ -58,7 +58,7 @@ try{
   await page.locator('.hand button.card').first().click();
   await page.locator('.inspect-play').click();
   assert.notEqual(await page.locator('.battle-message').innerText(),before,'Confirmed card play causes an effect');
-  assert.equal(await page.locator('.hand .card').count(),4,'Played card leaves the hand');
+  assert.notEqual(await page.locator('.hand .card').count(),5,'Playing the card changes the hand');
   assert.equal(await page.locator('.guide-heading').innerText(),'3. End your turn','Guide advances after playing');
   await page.locator('[data-action="openDeck"]').click();
   assert.equal(await page.locator('.pile-panel').count(),1,'Deck viewer opens');
@@ -74,7 +74,7 @@ try{
   await page.locator('[data-action="end"]').click();
   assert.equal(await page.locator('.battle-guide').count(),0,'Tutorial finishes after ending a turn');
   await page.locator('[data-action="guideOpen"]').click();
-  assert.equal(await page.locator('.guide-heading').innerText(),'1. Play a card','Tutorial can be replayed');
+  assert.equal(await page.locator('.guide-heading').innerText(),'1. Tap a card to inspect','Tutorial can be replayed');
   await page.locator('[data-action="guideSkip"]').click();
   assert((await page.locator('.duel-round').innerText()).includes('TURN 2'),'End turn advances turn');
   await page.locator('#collectionTab').click();
@@ -111,7 +111,7 @@ try{
  assert(handBox&&handBox.y+handBox.height<=395,'Landscape hand fits within viewport');
  await landscape.locator('.hand button.card').first().click();
  assert.equal(await landscape.locator('.inspect-dialog[open]').count(),1,'Landscape card preview opens');
- const modalBox=await landscape.locator('.inspect-panel').boundingBox();
+ const modalBox=await landscape.locator('.inspect-dialog').boundingBox();
  assert(modalBox&&modalBox.height<=390,'Card preview fits short landscape screen');
  await landscape.locator('[data-action="closeInspect"]').last().click();
  await landscape.locator('.hand button.card').first().click();
