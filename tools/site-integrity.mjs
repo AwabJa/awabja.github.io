@@ -260,7 +260,8 @@ for(const id of ['undoBar','undoTask','recurrenceChoice','editOneOccurrence',
 check(!existsSync(join(root,'Enzo')), 'Retired Enzo directory must stay removed');
 const cardsHtml=readFileSync(join(root,'card-game/index.html'),'utf8');
 const cardsApp=readFileSync(join(root,'card-game/game.js'),'utf8');
-check(cardsHtml.includes('src="game.js?v=') &&
+check(cardsHtml.includes('<title>Moonfall |') &&
+      cardsHtml.includes('src="game.js?v=') &&
       cardsHtml.includes('href="style.css?v=') &&
       cardsHtml.includes('src="scene25d.js?v=') &&
       cardsHtml.includes('id="sceneWorld"') &&
@@ -269,6 +270,8 @@ check(existsSync(join(root,'card-game/scene25d.js')) &&
       existsSync(join(root,'card-game/assets/backdrop2.webp')) &&
       existsSync(join(root,'card-game/assets/characters.webp')) &&
       existsSync(join(root,'card-game/assets/cards-hd.webp')) &&
+      existsSync(join(root,'card-game/assets/frames-allies.webp')) &&
+      existsSync(join(root,'card-game/assets/frames-enemies.webp')) &&
       existsSync(join(root,'card-game/manifest.webmanifest')) &&
       !existsSync(join(root,'card-game/assets/battle-hd.webp')) &&
       !existsSync(join(root,'card-game/assets/atlas.webp')),

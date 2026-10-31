@@ -6,7 +6,7 @@ const loading=document.getElementById('loadMessage');
 const cardsArt=new Image();
 cardsArt.decoding='async';
 const artwork=[cardsArt];
-cardsArt.src='assets/cards-hd.webp?v=moonfall-motion-1';
+cardsArt.src='assets/cards-hd.webp?v=moonfall-frames-1';
 const W=1600,H=800,THEME={gold:'#f1d4a1',cream:'#f7e7d0',muted:'#bac0cb',blue:'#a6cbff',red:'#ef8799',green:'#9be3b6'};
 const CARDS=[
  {id:'shadow',name:'Shadow Step',rarity:'Rare',cost:1,kind:'attack',description:'Deal 135 damage to your selected enemy. If this defeats it, regain 1 energy.',amount:135,flavor:'Disappear into the night. Return as a blade.',symbol:'✧',hue:'#c4a6ff'},
@@ -50,8 +50,8 @@ function drawHeader(){
  grad.addColorStop(0,'#080d1cf3');grad.addColorStop(.72,'#080d1cb0');grad.addColorStop(1,'#080d1c00');
  ctx.fillStyle=grad;ctx.fillRect(0,0,W,106);
  text('✧',31,37,42,THEME.gold,'Georgia');
- text('ARCANA DUEL',79,35,31,THEME.cream,'Georgia','left','700');
- text('2.5D ART',322,39,15,'#e7d4b2','system-ui','left','700');
+ text('MOONFALL',79,35,34,THEME.cream,'Georgia','left','700');
+ text('THE GOTHIC CARD RPG',286,39,13,'#e7d4b2','system-ui','left','700');
  pill(`TURN ${game.turn}`,758,15,155,40,'#211e2bdb','#d6b78d',21);
  const live=game.foes.filter(f=>f.hp>0).length;
  pill(`${live} ENEMIES`,927,15,155,40,'#231b2bd8','#c58e9d',16);
@@ -370,7 +370,7 @@ fsButton.addEventListener('click',async()=>{
    }
  }catch{}
  fsHint.hidden=false;
- announce('iPhone fullscreen: Share → Add to Home Screen, then open Arcana Duel from its icon.');
+ announce('iPhone fullscreen: Share → Add to Home Screen, then open Moonfall from its icon.');
 });
 document.getElementById('dismissFullscreenHint').addEventListener('click',()=>fsHint.hidden=true);
 document.addEventListener('fullscreenchange',()=>{

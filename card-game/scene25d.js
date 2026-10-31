@@ -1,13 +1,20 @@
-/* Moonfall 2.5D motion pass: independently layered illustrated actors, subtle
-   secondary-motion sprite deformation, spell actions, hit reactions and atmosphere.
-   These are animated illustrated cutouts, not a hand-drawn frame-by-frame rig. */
+/* Moonfall illustrated frame animation: 7 independent characters x 5 action states x 6
+   DISTINCT prebaked RGBA frames. Poses are digitally generated from source character art,
+   not independently hand-drawn. Action cues select walking, attack, cast, and hurt frames. */
 (()=>{'use strict';
  const canvas=document.getElementById('sceneWorld');
  const ctx=canvas?.getContext('2d',{alpha:false,desynchronized:true});
  if(!ctx){window.MoonfallScene={render(){},cue(){},reset(){},getStats(){return {mode:'unavailable',actors:0}}};return}
  const W=1600,H=800,TAU=Math.PI*2;
- const background=new Image();background.decoding='async';background.src='assets/backdrop2.webp?v=moonfall-motion-1';
- const actors=new Image();actors.decoding='async';actors.src='assets/characters.webp?v=moonfall-motion-1';
+ const background=new Image();background.decoding='async';background.src='assets/backdrop2.webp?v=moonfall-frames-1';
+ const actors=new Image();actors.decoding='async';actors.src='assets/characters.webp?v=moonfall-frames-1';
+ const frameAtlases=[new Image(),new Image()];
+ frameAtlases.forEach(image=>image.decoding='async');
+ frameAtlases[0].src='assets/frames-allies.webp?v=moonfall-frames-1';
+ frameAtlases[1].src='assets/frames-enemies.webp?v=moonfall-frames-1';
+ const ACTION_NAMES=['idle','walk','attack','cast','hurt'];
+ const FRAME_COUNT=6,FRAME_W=300,FRAME_H=320;
+ const currentClips=Array(7).fill('idle'),currentFrames=Array(7).fill(0);
  const positions=[137,344,548,724,1071,1261,1451];
  const sizes=[239,234,223,218,230,241,237];
  const palette={strike:'#bbafff',bolt:'#9dc9ff',area:'#ff708c',defend:'#eed6a5',heal:'#9cf7c4',enemy:'#f19ca4',burn:'#ffb46f'};
@@ -31,7 +38,7 @@
   const event={kind:e.kind,source,target,start:performance.now()+clamp(Number(e.delay)||0,0,1400),duration:e.kind==='area'?1150:850,color:palette[e.kind]};
   cues.push(event);cues=cues.slice(-24);lastCue=event.kind;
  }
- function reset(){cues=[];hits.fill(0);previous.fill(null);lastCue=null;activeCueCount=0}
+ function reset(){cues=[];hits.fill(0);previous.fill(null);lastCue=null;activeCueCount=0;currentClips.fill('idle');currentFrames.fill(0)}
  function actorMove(i,now){
   let dx=0,dy=0,roll=0,flash=0,lunge=0;
   for(const e of cues){
@@ -76,12 +83,32 @@
    shimmer(x,271+(x===187?-34:0),41,'#ffa44c',flick*.28);
   }}
  }
+ function poseFor(i,now,alive){
+  if(!alive)return {state:'hurt',frame:5};
+  for(let j=cues.length-1;j>=0;j--){
+   const e=cues[j],p=(now-e.start)/e.duration;
+   if(p<0||p>=1)continue;
+   if(e.target===i && !['heal','defend'].includes(e.kind) && p>=.42){
+    return {state:'hurt',frame:Math.min(5,Math.floor(((p-.42)/.58)*6))};
+   }
+   if(e.source!==i)continue;
+   if(e.kind==='enemy'||e.kind==='strike'){
+    if(p<.23)return {state:'walk',frame:Math.min(5,Math.floor(p/.23*6))};
+    if(p<.76)return {state:'attack',frame:Math.min(5,Math.floor((p-.23)/.53*6))};
+    return {state:'walk',frame:5-Math.min(5,Math.floor((p-.76)/.24*6))};
+   }
+   return {state:'cast',frame:Math.min(5,Math.floor(p*6))};
+  }
+  return {state:'idle',frame:Math.floor(now/220+i*1.3)%FRAME_COUNT};
+ }
  function drawActor(i,t,hp,selected,now){
   const x=positions[i],h=sizes[i],w=300/320*h,alive=hp>0;
   const phase=t*1.52+i*1.11;
   const breath=alive&&!reduced?Math.sin(phase)*.008:0;
   const bob=alive&&!reduced?Math.sin(phase)*2.2+Math.sin(t*.47+i*2.1)*1.0:0;
   const tilt=alive&&!reduced?Math.sin(t*.9+i*1.47)*.009:0;
+  const pose=poseFor(i,now,alive);
+  currentClips[i]=pose.state;currentFrames[i]=pose.frame;
   const move=actorMove(i,now),base=442+bob+move.dy;
   // Contact shadows compress when a character lunges, lift when a character jumps.
   const shadow=ctx.createRadialGradient(x,445,3,x,445,w*.46);
@@ -94,23 +121,22 @@
   ctx.save();ctx.translate(x+move.dx,base-h*.06);ctx.rotate(tilt+move.roll);
   ctx.scale(1+breath*.35,1-breath);
   const top=-h*.94,left=-w/2;
-  if(ready(actors)){
+  const sheet=frameAtlases[i<4?0:1];
+  if(ready(sheet)){
    ctx.globalAlpha=alive?1:.32;
    if(hits[i]>0){ctx.shadowColor=i<4?'#9cfff1':'#ff9ba7';ctx.shadowBlur=hits[i]*28}
-   // Vertical sprite-strip warping adds gentle secondary flow to hair and clothing.
-   // Pixel shift stays below 4px, avoiding the obvious rubber-model effect.
-   const bands=reduced||!alive?1:12;
-   for(let b=0;b<bands;b++){
-    const y=b*320/bands,bh=320/bands;
-    const upper=1-y/320;
-    const tail=y/320;
-    const drift=alive&&!reduced?(Math.sin(t*1.25+i*.7+y*.028)*upper*2.1+Math.sin(t*1.68+i*.4+y*.042)*tail*2.5):0;
-    // Slight torso expansion, distant from the feet; strips share their boundaries.
-    ctx.drawImage(actors,i*300,y,300,bh,left+drift,top+y/320*h,w,h/bands+.32);
-   }
+   const localIndex=i<4?i:i-4;
+   const row=(localIndex*ACTION_NAMES.length+ACTION_NAMES.indexOf(pose.state))*FRAME_H;
+   const col=pose.frame*FRAME_W;
+   ctx.drawImage(sheet,col,row,FRAME_W,FRAME_H,left,top,w,h);
    ctx.globalAlpha=1;
-   if(move.flash>0){ctx.globalCompositeOperation='screen';ctx.globalAlpha=move.flash*.24;ctx.fillStyle=i<4?'#d4fff4':'#ffb7c0';ctx.fillRect(left,top,w,h);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1}
+  }else if(ready(actors)){
+   // Initial-load fallback only. Normal combat draws a separately pre-rendered frame.
+   ctx.globalAlpha=alive?1:.32;
+   ctx.drawImage(actors,i*300,0,300,320,left,top,w,h);
+   ctx.globalAlpha=1;
   }else{ctx.fillStyle='#787490';ctx.beginPath();ctx.ellipse(0,-h*.5,w*.22,h*.44,0,0,TAU);ctx.fill()}
+  if(move.flash>0){ctx.globalCompositeOperation='screen';ctx.globalAlpha=move.flash*.24;ctx.fillStyle=i<4?'#d4fff4':'#ffb7c0';ctx.fillRect(left,top,w,h);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1}
   ctx.restore();
   hits[i]=Math.max(0,hits[i]-.05);
  }
@@ -188,5 +214,5 @@
   }
   drawSpells(now);foreground(t);frames++;nowClock=now;
  }
- window.MoonfallScene={render,cue,reset,getStats(){return {mode:'layered-2.5D',actors:7,backgroundLoaded:ready(background),spritesLoaded:ready(actors),frames,activeEffects:activeCueCount,lastCue,reducedMotion:reduced}}};
+ window.MoonfallScene={render,cue,reset,getStats(){return {mode:'layered-2.5D',actors:7,backgroundLoaded:ready(background),spritesLoaded:ready(actors),frames,activeEffects:activeCueCount,lastCue,reducedMotion:reduced,atlasLoaded:frameAtlases.map(ready),framesPerAction:FRAME_COUNT,actionNames:ACTION_NAMES,animationStates:[...currentClips],frameIndices:[...currentFrames]}}};
 })();

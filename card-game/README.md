@@ -1,4 +1,4 @@
-# Arcana Duel: Moonfall — 2.5D illustrated battle slice
+# Moonfall — 2.5D illustrated battle slice
 
 **Live game:** https://awabja.github.io/card-game/
 
@@ -11,6 +11,12 @@ The earlier low-poly WebGL scene was removed and replaced with a **layered 2.5D 
 3. Tap a card in the compact fanned hand. Read the larger preview, then choose **Play Card** or **Keep in Hand**. Inspecting never spends energy.
 4. End Turn to let enemies attack, apply damage and shields, then refill your hand.
 5. Defeat all three enemies before all four allies fall.
+
+## Character frame animation
+
+All **seven** characters now have sprite atlases containing **six separate rendered frames** for each of five actions: idle, walking, attacking, casting and taking damage (**210 frames total**). Walking is used during approach/recovery, attacks during strikes, spells for card abilities, and hurt frames on impacts. The renderer switches frames on gameplay event cues, rather than relying solely on procedural wobble.
+
+**Art production note:** These frames are generated/deformed from the existing character illustrations, not separately hand-drawn or skeletal-rigged by an animator. This is a substantial upgrade in animation state coverage, but a professional character-animation pass would require redrawing or rigging distinct limbs and fabric layers.
 
 ## Implemented
 

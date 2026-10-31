@@ -13,20 +13,24 @@ const sceneJS=await readFile(join(root,'scene25d.js'),'utf8');
 const background=(await readFile(join(root,'assets/backdrop2.webp'))).toString('base64');
 const actors=(await readFile(join(root,'assets/characters.webp'))).toString('base64');
 const cards=(await readFile(join(root,'assets/cards-hd.webp'))).toString('base64');
+const framesAllies=(await readFile(join(root,'assets/frames-allies.webp'))).toString('base64');
+const framesEnemies=(await readFile(join(root,'assets/frames-enemies.webp'))).toString('base64');
 const manifest=JSON.parse(await readFile(join(root,'manifest.webmanifest'),'utf8'));
-assert.match(htmlRaw,/src="game\.js\?v=moonfall-motion-1"/);
-assert.match(htmlRaw,/src="scene25d\.js\?v=moonfall-motion-1"/);
+assert.match(htmlRaw,/src="game\.js\?v=moonfall-frames-1"/);
+assert.match(htmlRaw,/src="scene25d\.js\?v=moonfall-frames-1"/);
 assert.match(htmlRaw,/<canvas id="sceneWorld"/);
 assert.match(htmlRaw,/apple-mobile-web-app-capable/);
-assert.match(htmlRaw,/href="style\.css\?v=moonfall-motion-1"/);
+assert.match(htmlRaw,/href="style\.css\?v=moonfall-frames-1"/);
 assert.doesNotMatch(jsRaw,/sceneArt|battle-hd|atlas\.webp/,'Old painted battlefield not used');
-assert.match(sceneJS,/independently layered illustrated actors/);
+assert.match(sceneJS,/7 independent characters/);
 assert.match(sceneJS,/function cue\(e\)/,'Renderer exposes event-based action animation');
 assert.match(sceneJS,/function drawSpells\(now\)/,'Renderer draws spell and attack effects');
 assert.match(sceneJS,/function actorMove\(i,now\)/,'Sprites have wind-up and hit reactions');
+assert.match(sceneJS,/function poseFor\(i,now,alive\)/,'Dedicated action frames are selected by game events');
+assert(framesAllies.length>500000&&framesEnemies.length>500000,'High-quality prebaked sprite frame atlases exist');
 assert.match(sceneJS,/drawActor\(/);
 assert.doesNotMatch(sceneJS,/getContext\('webgl'/);
-assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-motion-1'/);
+assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-frames-1'/);
 assert(cards.length>100000,'Card art must be present');
 assert(background.length>150000 && actors.length>100000,'High-resolution illustration layers must be present');
 assert.equal(manifest.display,'fullscreen');
@@ -37,9 +41,11 @@ assert.match(css,/\.game-shell\{position:relative;width:100vw!important;height:1
 const html=htmlRaw.replace(/<meta http-equiv="Content-Security-Policy"[^>]+>/,'')
   .replace(/<link rel="stylesheet"[^>]+>/,`<style>${css}</style>`)
   .replace(/<script src="[^"]+" defer><\/script>/g,'');
-const js=jsRaw.replace("cardsArt.src='assets/cards-hd.webp?v=moonfall-motion-1';",`cardsArt.src='data:image/webp;base64,${cards}';`);
-const scene=sceneJS.replace("background.src='assets/backdrop2.webp?v=moonfall-motion-1';",`background.src='data:image/webp;base64,${background}';`)
- .replace("actors.src='assets/characters.webp?v=moonfall-motion-1';",`actors.src='data:image/webp;base64,${actors}';`);
+const js=jsRaw.replace("cardsArt.src='assets/cards-hd.webp?v=moonfall-frames-1';",`cardsArt.src='data:image/webp;base64,${cards}';`);
+const scene=sceneJS.replace("background.src='assets/backdrop2.webp?v=moonfall-frames-1';",`background.src='data:image/webp;base64,${background}';`)
+ .replace("actors.src='assets/characters.webp?v=moonfall-frames-1';",`actors.src='data:image/webp;base64,${actors}';`)
+ .replace("frameAtlases[0].src='assets/frames-allies.webp?v=moonfall-frames-1';",`frameAtlases[0].src='data:image/webp;base64,${framesAllies}';`)
+ .replace("frameAtlases[1].src='assets/frames-enemies.webp?v=moonfall-frames-1';",`frameAtlases[1].src='data:image/webp;base64,${framesEnemies}';`);
 let executablePath;
 for (const candidate of [process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/chromium'].filter(Boolean)) {
   try {await access(candidate);executablePath=candidate;break;} catch {}
@@ -63,6 +69,11 @@ try {
     const modelStats=await page.evaluate(()=>window.MoonfallScene?.getStats());
     assert.equal(modelStats?.actors,7,'Seven independently rendered anime character sprites');
     assert.equal(modelStats?.mode,'layered-2.5D','Renderer is an illustrated 2.5D scene');
+    await page.waitForFunction(()=>window.MoonfallScene.getStats().atlasLoaded.every(Boolean),null,{timeout:10000});
+    const frames=await page.evaluate(()=>window.MoonfallScene.getStats());
+    assert.equal(frames.framesPerAction,6,'Six individually baked frames per action');
+    assert.deepEqual(frames.actionNames,['idle','walk','attack','cast','hurt']);
+    assert.equal(frames.animationStates.length,7,'All seven characters have animated states');
     assert(Math.abs(box.width-width)<=1 && Math.abs(box.height-height)<=1,'Canvas fills entire viewport');
     const raster=await page.evaluate(()=>({w:document.getElementById('game').width,h:document.getElementById('game').height}));
     assert(raster.w>=1600 && raster.h>=800,'Canvas draws above baseline logical resolution');
@@ -83,6 +94,14 @@ try {
       const state=()=>page.evaluate(()=>window.__moonfallTestState());
       const before=await state();
       assert.equal(before.hand.length,5,'Five opening cards');
+      // Check real gameplay-related frame transitions, not just code presence.
+      await page.evaluate(()=>window.MoonfallScene.cue({kind:'strike',source:1,target:5}));
+      await page.waitForFunction(()=>window.MoonfallScene.getStats().animationStates[1]==='attack',null,{timeout:1500});
+      await page.waitForFunction(()=>window.MoonfallScene.getStats().animationStates[5]==='hurt',null,{timeout:1500});
+      await page.waitForTimeout(900);
+      await page.evaluate(()=>window.MoonfallScene.cue({kind:'heal',source:2,target:0}));
+      await page.waitForFunction(()=>window.MoonfallScene.getStats().animationStates[2]==='cast',null,{timeout:1500});
+      await page.waitForTimeout(950);
       assert.equal(before.foes.length,3,'Three actual enemy models');
       assert.equal(before.allies.length,4,'Four separate allied models');
       const fan=await page.evaluate(()=>window.__moonfallFanLayout());
@@ -154,5 +173,5 @@ try {
     assert.deepEqual(errors,[],'No browser JavaScript errors at '+width+'×'+height);
     await page.close();
   }
-  console.log('MOONFALL 2.5D CHECKS PASSED: illustration layers, seven sprites, cards, turns and mobile layout');
+  console.log('MOONFALL FRAME ANIMATIONS PASSED: 7 actors, walking, attacking, spellcasting and damage reactions');
 } finally {await browser.close();}
