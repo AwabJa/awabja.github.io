@@ -32,7 +32,7 @@ try{
   await page.locator('.combatant-enemy .combatant-name').waitFor();
   assert.equal(await page.locator('.duel-arena').count(),1,'Battlefield is visible');
   assert.equal(await page.locator('.board-v5 .game-table').count(),1,'New card-first game table is present');
-  assert.match(await page.locator('#buildVersion').innerText(),/BUILD 06/,'Updated version is visible');
+  assert.match(await page.locator('#buildVersion').innerText(),/BUILD 07/,'Updated version is visible');
   assert.equal(await page.locator('.combatant').count(),2,'Real one-on-one combatants are shown');
   assert.equal(await page.locator('.combatant .character-art').count(),2,'Hero and enemy have original illustrations');
   assert.equal(await page.locator('.duel-hand-section').count(),1,'Hand is visible');
@@ -47,6 +47,11 @@ try{
   const before=await page.locator('.battle-message').innerText();
   const hpBefore=await page.locator('.combatant-enemy .combatant-hp-number').innerText();
   const energyBefore=await page.locator('.duel-energy strong').innerText();
+  const geometry=await page.evaluate(()=>{
+    const names=['.game-table','.game-table-head','.game-tabletop','.card-table','.hand','.hand button.card','.game-battle-message'];
+    return Object.fromEntries(names.map(name=>{const node=document.querySelector(name),r=node?.getBoundingClientRect();return [name,r?{x:r.x,y:r.y,w:r.width,h:r.height}:null]}));
+  });
+  console.log('HAND GEOMETRY',width,JSON.stringify(geometry));
   await page.locator('.hand button.card').first().click();
   assert.equal(await page.locator('.inspect-dialog[open]').count(),1,'Tapping a card opens its details');
   assert.equal(await page.locator('.inspect-description').count(),1,'Preview explains the card');

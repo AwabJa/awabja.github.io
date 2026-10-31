@@ -153,3 +153,16 @@ body{background:radial-gradient(ellipse at 50% 0,#29333d,#0b0e16 65%)}
  #app>.footer{display:none}
 }
 @media(prefers-reduced-motion:reduce){.board-v5 .card,.board-v5 .card:hover:not(:disabled){transition:none!important;transform:none!important}}
+
+/* Keep the scrollable hand above decorative tabletop labels at narrow widths. */
+.board-v5 .game-tabletop{position:relative;z-index:8;flex:1 1 auto;min-height:220px}
+.board-v5 .duel-hand-section{position:relative;z-index:9;min-width:0;min-height:0;align-self:stretch}
+.board-v5 .card-table{position:relative;z-index:10;min-height:0}
+.board-v5 .card-table>.hand{position:relative;z-index:11;min-height:0;height:100%;align-items:stretch}
+.board-v5 .hand .card{position:relative;z-index:12;align-self:stretch}
+.board-v5 .game-table-head{pointer-events:none}
+.board-v5 .game-battle-message{pointer-events:none}
+.board-v5 .game-battle-message .duel-restart{pointer-events:auto}
+@media(orientation:landscape) and (max-height:600px) and (max-width:1050px){
+ .board-v5 .game-tabletop{min-height:0;height:calc(100% - 43px)}
+}
