@@ -271,7 +271,7 @@ check(existsSync(join(root,'card-game/assets/battle-hd.webp')) &&
 check(!existsSync(join(root,'card-game/app.js')), 'Retired card-game prototype must be removed');
 check(cardsApp.includes('selectedEnemy') && cardsApp.includes('game.hand') &&
       cardsApp.includes('preview') && cardsApp.includes('requestFullscreen') &&
-      cardsApp.includes('ctx.rotate(angle)'),
+      cardsApp.includes('ctx.rotate(c.angle)') && cardsApp.includes('handLayout()'),
       'Card game must retain targeting, previews, fullscreen and curved hand rendering');
 
 check(existsSync(join(root,'serivia/index.html')) && existsSync(join(root,'serivia/app.js')) && existsSync(join(root,'serivia/favicon.svg')), 'serivia project must remain published');
