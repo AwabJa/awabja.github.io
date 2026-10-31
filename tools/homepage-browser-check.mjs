@@ -165,7 +165,7 @@ try{
  const reduced=await browser.newPage({viewport:{width:390,height:800},reducedMotion:'reduce'});
  await reduced.goto(origin+'/');
  assert.equal(await reduced.locator('.hero-display-line').count(),1);
- assert.equal(await reduced.locator('.project').count(),3);
+ assert.equal(await reduced.locator('.project').count(),2);
  await reduced.close();
  for(const legacy of ['index.previous.html','home-preview/','water-hero.js','styles.css','assets/water-aj.webp','3D%20Navigation%20Bar/','assets/homepage/solar-interface.svg']){
    const response=await browser.newPage();

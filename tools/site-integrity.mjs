@@ -301,7 +301,7 @@ check(homeHtml.includes('href="homepage.css?v=5"') &&
 check(homeHtml.includes('class="project project-serivia"') && homeHtml.includes('class="project-title">serivia') && !homeHtml.includes('project-solar') && !homeHtml.includes('Solar System Explorer'), 'Homepage must show serivia, not the retired Solar System');
 check(homeHtml.includes('href="Flow/"') &&
       homeHtml.includes('href="serivia/"') &&
-      homeHtml.includes('href="Enzo/"'),
+      !homeHtml.includes('href="Enzo/"') && !homeHtml.includes('project-enzo'),
   'Homepage must retain live project links');
 check(homeHtml.includes('assets/homepage/flow-product.svg') &&
       homeHtml.includes('assets/homepage/serivia-product.svg'),
