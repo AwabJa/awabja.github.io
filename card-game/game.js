@@ -295,7 +295,7 @@ function chooseAction(x,y){
     x>=t.x&&x<=t.x+t.w&&y>=t.y&&y<=t.y+t.h))||null;
 }
 window.__moonfallFanLayout=()=>handLayout().map(c=>({slot:c.slot,card:CARDS[game.hand[c.slot]]?.id,x:c.x,y:c.y,w:c.w,h:c.h,angle:c.angle,polygon:cardPolygon(c)}));
-window.__moonfallTestState=()=>({models:window.Moonfall3D?.getStats?.()||null,turn:game.turn,energy:game.energy,hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,allies:game.allies.map(a=>({hp:a.hp,shield:a.shield})),foes:game.foes.map(f=>({hp:f.hp,burnTurns:f.burnTurns})),ended:game.ended,previewCard:game.preview?.type==='card'?CARDS[game.preview.index].id:null});
+window.__moonfallTestState=()=>({models:window.Moonfall3D?.getStats?.()||null,turn:game.turn,energy:game.energy,maxEnergy:game.maxEnergy,hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,allies:game.allies.map(a=>({hp:a.hp,shield:a.shield})),foes:game.foes.map(f=>({hp:f.hp,burnTurns:f.burnTurns})),ended:game.ended,previewCard:game.preview?.type==='card'?CARDS[game.preview.index].id:null});
 function activate(z){if(!z)return;
  if(game.ended){if(z.action==='restart'){game=freshGame();game.draw=game.draw.slice(5);announce('New battle started.');}return}
  if(game.preview){
