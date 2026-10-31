@@ -13,14 +13,19 @@ A zero-dependency, mobile-first, single-player strategic collectible card game p
 - Deck shuffle/discard cycle, persistent collection, shards and card unlock packs
 - No payment system, server, analytics, third-party scripts, or external assets
 - Responsive touch-friendly cards, mouse and keyboard controls, reduced-motion mode
-- Clear one-on-one cathedral battle with the hero and actual enemy, obvious health/energy bars, visible next enemy move, swipeable hand, and End Turn button
+- Landscape-first card table with visible draw and discard piles, horizontal swipe through your hand, and tap-to-inspect card dialog with an explicit Play Card confirmation
+- Clear one-on-one cathedral battle with the hero and actual enemy, health/energy bars, visible next enemy move, and End Turn button
 
 ## How to play
 
 1. Open the game in a browser. The first battle shows a 3-step tutorial; the “How to play” button reopens it at any time.
-2. Tap a highlighted card in your hand. Its number is the energy cost. Attack cards hurt the enemy, guard cards add a shield, and heal cards restore health.
-3. Read the enemy's upcoming move above your cards. End your turn when you run out of energy or have played enough cards. The enemy attacks, then you draw a new hand.
+2. Turn your phone to **landscape** for the full-width table. Swipe sideways through your hand. **Tap a card to inspect it**; nothing happens to your energy or enemy HP until you press **Play Card**. Close the preview to keep the card.
+3. Choose **Play Card** to spend its shown energy cost and activate it. Open **Draw** to view your 12-card deck or **Discard** to review previously played cards. Read the enemy's upcoming move and end your turn when ready.
 4. Reduce the enemy's HP to zero before your HP reaches zero. Survive three consecutive encounters, unlock more cards and customize your deck.
+
+## Mobile orientation
+
+Rotate your phone sideways to use the compact landscape game table. Mobile web browsers generally cannot force the device to rotate; the portrait view remains usable with an orientation hint. Tapping a card first previews it; using the Play Card button is the only way to spend energy.
 
 ## Status and limitations
 

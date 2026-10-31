@@ -134,6 +134,8 @@ function renderBattle(){
     el('span','duel-stat','TURN '+battle.turn),
     button('? How to play','guideOpen','guide-launch'));
   add(header,intro,meta);shell.appendChild(header);
+  const orientation=el('div','orientation-note','↻ Rotate your phone sideways to see the whole card table and swipe through your hand.');
+  shell.appendChild(orientation);
   const arena=el('section','duel-arena');
   arena.setAttribute('aria-label','Battlefield');
   const matchup=el('div','duel-matchup');
