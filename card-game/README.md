@@ -6,7 +6,7 @@ This is the **HD Hand Edition**, a landscape-first single-battle vertical slice.
 
 ## What works
 
-- Four allied characters and three enemy characters in the same cinematic battle scene
+- Four independent allied 3D models and three independent enemy 3D models, each animated with idle movement and individual status
 - Live per-character HP and ally shields, individually selectable attack and healing targets
 - Five unique illustrated cards: Shadow Step, Guardian Aegis, Crimson Bloom, Healing Wind, Arcane Bolt
 - A curved, overlapping **fanned hand of cards**, with touch selection and swipe-to-browse; tap a card for a **large preview**, then choose **Play Card** or **Keep in Hand**
@@ -39,3 +39,7 @@ This game is separate from Flow and Serivia and is not yet featured on the main 
 ## Graphics limitations
 
 The updated artwork retains detail significantly better than the tiny previous atlas, but these are still **single-scene illustrated crops**, not independently rigged HD sprites. A truly professional production release will need separately illustrated hero and enemy layers, custom card paintings, and a dedicated animations pipeline.
+
+## Model quality and limitations
+
+These characters are **procedural low-poly, toon-shaded 3D models**, not imported hand-authored anime-quality GLB assets. They are real independently animated meshes and are not painted into the background, but a production-grade anime look will require professionally created, rigged models and animation clips. The renderer falls back to a plain gradient on devices with WebGL disabled; battle controls continue to work. No third-party assets or JavaScript runtime dependencies are fetched.

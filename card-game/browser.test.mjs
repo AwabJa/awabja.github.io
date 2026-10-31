@@ -1,4 +1,4 @@
-/** Moonfall vertical-slice smoke tests. Runs against shipped HTML/CSS/JS and illustrated atlas. */
+/** Moonfall live-model scene: 3D or geometry fallback plus complete card actions. */
 import assert from 'node:assert/strict';
 import {readFile, access} from 'node:fs/promises';
 import {dirname, join} from 'node:path';
@@ -9,15 +9,21 @@ const root=dirname(fileURLToPath(import.meta.url));
 const htmlRaw=await readFile(join(root,'index.html'),'utf8');
 const css=await readFile(join(root,'style.css'),'utf8');
 const jsRaw=await readFile(join(root,'game.js'),'utf8');
-const scene=(await readFile(join(root,'assets/battle-hd.webp'))).toString('base64');
+const sceneJS=await readFile(join(root,'scene3d.js'),'utf8');
+const fallbackJS=await readFile(join(root,'fallback-scene.js'),'utf8');
 const cards=(await readFile(join(root,'assets/cards-hd.webp'))).toString('base64');
 const manifest=JSON.parse(await readFile(join(root,'manifest.webmanifest'),'utf8'));
-assert.match(htmlRaw,/src="game\.js\?v=moonfall-3"/);
+assert.match(htmlRaw,/src="game\.js\?v=moonfall-4-models"/);
+assert.match(htmlRaw,/src="scene3d\.js\?v=moonfall-4-models"/);
+assert.match(htmlRaw,/src="fallback-scene\.js\?v=moonfall-4-models"/);
+assert.match(htmlRaw,/<canvas id="scene3d"/);
 assert.match(htmlRaw,/apple-mobile-web-app-capable/);
-assert.match(htmlRaw,/href="style\.css\?v=moonfall-3"/);
-assert.match(jsRaw,/sceneArt\.src='assets\/battle-hd\.webp\?v=moonfall-3'/);
-assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-3'/);
-assert(scene.length>150000,'High-resolution illustrated background must be present');
+assert.match(htmlRaw,/href="style\.css\?v=moonfall-4-models"/);
+assert.doesNotMatch(jsRaw,/sceneArt|battle-hd|atlas\.webp/,'Old painted battlefield not used');
+assert.match(sceneJS,/getContext\('webgl'/);
+assert.match(sceneJS,/humanoid\(/);
+assert.match(fallbackJS,/environment\(/);
+assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-4-models'/);
 assert(cards.length>100000,'High-resolution illustrated card art must be present');
 assert.equal(manifest.display,'fullscreen');
 assert.equal(manifest.orientation,'landscape');
@@ -26,10 +32,8 @@ assert.match(css,/\.game-shell\{position:relative;width:100vw!important;height:1
 // Inline only in tests to avoid network dependencies and guarantee the tested source is this commit.
 const html=htmlRaw.replace(/<meta http-equiv="Content-Security-Policy"[^>]+>/,'')
   .replace(/<link rel="stylesheet"[^>]+>/,`<style>${css}</style>`)
-  .replace(/<script src="game\.js\?v=moonfall-3" defer><\/script>/,'');
-const js=jsRaw
-  .replace("sceneArt.src='assets/battle-hd.webp?v=moonfall-3';",`sceneArt.src='data:image/webp;base64,${scene}';`)
-  .replace("cardsArt.src='assets/cards-hd.webp?v=moonfall-3';",`cardsArt.src='data:image/webp;base64,${cards}';`);
+  .replace(/<script src="[^"]+" defer><\/script>/g,'');
+const js=jsRaw.replace("cardsArt.src='assets/cards-hd.webp?v=moonfall-4-models';",`cardsArt.src='data:image/webp;base64,${cards}';`);
 let executablePath;
 for (const candidate of [process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/chromium'].filter(Boolean)) {
   try {await access(candidate);executablePath=candidate;break;} catch {}
@@ -43,11 +47,16 @@ try {
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
     await page.setContent(html);
+    await page.addScriptTag({content:fallbackJS});
+    await page.addScriptTag({content:sceneJS});
     await page.addScriptTag({content:js});
     await page.locator('#loadMessage').waitFor({state:'hidden'});
     const canvas=page.locator('#game');
     const box=await canvas.boundingBox();
     assert(box && box.width>=100 && box.height>=50,'Canvas must render at '+width+'×'+height);
+    assert.equal(await page.locator('#scene3d').count(),1,'Independent 3D model canvas is present');
+    const modelStats=await page.evaluate(()=>window.Moonfall3D?.getStats());
+    assert.equal(modelStats?.models,7,'Seven separately rendered character models or fallback equivalents');
     assert(Math.abs(box.width-width)<=1 && Math.abs(box.height-height)<=1,'Canvas fills entire viewport');
     const raster=await page.evaluate(()=>({w:document.getElementById('game').width,h:document.getElementById('game').height}));
     assert(raster.w>=1600 && raster.h>=800,'Canvas draws above baseline logical resolution');
@@ -116,5 +125,5 @@ try {
     assert.deepEqual(errors,[],'No browser JavaScript errors at '+width+'×'+height);
     await page.close();
   }
-  console.log('MOONFALL BATTLE CHECKS PASSED: illustrated arena, mobile layout, target/card/turn gameplay');
+  console.log('MOONFALL MODEL SCENE CHECKS PASSED: procedural characters and environment, controls and mobile layout');
 } finally {await browser.close();}
