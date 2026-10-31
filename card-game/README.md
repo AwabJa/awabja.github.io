@@ -13,10 +13,11 @@ A zero-dependency, mobile-first, single-player strategic collectible card game p
 - Deck shuffle/discard cycle, persistent collection, shards and card unlock packs
 - No payment system, server, analytics, third-party scripts, or external assets
 - Responsive touch-friendly cards, mouse and keyboard controls, reduced-motion mode
+- Cinematic cathedral battle with a four-character allied lineup, enemy and decorative spectral echoes, inline hand of illustrated cards, energy gems and End Turn button; combat still uses one shared hero health pool and one enemy health pool per encounter
 
 ## Status and limitations
 
-Card art is currently **CSS-based concept placeholder art** (sigils, gradients, silhouettes), not completed illustrated anime characters. The prototype is PvE only; there is no matchmaking or account sync. LocalStorage progress belongs to each browser/device and is not backed up online. Card rarity has no monetization attached.
+Card artwork now uses **original SVG anime-inspired character illustrations**, with character lineups and a painted-vector cathedral battlefield. These are early vector concepts, not the final fully illustrated character art shown in the visual mockup. The prototype is PvE only; there is no matchmaking or account sync. LocalStorage progress belongs to each browser/device and is not backed up online. Card rarity has no monetization attached.
 
 ## Run and test
 

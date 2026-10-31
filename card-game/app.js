@@ -1,3 +1,4 @@
+import {characterArt} from './character-art.mjs';
 import {CARDS,BY_ID,STARTER_DECK,STARTER_UNLOCKED,DECK_SIZE,PACK_PRICE,ENEMIES,
   newBattle,playCard,endTurn,nextEncounter,enemyIntent,canAdd,canRemove} from './engine.mjs';
 
@@ -54,7 +55,7 @@ function cardFace(card,playable,index,locked=false){
   if(locked)face.setAttribute('aria-label','Locked card: '+card.name);
   const inner=el('div','card-inner');
   const top=el('div','card-top');add(top,el('span','card-cost',card.cost),el('span','card-rarity',card.rarity));
-  const art=el('div','card-art');art.setAttribute('aria-hidden','true');art.appendChild(el('span','card-glyph',card.glyph));
+  const art=el('div','card-art');art.setAttribute('aria-hidden','true');art.appendChild(characterArt(card.id));art.appendChild(el('span','card-glyph',card.glyph));
   const name=el('strong','card-title',locked?'Undiscovered':card.name);
   const info=el('p','card-text',locked?'Unlock through card packs.':card.text);
   const bottom=el('div','card-bottom');add(bottom,el('span','',card.element),el('span','',card.type));
@@ -71,51 +72,107 @@ function progressBar(current,total,player=false){
 function stat(name,value){
   const line=el('div','stat-line');add(line,el('span','',name),el('strong','',value));return line;
 }
+
+function fighter(id,name,side,{hp,maxHp,shield,intent,leader=false}={}){
+  const unit=el('div','fighter fighter-'+side+(leader?' fighter-leader':''));
+  const figure=el('div','fighter-figure');
+  figure.appendChild(characterArt(id));unit.appendChild(figure);
+  const plate=el('div','fighter-plate');
+  const title=el('strong','fighter-name',name);
+  const line=el('div','fighter-life');
+  if(Number.isFinite(hp)){
+    const health=el('div','health-track fighter-health');
+    health.setAttribute('role','progressbar');health.setAttribute('aria-valuemin','0');
+    health.setAttribute('aria-valuemax',String(maxHp));health.setAttribute('aria-valuenow',String(hp));
+    const bar=el('span','health-fill'+(side==='ally'?' player':''));
+    bar.style.width=(hp/maxHp*100)+'%';health.appendChild(bar);
+    add(line,el('span','',hp+' / '+maxHp),health);
+  }else add(line,el('span','fighter-tag',side==='ally'?'ALLY · TEAM HEALTH':'SPECTRAL ECHO · VISUAL'));
+  add(plate,title,line);
+  if(shield)plate.appendChild(el('small','fighter-shield','◆ '+shield+' shield'));
+  if(intent)plate.appendChild(el('small','fighter-intent','NEXT: '+intent));
+  unit.appendChild(plate);
+  return unit;
+}
 function renderBattle(){
-  const head=el('div','section-head');
-  const left=el('div','');add(left,label('CHAPTER 01 / THE SHATTERED CONSTELLATION'),heading('Choose your','destiny.','Fight three encounters. Read enemy intentions, combine your cards, and survive.'));
-  add(head,left,el('div','pill','✦  ENCOUNTER '+(battle.wave+1)+' / '+ENEMIES.length));main.appendChild(head);
-  if(battle.phase!=='playing'){
-    const panel=el('section','result');
-    const victory=battle.phase==='victory';
-    const failed=battle.phase==='defeat';
-    add(panel,el('div','result-glyph',failed?'☽':victory?'✷':'✦'),el('h2','',failed?'The stars fade':victory?'Legend Ascendant':'Trial complete'),
-      el('p','',failed?'Your hero was defeated. Adjust your deck and try again.':victory?'You completed all three encounters and earned your victory rewards.':'You defeated '+ENEMIES[battle.wave].name+'. Your hero recovers 10 HP before the next trial.'));
-    const buttons=el('div','result-actions');
-    if(battle.phase==='cleared')buttons.appendChild(button('Continue to next trial','next','primary'));
-    buttons.appendChild(button(failed||victory?'Begin a new run':'Restart run','restart','secondary'));
-    buttons.appendChild(button('Edit deck','collection','secondary'));
-    panel.appendChild(buttons);main.appendChild(panel);return;
-  }
-  const layout=el('div','battle-layout');
-  const stage=el('section','stage');
-  const stageLabel=el('div','stage-title');add(stageLabel,el('span','',ENEMIES[battle.wave].title),el('span','','TURN '+battle.turn));
-  const foe=el('div','enemy-display');
-  const portrait=el('div','enemy-portrait '+ENEMIES[battle.wave].element);portrait.setAttribute('aria-hidden','true');portrait.appendChild(el('span','',ENEMIES[battle.wave].glyph));
+  const shell=el('div','duel-shell');
+  const header=el('div','duel-heading');
+  const intro=el('div','duel-heading-left');
+  add(intro,label('CHAPTER I  ·  THE SHATTERED CONSTELLATION'),el('h1','duel-title','The Hollow Cathedral'));
+  const meta=el('div','duel-meta');
+  add(meta,el('span','duel-stat','WAVE '+(battle.wave+1)+' / '+ENEMIES.length),
+    el('span','duel-stat','TURN '+battle.turn));
+  add(header,intro,meta);shell.appendChild(header);
+  const arena=el('section','duel-arena');
+  arena.setAttribute('aria-label','Battlefield: your party faces the enemy');
+  const stageHead=el('div','stage-title');
+  add(stageHead,el('span','','✦  '+ENEMIES[battle.wave].title),
+    el('span','','TURN '+battle.turn));
+  arena.appendChild(stageHead);
+  const roster=el('div','duel-roster');
+  const allies=el('div','duel-team duel-allies');
+  add(allies,
+    fighter('healer','Aurelia','ally',{hp:battle.hp,maxHp:battle.maxHp}),
+    fighter('kitsune','Mika','ally'),
+    fighter('ronin','Caelum','ally'),
+    fighter('oracle','Luna','ally'));
+  const enemies=el('div','duel-team duel-enemies');
+  const foeIds=['wisp','stalker','queen'];
+  const foeId=foeIds[battle.wave];
   const intent=enemyIntent(battle);
-  add(foe,portrait,el('h2','enemy-name',ENEMIES[battle.wave].name),progressBar(battle.enemy.hp,battle.enemy.maxHp),
-    el('p','health-copy',battle.enemy.hp+' / '+battle.enemy.maxHp+' HP'+(battle.enemy.shield?' · '+battle.enemy.shield+' shield':'')),
-    el('div','intent','NEXT · '+intent.label+(battle.weak?' · WEAKENED':'')+(battle.burn?' · '+battle.burn+' BURN':'')));
-  add(stage,stageLabel,foe);
-  const sidebar=el('aside','battle-sidebar');
-  const heroPanel=el('div','panel');
-  add(heroPanel,el('h3','','YOUR HERO'),stat('Health',battle.hp+' / '+battle.maxHp),progressBar(battle.hp,battle.maxHp,true),
-    stat('Shield',battle.shield),stat('Draw pile',battle.draw.length),stat('Discard pile',battle.discard.length));
-  const actionPanel=el('div','panel');
-  add(actionPanel,el('h3','','ARCANE ENERGY'),stat('Available',battle.energy+' / '+battle.maxEnergy));
-  const orbs=el('div','energy-orbs');
-  for(let i=0;i<Math.max(battle.maxEnergy,battle.energy);i++)orbs.appendChild(el('span','orb'+(i<battle.energy?' filled':'')));
-  orbs.setAttribute('aria-label',battle.energy+' energy remaining');
-  add(actionPanel,orbs,el('p','battle-message',battle.message),button('End turn →','end','primary full'),
-    el('p','tip','Shield expires at the end of an enemy attack. Burn damages the enemy at the end of your turn.'),
-    button('Restart run','restart','secondary full'));
-  add(sidebar,heroPanel,actionPanel);add(layout,stage,sidebar);main.appendChild(layout);
-  const handBox=el('section','hand-section');
-  const handHead=el('div','hand-heading');add(handHead,el('h2','','YOUR HAND'),el('span','',battle.hand.length+' cards · '+battle.energy+' energy'));
+  const badge=el('div','enemy-name',ENEMIES[battle.wave].name);
+  add(enemies,
+    fighter('phantom','Shade','enemy'),
+    fighter(foeId,ENEMIES[battle.wave].name,'enemy',{hp:battle.enemy.hp,maxHp:battle.enemy.maxHp,shield:battle.enemy.shield,intent:intent.label,leader:true}),
+    fighter('empress','Echo','enemy'));
+  const mark=el('div','duel-vs','✧');mark.setAttribute('aria-hidden','true');
+  add(roster,allies,mark,enemies);arena.appendChild(roster);
+  const status=el('div','duel-status');
+  const hero=el('div','team-stat');
+  add(hero,el('span','team-stat-icon','◈'),el('span','', 'HERO '+battle.hp+'/'+battle.maxHp+' HP'+(battle.shield?' · '+battle.shield+' SHIELD':'')));
+  const enemy=el('div','team-stat enemy-stat');
+  add(enemy,el('span','team-stat-icon','✦'),el('span','',ENEMIES[battle.wave].name+' '+battle.enemy.hp+'/'+battle.enemy.maxHp+' HP'));
+  add(status,hero,enemy);arena.appendChild(status);
+  shell.appendChild(arena);
+  if(battle.phase!=='playing'){
+    const result=el('section','duel-result result');
+    const failed=battle.phase==='defeat',completed=battle.phase==='victory';
+    add(result,el('div','result-glyph',failed?'☽':completed?'✷':'✦'),
+      el('h2','',failed?'The stars fade':completed?'Legend Ascendant':'Trial complete'),
+      el('p','',failed?'Your party has fallen. Rearrange your deck and try again.':completed?'All three trials cleared. Your rewards have been added to the collection.':'You defeated '+ENEMIES[battle.wave].name+'. You recover 10 HP before the next battle.'));
+    const controls=el('div','result-actions');
+    if(battle.phase==='cleared')controls.appendChild(button('Continue to next trial','next','primary'));
+    controls.appendChild(button('Restart run','restart','secondary'));
+    controls.appendChild(button('Edit deck','collection','secondary'));
+    result.appendChild(controls);shell.appendChild(result);main.appendChild(shell);return;
+  }
+  const command=el('div','duel-command');
+  const support=el('div','duel-hero');
+  const avatar=el('div','duel-avatar');avatar.appendChild(characterArt('ronin'));
+  const heroCopy=el('div','duel-hero-copy');
+  add(heroCopy,el('strong','','CAELUM'),el('span','', 'Level 01 · Arcane Vanguard'),
+    el('small','', 'Draw '+battle.draw.length+'  ·  Discard '+battle.discard.length));
+  add(support,avatar,heroCopy);
+  const mana=el('div','duel-mana');
+  add(mana,el('strong','',battle.energy+' / '+battle.maxEnergy),el('span','','ENERGY'));
+  const gems=el('div','duel-gems');
+  for(let i=0;i<Math.max(battle.maxEnergy,battle.energy);i++)gems.appendChild(el('i',i<battle.energy?'lit':''));
+  gems.setAttribute('aria-label',battle.energy+' energy points remaining');mana.appendChild(gems);
+  const actionBar=el('div','duel-actions');
+  actionBar.appendChild(button('End Turn','end','duel-end'));
+  actionBar.appendChild(button('↺ Restart','restart','duel-restart'));
+  add(command,support,mana,actionBar);shell.appendChild(command);
+  const handBlock=el('section','duel-hand-section');
+  const handHead=el('div','hand-heading');add(handHead,el('h2','','YOUR HAND'),el('span','',battle.hand.length+' CARDS  ·  TAP TO CAST'));
   const hand=el('div','hand');
-  if(!battle.hand.length)hand.appendChild(el('p','empty','No cards in your hand. End your turn to draw again.'));
+  if(!battle.hand.length)hand.appendChild(el('p','empty','Your hand is empty. End turn to draw five cards.'));
   battle.hand.forEach((id,index)=>hand.appendChild(cardFace(BY_ID[id],true,index)));
-  add(handBox,handHead,hand);main.appendChild(handBox);
+  const message=el('p','battle-message',battle.message);
+  message.setAttribute('role','status');message.setAttribute('aria-live','polite');
+  add(handBlock,handHead,hand,message);
+  shell.appendChild(handBlock);
+  const bottomNote=el('p','duel-note','Shield protects one enemy attack · Burn damages at end of turn · Your 4 allies share the hero health pool. Spectral echoes are visual only.');
+  shell.appendChild(bottomNote);main.appendChild(shell);
 }
 function renderCollection(){
   const head=el('div','section-head');
@@ -158,6 +215,7 @@ function render(){
   collectionTab.classList.toggle('active',screen==='collection');
   battleTab.setAttribute('aria-current',screen==='battle'?'page':'false');
   collectionTab.setAttribute('aria-current',screen==='collection'?'page':'false');
+  main.classList.toggle('battle-screen',screen==='battle');
   main.replaceChildren();
   if(screen==='battle'){if(!battle)startBattle(false);renderBattle()}else renderCollection();
 }

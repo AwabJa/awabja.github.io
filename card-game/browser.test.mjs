@@ -29,7 +29,12 @@ try{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const res=await page.goto(base+'/card-game/',{waitUntil:'networkidle'});
   assert.equal(res.status(),200);
-  await page.locator('.enemy-name').waitFor();
+  await page.locator('.fighter-leader .fighter-name').waitFor();
+  assert.equal(await page.locator('.duel-arena').count(),1,'Battlefield is visible');
+  assert.equal(await page.locator('.fighter').count(),7,'Character lineups render');
+  assert((await page.locator('.fighter .character-art').count())>=7,'Every fighter has original SVG illustration');
+  assert.equal(await page.locator('.duel-hand-section').count(),1,'Hand overlays the game presentation');
+  assert.equal(await page.locator('.duel-end').count(),1,'Large End Turn action is visible');
   assert.equal(await page.locator('.hand .card').count(),5,'Opening hand has 5 cards');
   assert.equal(await page.locator('.wallet strong').innerText(),'50');
   assert((await page.title()).includes('Arcana Duel'));
@@ -63,5 +68,13 @@ try{
   assert.deepEqual(errors,[],'No browser exceptions on '+width+'px');
   await page.close();
  }
+ const landscape=await browser.newPage({viewport:{width:844,height:390},isMobile:true,hasTouch:true});
+ const landRes=await landscape.goto(base+'/card-game/',{waitUntil:'networkidle'});
+ assert.equal(landRes.status(),200,'Landscape game loads');
+ assert.equal(await landscape.locator('.duel-arena').count(),1,'Landscape arena is present');
+ await landscape.locator('.hand button.card:not(:disabled)').first().click();
+ await landscape.locator('.duel-end').click();
+ assert((await landscape.locator('.stage-title').innerText()).includes('TURN 2'),'Landscape controls are usable');
+ await landscape.close();
  console.log('ARCANA DUEL BROWSER CHECKS PASSED');
 }finally{await browser.close();server.close()}
