@@ -246,7 +246,7 @@ function endTurn(){if(game.ended||game.preview)return;
  announce('Enemies dealt '+hits+' damage; shields blocked '+blocked+'. Your hand is refilled.');
 }
 function chooseAction(x,y){const z=[...zones].reverse().find(t=>t.enabled&&x>=t.x&&x<=t.x+t.w&&y>=t.y&&y<=t.y+t.h);return z||null}
-window.__moonfallTestState=()=>({turn:game.turn,energy:game.energy,hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,allies:game.allies.map(a=>({hp:a.hp,shield:a.shield})),foes:game.foes.map(f=>({hp:f.hp,burnTurns:f.burnTurns})),ended:game.ended});
+window.__moonfallTestState=()=>({turn:game.turn,energy:game.energy,maxEnergy:game.maxEnergy,hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,allies:game.allies.map(a=>({hp:a.hp,shield:a.shield})),foes:game.foes.map(f=>({hp:f.hp,burnTurns:f.burnTurns})),ended:game.ended});
 function activate(z){if(!z)return;
  if(game.ended){if(z.action==='restart'){game=freshGame();game.draw=game.draw.slice(5);announce('New battle started.');}return}
  if(game.preview){
