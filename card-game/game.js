@@ -53,12 +53,12 @@ function drawHeader(){
  text('✧',31,37,42,THEME.gold,'Georgia');
  text('ARCANA DUEL',79,35,31,THEME.cream,'Georgia','left','700');
  text('MOONFALL',322,39,15,'#e7d4b2','system-ui','left','700');
- pill(`TURN ${game.turn}`,771,15,180,40,'#211e2bdb','#d6b78d',21);
+ pill(`TURN ${game.turn}`,758,15,155,40,'#211e2bdb','#d6b78d',21);
  const live=game.foes.filter(f=>f.hp>0).length;
- pill(`${live} ENEMIES`,972,15,172,40,'#231b2bd8','#c58e9d',16);
- pill('HOW TO PLAY',1161,15,159,40,'#252034dc','#c5a67d',14);
- pill('↺ RESTART',1334,15,143,40,'#242132dc','#b6a48f',14);
- register(1161,15,159,40,'guide');register(1334,15,143,40,'restart');
+ pill(`${live} ENEMIES`,927,15,155,40,'#231b2bd8','#c58e9d',16);
+ pill('HOW TO PLAY',1096,15,154,40,'#252034dc','#c5a67d',14);
+ pill('↺ RESTART',1260,15,140,40,'#242132dc','#b6a48f',14);
+ register(1096,15,154,40,'guide');register(1260,15,140,40,'restart');
 }
 function scene(){
  // One seamless battlefield: continue the reflecting stone floor behind the held cards.
@@ -69,6 +69,9 @@ function scene(){
  }else{ctx.fillStyle=gradient(0,0,W,H,[[0,'#344055'],[.65,'#1a2838'],[1,'#111827']]);ctx.fillRect(0,0,W,H)}
  const floor=gradient(0,337,W,463,[[0,'#0b102000'],[.28,'#0a112053'],[.65,'#080d1a8a'],[1,'#070916dc']]);
  ctx.fillStyle=floor;ctx.fillRect(0,337,W,463);
+ // Veil the source illustration's baked-in status bars; live HP remains authoritative.
+ const baked=gradient(0,376,W,180,[[0,'#070c1900'],[.62,'#09101ccd'],[1,'#080d1bb8']]);
+ ctx.fillStyle=baked;ctx.fillRect(0,376,W,180);
  for(let i=0;i<4;i++){
    const a=game.allies[i],x=a.x,selected=i===game.selectedAlly;
    if(selected&&a.hp>0){glow(x,400,66,'#8dbedd50');rr(x-80,374,160,4,2,'#e7d0a6')}
