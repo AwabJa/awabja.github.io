@@ -127,98 +127,103 @@ function renderGuide(){
   guide.appendChild(actions);
   return guide;
 }
+
 function renderBattle(){
-  const shell=el('div','duel-shell');
-  const header=el('div','duel-heading');
-  const intro=el('div','duel-heading-left');
-  add(intro,el('p','eyebrow','CHAPTER 01 · THE SHATTERED CONSTELLATION'),
-    el('h1','duel-title','The Hollow Cathedral'));
-  const meta=el('div','duel-meta');
-  add(meta,el('span','duel-stat','WAVE '+(battle.wave+1)+' / '+ENEMIES.length),
-    el('span','duel-stat','TURN '+battle.turn),
-    button('? How to play','guideOpen','guide-launch'));
-  add(header,intro,meta);shell.appendChild(header);
-  shell.appendChild(el('div','orientation-note','↻ Rotate your phone sideways for the full card table. Swipe left or right through your hand.'));
-  const arena=el('section','duel-arena');
-  arena.setAttribute('aria-label','Battlefield');
-  const matchup=el('div','duel-matchup');
-  matchup.appendChild(combatant('ronin','Caelum','YOU · ARCANE VANGUARD',
-    battle.hp,battle.maxHp,battle.shield,true));
-  const center=el('div','duel-center');
-  add(center,el('span','duel-versus','VS'),
-    el('span','duel-round','TURN '+battle.turn));
-  matchup.appendChild(center);
+  const shell=el('div','duel-shell board-v5');
+  const upper=el('header','game-head');
+  const left=el('div','game-head-name');
+  add(left,el('span','head-prefix','CHAPTER I · THE SHATTERED CONSTELLATION'),
+    el('h1','', 'The Hollow Cathedral'));
+  const round=el('div','game-head-status');
+  add(round,el('span','round-pill','WAVE '+(battle.wave+1)+' / '+ENEMIES.length),
+    el('span','duel-round round-pill','TURN '+battle.turn),
+    button('HOW TO PLAY','guideOpen','guide-launch'));
+  add(upper,left,round);shell.appendChild(upper);
+
+  const rotate=el('div','orientation-note');
+  add(rotate,el('span','rotate-icon','↻'),
+    el('span','','Turn your phone sideways for the full card table. Tap a card to inspect it before playing.'));
+  shell.appendChild(rotate);
+
+  const arena=el('section','duel-arena game-battlefield');
+  arena.setAttribute('aria-label','Your hero versus the enemy');
+  const matchup=el('div','duel-matchup game-matchup');
+  const hero=combatant('ronin','Caelum','YOUR HERO',battle.hp,battle.maxHp,battle.shield,true);
+  const middle=el('div','duel-center');
+  add(middle,el('span','duel-versus','VS'),
+    el('span','middle-hint','TACTICAL BATTLE'));
   const enemy=ENEMIES[battle.wave];
   const enemyId=['wisp','stalker','queen'][battle.wave];
-  matchup.appendChild(combatant(enemyId,enemy.name,'ENEMY · '+enemy.title,
-    battle.enemy.hp,battle.enemy.maxHp,battle.enemy.shield,false));
-  arena.appendChild(matchup);
-  const intent=enemyIntent(battle);
-  const attack=el('div','duel-forecast');
-  add(attack,el('span','forecast-eye','◈'),
-    el('span','forecast-label','ENEMY NEXT MOVE'),
-    el('strong','',intent.label));
-  if(battle.weak>0)attack.appendChild(el('span','forecast-debuff','WEAKENED'));
-  if(battle.burn>0)attack.appendChild(el('span','forecast-debuff','BURN '+battle.burn));
-  arena.appendChild(attack);
+  const villain=combatant(enemyId,enemy.name,'ENEMY',battle.enemy.hp,battle.enemy.maxHp,battle.enemy.shield,false);
+  add(matchup,hero,middle,villain);arena.appendChild(matchup);
+  const upcoming=enemyIntent(battle);
+  const forecast=el('div','duel-forecast');
+  add(forecast,el('span','forecast-eye','◇'),
+    el('span','forecast-label','ENEMY NEXT'),
+    el('strong','',upcoming.label));
+  if(battle.weak>0)forecast.appendChild(el('span','forecast-debuff','WEAK '+battle.weak));
+  if(battle.burn>0)forecast.appendChild(el('span','forecast-debuff','BURN '+battle.burn));
+  arena.appendChild(forecast);
   shell.appendChild(arena);
+
   if(battle.phase!=='playing'){
-    const failed=battle.phase==='defeat',finished=battle.phase==='victory';
-    const panel=el('section','duel-result result');
-    add(panel,el('div','result-glyph',failed?'☽':finished?'✷':'✦'),
-      el('h2','',failed?'Try another strategy':finished?'Victory!':'Enemy defeated!'),
-      el('p','',failed?'The enemy took your final health point. Use shields, heals, and damage cards to survive.':finished?'All three enemies defeated. Your rewards are saved on this device.':'Your next enemy is stronger. You restore 10 HP before the next round.'));
+    const failed=battle.phase==='defeat',won=battle.phase==='victory';
+    const result=el('section','duel-result result');
+    add(result,el('div','result-glyph',failed?'☽':won?'✷':'✦'),
+      el('h2','',failed?'Try another strategy':won?'Victory!':'Enemy defeated!'),
+      el('p','',failed?'You lost all your health. Use shields and healing to survive.':won?'All encounters cleared. Your reward is saved on this device.':'One enemy down. You recover 10 HP before the next challenge.'));
     const actions=el('div','result-actions');
     if(battle.phase==='cleared')actions.appendChild(button('Next enemy','next','primary'));
-    actions.appendChild(button('Restart battle','restart','secondary'));
-    actions.appendChild(button('Edit deck','collection','secondary'));
-    panel.appendChild(actions);shell.appendChild(panel);main.appendChild(shell);return;
+    add(actions,button('Restart','restart','secondary'),button('Edit deck','collection','secondary'));
+    result.appendChild(actions);
+    shell.appendChild(result);main.appendChild(shell);return;
   }
   const guide=renderGuide();
   if(guide)shell.appendChild(guide);
-  const controls=el('section','duel-controls');
-  const mana=el('div','duel-energy');
-  add(mana,el('span','energy-heading','YOUR ENERGY'),el('strong','',battle.energy+' / '+battle.maxEnergy));
-  const jewels=el('div','duel-gems');
-  for(let i=0;i<battle.maxEnergy;i++){
-    const gem=el('i',i<battle.energy?'lit':'');
-    jewels.appendChild(gem);
-  }
-  mana.appendChild(jewels);
-  const info=el('div','duel-turn-explain');
-  add(info,el('strong','','YOUR TURN'),
-    el('span','', 'Play cards to attack, defend, or heal. Then end your turn.'));
-  const endButton=button('End Turn  →','end','duel-end');
-  endButton.setAttribute('aria-label','End your turn and let the enemy act');
-  add(controls,mana,info,endButton);shell.appendChild(controls);
-  const handSection=el('section','duel-hand-section');
-  const handHeader=el('div','hand-heading');
-  add(handHeader,el('h2','','YOUR HAND — TAP A CARD TO INSPECT'),
-    el('span','',battle.hand.length+' CARDS · '+battle.energy+' ENERGY'));
-  const table=el('div','card-table');
-  const piles=el('div','table-piles');
-  const deckStack=button('DRAW '+battle.draw.length,'openDeck','pile-button');
-  deckStack.setAttribute('aria-label','View your deck; '+battle.draw.length+' cards remain in the draw pile');
-  const deckIcon=el('span','pile-back','✧');deckIcon.setAttribute('aria-hidden','true');deckStack.prepend(deckIcon);
-  const discardStack=button('DISCARD '+battle.discard.length,'openDiscard','pile-button');
-  discardStack.setAttribute('aria-label','View the '+battle.discard.length+' cards in your discard pile');
-  const discardIcon=el('span','pile-back discard-back','◈');discardIcon.setAttribute('aria-hidden','true');discardStack.prepend(discardIcon);
-  add(piles,deckStack,discardStack);
-  const hand=el('div','hand');
-  hand.setAttribute('aria-label','Swipe horizontally through cards in your hand');
-  if(battle.hand.length===0)hand.appendChild(el('p','empty','No cards left in hand. Press End Turn to draw new ones.'));
-  battle.hand.forEach((id,i)=>hand.appendChild(cardFace(BY_ID[id],true,i)));
-  const feedback=el('p','battle-message',battle.message);
-  feedback.setAttribute('aria-live','polite');
-  add(table,piles,hand);
-  add(handSection,handHeader,table,feedback);shell.appendChild(handSection);
-  const foot=el('div','battle-bottom');
-  add(foot,el('span','', 'WIN: RED ENEMY HP REACHES 0'),
-    el('span','', 'LOSE: GREEN HERO HP REACHES 0'),
-    button('↺ Restart battle','restart','duel-restart'));
-  shell.appendChild(foot);main.appendChild(shell);
-}
 
+  const board=el('section','game-table');
+  const boardHeading=el('div','game-table-head');
+  const info=el('div','game-table-info');
+  add(info,el('span','table-head-kicker','YOUR HAND'),
+    el('strong','', 'Tap to inspect · Swipe to browse'));
+  const resources=el('div','game-resource-bar');
+  const mana=el('div','duel-energy');
+  add(mana,el('span','energy-heading','ENERGY'),el('strong','',battle.energy+' / '+battle.maxEnergy));
+  const jewels=el('div','duel-gems');
+  for(let i=0;i<battle.maxEnergy;i++)jewels.appendChild(el('i',i<battle.energy?'lit':''));
+  mana.appendChild(jewels);
+  add(resources,mana,el('span','hand-count',battle.hand.length+' IN HAND'));
+  add(boardHeading,info,resources);board.appendChild(boardHeading);
+
+  const tabletop=el('div','game-tabletop');
+  const piles=el('div','table-piles');
+  const deck=button('DRAW '+battle.draw.length,'openDeck','pile-button');
+  deck.setAttribute('aria-label','View your full deck. '+battle.draw.length+' cards remain in the draw pile');
+  const dArt=el('span','pile-back','✧');dArt.setAttribute('aria-hidden','true');deck.prepend(dArt);
+  const discard=button('DISCARD '+battle.discard.length,'openDiscard','pile-button');
+  discard.setAttribute('aria-label','Inspect cards in the discard pile');
+  const discarded=el('span','pile-back discard-back','◈');discarded.setAttribute('aria-hidden','true');discard.prepend(discarded);
+  add(piles,deck,discard);
+
+  const handSection=el('div','duel-hand-section');
+  const table=el('div','card-table');
+  const hand=el('div','hand');
+  hand.setAttribute('aria-label','Hand of cards. Scroll sideways, then tap to inspect.');
+  if(battle.hand.length===0)hand.appendChild(el('p','empty','No cards left. End your turn to draw again.'));
+  battle.hand.forEach((id,i)=>hand.appendChild(cardFace(BY_ID[id],true,i)));
+  table.appendChild(hand);handSection.appendChild(table);
+  const endArea=el('div','game-endarea');
+  const end=button('END TURN','end','duel-end');
+  end.setAttribute('aria-label','End turn and let enemy perform its next move');
+  add(endArea,end,el('small','', 'Enemy moves next'));
+  add(tabletop,piles,handSection,endArea);board.appendChild(tabletop);
+  const footer=el('div','game-battle-message');
+  const message=el('p','battle-message',battle.message);
+  message.setAttribute('aria-live','polite');
+  add(footer,message,button('↺ Restart','restart','duel-restart'));
+  board.appendChild(footer);shell.appendChild(board);
+  main.appendChild(shell);
+}
 /** A native modal keeps tap-to-inspect separate from the action of spending energy. */
 const inspectorDialog=document.createElement('dialog');
 inspectorDialog.className='inspect-dialog';

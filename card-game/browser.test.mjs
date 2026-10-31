@@ -31,6 +31,8 @@ try{
   assert.equal(res.status(),200);
   await page.locator('.combatant-enemy .combatant-name').waitFor();
   assert.equal(await page.locator('.duel-arena').count(),1,'Battlefield is visible');
+  assert.equal(await page.locator('.board-v5 .game-table').count(),1,'New card-first game table is present');
+  assert.match(await page.locator('#buildVersion').innerText(),/BUILD 06/,'Updated version is visible');
   assert.equal(await page.locator('.combatant').count(),2,'Real one-on-one combatants are shown');
   assert.equal(await page.locator('.combatant .character-art').count(),2,'Hero and enemy have original illustrations');
   assert.equal(await page.locator('.duel-hand-section').count(),1,'Hand is visible');
@@ -106,6 +108,8 @@ try{
  const landRes=await landscape.goto(base+'/card-game/',{waitUntil:'networkidle'});
  assert.equal(landRes.status(),200,'Landscape game loads');
  assert.equal(await landscape.locator('.duel-arena').count(),1,'Landscape arena is present');
+ assert.equal(await landscape.locator('.game-tabletop .table-piles').count(),1,'Deck piles live on the game table');
+ assert.equal(await landscape.locator('.game-tabletop .game-endarea').count(),1,'End Turn is beside the hand');
  assert.equal(await landscape.locator('.combatant').count(),2,'Landscape shows only active fighters');
  const handBox=await landscape.locator('.card-table').boundingBox();
  assert(handBox&&handBox.y+handBox.height<=395,'Landscape hand fits within viewport');

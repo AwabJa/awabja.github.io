@@ -25,7 +25,9 @@ A zero-dependency, mobile-first, single-player strategic collectible card game p
 
 ## Mobile orientation
 
-Rotate your phone sideways to use the compact landscape game table. Mobile web browsers generally cannot force the device to rotate; the portrait view remains usable with an orientation hint. Tapping a card first previews it; using the Play Card button is the only way to spend energy.
+The battle page now uses a **card-first tabletop layout** with the hand, draw pile, discard pile, and End Turn button in one visible play surface. Rotate your phone sideways to use the compact landscape game table. Mobile web browsers generally cannot force the device to rotate; the portrait view remains usable with an orientation hint. Tapping a card first previews it; using the Play Card button is the only way to spend energy.
+
+The current visible build label is **CARD TABLE · BUILD 06**. Stylesheets and JavaScript have versioned URLs so phones can fetch new changes after the page reloads.
 
 ## Status and limitations
 
