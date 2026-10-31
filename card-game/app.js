@@ -9,6 +9,10 @@ const battleTab=document.getElementById('battleTab');
 const collectionTab=document.getElementById('collectionTab');
 let screen='battle';
 let notice='';
+let cardPreview=null;
+let previewReturn=null;
+let deckViewer=null;
+let lastPreviewTrigger=null;
 function initialSave(){return {unlocked:[...STARTER_UNLOCKED],deck:[...STARTER_DECK],shards:50,wins:0}}
 function loadSave(){
   const fresh=initialSave();
@@ -51,7 +55,7 @@ function heading(title,accent,subtitle){
 }
 function cardFace(card,playable,index,locked=false){
   const face=el(playable?'button':'article','card '+card.element+' '+card.rarity.toLowerCase()+(locked?' locked':''));
-  if(playable){face.type='button';face.dataset.action='play';face.dataset.value=String(index);face.disabled=card.cost>battle.energy||battle.phase!=='playing';face.setAttribute('aria-label','Play '+card.name+', '+card.cost+' energy. '+card.text)}
+  if(playable){face.type='button';face.dataset.action='inspectHand';face.dataset.value=String(index);face.setAttribute('aria-label','Inspect '+card.name+', '+card.cost+' energy. '+card.text);if(card.cost>battle.energy)face.classList.add('unaffordable')}
   if(locked)face.setAttribute('aria-label','Locked card: '+card.name);
   const inner=el('div','card-inner');
   const top=el('div','card-top');add(top,el('span','card-cost',card.cost),el('span','card-rarity',card.rarity));
@@ -76,9 +80,9 @@ function stat(name,value){
 
 const TUTORIAL_KEY='arcana-duel-tutorial-v2';
 const LESSONS=[
- {heading:'1. Play a card',body:'Tap any glowing card in your hand. The number in its corner is its energy cost. Attack cards reduce enemy health.'},
- {heading:'2. Watch the numbers',body:'Your energy goes down when you play cards. Green is your health, red is enemy health, and a shield blocks damage.'},
- {heading:'3. End your turn',body:'The enemy moves after you press End Turn. Read its NEXT ATTACK before deciding which cards to play.'}
+ {heading:'1. Tap a card to inspect',body:'Swipe sideways through your hand, then tap a card. It opens a large preview, so you can read what it does before spending energy.'},
+ {heading:'2. Choose Play Card',body:'Use the Play Card button in the preview to activate the card. Its number is the energy cost. Cancel to keep it in your hand.'},
+ {heading:'3. End your turn',body:'When you are done playing cards, tap End Turn. The enemy performs its displayed next move, then you draw a new hand.'}
 ];
 let lesson=0;
 let guideOpen=true;
@@ -134,8 +138,7 @@ function renderBattle(){
     el('span','duel-stat','TURN '+battle.turn),
     button('? How to play','guideOpen','guide-launch'));
   add(header,intro,meta);shell.appendChild(header);
-  const orientation=el('div','orientation-note','↻ Rotate your phone sideways to see the whole card table and swipe through your hand.');
-  shell.appendChild(orientation);
+  shell.appendChild(el('div','orientation-note','↻ Rotate your phone sideways for the full card table. Swipe left or right through your hand.'));
   const arena=el('section','duel-arena');
   arena.setAttribute('aria-label','Battlefield');
   const matchup=el('div','duel-matchup');
@@ -190,20 +193,164 @@ function renderBattle(){
   add(controls,mana,info,endButton);shell.appendChild(controls);
   const handSection=el('section','duel-hand-section');
   const handHeader=el('div','hand-heading');
-  add(handHeader,el('h2','','YOUR CARDS — TAP TO PLAY'),
+  add(handHeader,el('h2','','YOUR HAND — TAP A CARD TO INSPECT'),
     el('span','',battle.hand.length+' CARDS · '+battle.energy+' ENERGY'));
+  const table=el('div','card-table');
+  const piles=el('div','table-piles');
+  const deckStack=button('DRAW '+battle.draw.length,'openDeck','pile-button');
+  deckStack.setAttribute('aria-label','View your deck; '+battle.draw.length+' cards remain in the draw pile');
+  const deckIcon=el('span','pile-back','✧');deckIcon.setAttribute('aria-hidden','true');deckStack.prepend(deckIcon);
+  const discardStack=button('DISCARD '+battle.discard.length,'openDiscard','pile-button');
+  discardStack.setAttribute('aria-label','View the '+battle.discard.length+' cards in your discard pile');
+  const discardIcon=el('span','pile-back discard-back','◈');discardIcon.setAttribute('aria-hidden','true');discardStack.prepend(discardIcon);
+  add(piles,deckStack,discardStack);
   const hand=el('div','hand');
+  hand.setAttribute('aria-label','Swipe horizontally through cards in your hand');
   if(battle.hand.length===0)hand.appendChild(el('p','empty','No cards left in hand. Press End Turn to draw new ones.'));
   battle.hand.forEach((id,i)=>hand.appendChild(cardFace(BY_ID[id],true,i)));
   const feedback=el('p','battle-message',battle.message);
   feedback.setAttribute('aria-live','polite');
-  add(handSection,handHeader,hand,feedback);shell.appendChild(handSection);
+  add(table,piles,hand);
+  add(handSection,handHeader,table,feedback);shell.appendChild(handSection);
   const foot=el('div','battle-bottom');
   add(foot,el('span','', 'WIN: RED ENEMY HP REACHES 0'),
     el('span','', 'LOSE: GREEN HERO HP REACHES 0'),
     button('↺ Restart battle','restart','duel-restart'));
   shell.appendChild(foot);main.appendChild(shell);
 }
+
+/** A native modal keeps tap-to-inspect separate from the action of spending energy. */
+const inspectorDialog=document.createElement('dialog');
+inspectorDialog.className='inspect-dialog';
+inspectorDialog.setAttribute('aria-label','Card details');
+document.body.appendChild(inspectorDialog);
+inspectorDialog.addEventListener('click',event=>{
+  if(event.target===inspectorDialog)closeCardDialog();
+});
+inspectorDialog.addEventListener('close',()=>{
+  cardPreview=null;deckViewer=null;previewReturn=null;
+  document.body.classList.remove('dialog-open');
+  lastPreviewTrigger?.focus?.({preventScroll:true});
+  lastPreviewTrigger=null;
+});
+function closeCardDialog(){
+  if(inspectorDialog.open)inspectorDialog.close();
+}
+function showDialog(trigger){
+  if(trigger)lastPreviewTrigger=trigger;
+  if(!inspectorDialog.open)inspectorDialog.showModal();
+  document.body.classList.add('dialog-open');
+}
+function openCardPreview(id,index,source,trigger){
+  if(!BY_ID[id] || (source==='hand'&&(!battle||battle.phase!=='playing'||battle.hand[index]!==id)))return;
+  cardPreview={id,index,source};
+  if(source!=='pile')previewReturn=null;
+  renderInspector();
+  showDialog(trigger);
+}
+function openDeckViewer(kind,trigger){
+  if(!battle)return;
+  cardPreview=null;
+  deckViewer=kind;
+  previewReturn=null;
+  renderInspector();
+  showDialog(trigger);
+}
+function cardTypeName(card){
+  return ({strike:'Attack',guard:'Defense',burn:'Fire damage',draw:'Draw cards',heal:'Healing',
+    weaken:'Debuff',channel:'Energy boost',leech:'Lifesteal',hybrid:'Attack & defense',
+    aegis:'Healing & shield',pierce:'Piercing attack'})[card.type]||'Ability';
+}
+function renderInspector(){
+  inspectorDialog.replaceChildren();
+  if(cardPreview){
+    const card=BY_ID[cardPreview.id];
+    if(!card)return;
+    const frame=el('div','inspect-panel');
+    const top=el('div','inspect-top');
+    add(top,el('span','inspect-kicker','CARD INFORMATION'),
+      button('✕ Close','closeInspect','inspect-close'));
+    const layout=el('div','inspect-layout');
+    const art=el('div','inspect-card-art');
+    art.appendChild(cardFace(card,false,-1));
+    const detail=el('div','inspect-details');
+    add(detail,el('span','inspect-rarity',card.rarity.toUpperCase()+' · '+card.element.toUpperCase()),
+      el('h2','inspect-title',card.name),
+      el('span','inspect-type',cardTypeName(card)),
+      el('p','inspect-description',card.text));
+    const cost=el('div','inspect-cost');
+    add(cost,el('span','','ENERGY COST'),el('strong','',card.cost));
+    detail.appendChild(cost);
+    if(cardPreview.source==='hand'){
+      const canPlay=!!battle && battle.phase==='playing' && battle.hand[cardPreview.index]===card.id && card.cost<=battle.energy;
+      const msg=canPlay?'Playing spends '+card.cost+' energy.':'Not enough energy to play this card this turn.';
+      detail.appendChild(el('p','inspect-hint',msg));
+      const actions=el('div','inspect-actions');
+      actions.appendChild(button('Play Card','confirmPlay','inspect-play',!canPlay));
+      actions.appendChild(button('Keep in Hand','closeInspect','inspect-cancel'));
+      detail.appendChild(actions);
+    }else{
+      const actions=el('div','inspect-actions');
+      if(previewReturn)actions.appendChild(button('← Back to '+(previewReturn==='discard'?'discard':'deck'),'returnPile','inspect-cancel'));
+      else actions.appendChild(button('Close','closeInspect','inspect-cancel'));
+      detail.appendChild(actions);
+    }
+    add(layout,art,detail);
+    add(frame,top,layout);
+    inspectorDialog.appendChild(frame);
+    return;
+  }
+  const kind=deckViewer;
+  if(!kind)return;
+  const cards=kind==='discard'?battle.discard:progress.deck;
+  const counts=new Map();
+  for(const id of cards)counts.set(id,(counts.get(id)||0)+1);
+  const frame=el('div','inspect-panel pile-panel');
+  const top=el('div','inspect-top');
+  add(top,el('span','inspect-kicker',kind==='discard'?'DISCARD PILE':'YOUR 12-CARD DECK'),
+    button('✕ Close','closeInspect','inspect-close'));
+  const title=el('h2','inspect-title',kind==='discard'?'Discard pile':'Your deck');
+  const explanation=el('p','inspect-description',
+    kind==='discard'?'Cards played or discarded during this battle. These are shuffled back when the draw pile runs out.':
+      'These are all the cards in your deck. '+battle.draw.length+' remain in the draw pile; '+battle.hand.length+' are in your hand. Tap an entry to inspect it.');
+  const list=el('div','pile-list');
+  for(const [id,count] of counts){
+    const card=BY_ID[id];
+    const item=button(card.name+' · '+card.cost+' energy · ×'+count,'inspectPileCard','pile-entry',false,id);
+    item.prepend(el('span','pile-symbol',card.glyph));
+    list.appendChild(item);
+  }
+  if(!counts.size)list.appendChild(el('p','empty','No cards in this pile yet.'));
+  add(frame,top,title,explanation,list);
+  inspectorDialog.appendChild(frame);
+}
+inspectorDialog.addEventListener('click',event=>{
+  const target=event.target.closest('button[data-action]');
+  if(!target||target.disabled)return;
+  const action=target.dataset.action;
+  if(action==='closeInspect'){closeCardDialog();render();return}
+  if(action==='confirmPlay'&&cardPreview?.source==='hand'&&battle){
+    const {id,index}=cardPreview;
+    if(battle.hand[index]!==id)return;
+    const old=battle.phase;
+    const played=playCard(battle,index);
+    if(played){
+      if(guideOpen&&lesson===1)lesson=2;
+      resolveRewards(old);
+      closeCardDialog();
+      render();
+    }else renderInspector();
+    return;
+  }
+  if(action==='inspectPileCard'&&deckViewer){
+    const id=target.dataset.value;
+    if(BY_ID[id]){const kind=deckViewer;previewReturn=kind;cardPreview={id,index:-1,source:'pile'};deckViewer=null;renderInspector()}
+    return;
+  }
+  if(action==='returnPile'&&previewReturn){
+    const kind=previewReturn;cardPreview=null;deckViewer=kind;previewReturn=null;renderInspector();
+  }
+});
 function renderCollection(){
   const head=el('div','section-head');
   const intro=el('div','');add(intro,label('YOUR COLLECTION / DECK FORGE'),heading('Collect the','extraordinary.','Unlock powerful cards with shards. Build a 12-card deck before entering battle.'));
@@ -270,10 +417,11 @@ main.addEventListener('click',event=>{
   if(action==='guideOpen'){guideOpen=true;lesson=0;render();return}
   if(action==='guideSkip'){closeGuide();render();return}
   if(action==='guideNext'){if(lesson>=2)closeGuide();else lesson++;render();return}
-  if(action==='play'&&battle){const old=battle.phase;const played=playCard(battle,Number(value));if(played&&guideOpen&&lesson===0)lesson=1;resolveRewards(old);render();return}
-  if(action==='end'&&battle){const old=battle.phase;endTurn(battle);if(guideOpen&&lesson<2)lesson=2;resolveRewards(old);render();return}
+  if(action==='inspectHand'&&battle){const index=Number(value);if(Number.isInteger(index)&&index>=0&&index<battle.hand.length){if(guideOpen&&lesson===0)lesson=1;openCardPreview(battle.hand[index],index,'hand',target)}return}
+  if(action==='openDeck'||action==='openDiscard'){openDeckViewer(action==='openDiscard'?'discard':'deck',target);return}
+  if(action==='end'&&battle){const old=battle.phase;endTurn(battle);if(guideOpen&&lesson===2)closeGuide();resolveRewards(old);render();return}
   if(action==='next'&&battle&&battle.phase==='cleared'){battle=nextEncounter(battle,progress.deck);render();return}
-  if(action==='restart'||action==='start'){startBattle();return}
+  if(action==='restart'||action==='start'){closeCardDialog();startBattle();return}
   if(action==='collection'){switchScreen('collection');return}
   if(action==='add'&&canAdd(progress.deck,value,progress.unlocked)){progress.deck.push(value);notice=BY_ID[value].name+' added to the deck.';save();render();return}
   if(action==='remove'&&canRemove(progress.deck,value)){progress.deck.splice(progress.deck.indexOf(value),1);notice=BY_ID[value].name+' removed from the deck.';save();render();return}
