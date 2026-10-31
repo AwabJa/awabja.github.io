@@ -16,11 +16,16 @@ const cards=(await readFile(join(root,'assets/cards-hd.webp'))).toString('base64
 const framesAllies=(await readFile(join(root,'assets/frames-allies.webp'))).toString('base64');
 const framesEnemies=(await readFile(join(root,'assets/frames-enemies.webp'))).toString('base64');
 const manifest=JSON.parse(await readFile(join(root,'manifest.webmanifest'),'utf8'));
-assert.match(htmlRaw,/src="game\.js\?v=moonfall-motion-2"/);
-assert.match(htmlRaw,/src="scene25d\.js\?v=moonfall-motion-2"/);
+assert.match(htmlRaw,/src="game\.js\?v=moonfall-fixed-world-1"/);
+assert.match(htmlRaw,/src="scene25d\.js\?v=moonfall-fixed-world-1"/);
+assert.match(htmlRaw,/<canvas id="sceneBackground"/);
+assert.match(htmlRaw,/<canvas id="sceneAtmosphere"/);
 assert.match(htmlRaw,/<canvas id="sceneWorld"/);
+assert.match(sceneJS,/function paintFixedBackground\(/);
+assert.match(sceneJS,/function paintAtmosphere\(/);
+assert.doesNotMatch(sceneJS,/Math\.sin\(t\*\.15\)\*3/,'No backdrop sway');
 assert.match(htmlRaw,/apple-mobile-web-app-capable/);
-assert.match(htmlRaw,/href="style\.css\?v=moonfall-motion-2"/);
+assert.match(htmlRaw,/href="style\.css\?v=moonfall-fixed-world-1"/);
 assert.doesNotMatch(jsRaw,/sceneArt|battle-hd|atlas\.webp/,'Old painted battlefield not used');
 assert.match(sceneJS,/7 independent characters/);
 assert.match(sceneJS,/function cue\(e\)/,'Renderer exposes event-based action animation');
@@ -30,7 +35,7 @@ assert.match(sceneJS,/function poseFor\(i,now,alive\)/,'Dedicated action frames 
 assert(framesAllies.length>500000&&framesEnemies.length>500000,'High-quality prebaked sprite frame atlases exist');
 assert.match(sceneJS,/drawActor\(/);
 assert.doesNotMatch(sceneJS,/getContext\('webgl'/);
-assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-motion-2'/);
+assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-fixed-world-1'/);
 assert(cards.length>100000,'Card art must be present');
 assert(background.length>150000 && actors.length>100000,'High-resolution illustration layers must be present');
 assert.equal(manifest.display,'fullscreen');
@@ -41,11 +46,11 @@ assert.match(css,/\.game-shell\{position:relative;width:100vw!important;height:1
 const html=htmlRaw.replace(/<meta http-equiv="Content-Security-Policy"[^>]+>/,'')
   .replace(/<link rel="stylesheet"[^>]+>/,`<style>${css}</style>`)
   .replace(/<script src="[^"]+" defer><\/script>/g,'');
-const js=jsRaw.replace("cardsArt.src='assets/cards-hd.webp?v=moonfall-motion-2';",`cardsArt.src='data:image/webp;base64,${cards}';`);
-const scene=sceneJS.replace("background.src='assets/backdrop2.webp?v=moonfall-motion-2';",`background.src='data:image/webp;base64,${background}';`)
- .replace("actors.src='assets/characters.webp?v=moonfall-motion-2';",`actors.src='data:image/webp;base64,${actors}';`)
- .replace("frameAtlases[0].src='assets/frames-allies.webp?v=moonfall-motion-2';",`frameAtlases[0].src='data:image/webp;base64,${framesAllies}';`)
- .replace("frameAtlases[1].src='assets/frames-enemies.webp?v=moonfall-motion-2';",`frameAtlases[1].src='data:image/webp;base64,${framesEnemies}';`);
+const js=jsRaw.replace("cardsArt.src='assets/cards-hd.webp?v=moonfall-fixed-world-1';",`cardsArt.src='data:image/webp;base64,${cards}';`);
+const scene=sceneJS.replace("background.src='assets/backdrop2.webp?v=moonfall-fixed-world-1';",`background.src='data:image/webp;base64,${background}';`)
+ .replace("actors.src='assets/characters.webp?v=moonfall-fixed-world-1';",`actors.src='data:image/webp;base64,${actors}';`)
+ .replace("frameAtlases[0].src='assets/frames-allies.webp?v=moonfall-fixed-world-1';",`frameAtlases[0].src='data:image/webp;base64,${framesAllies}';`)
+ .replace("frameAtlases[1].src='assets/frames-enemies.webp?v=moonfall-fixed-world-1';",`frameAtlases[1].src='data:image/webp;base64,${framesEnemies}';`);
 let executablePath;
 for (const candidate of [process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/chromium'].filter(Boolean)) {
   try {await access(candidate);executablePath=candidate;break;} catch {}
@@ -65,7 +70,16 @@ try {
     const canvas=page.locator('#game');
     const box=await canvas.boundingBox();
     assert(box && box.width>=100 && box.height>=50,'Canvas must render at '+width+'×'+height);
-    assert.equal(await page.locator('#sceneWorld').count(),1,'Separate illustration canvas is present');
+    assert.equal(await page.locator('#sceneWorld').count(),1,'Character and effect layer is present');
+    assert.equal(await page.locator('#sceneBackground').count(),1,'Static castle layer is present');
+    assert.equal(await page.locator('#sceneAtmosphere').count(),1,'Moving atmosphere has its own layer');
+    await page.waitForFunction(()=>window.MoonfallScene.getStats().backgroundLoaded && window.MoonfallScene.getStats().backgroundPaints>=1,null,{timeout:10000});
+    const fixedStart=await page.evaluate(()=>window.MoonfallScene.getStats());
+    await page.waitForTimeout(220);
+    const fixedAfter=await page.evaluate(()=>window.MoonfallScene.getStats());
+    assert.equal(fixedStart.backgroundPaints,fixedAfter.backgroundPaints,'Castle background is not repainted during idle animation');
+    assert(fixedAfter.atmosphereFrames>fixedStart.atmosphereFrames,'Atmosphere independently animates');
+    assert.equal(fixedAfter.layerCount,4,'Four independent scene and HUD layers');
     const modelStats=await page.evaluate(()=>window.MoonfallScene?.getStats());
     assert.equal(modelStats?.actors,7,'Seven independently rendered anime character sprites');
     assert.equal(modelStats?.mode,'layered-2.5D','Renderer is an illustrated 2.5D scene');
@@ -160,6 +174,8 @@ try {
       const played=await state();
       assert.equal(played.energy,2,'Confirm spends energy');
       assert.equal(played.foes[1].hp,165,'Card damages selected enemy');
+      const afterStrike=await page.evaluate(()=>window.MoonfallScene.getStats());
+      assert.equal(afterStrike.backgroundPaints,fixedAfter.backgroundPaints,'The architecture is still fixed during attacks');
       const attackStats=await page.evaluate(()=>window.MoonfallScene.getStats());
       assert.equal(attackStats.lastCue,'strike','Playing Shadow Step triggers its attack animation');
       assert.equal(played.hand.length,4,'Played card is removed from hand');

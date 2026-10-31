@@ -3,15 +3,21 @@
    not independently hand-drawn. Action cues select walking, attack, cast, and hurt frames. */
 (()=>{'use strict';
  const canvas=document.getElementById('sceneWorld');
- const ctx=canvas?.getContext('2d',{alpha:false,desynchronized:true});
- if(!ctx){window.MoonfallScene={render(){},cue(){},reset(){},getStats(){return {mode:'unavailable',actors:0}}};return}
+ const backgroundCanvas=document.getElementById('sceneBackground');
+ const atmosphereCanvas=document.getElementById('sceneAtmosphere');
+ const ctx=canvas?.getContext('2d',{alpha:true,desynchronized:true});
+ const backgroundCtx=backgroundCanvas?.getContext('2d',{alpha:false});
+ const atmosphereCtx=atmosphereCanvas?.getContext('2d',{alpha:true});
+ if(!ctx||!backgroundCtx||!atmosphereCtx){
+  window.MoonfallScene={render(){},cue(){},reset(){},getStats(){return {mode:'unavailable',actors:0}}};return;
+ }
  const W=1600,H=800,TAU=Math.PI*2;
- const background=new Image();background.decoding='async';background.src='assets/backdrop2.webp?v=moonfall-motion-2';
- const actors=new Image();actors.decoding='async';actors.src='assets/characters.webp?v=moonfall-motion-2';
+ const background=new Image();background.decoding='async';background.src='assets/backdrop2.webp?v=moonfall-fixed-world-1';
+ const actors=new Image();actors.decoding='async';actors.src='assets/characters.webp?v=moonfall-fixed-world-1';
  const frameAtlases=[new Image(),new Image()];
  frameAtlases.forEach(image=>image.decoding='async');
- frameAtlases[0].src='assets/frames-allies.webp?v=moonfall-motion-2';
- frameAtlases[1].src='assets/frames-enemies.webp?v=moonfall-motion-2';
+ frameAtlases[0].src='assets/frames-allies.webp?v=moonfall-fixed-world-1';
+ frameAtlases[1].src='assets/frames-enemies.webp?v=moonfall-fixed-world-1';
  const ACTION_NAMES=['idle','walk','attack','cast','hurt'];
  const FRAME_COUNT=6,FRAME_W=300,FRAME_H=320;
  const currentClips=Array(7).fill('idle'),currentFrames=Array(7).fill(0),actorOffsets=Array(7).fill(0);
@@ -23,6 +29,7 @@
  const previous=Array(7).fill(null),hits=Array(7).fill(0);
  const hitStops=Array(7).fill(0);
  let cues=[],frames=0,activeCueCount=0,lastCue=null,nowClock=0;
+ let backgroundDirty=true,backgroundPaints=0,atmosphereFrames=0;
  const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
  function ready(img){return img.complete&&img.naturalWidth>0}
  function clamp(v,min,max){return Math.min(max,Math.max(min,v))}
@@ -76,30 +83,62 @@
   }
   return {dx,dy,roll,flash,reach};
  }
- function paintBackground(t){
-  // Restrained, layered camera parallax; keep gameplay targets stationary.
+
+ // Never animate, sway, or translate the architecture: painted only when
+ // dimensions or the underlying image change.
+ background.addEventListener('load',()=>{backgroundDirty=true});
+ function paintFixedBackground(){
+  backgroundCtx.setTransform(backgroundCanvas.width/W,0,0,backgroundCanvas.height/H,0,0);
+  backgroundCtx.clearRect(0,0,W,H);
   if(ready(background)){
-   const sway=reduced?0:Math.sin(t*.15)*3;
-   ctx.drawImage(background,-10+sway,-5,1620,810);
+   backgroundCtx.drawImage(background,-10,-5,1620,810);
   }else{
-   const g=ctx.createLinearGradient(0,0,0,H);
-   g.addColorStop(0,'#14203b');g.addColorStop(.62,'#3d3c56');g.addColorStop(1,'#090d19');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)
+   const g=backgroundCtx.createLinearGradient(0,0,0,H);
+   g.addColorStop(0,'#14203b');g.addColorStop(.62,'#3d3c56');
+   g.addColorStop(1,'#090d19');
+   backgroundCtx.fillStyle=g;backgroundCtx.fillRect(0,0,W,H);
   }
-  // Two translucent fog layers move at different speeds to suggest a deep courtyard.
+  backgroundDirty=false;backgroundPaints++;
+ }
+ // A distinct transparent layer for environmental movement. This never draws
+ // onto the architecture or touches actor transforms.
+ function paintAtmosphere(t){
+  const ac=atmosphereCtx;
+  ac.setTransform(atmosphereCanvas.width/W,0,0,atmosphereCanvas.height/H,0,0);
+  ac.clearRect(0,0,W,H);
   for(let j=0;j<2;j++){
    const yy=155+j*185;
    for(let i=0;i<5;i++){
     const x=((i*380+(reduced?0:t*(j?7:-5)))%1880+1880)%1880-120;
-    const g=ctx.createRadialGradient(x,yy,3,x,yy,245);
-    g.addColorStop(0,j?'#a1a5ce13':'#b9c8e119');g.addColorStop(1,'#d6def000');ctx.fillStyle=g;ctx.fillRect(x-245,yy-135,490,270);
+    const g=ac.createRadialGradient(x,yy,3,x,yy,245);
+    g.addColorStop(0,j?'#a1a5ce13':'#b9c8e119');
+    g.addColorStop(1,'#d6def000');
+    ac.fillStyle=g;ac.fillRect(x-245,yy-135,490,270);
    }
   }
-  // Fire braziers in the illustration flicker on an independent layer.
-  if(!reduced){for(const x of [187,815,1274]){
+  if(!reduced)for(const x of [187,815,1274]){
    const flick=.66+.18*Math.sin(t*7+x)+.12*Math.sin(t*12.3+x*.15);
-   shimmer(x,271+(x===187?-34:0),41,'#ffa44c',flick*.28);
-  }}
+   const yy=271+(x===187?-34:0),r=41;
+   const g=ac.createRadialGradient(x,yy,0,x,yy,r);
+   g.addColorStop(0,'#ffa44c');g.addColorStop(1,'#ffa44c00');
+   ac.save();ac.globalAlpha=flick*.28;
+   ac.fillStyle=g;ac.fillRect(x-r,yy-r,r*2,r*2);ac.restore();
+  }
+  atmosphereFrames++;
  }
+ function syncCanvasSizes(){
+  const ratio=Math.min(2,Math.max(1,window.devicePixelRatio||1));
+  const cw=Math.min(3200,Math.max(1,Math.round(canvas.clientWidth*ratio)));
+  const ch=Math.min(1600,Math.max(1,Math.round(canvas.clientHeight*ratio)));
+  for(const layer of [backgroundCanvas,atmosphereCanvas,canvas]){
+   if(layer.width!==cw||layer.height!==ch){
+    layer.width=cw;layer.height=ch;
+    if(layer===backgroundCanvas)backgroundDirty=true;
+   }
+  }
+  ctx.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);
+ }
+
  function poseFor(i,now,alive){
   if(!alive)return {state:'hurt',frame:5};
   for(let j=cues.length-1;j>=0;j--){
@@ -220,11 +259,11 @@
   vignette.addColorStop(0,'#070a1700');vignette.addColorStop(1,'#0406138c');ctx.fillStyle=vignette;ctx.fillRect(0,0,W,H);
  }
  function render(now,game){
-  const ratio=Math.min(2,Math.max(1,window.devicePixelRatio||1));
-  const cw=Math.min(3200,Math.max(1,Math.round(canvas.clientWidth*ratio))),ch=Math.min(1600,Math.max(1,Math.round(canvas.clientHeight*ratio)));
-  if(cw!==canvas.width||ch!==canvas.height){canvas.width=cw;canvas.height=ch}
-  ctx.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);
-  const t=now/1000;paintBackground(t);
+  syncCanvasSizes();
+  if(backgroundDirty)paintFixedBackground();
+  const t=now/1000;
+  paintAtmosphere(t);
+  ctx.clearRect(0,0,W,H);
   const hps=[...game.allies.map(a=>a.hp),...game.foes.map(f=>f.hp)];
   hps.forEach((hp,i)=>{if(previous[i]!==null&&hp<previous[i])hits[i]=1;previous[i]=hp});
   for(let i=0;i<7;i++){
@@ -233,5 +272,5 @@
   }
   drawSpells(now);foreground(t);frames++;nowClock=now;
  }
- window.MoonfallScene={render,cue,reset,getStats(){return {mode:'layered-2.5D',actors:7,backgroundLoaded:ready(background),spritesLoaded:ready(actors),frames,activeEffects:activeCueCount,lastCue,reducedMotion:reduced,atlasLoaded:frameAtlases.map(ready),framesPerAction:FRAME_COUNT,actionNames:ACTION_NAMES,animationStates:[...currentClips],frameIndices:[...currentFrames],actorOffsets:[...actorOffsets]}}};
+ window.MoonfallScene={render,cue,reset,getStats(){return {mode:'layered-2.5D',actors:7,backgroundLoaded:ready(background),backgroundFixed:true,backgroundPaints,atmosphereFrames,layerCount:4,spritesLoaded:ready(actors),frames,activeEffects:activeCueCount,lastCue,reducedMotion:reduced,atlasLoaded:frameAtlases.map(ready),framesPerAction:FRAME_COUNT,actionNames:ACTION_NAMES,animationStates:[...currentClips],frameIndices:[...currentFrames],actorOffsets:[...actorOffsets]}}};
 })();

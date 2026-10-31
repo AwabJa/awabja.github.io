@@ -1,4 +1,4 @@
-# Moonfall — 2.5D illustrated battle slice
+# Moonfall — layered 2.5D battle
 
 **Live game:** https://awabja.github.io/card-game/
 
@@ -37,3 +37,9 @@ Tap **SEE ANIMATIONS** at the lower-left of the battlefield (or press **M**) to 
 This is an **art-directed playable vertical slice**, not a finished anime RPG. The scene uses separately composited character cutouts from original concept artwork; some sprite-edge cleanup and additional hand-painted animation frames are still needed. The current new motion deforms and translates illustrated sprites; it is not true skeletal rigging or unique hand-drawn attack frames. The backdrop uses repeated stone architecture to fill areas behind the characters. It is not a fully authored environment. No online multiplayer or persistent collection has been implemented.
 
 All gameplay lives in the existing browser-side game logic; the card rules remain testable and independent of the 2.5D presentation. The game is separate from Flow and Serivia.
+
+## Fixed-world scene compositor
+
+The gothic courtyard is now a dedicated **static `sceneBackground` canvas**, rendered only after the background asset loads or the screen resolution changes. The separate `sceneAtmosphere` canvas holds moving fog and torchlight; `sceneWorld` contains characters, spells, particles, and hit reactions; the `game` canvas contains health bars, hand, card previews, and controls. No animation translates or repositions the architecture.
+
+The mobile browser test checks that the static canvas does not repaint while the other layers animate and while a card is played. Browser-based fullscreen depends on the operating system; the card battle remains landscape-first.

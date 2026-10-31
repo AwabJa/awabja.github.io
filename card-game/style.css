@@ -59,3 +59,12 @@ canvas{display:block;width:100%!important;height:100%!important;touch-action:non
 
 /* 2.5D illustration renderer behind the translucent battle HUD */
 #sceneWorld{background:#111728;image-rendering:auto;}
+
+/* Fixed 2.5D compositor. Only atmosphere, sprites/effects and HUD are redrawn. */
+#sceneBackground,#sceneAtmosphere,#sceneWorld,#game{
+  position:absolute;inset:0;display:block;width:100%!important;height:100%!important;
+}
+#sceneBackground{z-index:0;pointer-events:none;background:#111728;image-rendering:auto}
+#sceneAtmosphere{z-index:1;pointer-events:none;background:transparent!important}
+#sceneWorld{z-index:2;pointer-events:none;background:transparent!important}
+#game{z-index:3;pointer-events:auto;background:transparent!important}
