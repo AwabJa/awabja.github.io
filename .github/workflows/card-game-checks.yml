@@ -1,4 +1,4 @@
-name: Arcana Duel checks
+name: Moonfall card battle checks
 
 on:
   push:
@@ -14,19 +14,17 @@ permissions:
   contents: read
 
 jobs:
-  tests:
+  browser:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
-      - run: node --check card-game/slice.js
-      - run: node --check card-game/app.js
-      - run: node --check card-game/engine.mjs
-      - run: node --test card-game/game.test.mjs
+      - run: node --check card-game/game.js
+      - run: node --check card-game/browser.test.mjs
       - run: npm install --no-save --package-lock=false playwright-core@1.56.1
-      - name: Browser smoke test at mobile, tablet and desktop widths
+      - name: Test landscape mobile, portrait mobile, and desktop controls
         run: |
           if command -v google-chrome >/dev/null 2>&1; then
             export CHROME_BIN="$(command -v google-chrome)"

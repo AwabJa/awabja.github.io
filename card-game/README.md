@@ -1,37 +1,35 @@
-# Arcana Duel — Moonfall vertical slice
+# Arcana Duel: Moonfall — playable anime-card vertical slice
 
-**Play:** https://awabja.github.io/card-game/
+**Live game:** https://awabja.github.io/card-game/
 
-This is a clean-slate, one-battle playable proof of concept, built in a single HTML5 Canvas game surface for landscape phones and desktop. The former DOM/CSS prototype and its original 16-card engine remain in the repository as reference material, but they are not loaded by this screen.
+This replaces the retired Arcana Duel CSS/SVG prototype with a new illustrated, landscape-first game scene. It is a **single-battle vertical slice**, not a finished commercial game. It uses an original generated moonlit fantasy battlefield and five original illustrated card concepts.
 
-## Why the rebuild is different
+## What works
 
-- A cohesive original anime-fantasy art atlas generated for this project (one compact local WebP; no external URLs) powers the battlefield and real card illustrations, replacing procedural SVG portraits.
-- The actual game plays at a 1600 × 800 logical design size, scaled uniformly to fit short landscape phones without page scrolling.
-- Four illustrated allies and three enemy units each have **real HP**, selectable targeting, ally shields and enemy damage. The battlefield is not a decorative fake team.
-- Five illustrated card types have distinct abilities: Shadow Step, Guardian Aegis, Crimson Bloom, Healing Wind, Arcane Bolt.
-- Tapping a card **previews** its full illustration, rarity, cost, description and target effect. An explicit **Play Card** button is required to spend energy; **Keep in Hand** cancels safely.
-- A draw pile, a discard pile and End Turn control are always beside the hand.
-- Enemies attack when you end the turn. Burn effects persist for two turns. Discards reshuffle into the draw pile. Victory requires defeating all three enemies; defeat requires all allies to fall.
-- You can tap the help button anytime, and portrait phones display a rotation hint (they are not forcibly rotated).
-- No accounts, purchases, third-party JavaScript, trackers or remote assets.
+- Four allied characters and three enemy characters in the same cinematic battle scene
+- Live per-character HP and ally shields, individually selectable attack and healing targets
+- Five unique illustrated cards: Shadow Step, Guardian Aegis, Crimson Bloom, Healing Wind, Arcane Bolt
+- Tap a card to open a **large illustrated preview**; choose **Play Card** or **Keep in Hand**
+- Energy, targeted damage, area damage, burn over time, healing, shield protection, deck draw, discard, turn resolution, victory/defeat, and restart
+- Draw pile and discard pile view, mouse/keyboard (1–5, E, H, Esc), swipe through cards if more than fit in the hand
+- A landscape view fitting the entire battle into a phone screen and a rotate-your-phone prompt in portrait
+- No payment systems, account sign-in, analytics, third-party JavaScript, network API calls, or external asset requests
 
-## Limitations
+## Playing
 
-This is **one battle**, not the full RPG. There is no story progression, long-term collection save, multiplayer, audio pipeline or skeletal character animation yet. The ensemble artwork is a **single painted scene**, not seven independent animated character sprites. The cards are illustrated crops from an original composite art concept; dedicated final card illustrations will improve fidelity further.
+1. On mobile, rotate sideways. Select **How to Play** for instructions if needed.
+2. Tap an enemy to target it (or an ally to target healing).
+3. Tap a card to inspect the art, energy cost, and ability. Press **Play Card** to commit or **Keep in Hand** to cancel.
+4. Select **End Turn** when done. Enemies attack, shields absorb damage, and you draw fresh cards.
+5. Defeat all three enemies before all four allies fall.
 
-## How to play
+## Technical notes
 
-1. Open the link on a phone turned sideways (landscape), or use a desktop browser.
-2. In the battlefield, tap one of the three enemies to target it. For healing, tap one of your four allies.
-3. Tap a card in your hand to read its effect; then choose **Play Card** or **Keep in Hand**.
-4. Use shields and healing to protect allies. End your turn to let enemies attack and to refill your hand.
-5. Win by defeating all three enemies before all four allies lose their health.
+- Vanilla JavaScript with an HTML Canvas 2D renderer and a single optimized original WebP art atlas in `assets/atlas.webp`.
+- Target resolution: 1600×800; scales responsively to landscape mobile and desktop.
+- The battle state is held in memory; restarting the page starts a new battle. Only the first-run tutorial dismissal is stored locally.
+- For testing, `window.__moonfallTestState()` returns a read-only *snapshot* of public in-game battle information; no accounts, personal information, or secrets exist.
+- CI runs a browser interaction test on landscape phone, portrait phone, and desktop, as well as source and site integrity checks.
+- The underlying card game mechanics and art may be expanded later into a full deck-builder, levels, rewards, audio, animation, and online accounts. None of those larger systems are claimed as complete now.
 
-Keyboard: **1–5** to preview a hand card; **Enter** to play its preview, **Esc** to close it, **E** to end your turn, **H** for help.
-
-## Development and quality checks
-
-The new battle uses only `index.html`, `slice.css`, `slice.js` and `assets/atlas.webp` in the runtime. CI checks the JavaScript syntax, old card-engine regression tests, and browser interactions on a 844 × 390 mobile landscape viewport, 390 × 844 portrait, and 1440 × 800 desktop.
-
-Flow and Serivia remain unrelated and untouched. The game is intentionally not yet shown as a finished portfolio project.
+This game is separate from Flow and Serivia and is not yet featured on the main portfolio homepage.

@@ -1,75 +1,96 @@
-/** Automated end-to-end vertical-slice smoke test; no third-party game assets or runtime libraries. */
+/** Moonfall vertical-slice smoke tests. Runs against shipped HTML/CSS/JS and illustrated atlas. */
 import assert from 'node:assert/strict';
-import {createServer} from 'node:http';
-import {readFile} from 'node:fs/promises';
-import {resolve, dirname, extname, sep} from 'node:path';
+import {readFile, access} from 'node:fs/promises';
+import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright-core';
-const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
-const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.webp':'image/webp','.svg':'image/svg+xml'};
-const server=createServer(async(req,res)=>{
- try{
-  const url=new URL(req.url,'http://127.0.0.1');
-  const decoded=decodeURIComponent(url.pathname);
-  const dest=resolve(root,'.'+(decoded.endsWith('/')?decoded+'index.html':decoded));
-  if(!dest.startsWith(root+sep)){res.writeHead(403);res.end();return}
-  const data=await readFile(dest);
-  res.writeHead(200,{'content-type':types[extname(dest)]||'application/octet-stream','cache-control':'no-store','x-content-type-options':'nosniff'});res.end(data);
- }catch{res.writeHead(404);res.end('Not found')}
-});
-await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
-const base='http://127.0.0.1:'+server.address().port;
-const browser=await chromium.launch({executablePath:process.env.CHROME_BIN||'/usr/bin/google-chrome',headless:true,args:['--no-sandbox']});
-try{
- const page=await browser.newPage({viewport:{width:844,height:390},isMobile:true,hasTouch:true});
- const errors=[];page.on('pageerror',e=>errors.push(e.message));
- const res=await page.goto(base+'/card-game/',{waitUntil:'networkidle'});
- assert.equal(res.status(),200);
- await page.waitForFunction(()=>document.getElementById('game')?.dataset.phase==='playing');
- const canvas=page.locator('#game');
- const state=async key=>canvas.getAttribute('data-'+key);
- const click=async(x,y)=>{
-  const b=await canvas.boundingBox();
-  await page.mouse.click(b.x+x/1600*b.width,b.y+y/800*b.height);
-  await page.waitForTimeout(150);
- };
- assert.equal(await state('energy'),'3');assert.equal(await state('hand'),'5');
- assert.equal(await state('foes'),'250,300,340');
- assert.equal((await page.locator('#loadMessage').getAttribute('class')).includes('hidden'),true);
- assert.equal(await state('preview'),'guide','First-time how-to-play guide is visible');
- await click(785,650);assert.equal(await state('preview'),'none');
- await click(382,650);assert.equal(await state('preview'),'card','Tap previews the first card');
- assert.equal(await state('energy'),'3','Preview does not spend energy');
- assert.equal(await state('foes'),'250,300,340','Preview does not deal damage');
- await click(1117,630);assert.equal(await state('preview'),'none','Keep in Hand closes the preview');
- assert.equal(await state('hand'),'5');
- await click(382,650);await click(800,631);
- assert.equal(await state('hand'),'4');assert.equal(await state('energy'),'2');
- assert.equal(await state('foes'),'115,300,340','Shadow Step attacks selected target');
- await click(1460,630);assert.equal(await state('turn'),'2');assert.equal(await state('hand'),'5');
- assert.notEqual(await state('allies'),'190,180,185,195','Enemies act and deal damage on End Turn');
- await click(90,670);assert.equal(await state('preview'),'deck','Deck opens');
- await click(380,347);assert.equal(await state('preview'),'card','Deck cards are inspectable');
- await click(775,634);assert.equal(await state('preview'),'deck');
- await click(1225,135);assert.equal(await state('preview'),'none');
- await click(1465,35);assert.equal(await state('preview'),'guide');
- await click(785,650);assert.equal(await state('preview'),'none');
- assert.deepEqual(errors,[],'No JavaScript exceptions in the landscape flow');
- const box=await canvas.boundingBox();
- assert(box.width>700&&box.height>=350,'Landscape game fits and remains readable');
- await page.close();
- const portrait=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
- await portrait.goto(base+'/card-game/',{waitUntil:'networkidle'});
- await portrait.locator('.orientation-panel').waitFor();
- assert.equal(await portrait.locator('.orientation-panel').isVisible(),true,'Rotation guidance appears in portrait');
- await portrait.locator('#portraitContinue').click();
- assert.equal(await portrait.locator('.orientation-panel').isVisible(),false,'Users may override the rotation hint');
- await portrait.close();
- const desktop=await browser.newPage({viewport:{width:1440,height:800}});
- await desktop.goto(base+'/card-game/',{waitUntil:'networkidle'});
- await desktop.waitForFunction(()=>document.getElementById('game').dataset.phase==='playing');
- assert.equal(await desktop.locator('#orientationPanel').isVisible(),false);
- assert.equal(await desktop.locator('#game').getAttribute('data-hand'),'5');
- await desktop.close();
- console.log('ARCANA DUEL VERTICAL SLICE BROWSER TESTS PASSED');
-}finally{await browser.close();server.close()}
+
+const root=dirname(fileURLToPath(import.meta.url));
+const htmlRaw=await readFile(join(root,'index.html'),'utf8');
+const css=await readFile(join(root,'style.css'),'utf8');
+const jsRaw=await readFile(join(root,'game.js'),'utf8');
+const atlas=(await readFile(join(root,'assets/atlas.webp'))).toString('base64');
+assert.match(htmlRaw,/src="game\.js\?v=moonfall-1"/);
+assert.match(htmlRaw,/href="style\.css\?v=moonfall-1"/);
+assert.match(jsRaw,/atlas\.src='assets\/atlas\.webp\?v=moonfall-1'/);
+assert(atlas.length>20000,'Original illustrated atlas must be present');
+
+// Inline only in tests to avoid network dependencies and guarantee the tested source is this commit.
+const html=htmlRaw.replace(/<meta http-equiv="Content-Security-Policy"[^>]+>/,'')
+  .replace(/<link rel="stylesheet"[^>]+>/,`<style>${css}</style>`)
+  .replace(/<script src="game\.js\?v=moonfall-1" defer><\/script>/,'');
+const js=jsRaw.replace("atlas.src='assets/atlas.webp?v=moonfall-1';",
+  `atlas.src='data:image/webp;base64,${atlas}';`);
+let executablePath;
+for (const candidate of [process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/chromium'].filter(Boolean)) {
+  try {await access(candidate);executablePath=candidate;break;} catch {}
+}
+const browser=await chromium.launch(executablePath?
+  {executablePath,headless:true,args:['--no-sandbox']}:
+  {channel:'chrome',headless:true,args:['--no-sandbox']});
+try {
+  for(const [width,height] of [[844,390],[390,844],[1440,800]]) {
+    const page=await browser.newPage({viewport:{width,height},isMobile:width<900,hasTouch:width<900});
+    const errors=[];
+    page.on('pageerror',error=>errors.push(error.message));
+    await page.setContent(html);
+    await page.addScriptTag({content:js});
+    await page.locator('#loadMessage').waitFor({state:'hidden'});
+    const canvas=page.locator('#game');
+    const box=await canvas.boundingBox();
+    assert(box && box.width>=100 && box.height>=50,'Canvas must render at '+width+'×'+height);
+    assert(box.x>=0 && box.x+box.width<=width+2,'Canvas fits screen width');
+    if(width===390){
+      assert.equal(await page.locator('#orientationPanel').isVisible(),true,'Portrait gives a clear rotate instruction');
+      await page.locator('#portraitContinue').click();
+      assert.equal(await page.locator('#orientationPanel').isVisible(),false,'Portrait preview opt-out works');
+    }
+    if(width===844){
+      assert(box.height<=height+1,'Landscape canvas fits the phone height');
+      const click=async(x,y)=>{
+        const rect=await canvas.boundingBox();
+        await page.mouse.click(rect.x+x/1600*rect.width,rect.y+y/800*rect.height);
+        await page.waitForTimeout(30);
+      };
+      const state=()=>page.evaluate(()=>window.__moonfallTestState());
+      const before=await state();
+      assert.equal(before.hand.length,5,'Five opening cards');
+      assert.equal(before.foes.length,3,'Three actual enemy combatants');
+      assert.equal(before.allies.length,4,'Four allied characters');
+      // The first-run guide is unavailable on about:blank; open it explicitly and verify close.
+      await page.keyboard.press('h');
+      assert.equal((await state()).preview,'guide','Help overlay can open');
+      await click(800,650);
+      assert.equal((await state()).preview,null,'Help overlay closes');
+      await click(1305,300);
+      assert.equal((await state()).selectedEnemy,1,'Player can target the center enemy');
+      await click(380,625);
+      assert.equal((await state()).preview,'card','Tapping a card inspects it; does not immediately play');
+      assert.equal((await state()).energy,3,'Preview costs no energy');
+      await click(1112,628);
+      assert.equal((await state()).preview,null,'Keep in hand closes preview');
+      assert.equal((await state()).hand.length,5,'Cancel does not discard card');
+      await click(380,625);
+      await click(820,628);
+      const played=await state();
+      assert.equal(played.energy,2,'Confirming a 1-energy card spends 1 energy');
+      assert.equal(played.foes[1].hp,165,'Selected enemy actually takes damage');
+      assert.equal(played.hand.length,4,'Played card moves out of hand');
+      assert.equal(played.discard.length,1,'Played card enters discard');
+      await click(89,640);
+      assert.equal((await state()).preview,'deck','Deck stack opens collection view');
+      await click(1190,136);
+      assert.equal((await state()).preview,null,'Deck view closes');
+      await click(1460,635);
+      const next=await state();
+      assert.equal(next.turn,2,'End Turn advances actual turn');
+      assert.equal(next.energy,next.maxEnergy,'Energy refills on next turn');
+      assert.equal(next.hand.length,5,'A new playable hand is drawn');
+      await click(1293,35);
+      assert.equal((await state()).turn,1,'Restart resets battle state');
+    }
+    assert.deepEqual(errors,[],'No browser JavaScript errors at '+width+'×'+height);
+    await page.close();
+  }
+  console.log('MOONFALL BATTLE CHECKS PASSED: illustrated arena, mobile layout, target/card/turn gameplay');
+} finally {await browser.close();}

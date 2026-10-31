@@ -3,7 +3,7 @@ const canvas=document.getElementById('game');
 const ctx=canvas.getContext('2d',{alpha:false});
 const messageNode=document.getElementById('announcer');
 const loading=document.getElementById('loadMessage');
-const atlas=new Image();atlas.decoding='async';atlas.src='assets/atlas.webp?v=1';
+const atlas=new Image();atlas.decoding='async';atlas.src='assets/atlas.webp?v=moonfall-1';
 const W=1600,H=800,THEME={gold:'#f1d4a1',cream:'#f7e7d0',muted:'#bac0cb',blue:'#a6cbff',red:'#ef8799',green:'#9be3b6'};
 const CARDS=[
  {id:'shadow',name:'Shadow Step',rarity:'Rare',cost:1,kind:'attack',description:'Deal 135 damage to your selected enemy. If this defeats it, regain 1 energy.',amount:135,flavor:'Disappear into the night. Return as a blade.',symbol:'✧',hue:'#c4a6ff'},
@@ -46,7 +46,7 @@ function drawHeader(){
  line(0,70,W,'#bf9c76a6',2);
  text('✧',31,36,42,THEME.gold,'Georgia');text('ARCANA',75,34,32,THEME.cream,'Georgia','left','700');
  text('DUEL',226,34,32,THEME.gold,'Georgia');
- text('MOONFALL  ·  THE HOLLOW CATHEDRAL',405,37,18,'#d1d4df','system-ui','left','650');
+ text('MOONFALL  ·  NEW BATTLE BUILD',405,37,18,'#d1d4df','system-ui','left','650');
  pill(`TURN ${game.turn}`,841,16,147,41,'#241d2ce8','#d2af88',21);
  const live=game.foes.filter(f=>f.hp>0).length;
  pill(`${live} ENEMIES`,1010,16,169,41,'#1c1a27e8','#ba8492',17);
@@ -162,6 +162,7 @@ function drawDeck(){
  const list=game.history==='discard'?game.discard:[...game.draw,...game.hand,...game.discard];
  const counts=Array(5).fill(0);list.forEach(n=>counts[n]++);
  for(let i=0;i<5;i++){
+   if(game.history==='discard'&&!counts[i])continue;
    const x=320+i*199, y=274;
    cardFrame(i,-1,x,y,180,279,true);
    pill('× '+counts[i],x+42,574,96,41,'#272233','#bd9a7c',19);
@@ -245,6 +246,7 @@ function endTurn(){if(game.ended||game.preview)return;
  announce('Enemies dealt '+hits+' damage; shields blocked '+blocked+'. Your hand is refilled.');
 }
 function chooseAction(x,y){const z=[...zones].reverse().find(t=>t.enabled&&x>=t.x&&x<=t.x+t.w&&y>=t.y&&y<=t.y+t.h);return z||null}
+window.__moonfallTestState=()=>({turn:game.turn,energy:game.energy,hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,allies:game.allies.map(a=>({hp:a.hp,shield:a.shield})),foes:game.foes.map(f=>({hp:f.hp,burnTurns:f.burnTurns})),ended:game.ended});
 function activate(z){if(!z)return;
  if(game.ended){if(z.action==='restart'){game=freshGame();game.draw=game.draw.slice(5);announce('New battle started.');}return}
  if(game.preview){
@@ -261,8 +263,8 @@ function activate(z){if(!z)return;
   case 'ally':game.selectedAlly=z.meta;announce('Healing target: '+game.allies[z.meta].name+'.');break;
   case 'enemy':game.selectedEnemy=z.meta;announce('Attack target: '+game.foes[z.meta].name+'.');break;
   case 'card':selectCard(z.meta);break;
-  case 'deck':game.preview={type:'deck'};game.history='deck';break;
-  case 'discard':game.preview={type:'deck'};game.history='discard';break;
+  case 'deck':game.preview={type:'deck'};game.history='deck';announce('Your deck is open. Tap a card to inspect it.');break;
+  case 'discard':game.preview={type:'deck'};game.history='discard';announce('Discard pile opened.');break;
   case 'end':endTurn();break;
   case 'restart':game=freshGame();game.draw=game.draw.slice(5);announce('New battle started.');break;
   case 'guide':game.preview={type:'guide'};break;
@@ -283,7 +285,9 @@ window.addEventListener('keydown',e=>{
  if(e.key.toLowerCase()==='e'){endTurn();return}
  if(e.key.toLowerCase()==='h'){game.preview={type:'guide'};return}
  });
-function start(){loading.classList.add('hidden');try{if(localStorage.getItem('arcana-slice-guide-v1')!=='done'){game.preview={type:'guide'};localStorage.setItem('arcana-slice-guide-v1','done')}}catch{}requestAnimationFrame(draw)}
-atlas.addEventListener('load',start,{once:true});atlas.addEventListener('error',()=>{loading.textContent='Artwork unavailable: the battle can still be played.';setTimeout(()=>{loading.classList.add('hidden');requestAnimationFrame(draw)},1200)},{once:true});
+let started=false;
+function start(){if(started)return;started=true;loading.classList.add('hidden');try{if(localStorage.getItem('arcana-slice-guide-v1')!=='done'){game.preview={type:'guide'};localStorage.setItem('arcana-slice-guide-v1','done')}}catch{}requestAnimationFrame(draw)}
+atlas.addEventListener('load',start,{once:true});
+if(atlas.complete&&atlas.naturalWidth>0)start();atlas.addEventListener('error',()=>{loading.textContent='Artwork unavailable: the battle can still be played.';setTimeout(()=>{loading.classList.add('hidden');requestAnimationFrame(draw)},1200)},{once:true});
 document.getElementById('portraitContinue').addEventListener('click',()=>document.getElementById('orientationPanel').classList.add('dismissed'));
 })();

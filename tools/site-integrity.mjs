@@ -259,11 +259,12 @@ for(const id of ['undoBar','undoTask','recurrenceChoice','editOneOccurrence',
 // Enzo has been retired; the new strategy card prototype has no external runtime dependencies.
 check(!existsSync(join(root,'Enzo')), 'Retired Enzo directory must stay removed');
 const cardsHtml=readFileSync(join(root,'card-game/index.html'),'utf8');
-const cardsApp=readFileSync(join(root,'card-game/slice.js'),'utf8');
-check(cardsHtml.includes('src="slice.js?v=') &&
-      cardsHtml.includes('href="slice.css?v=') &&
-      cardsHtml.includes('id="game"'), 'Card game should load the clean-slate landscape canvas');
+const cardsApp=readFileSync(join(root,'card-game/game.js'),'utf8');
+check(cardsHtml.includes('src="game.js?v=') &&
+      cardsHtml.includes('href="style.css?v=') &&
+      cardsHtml.includes('id="game"'), 'Moonfall game must load the illustrated landscape canvas');
 check(existsSync(join(root,'card-game/assets/atlas.webp')), 'Card game illustrated atlas must ship locally');
+check(!existsSync(join(root,'card-game/app.js')), 'Retired card-game prototype must be removed');
 check(cardsApp.includes('selectedEnemy') && cardsApp.includes('game.hand') &&
       cardsApp.includes('preview'), 'Card game must retain targeting, hand and card previews');
 
