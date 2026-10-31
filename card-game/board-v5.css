@@ -166,3 +166,10 @@ body{background:radial-gradient(ellipse at 50% 0,#29333d,#0b0e16 65%)}
 @media(orientation:landscape) and (max-height:600px) and (max-width:1050px){
  .board-v5 .game-tabletop{min-height:0;height:calc(100% - 43px)}
 }
+
+/* Explicit hit-testing for landscape controls; the frame is decorative. */
+.board-v5 .game-table{pointer-events:none}
+.board-v5 .hand button.card,
+.board-v5 .table-piles button.pile-button,
+.board-v5 .game-endarea button.duel-end,
+.board-v5 .game-battle-message button.duel-restart{pointer-events:auto}

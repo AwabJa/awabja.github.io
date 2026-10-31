@@ -32,7 +32,7 @@ try{
   await page.locator('.combatant-enemy .combatant-name').waitFor();
   assert.equal(await page.locator('.duel-arena').count(),1,'Battlefield is visible');
   assert.equal(await page.locator('.board-v5 .game-table').count(),1,'New card-first game table is present');
-  assert.match(await page.locator('#buildVersion').innerText(),/BUILD 07/,'Updated version is visible');
+  assert.match(await page.locator('#buildVersion').innerText(),/BUILD 08/,'Updated version is visible');
   assert.equal(await page.locator('.combatant').count(),2,'Real one-on-one combatants are shown');
   assert.equal(await page.locator('.combatant .character-art').count(),2,'Hero and enemy have original illustrations');
   assert.equal(await page.locator('.duel-hand-section').count(),1,'Hand is visible');
@@ -118,6 +118,15 @@ try{
  assert.equal(await landscape.locator('.combatant').count(),2,'Landscape shows only active fighters');
  const handBox=await landscape.locator('.card-table').boundingBox();
  assert(handBox&&handBox.y+handBox.height<=395,'Landscape hand fits within viewport');
+ const landscapeGeometry=await landscape.evaluate(()=>{
+   const picks=['.board-v5','.game-table','.game-table-head','.game-tabletop','.duel-hand-section','.card-table','.hand','.hand button.card','.game-battle-message'];
+   const geom=Object.fromEntries(picks.map(sel=>{const e=document.querySelector(sel),r=e?.getBoundingClientRect();return [sel,r?{x:r.x,y:r.y,w:r.width,h:r.height,p:getComputedStyle(e).pointerEvents,z:getComputedStyle(e).zIndex}:null]}));
+   const card=document.querySelector('.hand button.card'),r=card.getBoundingClientRect();
+   const midX=r.x+r.width/2,midY=r.y+r.height/2;
+   geom.hit={x:midX,y:midY,tag:document.elementFromPoint(midX,midY)?.outerHTML?.slice(0,140)};
+   return geom;
+ });
+ console.log('LANDSCAPE GEOMETRY',JSON.stringify(landscapeGeometry));
  await landscape.locator('.hand button.card').first().click();
  assert.equal(await landscape.locator('.inspect-dialog[open]').count(),1,'Landscape card preview opens');
  const modalBox=await landscape.locator('.inspect-dialog').boundingBox();
