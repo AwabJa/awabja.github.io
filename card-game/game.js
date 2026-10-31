@@ -6,7 +6,7 @@ const loading=document.getElementById('loadMessage');
 const cardsArt=new Image();
 cardsArt.decoding='async';
 const artwork=[cardsArt];
-cardsArt.src='assets/cards-hd.webp?v=moonfall-frames-1';
+cardsArt.src='assets/cards-hd.webp?v=moonfall-motion-2';
 const W=1600,H=800,THEME={gold:'#f1d4a1',cream:'#f7e7d0',muted:'#bac0cb',blue:'#a6cbff',red:'#ef8799',green:'#9be3b6'};
 const CARDS=[
  {id:'shadow',name:'Shadow Step',rarity:'Rare',cost:1,kind:'attack',description:'Deal 135 damage to your selected enemy. If this defeats it, regain 1 energy.',amount:135,flavor:'Disappear into the night. Return as a blade.',symbol:'✧',hue:'#c4a6ff'},
@@ -51,7 +51,7 @@ function drawHeader(){
  ctx.fillStyle=grad;ctx.fillRect(0,0,W,106);
  text('✧',31,37,42,THEME.gold,'Georgia');
  text('MOONFALL',79,35,34,THEME.cream,'Georgia','left','700');
- text('THE GOTHIC CARD RPG',286,39,13,'#e7d4b2','system-ui','left','700');
+ text('MOTION V2',300,39,15,'#e7d4b2','system-ui','left','700');
  pill(`TURN ${game.turn}`,758,15,155,40,'#211e2bdb','#d6b78d',21);
  const live=game.foes.filter(f=>f.hp>0).length;
  pill(`${live} ENEMIES`,927,15,155,40,'#231b2bd8','#c58e9d',16);
@@ -155,6 +155,9 @@ function drawTable(now){
   const x=130+i*22,y=625;ctx.fillStyle=i<game.energy?'#a2eaf9':'#41455b';
   ctx.beginPath();ctx.moveTo(x,y-8);ctx.lineTo(x+7,y);ctx.lineTo(x,y+8);ctx.lineTo(x-7,y);ctx.closePath();ctx.fill();
  }
+ // This is deliberately visible and does NOT modify hit points or spend cards.
+ pill('▶ SEE ANIMATIONS',233,599,218,46,'#423148e8','#edcd94',16);
+ register(233,599,218,46,'motionDemo');
  cardBack(45,691,56,68,'DECK',game.draw.length);
  cardBack(126,691,56,68,'DISCARD',game.discard.length);
  register(27,660,83,140,'deck');register(111,660,84,140,'discard');
@@ -238,6 +241,17 @@ function draw(now=performance.now()){
  if(game.ended)drawResult();
  requestAnimationFrame(draw);
 }
+function demoAnimations(){
+ if(game.preview||game.ended)return;
+ const showcase=[
+  {kind:'strike',source:1,target:4,delay:0},
+  {kind:'heal',source:2,target:0,delay:1700},
+  {kind:'area',source:0,target:5,delay:3400},
+  {kind:'enemy',source:6,target:3,delay:5300}
+ ];
+ showcase.forEach(c=>window.MoonfallScene?.cue?.(c));
+ announce('Animation demo: sword attack, spellcasting, area magic, and enemy strike. No health is changed.');
+}
 function aliveEnemy(){return game.foes.findIndex(e=>e.hp>0)}
 function aliveAlly(){return game.allies.findIndex(a=>a.hp>0)}
 function markFx(target,words,color){game.fx.push({target,words,color,start:performance.now()})}
@@ -320,6 +334,7 @@ function activate(z){if(!z)return;
   case 'discard':game.preview={type:'deck'};game.history='discard';announce('Discard pile opened.');break;
   case 'end':endTurn();break;
   case 'restart':game=freshGame();game.draw=game.draw.slice(5);window.MoonfallScene?.reset?.();announce('New battle started.');break;
+  case 'motionDemo':demoAnimations();break;
   case 'guide':game.preview={type:'guide'};break;
  }
 }
@@ -337,6 +352,7 @@ window.addEventListener('keydown',e=>{
  if(/^([1-9])$/.test(e.key)){selectCard(Number(e.key)-1);return}
  if(e.key.toLowerCase()==='e'){endTurn();return}
  if(e.key.toLowerCase()==='h'){game.preview={type:'guide'};return}
+ if(e.key.toLowerCase()==='m'){demoAnimations();return}
  });
 function configureResolution(){
  const box=canvas.getBoundingClientRect();

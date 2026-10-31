@@ -28,6 +28,10 @@ All **seven** characters now have sprite atlases containing **six separate rende
 - Fullscreen landscape web app with portrait orientation guide and Home Screen manifest
 - No tracking, payment systems, accounts, CDN or third-party runtime scripts
 
+## New animation showcase
+
+Tap **SEE ANIMATIONS** at the lower-left of the battlefield (or press **M**) to watch a scripted sword strike, healing spell, area magic, and enemy attack. The animation showcase does not change HP, energy or cards. Ordinary card play also triggers these larger action sequences. The version marker on the HUD reads **MOTION V2**.
+
 ## Limitations
 
 This is an **art-directed playable vertical slice**, not a finished anime RPG. The scene uses separately composited character cutouts from original concept artwork; some sprite-edge cleanup and additional hand-painted animation frames are still needed. The current new motion deforms and translates illustrated sprites; it is not true skeletal rigging or unique hand-drawn attack frames. The backdrop uses repeated stone architecture to fill areas behind the characters. It is not a fully authored environment. No online multiplayer or persistent collection has been implemented.

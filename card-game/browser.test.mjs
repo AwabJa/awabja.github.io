@@ -16,11 +16,11 @@ const cards=(await readFile(join(root,'assets/cards-hd.webp'))).toString('base64
 const framesAllies=(await readFile(join(root,'assets/frames-allies.webp'))).toString('base64');
 const framesEnemies=(await readFile(join(root,'assets/frames-enemies.webp'))).toString('base64');
 const manifest=JSON.parse(await readFile(join(root,'manifest.webmanifest'),'utf8'));
-assert.match(htmlRaw,/src="game\.js\?v=moonfall-frames-1"/);
-assert.match(htmlRaw,/src="scene25d\.js\?v=moonfall-frames-1"/);
+assert.match(htmlRaw,/src="game\.js\?v=moonfall-motion-2"/);
+assert.match(htmlRaw,/src="scene25d\.js\?v=moonfall-motion-2"/);
 assert.match(htmlRaw,/<canvas id="sceneWorld"/);
 assert.match(htmlRaw,/apple-mobile-web-app-capable/);
-assert.match(htmlRaw,/href="style\.css\?v=moonfall-frames-1"/);
+assert.match(htmlRaw,/href="style\.css\?v=moonfall-motion-2"/);
 assert.doesNotMatch(jsRaw,/sceneArt|battle-hd|atlas\.webp/,'Old painted battlefield not used');
 assert.match(sceneJS,/7 independent characters/);
 assert.match(sceneJS,/function cue\(e\)/,'Renderer exposes event-based action animation');
@@ -30,7 +30,7 @@ assert.match(sceneJS,/function poseFor\(i,now,alive\)/,'Dedicated action frames 
 assert(framesAllies.length>500000&&framesEnemies.length>500000,'High-quality prebaked sprite frame atlases exist');
 assert.match(sceneJS,/drawActor\(/);
 assert.doesNotMatch(sceneJS,/getContext\('webgl'/);
-assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-frames-1'/);
+assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-motion-2'/);
 assert(cards.length>100000,'Card art must be present');
 assert(background.length>150000 && actors.length>100000,'High-resolution illustration layers must be present');
 assert.equal(manifest.display,'fullscreen');
@@ -41,11 +41,11 @@ assert.match(css,/\.game-shell\{position:relative;width:100vw!important;height:1
 const html=htmlRaw.replace(/<meta http-equiv="Content-Security-Policy"[^>]+>/,'')
   .replace(/<link rel="stylesheet"[^>]+>/,`<style>${css}</style>`)
   .replace(/<script src="[^"]+" defer><\/script>/g,'');
-const js=jsRaw.replace("cardsArt.src='assets/cards-hd.webp?v=moonfall-frames-1';",`cardsArt.src='data:image/webp;base64,${cards}';`);
-const scene=sceneJS.replace("background.src='assets/backdrop2.webp?v=moonfall-frames-1';",`background.src='data:image/webp;base64,${background}';`)
- .replace("actors.src='assets/characters.webp?v=moonfall-frames-1';",`actors.src='data:image/webp;base64,${actors}';`)
- .replace("frameAtlases[0].src='assets/frames-allies.webp?v=moonfall-frames-1';",`frameAtlases[0].src='data:image/webp;base64,${framesAllies}';`)
- .replace("frameAtlases[1].src='assets/frames-enemies.webp?v=moonfall-frames-1';",`frameAtlases[1].src='data:image/webp;base64,${framesEnemies}';`);
+const js=jsRaw.replace("cardsArt.src='assets/cards-hd.webp?v=moonfall-motion-2';",`cardsArt.src='data:image/webp;base64,${cards}';`);
+const scene=sceneJS.replace("background.src='assets/backdrop2.webp?v=moonfall-motion-2';",`background.src='data:image/webp;base64,${background}';`)
+ .replace("actors.src='assets/characters.webp?v=moonfall-motion-2';",`actors.src='data:image/webp;base64,${actors}';`)
+ .replace("frameAtlases[0].src='assets/frames-allies.webp?v=moonfall-motion-2';",`frameAtlases[0].src='data:image/webp;base64,${framesAllies}';`)
+ .replace("frameAtlases[1].src='assets/frames-enemies.webp?v=moonfall-motion-2';",`frameAtlases[1].src='data:image/webp;base64,${framesEnemies}';`);
 let executablePath;
 for (const candidate of [process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/chromium'].filter(Boolean)) {
   try {await access(candidate);executablePath=candidate;break;} catch {}
@@ -74,6 +74,8 @@ try {
     assert.equal(frames.framesPerAction,6,'Six individually baked frames per action');
     assert.deepEqual(frames.actionNames,['idle','walk','attack','cast','hurt']);
     assert.equal(frames.animationStates.length,7,'All seven characters have animated states');
+    assert.equal(frames.actorOffsets.length,7,'Animation positions are independently tracked');
+    assert.match(jsRaw,/SEE ANIMATIONS/,'A visible animation showcase exists');
     assert(Math.abs(box.width-width)<=1 && Math.abs(box.height-height)<=1,'Canvas fills entire viewport');
     const raster=await page.evaluate(()=>({w:document.getElementById('game').width,h:document.getElementById('game').height}));
     assert(raster.w>=1600 && raster.h>=800,'Canvas draws above baseline logical resolution');
@@ -97,6 +99,7 @@ try {
       // Check real gameplay-related frame transitions, not just code presence.
       await page.evaluate(()=>window.MoonfallScene.cue({kind:'strike',source:1,target:5}));
       await page.waitForFunction(()=>window.MoonfallScene.getStats().animationStates[1]==='attack',null,{timeout:1500});
+      await page.waitForFunction(()=>Math.abs(window.MoonfallScene.getStats().actorOffsets[1])>=35,null,{timeout:1500});
       await page.waitForFunction(()=>window.MoonfallScene.getStats().animationStates[5]==='hurt',null,{timeout:1500});
       await page.waitForTimeout(900);
       await page.evaluate(()=>window.MoonfallScene.cue({kind:'heal',source:2,target:0}));
@@ -124,6 +127,11 @@ try {
           return null;
         },slot);
       };
+      // Showcase can be opened from the keyboard and does not alter game state.
+      const beforeDemo=await state();
+      await page.keyboard.press('m');
+      await page.waitForFunction(()=>window.MoonfallScene.getStats().lastCue==='enemy',null,{timeout:1500});
+      assert.deepEqual((await state()).foes,beforeDemo.foes,'Animation demo does not inflict damage');
       // Reveal guide with keyboard and dismiss without affecting the battle.
       await page.keyboard.press('h');
       assert.equal((await state()).preview,'guide','Help overlay opens');
