@@ -1,0 +1,30 @@
+:root{color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#090b13;color:#eadcc8}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;min-height:100%;overscroll-behavior:none;background:radial-gradient(ellipse at 50% 30%,#31384b 0%,#101622 54%,#080a11 100%)}
+body{min-height:100dvh;display:flex;align-items:center;justify-content:center;overflow-x:hidden}
+.experience{width:100%;min-height:100dvh;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;padding:8px}
+.game-shell{width:min(calc(100vw - 16px),calc((100dvh - 42px)*2));aspect-ratio:2/1;max-height:calc(100dvh - 42px);position:relative;isolation:isolate;overflow:hidden;border-radius:12px;border:1px solid #d0a76a;box-shadow:0 20px 80px #01030acb,0 0 0 4px #8c68883d;background:#151824}
+canvas{display:block;width:100%;height:100%;touch-action:none;outline:none;cursor:crosshair}
+canvas:focus-visible{outline:3px solid #ffda94;outline-offset:-3px}
+.below{margin:0;text-align:center;font-size:11px;line-height:1.4;color:#988e9d;letter-spacing:.045em}
+.visually-hidden{position:absolute!important;clip:rect(0,0,0,0);clip-path:inset(50%);height:1px;overflow:hidden;white-space:nowrap;width:1px}
+.load-message{display:grid;place-items:center;position:absolute;inset:0;background:#151824;color:#e8c994;font-size:15px;letter-spacing:.08em;z-index:2;pointer-events:none}
+.load-message.hidden{display:none}
+.orientation-panel{display:none}
+@media(max-width:700px) and (orientation:portrait){
+ .experience{padding:12px;gap:10px}
+ .game-shell{width:min(calc(100vw - 24px),680px);max-height:none}
+ .orientation-panel{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:8px;background:linear-gradient(145deg,#24243af9,#111726fa);padding:10px 22px;z-index:3}
+ .orientation-panel h1{font:500 clamp(15px,4.5vw,21px) Georgia,serif;color:#f7deb4;margin:0}
+ .orientation-panel p{font-size:clamp(9px,2.5vw,12px);line-height:1.35;color:#e7ddec;max-width:320px;margin:0}
+ .rotate-glyph{font-size:28px;color:#f5c58c;line-height:1}
+ .orientation-panel button{border:1px solid #e2be86;border-radius:8px;padding:7px 11px;background:#493949;color:#fff0d6;font-weight:800;font-size:10px;min-height:33px}
+ .orientation-panel.dismissed{display:none}
+ .below{font-size:10px}
+}
+@media(max-height:540px) and (orientation:landscape){
+ .experience{padding:2px;gap:0}
+ .game-shell{width:min(calc(100vw - 4px - env(safe-area-inset-left) - env(safe-area-inset-right)),calc(100dvh * 2));max-height:100dvh;border-radius:5px}
+ .below{display:none}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

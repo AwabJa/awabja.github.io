@@ -259,13 +259,13 @@ for(const id of ['undoBar','undoTask','recurrenceChoice','editOneOccurrence',
 // Enzo has been retired; the new strategy card prototype has no external runtime dependencies.
 check(!existsSync(join(root,'Enzo')), 'Retired Enzo directory must stay removed');
 const cardsHtml=readFileSync(join(root,'card-game/index.html'),'utf8');
-const cardsApp=readFileSync(join(root,'card-game/app.js'),'utf8');
-check(cardsHtml.includes('src="app.js?v=') &&
-      cardsHtml.includes('href="style.css?v=') &&
-      cardsHtml.includes('href="board-v5.css?v=') &&
-      cardsHtml.includes('id="app"'), 'Card game must be a standalone static app');
-check(cardsApp.includes('localStorage') && cardsApp.includes('startBattle'),
-      'Card game must retain local collection and battle controls');
+const cardsApp=readFileSync(join(root,'card-game/slice.js'),'utf8');
+check(cardsHtml.includes('src="slice.js?v=') &&
+      cardsHtml.includes('href="slice.css?v=') &&
+      cardsHtml.includes('id="game"'), 'Card game should load the clean-slate landscape canvas');
+check(existsSync(join(root,'card-game/assets/atlas.webp')), 'Card game illustrated atlas must ship locally');
+check(cardsApp.includes('selectedEnemy') && cardsApp.includes('game.hand') &&
+      cardsApp.includes('preview'), 'Card game must retain targeting, hand and card previews');
 
 check(existsSync(join(root,'serivia/index.html')) && existsSync(join(root,'serivia/app.js')) && existsSync(join(root,'serivia/favicon.svg')), 'serivia project must remain published');
 const seriviaIndex=readFileSync(join(root,'serivia/index.html'),'utf8');

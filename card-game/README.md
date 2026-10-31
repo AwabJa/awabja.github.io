@@ -1,42 +1,37 @@
-# Arcana Duel — playable prototype
+# Arcana Duel — Moonfall vertical slice
 
-**Preview:** https://awabja.github.io/card-game/
+**Play:** https://awabja.github.io/card-game/
 
-A zero-dependency, mobile-first, single-player strategic collectible card game prototype. This is a **working title**, not the final brand. It is in development and intentionally not featured on the homepage yet.
+This is a clean-slate, one-battle playable proof of concept, built in a single HTML5 Canvas game surface for landscape phones and desktop. The former DOM/CSS prototype and its original 16-card engine remain in the repository as reference material, but they are not loaded by this screen.
 
-## Implemented
+## Why the rebuild is different
 
-- 16 original fantasy card concepts across four elemental visual themes and three rarity tiers
-- 12-card deck building, up to three copies of each unlocked card
-- Turn-based energy, shields, attack, heal, draw, burn, weaken, and mixed effects
-- Three sequential opponents with visible attack/defense intentions and increasing difficulty
-- Deck shuffle/discard cycle, persistent collection, shards and card unlock packs
-- No payment system, server, analytics, third-party scripts, or external assets
-- Responsive touch-friendly cards, mouse and keyboard controls, reduced-motion mode
-- Landscape-first card table with visible draw and discard piles, horizontal swipe through your hand, and tap-to-inspect card dialog with an explicit Play Card confirmation
-- Clear one-on-one cathedral battle with the hero and actual enemy, health/energy bars, visible next enemy move, and End Turn button
+- A cohesive original anime-fantasy art atlas generated for this project (one compact local WebP; no external URLs) powers the battlefield and real card illustrations, replacing procedural SVG portraits.
+- The actual game plays at a 1600 × 800 logical design size, scaled uniformly to fit short landscape phones without page scrolling.
+- Four illustrated allies and three enemy units each have **real HP**, selectable targeting, ally shields and enemy damage. The battlefield is not a decorative fake team.
+- Five illustrated card types have distinct abilities: Shadow Step, Guardian Aegis, Crimson Bloom, Healing Wind, Arcane Bolt.
+- Tapping a card **previews** its full illustration, rarity, cost, description and target effect. An explicit **Play Card** button is required to spend energy; **Keep in Hand** cancels safely.
+- A draw pile, a discard pile and End Turn control are always beside the hand.
+- Enemies attack when you end the turn. Burn effects persist for two turns. Discards reshuffle into the draw pile. Victory requires defeating all three enemies; defeat requires all allies to fall.
+- You can tap the help button anytime, and portrait phones display a rotation hint (they are not forcibly rotated).
+- No accounts, purchases, third-party JavaScript, trackers or remote assets.
+
+## Limitations
+
+This is **one battle**, not the full RPG. There is no story progression, long-term collection save, multiplayer, audio pipeline or skeletal character animation yet. The ensemble artwork is a **single painted scene**, not seven independent animated character sprites. The cards are illustrated crops from an original composite art concept; dedicated final card illustrations will improve fidelity further.
 
 ## How to play
 
-1. Open the game in a browser. The first battle shows a 3-step tutorial; the “How to play” button reopens it at any time.
-2. Turn your phone to **landscape** for the full-width table. Swipe sideways through your hand. **Tap a card to inspect it**; nothing happens to your energy or enemy HP until you press **Play Card**. Close the preview to keep the card.
-3. Choose **Play Card** to spend its shown energy cost and activate it. Open **Draw** to view your 12-card deck or **Discard** to review previously played cards. Read the enemy's upcoming move and end your turn when ready.
-4. Reduce the enemy's HP to zero before your HP reaches zero. Survive three consecutive encounters, unlock more cards and customize your deck.
+1. Open the link on a phone turned sideways (landscape), or use a desktop browser.
+2. In the battlefield, tap one of the three enemies to target it. For healing, tap one of your four allies.
+3. Tap a card in your hand to read its effect; then choose **Play Card** or **Keep in Hand**.
+4. Use shields and healing to protect allies. End your turn to let enemies attack and to refill your hand.
+5. Win by defeating all three enemies before all four allies lose their health.
 
-## Mobile orientation
+Keyboard: **1–5** to preview a hand card; **Enter** to play its preview, **Esc** to close it, **E** to end your turn, **H** for help.
 
-The battle page now uses a **card-first tabletop layout** with the hand, draw pile, discard pile, and End Turn button in one visible play surface. Rotate your phone sideways to use the compact landscape game table. Mobile web browsers generally cannot force the device to rotate; the portrait view remains usable with an orientation hint. Tapping a card first previews it; using the Play Card button is the only way to spend energy.
+## Development and quality checks
 
-The current visible build label is **CARD TABLE · BUILD 06**. Stylesheets and JavaScript have versioned URLs so phones can fetch new changes after the page reloads.
+The new battle uses only `index.html`, `slice.css`, `slice.js` and `assets/atlas.webp` in the runtime. CI checks the JavaScript syntax, old card-engine regression tests, and browser interactions on a 844 × 390 mobile landscape viewport, 390 × 844 portrait, and 1440 × 800 desktop.
 
-## Status and limitations
-
-Card artwork now uses **original SVG anime-inspired character illustrations**, with character lineups and a painted-vector cathedral battlefield. These are early vector placeholders, **not** the fully illustrated anime character art shown in the visual mockup. The prototype is PvE only; there is no matchmaking or account sync. LocalStorage progress belongs to each browser/device and is not backed up online. Card rarity has no monetization attached.
-
-## Run and test
-
-Serve the repository root through a static HTTP server and open `/card-game/`. Node.js can execute unit tests via `node --test card-game/game.test.mjs`.
-
-## Design direction
-
-Build an original anime-inspired universe with collectible character portraits, tactical combos, meaningful decisions and short mobile-friendly battles. Only add the game as a new portfolio card after artwork, balance, accessibility and mobile QA meet a release bar. Flow and Serivia are unrelated and unchanged by this game.
+Flow and Serivia remain unrelated and untouched. The game is intentionally not yet shown as a finished portfolio project.
