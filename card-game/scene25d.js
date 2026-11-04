@@ -121,7 +121,7 @@
    const p=(now-e.start)/e.duration;
    if(p<0||p>=1)continue;
    const actualStrike=['strike','enemy'].includes(e.kind);
-   if(e.source===i){
+   if(e.source===i && e.kind!=='burn'){
     if(actualStrike){
      // A distinct anticipation pose, forward dash, moment of contact, and full retreat.
      const approach=smooth((p-.12)/.31)*(1-smooth((p-.64)/.30));
@@ -228,7 +228,7 @@
    if(e.target===i && !['heal','defend'].includes(e.kind) && p>=e.impact){
     return {state:'hurt',frame:Math.min(5,Math.floor(((p-e.impact)/(1-e.impact))*6))};
    }
-   if(e.source!==i)continue;
+   if(e.source!==i||e.kind==='burn')continue;
    if(e.kind==='enemy'||e.kind==='strike'){
     if(p<.23)return {state:'walk',frame:Math.min(5,Math.floor(p/.23*6))};
     if(p<.76)return {state:'attack',frame:Math.min(5,Math.floor((p-.23)/.53*6))};
@@ -305,7 +305,7 @@
    const from=castOrigin(e.source,now),tx=positions[e.target],ty=actorGround[e.target]-sizes[e.target]*.49;
    const alpha=Math.sin(Math.PI*p),hit=p>=e.impact;
    const charge=smooth((p-.07)/.24)*(1-smooth((p-.34)/.15));
-   if(!reduced && charge>0){
+   if(!reduced && e.kind!=='burn' && charge>0){
     shimmer(from.x,from.y,40+18*charge,e.color,charge*.34);
     ctx.save();ctx.globalAlpha=charge*.85;ctx.strokeStyle=e.color;ctx.lineWidth=2.5;
     ctx.beginPath();ctx.arc(from.x,from.y,10+23*charge,0,TAU);ctx.stroke();ctx.restore();
