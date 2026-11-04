@@ -47,3 +47,17 @@ The mobile browser test checks that the static canvas does not repaint while the
 ## Foreground-only sprite masks
 
 All seven character sprites now use manually refined silhouette masks to remove fragments of the original castle, pillars and waterfall that were accidentally embedded in the sprite atlases. Masks deform along with the existing idle, walking, attacking, casting and damage frames, keeping the actor separate from the fixed courtyard without downloading new large textures. Source character artwork remains concept quality and will need dedicated clean drawings for production.
+
+
+## V2 presentation polish (November 2026)
+
+The V2 branch improves the existing illustrated vertical slice without replacing its game rules or large source illustrations:
+
+- **Actor-relative spell origins:** magic releases from per-character hand/weapon landmarks and follows actor movement, rather than starting from fixed character centres.
+- **Impact-synchronized rules:** damage, burn, healing and shields are applied at their visible contact/arrival frames. Player actions stay locked during unresolved combat impacts, and enemy turns finish after their attack sequence.
+- **Grounded fighters:** stronger consistent contact shadows follow lunges, idle animation no longer enters unrelated combat states, and body bob/tilt is restrained.
+- **Scene cohesion:** background and character color treatment is more consistent, with stable depth grading and quieter environmental lighting.
+- **Feedback:** a resolving indicator and clearer hit text accompany combat.
+- **Regression checks:** browser tests assert casting anchors, deferred impact timing, fixed architecture and responsive layouts.
+
+This pass improves **presentation and choreography using the existing art assets**. The original illustrations and deformation-generated atlases remain; it does **not** yet provide newly hand-drawn animation, a fully repainted environment, or production-grade rigged character models.
