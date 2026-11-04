@@ -159,13 +159,26 @@
   backgroundCtx.setTransform(backgroundCanvas.width/W,0,0,backgroundCanvas.height/H,0,0);
   backgroundCtx.clearRect(0,0,W,H);
   if(ready(background)){
+   // Give the painterly background the same cool nighttime palette as the actors.
+   backgroundCtx.save();
+   backgroundCtx.filter='saturate(.79) contrast(.95) brightness(.80)';
    backgroundCtx.drawImage(background,-10,-5,1620,810);
+   backgroundCtx.restore();
   }else{
    const g=backgroundCtx.createLinearGradient(0,0,0,H);
    g.addColorStop(0,'#14203b');g.addColorStop(.62,'#3d3c56');
    g.addColorStop(1,'#090d19');
    backgroundCtx.fillStyle=g;backgroundCtx.fillRect(0,0,W,H);
   }
+  // Static depth grade: keep the distant stone soft and the active ground readable.
+  const depth=backgroundCtx.createLinearGradient(0,0,0,545);
+  depth.addColorStop(0,'#08132858');depth.addColorStop(.48,'#141a2d12');
+  depth.addColorStop(.76,'#201f3112');depth.addColorStop(1,'#070b17b0');
+  backgroundCtx.fillStyle=depth;backgroundCtx.fillRect(0,0,W,545);
+  const groundLight=backgroundCtx.createRadialGradient(W*.5,395,125,W*.5,395,710);
+  groundLight.addColorStop(0,'#71809916');groundLight.addColorStop(.7,'#10152407');
+  groundLight.addColorStop(1,'#07091b91');backgroundCtx.fillStyle=groundLight;
+  backgroundCtx.fillRect(0,0,W,550);
   backgroundDirty=false;backgroundPaints++;
  }
  // A distinct transparent layer for environmental movement. This never draws
@@ -185,11 +198,11 @@
    }
   }
   if(!reduced)for(const x of [187,815,1274]){
-   const flick=.66+.18*Math.sin(t*7+x)+.12*Math.sin(t*12.3+x*.15);
+   const flick=.61+.13*Math.sin(t*7+x)+.09*Math.sin(t*12.3+x*.15);
    const yy=271+(x===187?-34:0),r=41;
    const g=ac.createRadialGradient(x,yy,0,x,yy,r);
    g.addColorStop(0,'#ffa44c');g.addColorStop(1,'#ffa44c00');
-   ac.save();ac.globalAlpha=flick*.28;
+   ac.save();ac.globalAlpha=flick*.18;
    ac.fillStyle=g;ac.fillRect(x-r,yy-r,r*2,r*2);ac.restore();
   }
   atmosphereFrames++;
@@ -255,6 +268,7 @@
   const top=-h*.94,left=-w/2;
   const sheet=frameAtlases[i<4?0:1];
   if(ready(sheet)){
+   ctx.filter='saturate(.86) contrast(1.06) brightness(.95)';
    ctx.globalAlpha=alive?1:.32;
    if(hits[i]>0){ctx.shadowColor=i<4?'#9cfff1':'#ff9ba7';ctx.shadowBlur=hits[i]*28}
    const localIndex=i<4?i:i-4;
@@ -265,11 +279,13 @@
    ctx.globalAlpha=1;
   }else if(ready(actors)){
    // Initial-load fallback only. Normal combat draws a separately pre-rendered frame.
+   ctx.filter='saturate(.86) contrast(1.06) brightness(.95)';
    ctx.globalAlpha=alive?1:.32;
    ctx.save();clipActor(i,{state:'idle',frame:0},left,top,w,h);
    ctx.drawImage(actors,i*300,0,300,320,left,top,w,h);ctx.restore();
    ctx.globalAlpha=1;
   }else{ctx.fillStyle='#787490';ctx.beginPath();ctx.ellipse(0,-h*.5,w*.22,h*.44,0,0,TAU);ctx.fill()}
+  ctx.filter='none';
   if(move.flash>0){ctx.globalCompositeOperation='screen';ctx.globalAlpha=move.flash*.62;ctx.fillStyle=i<4?'#d4fff4':'#ffb7c0';ctx.fillRect(left,top,w,h);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1}
   ctx.restore();
   hits[i]=Math.max(0,hits[i]-.05);
