@@ -50,8 +50,8 @@
        dress=clamp((y-185)/135,0,1);
     let dx=0,dy=0;
     if(state==='idle'){
-     dx=1.2*wave*torso+3.2*Math.sin(f*.60+y*.039+i*.7)*hair+2*Math.sin(f*.69+y*.045)*dress;
-     dy=-1.3*Math.sin(f*.56)*torso;
+     dx=.55*wave*torso+1.8*Math.sin(f*.60+y*.039+i*.7)*hair+1.1*Math.sin(f*.69+y*.045)*dress;
+     dy=-.65*Math.sin(f*.56)*torso;
     }else if(state==='walk'){
      dx=2.4*wave*torso+4*Math.sin(f*.82+y*.037+i*.4)*hair
         +6.4*wave*legs*Math.tanh((x-150)/23)+4.5*Math.sin(f*1.13+i*.3)*dress;
@@ -81,8 +81,13 @@
  const ACTION_NAMES=['idle','walk','attack','cast','hurt'];
  const FRAME_COUNT=6,FRAME_W=300,FRAME_H=320;
  const currentClips=Array(7).fill('idle'),currentFrames=Array(7).fill(0),actorOffsets=Array(7).fill(0);
- const positions=[137,344,548,724,1071,1261,1451];
- const sizes=[239,234,223,218,230,241,237];
+ // All geometry uses one 1600x800 world space shared with the HUD.
+ const positions=[220,380,540,700,1060,1220,1380];
+ const sizes=[235,232,225,222,232,239,236];
+ const actorGround=[443,443,444,443,443,443,443];
+ // Per-character artwork landmarks: normalized hand/weapon positions within each cutout.
+ const castingLandmarks=[[.73,.44],[.74,.42],[.70,.38],[.70,.42],[.27,.43],[.28,.40],[.26,.46]];
+ const impactPhase={strike:.56,bolt:.57,area:.55,defend:.52,heal:.52,enemy:.56,burn:.46};
  const palette={strike:'#bbafff',bolt:'#9dc9ff',area:'#ff708c',defend:'#eed6a5',heal:'#9cf7c4',enemy:'#f19ca4',burn:'#ffb46f'};
  const leaves=Array.from({length:29},(_,i)=>({x:(i*181+29)%W,y:(i*113+31)%730,seed:i*.87+1,speed:9+i%5*4,radius:2+i%4}));
  const embers=Array.from({length:27},(_,i)=>({x:(i*197+93)%W,y:(i*67+15)%365,seed:i*1.43,speed:12+i%8*3}));
@@ -103,8 +108,10 @@
   if(!e||!['strike','bolt','area','defend','heal','enemy','burn'].includes(e.kind))return;
   const source=Number.isInteger(e.source)&&e.source>=0&&e.source<=6?e.source:(e.kind==='enemy'?4:1);
   const target=Number.isInteger(e.target)&&e.target>=0&&e.target<=6?e.target:(e.kind==='heal'?0:4);
-  const event={kind:e.kind,source,target,start:performance.now()+clamp(Number(e.delay)||0,0,7000),duration:e.kind==='area'?1750:e.kind==='enemy'?1650:e.kind==='defend'||e.kind==='heal'?1800:1550,color:palette[e.kind]};
+  const event={kind:e.kind,source,target,start:performance.now()+clamp(Number(e.delay)||0,0,7000),duration:reduced?480:e.kind==='area'?1750:e.kind==='enemy'?1650:e.kind==='defend'||e.kind==='heal'?1800:1550,color:palette[e.kind],impact:impactPhase[e.kind]};
+  event.impactAt=event.start+event.duration*event.impact;
   cues.push(event);cues=cues.slice(-24);lastCue=event.kind;
+  return {impactAt:event.impactAt,endsAt:event.start+event.duration,kind:event.kind};
  }
  function reset(){cues=[];hits.fill(0);hitStops.fill(0);previous.fill(null);lastCue=null;activeCueCount=0;currentClips.fill('idle');currentFrames.fill(0);actorOffsets.fill(0)}
  // Actions visibly move characters through space rather than barely warping one still image.
@@ -114,7 +121,7 @@
    const p=(now-e.start)/e.duration;
    if(p<0||p>=1)continue;
    const actualStrike=['strike','enemy'].includes(e.kind);
-   if(e.source===i){
+   if(e.source===i && e.kind!=='burn'){
     if(actualStrike){
      // A distinct anticipation pose, forward dash, moment of contact, and full retreat.
      const approach=smooth((p-.12)/.31)*(1-smooth((p-.64)/.30));
@@ -125,14 +132,15 @@
      roll+=direction*.09*Math.sin(Math.PI*p);
      reach=Math.max(reach,approach);
     }else{
-     dy+=-18*Math.sin(Math.PI*p);
-     roll+=.06*Math.sin(Math.PI*p);
+     // Spellcasting keeps the feet planted instead of levitating the whole sprite.
+     dy+=-4*Math.sin(Math.PI*p);
+     roll+=.018*Math.sin(Math.PI*p);
     }
    }
    if(e.target===i){
     if(['defend','heal'].includes(e.kind)){dy+=-7*Math.sin(Math.PI*p);continue;}
-    if(p>.42){
-     const q=clamp((p-.42)/.58,0,1),strength=Math.pow(1-q,1.5);
+    if(p>=e.impact){
+     const q=clamp((p-e.impact)/(1-e.impact),0,1),strength=Math.pow(1-q,1.5);
      const dir=i<4?-1:1;
      dx+=dir*(26*Math.sin(Math.PI*q)+10*Math.sin(q*35)*strength);
      roll+=dir*.13*Math.sin(Math.PI*q);
@@ -151,13 +159,26 @@
   backgroundCtx.setTransform(backgroundCanvas.width/W,0,0,backgroundCanvas.height/H,0,0);
   backgroundCtx.clearRect(0,0,W,H);
   if(ready(background)){
+   // Give the painterly background the same cool nighttime palette as the actors.
+   backgroundCtx.save();
+   backgroundCtx.filter='saturate(.79) contrast(.95) brightness(.80)';
    backgroundCtx.drawImage(background,-10,-5,1620,810);
+   backgroundCtx.restore();
   }else{
    const g=backgroundCtx.createLinearGradient(0,0,0,H);
    g.addColorStop(0,'#14203b');g.addColorStop(.62,'#3d3c56');
    g.addColorStop(1,'#090d19');
    backgroundCtx.fillStyle=g;backgroundCtx.fillRect(0,0,W,H);
   }
+  // Static depth grade: keep the distant stone soft and the active ground readable.
+  const depth=backgroundCtx.createLinearGradient(0,0,0,545);
+  depth.addColorStop(0,'#08132858');depth.addColorStop(.48,'#141a2d12');
+  depth.addColorStop(.76,'#201f3112');depth.addColorStop(1,'#070b17b0');
+  backgroundCtx.fillStyle=depth;backgroundCtx.fillRect(0,0,W,545);
+  const groundLight=backgroundCtx.createRadialGradient(W*.5,395,125,W*.5,395,710);
+  groundLight.addColorStop(0,'#71809916');groundLight.addColorStop(.7,'#10152407');
+  groundLight.addColorStop(1,'#07091b91');backgroundCtx.fillStyle=groundLight;
+  backgroundCtx.fillRect(0,0,W,550);
   backgroundDirty=false;backgroundPaints++;
  }
  // A distinct transparent layer for environmental movement. This never draws
@@ -177,11 +198,11 @@
    }
   }
   if(!reduced)for(const x of [187,815,1274]){
-   const flick=.66+.18*Math.sin(t*7+x)+.12*Math.sin(t*12.3+x*.15);
+   const flick=.61+.13*Math.sin(t*7+x)+.09*Math.sin(t*12.3+x*.15);
    const yy=271+(x===187?-34:0),r=41;
    const g=ac.createRadialGradient(x,yy,0,x,yy,r);
    g.addColorStop(0,'#ffa44c');g.addColorStop(1,'#ffa44c00');
-   ac.save();ac.globalAlpha=flick*.28;
+   ac.save();ac.globalAlpha=flick*.18;
    ac.fillStyle=g;ac.fillRect(x-r,yy-r,r*2,r*2);ac.restore();
   }
   atmosphereFrames++;
@@ -204,10 +225,10 @@
   for(let j=cues.length-1;j>=0;j--){
    const e=cues[j],p=(now-e.start)/e.duration;
    if(p<0||p>=1)continue;
-   if(e.target===i && !['heal','defend'].includes(e.kind) && p>=.42){
-    return {state:'hurt',frame:Math.min(5,Math.floor(((p-.42)/.58)*6))};
+   if(e.target===i && !['heal','defend'].includes(e.kind) && p>=e.impact){
+    return {state:'hurt',frame:Math.min(5,Math.floor(((p-e.impact)/(1-e.impact))*6))};
    }
-   if(e.source!==i)continue;
+   if(e.source!==i||e.kind==='burn')continue;
    if(e.kind==='enemy'||e.kind==='strike'){
     if(p<.23)return {state:'walk',frame:Math.min(5,Math.floor(p/.23*6))};
     if(p<.76)return {state:'attack',frame:Math.min(5,Math.floor((p-.23)/.53*6))};
@@ -215,32 +236,39 @@
    }
    return {state:'cast',frame:Math.min(5,Math.floor(p*6))};
   }
-  const idleCycle=(now/1000+i*1.3)%10;
-  if(!reduced && idleCycle>8.9 && idleCycle<9.7) return {state:i%3===0?'cast':'walk',frame:Math.floor((idleCycle-8.9)*7)%FRAME_COUNT};
+  // Idle never spontaneously shows an attack or cast; only game events change action.
   return {state:'idle',frame:Math.floor(now/170+i*1.3)%FRAME_COUNT};
  }
  function drawActor(i,t,hp,selected,now){
   const x=positions[i],h=sizes[i],w=300/320*h,alive=hp>0;
   const phase=t*1.52+i*1.11;
-  const breath=alive&&!reduced?Math.sin(phase)*.014:0;
-  const bob=alive&&!reduced?Math.sin(phase)*4.2+Math.sin(t*.47+i*2.1)*1.7:0;
-  const tilt=alive&&!reduced?Math.sin(t*.9+i*1.47)*.023:0;
+  const breath=alive&&!reduced?Math.sin(phase)*.004:0;
+  const bob=alive&&!reduced?Math.sin(phase)*1.1:0;
+  const tilt=alive&&!reduced?Math.sin(t*.9+i*1.47)*.006:0;
   const pose=poseFor(i,now,alive);
   currentClips[i]=pose.state;currentFrames[i]=pose.frame;
-  const move=actorMove(i,now),base=442+bob+move.dy;actorOffsets[i]=Math.round(move.dx);
-  // Contact shadows compress when a character lunges, lift when a character jumps.
-  const shadow=ctx.createRadialGradient(x,445,3,x,445,w*.46);
-  shadow.addColorStop(0,'#03060ea8');shadow.addColorStop(1,'#03060e00');ctx.fillStyle=shadow;ctx.fillRect(x-w/2,429,w,36);
+  const move=actorMove(i,now),base=actorGround[i]+bob+move.dy;actorOffsets[i]=Math.round(move.dx);
+  // Ground contact is fixed to the battle plane; only the shadow's X follows lunges.
+  const footX=x+move.dx,footY=actorGround[i]+3;
+  const shadowWidth=w*(.39+(move.reach*.07));
+  ctx.save();
+  ctx.translate(footX,footY);
+  ctx.scale(1,Math.max(.72,1+move.dy*.008));
+  const shadow=ctx.createRadialGradient(0,0,2,0,0,shadowWidth);
+  shadow.addColorStop(0,'#03040ac9');shadow.addColorStop(.58,'#06071079');shadow.addColorStop(1,'#03060e00');
+  ctx.fillStyle=shadow;ctx.fillRect(-shadowWidth,-17,shadowWidth*2,34);
+  ctx.restore();
   if(selected&&alive){
    ctx.save();ctx.globalAlpha=.6+.20*Math.sin(t*2.6+i);
-   ctx.beginPath();ctx.ellipse(x,445,w*.44,10,0,0,TAU);ctx.fillStyle=i<4?'#9debc83d':'#f6a9ad3d';ctx.fill();
+   ctx.beginPath();ctx.ellipse(footX,footY,w*.43,9,0,0,TAU);ctx.fillStyle=i<4?'#9debc83d':'#f6a9ad3d';ctx.fill();
    ctx.strokeStyle='#ffe4b0';ctx.lineWidth=1.6;ctx.stroke();ctx.restore();
   }
   ctx.save();ctx.translate(x+move.dx,base-h*.06);ctx.rotate(tilt+move.roll);
-  ctx.scale(1+breath*.35+move.reach*.055,1-breath+move.reach*.025);
+  ctx.scale(1+breath*.25+move.reach*.02,1-breath*.35+move.reach*.015);
   const top=-h*.94,left=-w/2;
   const sheet=frameAtlases[i<4?0:1];
   if(ready(sheet)){
+   ctx.filter='saturate(.86) contrast(1.06) brightness(.95)';
    ctx.globalAlpha=alive?1:.32;
    if(hits[i]>0){ctx.shadowColor=i<4?'#9cfff1':'#ff9ba7';ctx.shadowBlur=hits[i]*28}
    const localIndex=i<4?i:i-4;
@@ -251,14 +279,21 @@
    ctx.globalAlpha=1;
   }else if(ready(actors)){
    // Initial-load fallback only. Normal combat draws a separately pre-rendered frame.
+   ctx.filter='saturate(.86) contrast(1.06) brightness(.95)';
    ctx.globalAlpha=alive?1:.32;
    ctx.save();clipActor(i,{state:'idle',frame:0},left,top,w,h);
    ctx.drawImage(actors,i*300,0,300,320,left,top,w,h);ctx.restore();
    ctx.globalAlpha=1;
   }else{ctx.fillStyle='#787490';ctx.beginPath();ctx.ellipse(0,-h*.5,w*.22,h*.44,0,0,TAU);ctx.fill()}
+  ctx.filter='none';
   if(move.flash>0){ctx.globalCompositeOperation='screen';ctx.globalAlpha=move.flash*.62;ctx.fillStyle=i<4?'#d4fff4':'#ffb7c0';ctx.fillRect(left,top,w,h);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1}
   ctx.restore();
   hits[i]=Math.max(0,hits[i]-.05);
+ }
+ // Casting points follow the moving actor, not the static stage or target centre.
+ function castOrigin(i,now){
+  const h=sizes[i],w=h*300/320,[u,v]=castingLandmarks[i],motion=actorMove(i,now);
+  return {x:positions[i]+motion.dx+(u-.5)*w,y:actorGround[i]+motion.dy-h*(1-v)};
  }
  function drawSpells(now){
   activeCueCount=0;
@@ -267,38 +302,76 @@
    const p=(now-e.start)/e.duration;
    if(p<0||p>=1)continue;
    activeCueCount++;
-   const sx=positions[e.source],tx=positions[e.target],startY=323,endY=318;
-   const alpha=Math.sin(Math.PI*p);
+   const from=castOrigin(e.source,now),tx=positions[e.target],ty=actorGround[e.target]-sizes[e.target]*.49;
+   const alpha=Math.sin(Math.PI*p),hit=p>=e.impact;
+   const charge=smooth((p-.07)/.24)*(1-smooth((p-.34)/.15));
+   if(!reduced && e.kind!=='burn' && charge>0){
+    shimmer(from.x,from.y,40+18*charge,e.color,charge*.34);
+    ctx.save();ctx.globalAlpha=charge*.85;ctx.strokeStyle=e.color;ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.arc(from.x,from.y,10+23*charge,0,TAU);ctx.stroke();ctx.restore();
+    for(let a=0;a<7;a++){
+     const angle=TAU*a/7+now*.002;
+     particle(from.x+Math.cos(angle)*(24-12*charge),from.y+Math.sin(angle)*(24-12*charge),2.3,e.color,charge);
+    }
+   }
    if(e.kind==='defend'||e.kind==='heal'){
-    for(let k=0;k<(e.kind==='defend'?4:1);k++){
-     const dest=e.kind==='defend'?positions[k]:tx;
-     const offset=.045*Math.sin(now*.009+k),r=31+44*smooth(p/.45);
-     ctx.save();ctx.globalAlpha=alpha*.68;ctx.lineWidth=2.4;ctx.strokeStyle=e.color;
-     ctx.beginPath();ctx.ellipse(dest,355,r,r*.87,offset,0,TAU);ctx.stroke();ctx.restore();
-     shimmer(dest,360,r*1.2,e.color,alpha*.13);
-     for(let j=0;j<7;j++){const a=TAU*j/7+p*4+k;particle(dest+Math.cos(a)*r,355+Math.sin(a)*r*.7,1.8,e.color,alpha)}
+    if(p<.32)continue;
+    const count=e.kind==='defend'?4:1;
+    for(let k=0;k<count;k++){
+     const id=e.kind==='defend'?k:e.target,dest=positions[id],cy=actorGround[id]-sizes[id]*.52;
+     const sweep=smooth((p-.28)/.42),r=30+47*sweep;
+     const fade=1-smooth((p-.76)/.24);
+     ctx.save();ctx.globalAlpha=fade*.65;ctx.lineWidth=e.kind==='defend'?3.2:2.5;ctx.strokeStyle=e.color;
+     ctx.beginPath();ctx.ellipse(dest,cy,r,r*.85,0,0,TAU);ctx.stroke();ctx.restore();
+     shimmer(dest,cy,r*1.2,e.color,fade*.14);
+     for(let n=0;n<9;n++){
+      const angle=TAU*n/9+p*4+k;
+      particle(dest+Math.cos(angle)*r,cy+Math.sin(angle)*r*.8,2,e.color,fade*.85);
+     }
+    }
+    continue;
+   }
+   if(e.kind==='burn'){
+    if(!hit)continue;
+    const q=clamp((p-e.impact)/(1-e.impact),0,1),r=16+72*smooth(q);
+    shimmer(tx,ty,r,e.color,(1-q)*.35);
+    for(let n=0;n<13;n++){
+     const a=TAU*n/13;
+     particle(tx+Math.cos(a)*r,ty+Math.sin(a)*r*.7,2.5,e.color,1-q);
     }
     continue;
    }
    if(e.kind==='area'){
-    const radius=20+320*smooth((p-.1)/.72);
-    ctx.save();ctx.globalAlpha=alpha*.78;ctx.lineWidth=4;ctx.strokeStyle=e.color;
-    ctx.beginPath();ctx.ellipse(1250,342,radius,radius*.25,0,0,TAU);ctx.stroke();ctx.restore();
-    for(let j=0;j<17;j++){const a=j*2.4+p*5;particle(1250+Math.cos(a)*radius,342+Math.sin(a)*radius*.24,3.5,e.color,alpha*.75)}
-    shimmer(1250,340,radius*.65,e.color,alpha*.18);continue;
+    if(!hit)continue;
+    const q=clamp((p-e.impact)/(1-e.impact),0,1),radius=24+130*smooth(q/.58);
+    ctx.save();ctx.globalAlpha=(1-smooth(q))*.8;ctx.lineWidth=4;ctx.strokeStyle=e.color;
+    ctx.beginPath();ctx.ellipse(tx,ty,radius,radius*.55,0,0,TAU);ctx.stroke();ctx.restore();
+    shimmer(tx,ty,radius*.75,e.color,(1-q)*.24);
+    for(let n=0;n<16;n++){
+     const a=TAU*n/16+q*.8;
+     particle(tx+Math.cos(a)*radius,ty+Math.sin(a)*radius*.55,3,e.color,(1-q)*.9);
+    }
+    continue;
    }
-   const travel=smooth((p-.14)/.38),x=sx+(tx-sx)*travel,y=startY+(endY-startY)*travel-85*Math.sin(Math.PI*travel);
-   if(p<.62){
-    ctx.save();ctx.globalAlpha=Math.sin(Math.PI*travel)*.9;ctx.strokeStyle=e.color;ctx.lineWidth=e.kind==='strike'?11:7;
-    ctx.beginPath();ctx.moveTo(x-(e.kind==='enemy'?-1:1)*39,y+18);ctx.lineTo(x+22,y-20);ctx.stroke();ctx.restore();
-    shimmer(x,y,52,e.color,.38);particle(x,y,6,e.color,.9);
+   // Release follows anticipation; projectile completes exactly at the gameplay impact event.
+   const release=.36,flight=clamp((p-release)/(e.impact-release),0,1);
+   if(p>=release && p<=e.impact){
+    const u=smooth(flight),x=from.x+(tx-from.x)*u,y=from.y+(ty-from.y)*u-72*Math.sin(Math.PI*u);
+    ctx.save();ctx.globalAlpha=Math.min(1,(1-flight)*5)*.94;ctx.strokeStyle=e.color;
+    ctx.lineWidth=e.kind==='strike'||e.kind==='enemy'?10:6;
+    ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x-(tx-from.x)*.045,y+13);ctx.lineTo(x+16,y-15);ctx.stroke();ctx.restore();
+    shimmer(x,y,41,e.color,.3);particle(x,y,6,e.color,.95);
+    if(!reduced)for(let n=0;n<3;n++)particle(x-(tx-from.x)*(.016+n*.009),y+7+n*3,3-n*.6,e.color,.7);
    }
-   if(p>.40){
-    const q=(p-.40)/.60,r=9+145*smooth(q/.42);
-    ctx.save();ctx.globalAlpha=(1-smooth(q))*.75;ctx.strokeStyle=e.color;ctx.lineWidth=Math.max(1,6*(1-q));
-    ctx.beginPath();ctx.ellipse(tx,334,r,r*.58,-.3,0,TAU);ctx.stroke();ctx.restore();
-    shimmer(tx,330,r*.75,e.color,(1-q)*.18);
-    for(let j=0;j<20;j++){const a=TAU*j/20+j*.2;particle(tx+Math.cos(a)*r,330+Math.sin(a)*r*.53,4,e.color,1-q)}
+   if(hit){
+    const q=clamp((p-e.impact)/(1-e.impact),0,1),r=9+119*smooth(q/.46);
+    ctx.save();ctx.globalAlpha=(1-smooth(q))*.82;ctx.strokeStyle=e.color;ctx.lineWidth=Math.max(.8,6*(1-q));
+    ctx.beginPath();ctx.ellipse(tx,ty,r,r*.62,-.25,0,TAU);ctx.stroke();ctx.restore();
+    shimmer(tx,ty,r*.76,e.color,(1-q)*.21);
+    for(let n=0;n<18;n++){
+     const a=TAU*n/18+n*.17;
+     particle(tx+Math.cos(a)*r,ty+Math.sin(a)*r*.62,3.5,e.color,1-q);
+    }
    }
   }
  }
@@ -334,5 +407,5 @@
   }
   drawSpells(now);foreground(t);frames++;nowClock=now;
  }
- window.MoonfallScene={render,cue,reset,getStats(){return {mode:'layered-2.5D',actors:7,backgroundLoaded:ready(background),backgroundFixed:true,backgroundPaints,atmosphereFrames,layerCount:4,spritesLoaded:ready(actors),frames,activeEffects:activeCueCount,lastCue,reducedMotion:reduced,atlasLoaded:frameAtlases.map(ready),framesPerAction:FRAME_COUNT,cutouts:cutouts.length,cutoutMode:'foreground-only animated silhouettes',actionNames:ACTION_NAMES,animationStates:[...currentClips],frameIndices:[...currentFrames],actorOffsets:[...actorOffsets]}}};
+ window.MoonfallScene={render,cue,reset,getStats(){return {mode:'layered-2.5D',actors:7,backgroundLoaded:ready(background),backgroundFixed:true,backgroundPaints,atmosphereFrames,layerCount:4,spritesLoaded:ready(actors),frames,activeEffects:activeCueCount,lastCue,reducedMotion:reduced,atlasLoaded:frameAtlases.map(ready),framesPerAction:FRAME_COUNT,cutouts:cutouts.length,cutoutMode:'foreground-only animated silhouettes',actionNames:ACTION_NAMES,animationStates:[...currentClips],frameIndices:[...currentFrames],actorOffsets:[...actorOffsets],castAnchors:castingLandmarks.map((_,i)=>castOrigin(i,nowClock)),ground:actorGround.slice()}}};
 })();

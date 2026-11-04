@@ -28,6 +28,24 @@ function freshGame(){return {
  toast:'Tap a card to inspect it, then choose PLAY CARD.',toastAt:performance.now(),fx:[],lastEffect:null,hover:-1,
  initial:true};}
 let game=freshGame();game.draw=game.draw.slice(5);
+// Combat state changes land on the same frame as their corresponding animation hits.
+let pendingImpacts=[],afterImpacts=null;
+function isResolving(){return pendingImpacts.length>0||afterImpacts!==null}
+function clearImpacts(){pendingImpacts=[];afterImpacts=null}
+function flushImpacts(now){
+ const due=pendingImpacts.filter(action=>action.at<=now);
+ pendingImpacts=pendingImpacts.filter(action=>action.at>now);
+ for(const action of due)action.apply();
+ if(!pendingImpacts.length&&afterImpacts){
+  const next=afterImpacts;afterImpacts=null;next();
+ }
+}
+function impactCue(kind,source,target,apply,delay=0){
+ const motion=actionCue(kind,source,target,delay);
+ if(!motion||!Number.isFinite(motion.impactAt)){apply();return}
+ pendingImpacts.push({at:motion.impactAt,apply});
+}
+
 const zones=[];
 let pointer=null;
 function announce(s){game.toast=s;game.toastAt=performance.now();messageNode.textContent=s}
@@ -51,7 +69,11 @@ function drawHeader(){
  ctx.fillStyle=grad;ctx.fillRect(0,0,W,106);
  text('✧',31,37,42,THEME.gold,'Georgia');
  text('MOONFALL',79,35,34,THEME.cream,'Georgia','left','700');
- text('MOTION V2',300,39,15,'#e7d4b2','system-ui','left','700');
+ text('V2 POLISH',300,39,15,'#e7d4b2','system-ui','left','700');
+ if(isResolving()){
+  rr(433,22,179,31,7,'#292239ed','#e7c690bd',1);
+  text('✦ RESOLVING',523,38,13,'#ffdfa2','system-ui','center','800');
+ }
  pill(`TURN ${game.turn}`,758,15,155,40,'#211e2bdb','#d6b78d',21);
  const live=game.foes.filter(f=>f.hp>0).length;
  pill(`${live} ENEMIES`,927,15,155,40,'#231b2bd8','#c58e9d',16);
@@ -227,11 +249,12 @@ function drawResult(){
  text(game.ended==='win'?'THE CATHEDRAL IS YOURS':'YOUR LEGEND IS NOT OVER',800,461,28,THEME.cream,'Georgia','center');
  pill('PLAY AGAIN',604,582,390,70,'#684c3e','#f2d4a4',26);register(604,582,390,70,'restart');
 }
-function drawParticles(now){game.fx=game.fx.filter(f=>now-f.start<850);for(const f of game.fx){const t=(now-f.start)/850;const alpha=1-t;const p=game.foes[f.target];const x=p?.x||800, y=260-(t*95);ctx.save();ctx.globalAlpha=alpha;glow(x,y,55,f.color+'99');text(f.words,x,y,38,f.color,'Georgia','center','700');ctx.restore()}}
+function drawParticles(now){game.fx=game.fx.filter(f=>now-f.start<850);for(const f of game.fx){const t=(now-f.start)/850;const alpha=1-t;const p=f.team==='ally'?game.allies[f.target]:game.foes[f.target];const x=p?.x||800, y=260-(t*95);ctx.save();ctx.globalAlpha=alpha;ctx.shadowColor=f.color;ctx.shadowBlur=12*(1-t);glow(x,y,47,f.color+'55');text(f.words,x,y,33,f.color,'Georgia','center','700');ctx.restore()}}
 let lastSnapshotAt=0;
 function draw(now=performance.now()){
+ flushImpacts(now);
  if(now-lastSnapshotAt>100){
-   canvas.dataset.turn=String(game.turn);canvas.dataset.energy=String(game.energy);
+   canvas.dataset.turn=String(game.turn);canvas.dataset.energy=String(game.energy);canvas.dataset.resolving=String(isResolving());
    canvas.dataset.hand=String(game.hand.length);canvas.dataset.preview=game.preview?.type||'none';
    canvas.dataset.foes=game.foes.map(x=>x.hp).join(',');canvas.dataset.allies=game.allies.map(x=>x.hp).join(',');
    canvas.dataset.phase=game.ended||'playing';lastSnapshotAt=now;
@@ -254,49 +277,101 @@ function demoAnimations(){
 }
 function aliveEnemy(){return game.foes.findIndex(e=>e.hp>0)}
 function aliveAlly(){return game.allies.findIndex(a=>a.hp>0)}
-function markFx(target,words,color){game.fx.push({target,words,color,start:performance.now()})}
-function actionCue(kind,source,target,delay=0){window.MoonfallScene?.cue?.({kind,source,target,delay})}
+function markFx(target,words,color,team='enemy'){game.fx.push({target,words,color,team,start:performance.now()})}
+function actionCue(kind,source,target,delay=0){return window.MoonfallScene?.cue?.({kind,source,target,delay})}
 function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
 function drawToFive(){while(game.hand.length<5){if(!game.draw.length){if(!game.discard.length)break;game.draw=shuffle(game.discard);game.discard=[]}game.hand.push(game.draw.shift())}game.handScroll=0}
 function selectCard(slot){if(slot<0||slot>=game.hand.length||game.ended)return;game.preview={type:'card',index:game.hand[slot],slot,readonly:false};announce('Card selected. Read its ability, then choose Play Card or Keep in Hand.')}
 function targetDamage(target,damage){const foe=game.foes[target];if(!foe||foe.hp<=0)return;foe.hp=Math.max(0,foe.hp-damage);markFx(target,'−'+damage,THEME.red);if(foe.hp===0){announce(foe.name+' defeated!');if(game.selectedEnemy===target)game.selectedEnemy=aliveEnemy()}}
 function winCheck(){if(game.foes.every(f=>f.hp<=0)){game.ended='win';announce('Victory! All three enemies defeated.')}else if(game.allies.every(a=>a.hp<=0)){game.ended='lost';announce('Defeat. Try another strategy.')}}
-function play(){if(game.preview?.type!=='card'||game.ended)return;const {index,slot}=game.preview,c=CARDS[index];if(!c||game.hand[slot]!==index)return;if(game.energy<c.cost){announce('Not enough energy. End your turn to refill.');return}game.energy-=c.cost;game.hand.splice(slot,1);game.discard.push(index);game.preview=null;
+function play(){
+ if(game.preview?.type!=='card'||game.ended||isResolving())return;
+ const {index,slot}=game.preview,c=CARDS[index];
+ if(!c||game.hand[slot]!==index)return;
+ if(game.energy<c.cost){announce('Not enough energy. End your turn to refill.');return}
+ game.energy-=c.cost;game.hand.splice(slot,1);game.discard.push(index);game.preview=null;
  if(c.kind==='attack'){
-   const target=game.foes[game.selectedEnemy]?.hp>0?game.selectedEnemy:aliveEnemy();
-   if(target>=0){actionCue(index===0?'strike':'bolt',1,4+target);targetDamage(target,c.amount);if(index===0&&game.foes[target].hp===0){game.energy=Math.min(game.maxEnergy,game.energy+1);announce('Enemy defeated! Shadow Step refunded 1 energy.')}}
+  const target=game.foes[game.selectedEnemy]?.hp>0?game.selectedEnemy:aliveEnemy();
+  if(target>=0)impactCue(index===0?'strike':'bolt',1,4+target,()=>{
+   targetDamage(target,c.amount);
+   if(index===0&&game.foes[target].hp===0){
+    game.energy=Math.min(game.maxEnergy,game.energy+1);
+    announce('Enemy defeated! Shadow Step refunded 1 energy.');
+   }
+   winCheck();
+  });
  }else if(c.kind==='area'){
-   game.foes.forEach((foe,i)=>{if(foe.hp>0){foe.burn=20;foe.burnTurns=2;actionCue('area',0,4+i,i*75);targetDamage(i,c.amount)}});
+  game.foes.forEach((foe,i)=>{
+   if(foe.hp<=0)return;
+   impactCue('area',0,4+i,()=>{
+    if(foe.hp<=0)return;
+    foe.burn=20;foe.burnTurns=2;targetDamage(i,c.amount);winCheck();
+   },i*75);
+  });
  }else if(c.kind==='defend'){
-   game.allies.filter(a=>a.hp>0).forEach(a=>a.shield+=c.amount);actionCue('defend',0,0);
-   announce('The party gained 70 shield each.');
+  impactCue('defend',0,0,()=>{
+   game.allies.forEach((a,i)=>{if(a.hp>0){a.shield+=c.amount;markFx(i,'+'+c.amount+' SHIELD','#e8d09a','ally')}});
+   announce('The party gained '+c.amount+' shield each.');
+  });
  }else if(c.kind==='heal'){
-   const target=game.allies[game.selectedAlly]?.hp>0?game.selectedAlly:aliveAlly();
-   if(target>=0){const a=game.allies[target];const heal=Math.min(c.amount,a.maxHp-a.hp);a.hp+=heal;actionCue('heal',2,target);announce(a.name+' healed '+heal+' HP.');}
+  const target=game.allies[game.selectedAlly]?.hp>0?game.selectedAlly:aliveAlly();
+  if(target>=0)impactCue('heal',2,target,()=>{
+   const a=game.allies[target];
+   if(a.hp<=0)return;
+   const healed=Math.min(c.amount,a.maxHp-a.hp);
+   a.hp+=healed;markFx(target,'+'+healed,THEME.green,'ally');
+   announce(a.name+' healed '+healed+' HP.');
+  });
  }
- if(!game.ended&&c.kind==='attack'&&index!==0)announce(c.name+' dealt '+c.amount+' damage.');
- winCheck();
+ if(!game.ended)announce(c.name+' — casting…');
 }
-function endTurn(){if(game.ended||game.preview)return;
- for(const [i,foe] of game.foes.entries()){
-   if(foe.hp<=0)continue;
-   if(foe.burnTurns>0){foe.hp=Math.max(0,foe.hp-foe.burn);foe.burnTurns--;markFx(i,'BURN −'+foe.burn,'#ffc596');actionCue('burn',0,4+i,i*95)}
- }
- if(game.foes.every(f=>f.hp===0)){winCheck();return}
+function resolveEnemyAttacks(){
+ if(game.foes.every(f=>f.hp<=0)){winCheck();return}
  let hits=0,blocked=0;
+ // Predict each strike in sequence, so later enemies retarget if a prior strike
+ // will defeat an ally. Animation targets match the eventual gameplay targets.
+ const projected=game.allies.map(a=>({hp:a.hp,shield:a.shield}));
  for(let i=0;i<game.foes.length;i++){
-   const foe=game.foes[i];if(foe.hp<=0)continue;
-   const targets=game.allies.map((a,j)=>a.hp>0?j:-1).filter(j=>j>=0);
-   if(!targets.length)break;
-   const ally=game.allies[targets[(game.turn+i)%targets.length]];
-   const dmg=foe.attack+Math.min(18,(game.turn-1)*4);
+  const foe=game.foes[i];
+  if(foe.hp<=0)continue;
+  const targetIds=projected.map((a,j)=>a.hp>0?j:-1).filter(j=>j>=0);
+  if(!targetIds.length)break;
+  const target=targetIds[(game.turn+i)%targetIds.length];
+  const dmg=foe.attack+Math.min(18,(game.turn-1)*4);
+  const predictedBlock=Math.min(projected[target].shield,dmg);
+  projected[target].shield-=predictedBlock;
+  projected[target].hp=Math.max(0,projected[target].hp-(dmg-predictedBlock));
+  impactCue('enemy',4+i,target,()=>{
+   const ally=game.allies[target];
+   if(ally.hp<=0||foe.hp<=0)return;
    const block=Math.min(ally.shield,dmg);
-   ally.shield-=block;ally.hp=Math.max(0,ally.hp-(dmg-block));hits+=dmg-block;blocked+=block;actionCue('enemy',4+i,targets[(game.turn+i)%targets.length],i*210);
+   ally.shield-=block;ally.hp=Math.max(0,ally.hp-(dmg-block));
+   hits+=dmg-block;blocked+=block;
+   if(dmg>block)markFx(target,'−'+(dmg-block),THEME.red,'ally');
+   winCheck();
+  },i*210);
  }
- winCheck();if(game.ended)return;
- game.discard.push(...game.hand);game.hand=[];
- game.turn++;game.maxEnergy=Math.min(5,3+Math.floor((game.turn-1)/2));game.energy=game.maxEnergy;drawToFive();
- announce('Enemies dealt '+hits+' damage; shields blocked '+blocked+'. Your hand is refilled.');
+ afterImpacts=()=>{
+  if(game.ended)return;
+  game.discard.push(...game.hand);game.hand=[];
+  game.turn++;game.maxEnergy=Math.min(5,3+Math.floor((game.turn-1)/2));
+  game.energy=game.maxEnergy;drawToFive();
+  announce('Enemies dealt '+hits+' damage; shields blocked '+blocked+'. Your hand is refilled.');
+ };
+}
+function endTurn(){
+ if(game.ended||game.preview||isResolving())return;
+ const burning=game.foes.map((foe,i)=>({foe,i})).filter(({foe})=>foe.hp>0&&foe.burnTurns>0);
+ if(!burning.length){resolveEnemyAttacks();return}
+ for(const {foe,i} of burning){
+  impactCue('burn',0,4+i,()=>{
+   if(foe.hp<=0)return;
+   foe.hp=Math.max(0,foe.hp-foe.burn);foe.burnTurns--;
+   markFx(i,'BURN −'+foe.burn,'#ffc596');
+  },i*95);
+ }
+ afterImpacts=()=>{winCheck();if(!game.ended)resolveEnemyAttacks()};
+ announce('Burn damage resolving…');
 }
 function insidePolygon(x,y,points){
  let inside=false;
@@ -313,16 +388,17 @@ function chooseAction(x,y){
 window.__moonfallHitTest=(x,y)=>{const z=chooseAction(x,y);return z?{action:z.action,meta:z.meta}:null};
 window.__moonfallPreviewSize=()=>{const stretch=(canvas.clientWidth/W)/(canvas.clientHeight/H);return {width:419*(2/3)/stretch,height:419}};
 window.__moonfallFanLayout=()=>handLayout().map(c=>({slot:c.slot,card:CARDS[game.hand[c.slot]]?.id,x:c.x,y:c.y,w:c.w,h:c.h,angle:c.angle,polygon:cardPolygon(c)}));
-window.__moonfallTestState=()=>({models:window.MoonfallScene?.getStats?.()||null,turn:game.turn,energy:game.energy,maxEnergy:game.maxEnergy,hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,allies:game.allies.map(a=>({hp:a.hp,shield:a.shield})),foes:game.foes.map(f=>({hp:f.hp,burnTurns:f.burnTurns})),ended:game.ended,previewCard:game.preview?.type==='card'?CARDS[game.preview.index].id:null});
+window.__moonfallTestState=()=>({models:window.MoonfallScene?.getStats?.()||null,turn:game.turn,energy:game.energy,maxEnergy:game.maxEnergy,hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,allies:game.allies.map(a=>({hp:a.hp,shield:a.shield})),foes:game.foes.map(f=>({hp:f.hp,burnTurns:f.burnTurns})),ended:game.ended,pendingImpacts:pendingImpacts.length,resolving:isResolving(),previewCard:game.preview?.type==='card'?CARDS[game.preview.index].id:null});
 function activate(z){if(!z)return;
- if(game.ended){if(z.action==='restart'){game=freshGame();game.draw=game.draw.slice(5);window.MoonfallScene?.reset?.();announce('New battle started.');}return}
+ if(game.ended){if(z.action==='restart'){clearImpacts();game=freshGame();game.draw=game.draw.slice(5);window.MoonfallScene?.reset?.();announce('New battle started.');}return}
+ if(isResolving()&&z.action!=='restart')return;
  if(game.preview){
   switch(z.action){
    case 'close':game.preview=null;return;
    case 'play':play();return;
    case 'backdeck':game.preview={type:'deck'};return;
    case 'deckcard':game.preview={type:'card',index:z.meta,readonly:true};return;
-   case 'restart':game=freshGame();game.draw=game.draw.slice(5);window.MoonfallScene?.reset?.();return;
+   case 'restart':clearImpacts();game=freshGame();game.draw=game.draw.slice(5);window.MoonfallScene?.reset?.();return;
   }
   return;
  }
@@ -333,7 +409,7 @@ function activate(z){if(!z)return;
   case 'deck':game.preview={type:'deck'};game.history='deck';announce('Your deck is open. Tap a card to inspect it.');break;
   case 'discard':game.preview={type:'deck'};game.history='discard';announce('Discard pile opened.');break;
   case 'end':endTurn();break;
-  case 'restart':game=freshGame();game.draw=game.draw.slice(5);window.MoonfallScene?.reset?.();announce('New battle started.');break;
+  case 'restart':clearImpacts();game=freshGame();game.draw=game.draw.slice(5);window.MoonfallScene?.reset?.();announce('New battle started.');break;
   case 'motionDemo':demoAnimations();break;
   case 'guide':game.preview={type:'guide'};break;
  }
@@ -347,7 +423,8 @@ canvas.addEventListener('pointercancel',()=>pointer=null);
 canvas.addEventListener('wheel',e=>{const r=canvas.getBoundingClientRect();const p=xy(e);if(!game.preview&&p.y>475&&p.x>273&&p.x<1330){e.preventDefault();const max=Math.max(0,194+Math.max(0,game.hand.length-1)*(game.hand.length<=5?148:120)-980);game.handScroll=Math.max(0,Math.min(max,game.handScroll+e.deltaY+e.deltaX))}},{passive:false});
 window.addEventListener('keydown',e=>{
  if(e.key==='Escape'){game.preview=null;return}
- if(game.ended){if(e.key==='Enter'){game=freshGame();game.draw=game.draw.slice(5);window.MoonfallScene?.reset?.()}return}
+ if(isResolving())return;
+ if(game.ended){if(e.key==='Enter'){clearImpacts();game=freshGame();game.draw=game.draw.slice(5);window.MoonfallScene?.reset?.()}return}
  if(game.preview){if(e.key==='Enter'&&game.preview.type==='card'&&!game.preview.readonly)play();return}
  if(/^([1-9])$/.test(e.key)){selectCard(Number(e.key)-1);return}
  if(e.key.toLowerCase()==='e'){endTurn();return}
