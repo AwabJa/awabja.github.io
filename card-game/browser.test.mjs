@@ -237,8 +237,9 @@ try {
     assert(before.castAnchors.every(p=>p.x>40&&p.x<1550&&p.y>70&&p.y<470),'Hands are in plausible battlefield positions');
     await page.evaluate(()=>window.MoonfallScene.cue({kind:'bolt',source:3,target:4}));
     await page.waitForFunction(()=>window.MoonfallScene.getStats().animationStates[3]==='cast',null,{timeout:1500});
+    await page.waitForFunction(initial=>Math.abs(window.MoonfallScene.getStats().castAnchors[3].x-initial)>12,before.castAnchors[3].x,{timeout:1500});
     const during=await page.evaluate(()=>window.MoonfallScene.getStats());
-    assert(Math.abs(during.castAnchors[3].x-before.castAnchors[3].x)>3,'The casting hand physically moves during spell wind-up');
+    assert(Math.abs(during.castAnchors[3].x-before.castAnchors[3].x)>12,'The casting hand physically moves during spell wind-up');
     assert.equal(during.backgroundPaints,before.backgroundPaints,'Battlefield architecture remains stationary');
     assert.deepEqual(errors,[],'Preview has no JavaScript errors');
     await page.close();
