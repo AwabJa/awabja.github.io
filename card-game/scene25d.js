@@ -50,8 +50,8 @@
        dress=clamp((y-185)/135,0,1);
     let dx=0,dy=0;
     if(state==='idle'){
-     dx=1.2*wave*torso+3.2*Math.sin(f*.60+y*.039+i*.7)*hair+2*Math.sin(f*.69+y*.045)*dress;
-     dy=-1.3*Math.sin(f*.56)*torso;
+     dx=.55*wave*torso+1.8*Math.sin(f*.60+y*.039+i*.7)*hair+1.1*Math.sin(f*.69+y*.045)*dress;
+     dy=-.65*Math.sin(f*.56)*torso;
     }else if(state==='walk'){
      dx=2.4*wave*torso+4*Math.sin(f*.82+y*.037+i*.4)*hair
         +6.4*wave*legs*Math.tanh((x-150)/23)+4.5*Math.sin(f*1.13+i*.3)*dress;
@@ -132,8 +132,9 @@
      roll+=direction*.09*Math.sin(Math.PI*p);
      reach=Math.max(reach,approach);
     }else{
-     dy+=-18*Math.sin(Math.PI*p);
-     roll+=.06*Math.sin(Math.PI*p);
+     // Spellcasting keeps the feet planted instead of levitating the whole sprite.
+     dy+=-4*Math.sin(Math.PI*p);
+     roll+=.018*Math.sin(Math.PI*p);
     }
    }
    if(e.target===i){
@@ -222,29 +223,35 @@
    }
    return {state:'cast',frame:Math.min(5,Math.floor(p*6))};
   }
-  const idleCycle=(now/1000+i*1.3)%10;
-  if(!reduced && idleCycle>8.9 && idleCycle<9.7) return {state:i%3===0?'cast':'walk',frame:Math.floor((idleCycle-8.9)*7)%FRAME_COUNT};
+  // Idle never spontaneously shows an attack or cast; only game events change action.
   return {state:'idle',frame:Math.floor(now/170+i*1.3)%FRAME_COUNT};
  }
  function drawActor(i,t,hp,selected,now){
   const x=positions[i],h=sizes[i],w=300/320*h,alive=hp>0;
   const phase=t*1.52+i*1.11;
-  const breath=alive&&!reduced?Math.sin(phase)*.014:0;
-  const bob=alive&&!reduced?Math.sin(phase)*4.2+Math.sin(t*.47+i*2.1)*1.7:0;
-  const tilt=alive&&!reduced?Math.sin(t*.9+i*1.47)*.023:0;
+  const breath=alive&&!reduced?Math.sin(phase)*.004:0;
+  const bob=alive&&!reduced?Math.sin(phase)*1.1:0;
+  const tilt=alive&&!reduced?Math.sin(t*.9+i*1.47)*.006:0;
   const pose=poseFor(i,now,alive);
   currentClips[i]=pose.state;currentFrames[i]=pose.frame;
-  const move=actorMove(i,now),base=442+bob+move.dy;actorOffsets[i]=Math.round(move.dx);
-  // Contact shadows compress when a character lunges, lift when a character jumps.
-  const shadow=ctx.createRadialGradient(x,445,3,x,445,w*.46);
-  shadow.addColorStop(0,'#03060ea8');shadow.addColorStop(1,'#03060e00');ctx.fillStyle=shadow;ctx.fillRect(x-w/2,429,w,36);
+  const move=actorMove(i,now),base=actorGround[i]+bob+move.dy;actorOffsets[i]=Math.round(move.dx);
+  // Ground contact is fixed to the battle plane; only the shadow's X follows lunges.
+  const footX=x+move.dx,footY=actorGround[i]+3;
+  const shadowWidth=w*(.39+(move.reach*.07));
+  ctx.save();
+  ctx.translate(footX,footY);
+  ctx.scale(1,Math.max(.72,1+move.dy*.008));
+  const shadow=ctx.createRadialGradient(0,0,2,0,0,shadowWidth);
+  shadow.addColorStop(0,'#03040ac9');shadow.addColorStop(.58,'#06071079');shadow.addColorStop(1,'#03060e00');
+  ctx.fillStyle=shadow;ctx.fillRect(-shadowWidth,-17,shadowWidth*2,34);
+  ctx.restore();
   if(selected&&alive){
    ctx.save();ctx.globalAlpha=.6+.20*Math.sin(t*2.6+i);
-   ctx.beginPath();ctx.ellipse(x,445,w*.44,10,0,0,TAU);ctx.fillStyle=i<4?'#9debc83d':'#f6a9ad3d';ctx.fill();
+   ctx.beginPath();ctx.ellipse(footX,footY,w*.43,9,0,0,TAU);ctx.fillStyle=i<4?'#9debc83d':'#f6a9ad3d';ctx.fill();
    ctx.strokeStyle='#ffe4b0';ctx.lineWidth=1.6;ctx.stroke();ctx.restore();
   }
   ctx.save();ctx.translate(x+move.dx,base-h*.06);ctx.rotate(tilt+move.roll);
-  ctx.scale(1+breath*.35+move.reach*.055,1-breath+move.reach*.025);
+  ctx.scale(1+breath*.25+move.reach*.02,1-breath*.35+move.reach*.015);
   const top=-h*.94,left=-w/2;
   const sheet=frameAtlases[i<4?0:1];
   if(ready(sheet)){
