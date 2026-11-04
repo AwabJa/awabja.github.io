@@ -328,16 +328,22 @@ function play(){
 function resolveEnemyAttacks(){
  if(game.foes.every(f=>f.hp<=0)){winCheck();return}
  let hits=0,blocked=0;
+ // Predict each strike in sequence, so later enemies retarget if a prior strike
+ // will defeat an ally. Animation targets match the eventual gameplay targets.
+ const projected=game.allies.map(a=>({hp:a.hp,shield:a.shield}));
  for(let i=0;i<game.foes.length;i++){
   const foe=game.foes[i];
   if(foe.hp<=0)continue;
-  const targetIds=game.allies.map((a,j)=>a.hp>0?j:-1).filter(j=>j>=0);
+  const targetIds=projected.map((a,j)=>a.hp>0?j:-1).filter(j=>j>=0);
   if(!targetIds.length)break;
   const target=targetIds[(game.turn+i)%targetIds.length];
+  const dmg=foe.attack+Math.min(18,(game.turn-1)*4);
+  const predictedBlock=Math.min(projected[target].shield,dmg);
+  projected[target].shield-=predictedBlock;
+  projected[target].hp=Math.max(0,projected[target].hp-(dmg-predictedBlock));
   impactCue('enemy',4+i,target,()=>{
    const ally=game.allies[target];
    if(ally.hp<=0||foe.hp<=0)return;
-   const dmg=foe.attack+Math.min(18,(game.turn-1)*4);
    const block=Math.min(ally.shield,dmg);
    ally.shield-=block;ally.hp=Math.max(0,ally.hp-(dmg-block));
    hits+=dmg-block;blocked+=block;
