@@ -69,7 +69,11 @@ function drawHeader(){
  ctx.fillStyle=grad;ctx.fillRect(0,0,W,106);
  text('✧',31,37,42,THEME.gold,'Georgia');
  text('MOONFALL',79,35,34,THEME.cream,'Georgia','left','700');
- text('MOTION V2',300,39,15,'#e7d4b2','system-ui','left','700');
+ text('V2 POLISH',300,39,15,'#e7d4b2','system-ui','left','700');
+ if(isResolving()){
+  rr(433,22,179,31,7,'#292239ed','#e7c690bd',1);
+  text('✦ RESOLVING',523,38,13,'#ffdfa2','system-ui','center','800');
+ }
  pill(`TURN ${game.turn}`,758,15,155,40,'#211e2bdb','#d6b78d',21);
  const live=game.foes.filter(f=>f.hp>0).length;
  pill(`${live} ENEMIES`,927,15,155,40,'#231b2bd8','#c58e9d',16);
@@ -245,12 +249,12 @@ function drawResult(){
  text(game.ended==='win'?'THE CATHEDRAL IS YOURS':'YOUR LEGEND IS NOT OVER',800,461,28,THEME.cream,'Georgia','center');
  pill('PLAY AGAIN',604,582,390,70,'#684c3e','#f2d4a4',26);register(604,582,390,70,'restart');
 }
-function drawParticles(now){game.fx=game.fx.filter(f=>now-f.start<850);for(const f of game.fx){const t=(now-f.start)/850;const alpha=1-t;const p=f.team==='ally'?game.allies[f.target]:game.foes[f.target];const x=p?.x||800, y=260-(t*95);ctx.save();ctx.globalAlpha=alpha;glow(x,y,55,f.color+'99');text(f.words,x,y,38,f.color,'Georgia','center','700');ctx.restore()}}
+function drawParticles(now){game.fx=game.fx.filter(f=>now-f.start<850);for(const f of game.fx){const t=(now-f.start)/850;const alpha=1-t;const p=f.team==='ally'?game.allies[f.target]:game.foes[f.target];const x=p?.x||800, y=260-(t*95);ctx.save();ctx.globalAlpha=alpha;ctx.shadowColor=f.color;ctx.shadowBlur=12*(1-t);glow(x,y,47,f.color+'55');text(f.words,x,y,33,f.color,'Georgia','center','700');ctx.restore()}}
 let lastSnapshotAt=0;
 function draw(now=performance.now()){
  flushImpacts(now);
  if(now-lastSnapshotAt>100){
-   canvas.dataset.turn=String(game.turn);canvas.dataset.energy=String(game.energy);
+   canvas.dataset.turn=String(game.turn);canvas.dataset.energy=String(game.energy);canvas.dataset.resolving=String(isResolving());
    canvas.dataset.hand=String(game.hand.length);canvas.dataset.preview=game.preview?.type||'none';
    canvas.dataset.foes=game.foes.map(x=>x.hp).join(',');canvas.dataset.allies=game.allies.map(x=>x.hp).join(',');
    canvas.dataset.phase=game.ended||'playing';lastSnapshotAt=now;
