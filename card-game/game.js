@@ -390,47 +390,96 @@ function aliveAlly(){return game.allies.findIndex(a=>a.hp>0)}
 function markFx(target,words,color,team='enemy'){game.fx.push({target,words,color,team,start:performance.now()})}
 function actionCue(kind,source,target,delay=0){return window.MoonfallScene?.cue?.({kind,source,target,delay})}
 function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
-function drawToFive(){while(game.hand.length<5){if(!game.draw.length){if(!game.discard.length)break;game.draw=shuffle(game.discard);game.discard=[]}game.hand.push(game.draw.shift())}game.handScroll=0}
+function drawToFive(){drawCards(Math.max(0,5-game.hand.length));game.handScroll=0}
 function selectCard(slot){if(slot<0||slot>=game.hand.length||game.ended)return;game.preview={type:'card',index:game.hand[slot],slot,readonly:false};announce('Card selected. Read its ability, then choose Play Card or Keep in Hand.')}
-function targetDamage(target,damage){const foe=game.foes[target];if(!foe||foe.hp<=0)return;foe.hp=Math.max(0,foe.hp-damage);markFx(target,'−'+damage,THEME.red);if(foe.hp===0){announce(foe.name+' defeated!');if(game.selectedEnemy===target)game.selectedEnemy=aliveEnemy()}}
-function winCheck(){if(game.foes.every(f=>f.hp<=0)){game.ended='win';announce('Victory! All three enemies defeated.')}else if(game.allies.every(a=>a.hp<=0)){game.ended='lost';announce('Defeat. Try another strategy.')}}
+function targetDamage(target,damage){
+ const foe=game.foes[target];if(!foe||foe.hp<=0)return 0;
+ const scaled=Math.max(0,Math.round(damage*(foe.exposedTurns>0?1.3:1)));
+ const absorbed=Math.min(foe.shield,scaled);
+ foe.shield-=absorbed;
+ const dealt=Math.min(foe.hp,scaled-absorbed);
+ foe.hp-=dealt;
+ if(absorbed>0)markFx(target,'BLOCK '+absorbed,'#d4c1f6');
+ if(dealt>0)markFx(target,'−'+dealt,THEME.red);
+ if(foe.hp===0){announce(foe.name+' defeated!');if(game.selectedEnemy===target)game.selectedEnemy=aliveEnemy()}
+ return dealt;
+}
+function winCheck(){
+ if(game.foes.every(f=>f.hp<=0)){game.ended='win';announce('Victory! The Shattered Court is defeated.')}
+ else if(game.allies.every(a=>a.hp<=0)){game.ended='lost';announce('Your party has fallen. Reconsider the enemy intents.')}
+}
+function drawCards(count){
+ for(let i=0;i<count&&game.hand.length<7;i++){
+  if(!game.draw.length){if(!game.discard.length)break;game.draw=shuffle(game.discard);game.discard=[]}
+  const next=game.draw.shift();
+  if(Number.isInteger(next)&&CARDS[next])game.hand.push(next);
+ }
+}
 function play(){
  if(game.preview?.type!=='card'||game.ended||isResolving())return;
  const {index,slot}=game.preview,c=CARDS[index];
  if(!c||game.hand[slot]!==index)return;
  if(game.energy<c.cost){announce('Not enough energy. End your turn to refill.');return}
+ const allyTarget=game.allies[game.selectedAlly]?.hp>0?game.selectedAlly:aliveAlly();
+ const enemyTargetIndex=game.foes[game.selectedEnemy]?.hp>0?game.selectedEnemy:aliveEnemy();
+ if(c.kind==='bargain'&&(allyTarget<0||game.allies[allyTarget].hp<=c.amount)){
+  announce('The selected ally needs more than '+c.amount+' health for this bargain.');return
+ }
  game.energy-=c.cost;game.hand.splice(slot,1);game.discard.push(index);game.preview=null;
- if(c.kind==='attack'){
-  const target=game.foes[game.selectedEnemy]?.hp>0?game.selectedEnemy:aliveEnemy();
-  if(target>=0)impactCue(index===0?'strike':'bolt',1,4+target,()=>{
-   targetDamage(target,c.amount);
-   if(index===0&&game.foes[target].hp===0){
-    game.energy=Math.min(game.maxEnergy,game.energy+1);
-    announce('Enemy defeated! Shadow Step refunded 1 energy.');
-   }
+ if(c.kind==='attack'||c.kind==='expose'||c.kind==='hex'){
+  if(enemyTargetIndex>=0)impactCue(index===0?'strike':c.kind==='attack'?'bolt':'hex',
+   index===0||c.kind==='expose'?1:3,4+enemyTargetIndex,()=>{
+   targetDamage(enemyTargetIndex,c.amount);
+   const foe=game.foes[enemyTargetIndex];
+   if(c.kind==='expose'&&foe.hp>0){foe.exposedTurns=Math.max(foe.exposedTurns,2);announce(foe.name+' exposed to follow-up attacks.')}
+   if(c.kind==='hex'&&foe.hp>0){foe.weakTurns=Math.max(foe.weakTurns,2);announce(foe.name+' weakened for two enemy rounds.')}
+   if(index===0&&foe.hp===0){game.energy=Math.min(game.maxEnergy,game.energy+1);announce('Shadow Step refunded 1 energy.')}
    winCheck();
   });
- }else if(c.kind==='area'){
+ }else if(c.kind==='area'||c.kind==='chain'){
   game.foes.forEach((foe,i)=>{
    if(foe.hp<=0)return;
-   impactCue('area',0,4+i,()=>{
+   impactCue(c.kind==='chain'?'bolt':'area',c.kind==='chain'?3:0,4+i,()=>{
     if(foe.hp<=0)return;
-    foe.burn=20;foe.burnTurns=2;targetDamage(i,c.amount);winCheck();
-   },i*75);
+    targetDamage(i,c.amount);
+    if(c.kind==='area'&&foe.hp>0){foe.burn=12;foe.burnTurns=Math.max(foe.burnTurns,2)}
+    winCheck();
+   },i*85);
   });
  }else if(c.kind==='defend'){
   impactCue('defend',0,0,()=>{
    game.allies.forEach((a,i)=>{if(a.hp>0){a.shield+=c.amount;markFx(i,'+'+c.amount+' SHIELD','#e8d09a','ally')}});
-   announce('The party gained '+c.amount+' shield each.');
+  });
+ }else if(c.kind==='guard'||c.kind==='riposte'){
+  if(allyTarget>=0)impactCue('ward',c.kind==='guard'?0:3,allyTarget,()=>{
+   const a=game.allies[allyTarget];if(a.hp<=0)return;
+   a.shield+=c.amount;
+   if(c.kind==='guard')a.guardTurns=1;
+   else a.retaliate=35;
+   markFx(allyTarget,'+'+c.amount+' SHIELD','#e8d09a','ally');
+   announce(a.name+(c.kind==='guard'?' guards the party.':' readies a counterattack.'));
   });
  }else if(c.kind==='heal'){
-  const target=game.allies[game.selectedAlly]?.hp>0?game.selectedAlly:aliveAlly();
-  if(target>=0)impactCue('heal',2,target,()=>{
-   const a=game.allies[target];
+  if(allyTarget>=0)impactCue('heal',2,allyTarget,()=>{
+   const a=game.allies[allyTarget];if(a.hp<=0)return;
+   const healed=Math.min(c.amount,a.maxHp-a.hp);a.hp+=healed;
+   markFx(allyTarget,'+'+healed,THEME.green,'ally');
+  });
+ }else if(c.kind==='healall'){
+  game.allies.forEach((a,i)=>{
    if(a.hp<=0)return;
-   const healed=Math.min(c.amount,a.maxHp-a.hp);
-   a.hp+=healed;markFx(target,'+'+healed,THEME.green,'ally');
-   announce(a.name+' healed '+healed+' HP.');
+   impactCue('heal',2,i,()=>{
+    const healed=Math.min(c.amount,a.maxHp-a.hp);
+    a.hp+=healed;a.bleed=0;a.bleedTurns=0;
+    markFx(i,'+'+healed+' CLEANSE',THEME.green,'ally');
+   },i*65);
+  });
+ }else if(c.kind==='bargain'){
+  impactCue('bargain',4,allyTarget,()=>{
+   const a=game.allies[allyTarget];if(a.hp<=c.amount)return;
+   a.hp-=c.amount;game.energy=Math.min(game.maxEnergy,game.energy+1);
+   drawCards(2);markFx(allyTarget,'−'+c.amount,THEME.red,'ally');
+   announce('Bargain paid: +1 energy and two cards drawn.');
   });
  }
  if(!game.ended)announce(c.name+' — casting…');
@@ -438,35 +487,63 @@ function play(){
 function resolveEnemyAttacks(){
  if(game.foes.every(f=>f.hp<=0)){winCheck();return}
  let hits=0,blocked=0;
- // Predict each strike in sequence, so later enemies retarget if a prior strike
- // will defeat an ally. Animation targets match the eventual gameplay targets.
- const projected=game.allies.map(a=>({hp:a.hp,shield:a.shield}));
+ const projected=game.allies.map(a=>({...a}));
  for(let i=0;i<game.foes.length;i++){
-  const foe=game.foes[i];
-  if(foe.hp<=0)continue;
-  const targetIds=projected.map((a,j)=>a.hp>0?j:-1).filter(j=>j>=0);
-  if(!targetIds.length)break;
-  const target=targetIds[(game.turn+i)%targetIds.length];
-  const dmg=foe.attack+Math.min(18,(game.turn-1)*4);
+  const foe=game.foes[i];if(foe.hp<=0)continue;
+  const intent=enemyIntent(i);
+  if(intent.kind==='fortify'){
+   impactCue('ward',4+i,4+i,()=>{
+    if(foe.hp>0){foe.shield+=58;markFx(i,'+58 SHIELD','#b5baf0');announce('The Night Knight fortifies his armour.')}
+   },i*180);continue;
+  }
+  const target=enemyTarget(i,projected);if(target<0)break;
+  const dmg=Math.max(0,Math.round((intent.damage+Math.min(14,(game.turn-1)*3))*(foe.weakTurns>0?.65:1)));
   const predictedBlock=Math.min(projected[target].shield,dmg);
   projected[target].shield-=predictedBlock;
   projected[target].hp=Math.max(0,projected[target].hp-(dmg-predictedBlock));
   impactCue('enemy',4+i,target,()=>{
-   const ally=game.allies[target];
-   if(ally.hp<=0||foe.hp<=0)return;
+   const ally=game.allies[target];if(ally.hp<=0||foe.hp<=0)return;
    const block=Math.min(ally.shield,dmg);
    ally.shield-=block;ally.hp=Math.max(0,ally.hp-(dmg-block));
    hits+=dmg-block;blocked+=block;
    if(dmg>block)markFx(target,'−'+(dmg-block),THEME.red,'ally');
+   if(intent.kind==='bleed'&&dmg>block){
+    ally.bleed=11;ally.bleedTurns=Math.max(ally.bleedTurns,2);
+    announce(ally.name+' is bleeding.');
+   }
+   if(intent.kind==='siphon'){
+    const recovered=Math.min(foe.maxHp-foe.hp,19);
+    foe.hp+=recovered;if(recovered)markFx(i,'+'+recovered,'#c4d0e8');
+   }
+   if(intent.kind==='disrupt'){game.energyTax=1;announce('Oracle disrupts next turn: −1 energy.')}
+   if(ally.retaliate>0&&block>0){
+    const reflected=ally.retaliate;ally.retaliate=0;
+    targetDamage(i,reflected);
+   }
    winCheck();
-  },i*210);
+  },i*230);
  }
  afterImpacts=()=>{
   if(game.ended)return;
+  for(const ally of game.allies){
+   if(ally.hp>0&&ally.bleedTurns>0){
+    const dealt=Math.min(ally.hp,ally.bleed);
+    ally.hp-=dealt;
+    markFx(game.allies.indexOf(ally),'BLEED −'+dealt,'#ffadb5','ally');
+    ally.bleedTurns--;if(!ally.bleedTurns)ally.bleed=0;
+   }
+   ally.guardTurns=0;ally.retaliate=0;
+  }
+  for(const foe of game.foes){
+   foe.weakTurns=Math.max(0,foe.weakTurns-1);
+   foe.exposedTurns=Math.max(0,foe.exposedTurns-1);
+  }
+  winCheck();if(game.ended)return;
   game.discard.push(...game.hand);game.hand=[];
-  game.turn++;game.maxEnergy=Math.min(5,3+Math.floor((game.turn-1)/2));
-  game.energy=game.maxEnergy;drawToFive();
-  announce('Enemies dealt '+hits+' damage; shields blocked '+blocked+'. Your hand is refilled.');
+  game.turn++;game.maxEnergy=Math.min(5,3+Math.floor((game.turn-1)/3));
+  game.energy=Math.max(1,game.maxEnergy-game.energyTax);game.energyTax=0;
+  drawToFive();
+  announce('Enemy round: '+hits+' damage, '+blocked+' blocked. Review the next intents.');
  };
 }
 function endTurn(){
