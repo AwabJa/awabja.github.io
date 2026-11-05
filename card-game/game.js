@@ -109,8 +109,13 @@ function scene(){
 }
 function cardFrame(index,slot,x,y,w,h,large=false){
  const c=CARDS[index];const active=game.energy>=c.cost;
- ctx.save();ctx.shadowColor=(slot===game.hover?'#f7dc98':'#000a');ctx.shadowBlur=slot===game.hover?22:12;
- rr(x,y,w,h,11,gradient(x,y,w,h,[[0,'#dfc48d'],[.32,'#4e4b72'],[1,'#d5ac78']]),slot===game.hover?'#fff2ca':'#dcbb81',3);ctx.restore();
+ ctx.save();
+ ctx.shadowColor=slot===game.hover?'#ffe0a5b5':'#050414d0';
+ ctx.shadowBlur=slot===game.hover?26:17;ctx.shadowOffsetY=7;
+ rr(x,y,w,h,11,gradient(x,y,w,h,[[0,'#f0d4a0'],[.32,'#53416b'],[1,'#d6ae78']]),slot===game.hover?'#fff2ca':'#dcbb81',3);
+ ctx.restore();
+ ctx.save();ctx.strokeStyle='#fff1c27a';ctx.lineWidth=1;
+ ctx.beginPath();ctx.moveTo(x+17,y+6);ctx.quadraticCurveTo(x+w/2,y+3,x+w-17,y+6);ctx.stroke();ctx.restore();
  rr(x+6,y+6,w-12,h-12,7,'#161624','#c3a578',1.4);
  rr(x+9,y+9,w-18,h-18,5,null,'#997a59',.7);
  rr(x+10,y+12,w-20,h-24,6,gradient(x+10,y,w-20,h,[[0,'#3b324b'],[1,'#171727']]));
@@ -144,18 +149,23 @@ function cardBack(x,y,w,h,label,count){
 // Finger-fan layout: preserved 2:3 card ratio, overlapping edges and curved baseline.
 function handLayout(){
  const n=game.hand.length,mid=(n-1)/2;
- // Cards are 2:3 in *physical* phone pixels, even when the scene is stretched.
+ // Preserve the physical 2:3 aspect ratio in stretched phone landscapes.
  const height=186;
  const xScale=Math.max(.2,canvas.clientWidth/W),yScale=Math.max(.2,canvas.clientHeight/H);
  const width=height*(2/3)*(yScale/xScale);
- const spacing= n<=5?78:Math.max(55,Math.min(78,425/Math.max(1,n-1)));
+ // A tighter fan leaves a clearer battlefield and makes the cards feel held together.
+ const spacing=n<=5?65:Math.max(49,Math.min(65,360/Math.max(1,n-1)));
  const total=width+Math.max(0,n-1)*spacing;
- const first=824-total/2-game.handScroll;
+ const first=800-total/2-game.handScroll;
+ // Narrower viewports automatically reduce card tilt to avoid clipping the bottom edge.
+ const maxAngle=Math.min(.225,25/Math.max(70,width/2));
  return Array.from({length:n},(_,i)=>{
-   const d=i-mid;
-   // Tangential fan angles: low outer cards, center raised for inspection.
-   return {slot:i,x:first+i*spacing,y:535+Math.abs(d)*13-(game.hover===i?14:0),
-      w:width,h:height,angle:d*.16};
+   const d=i-mid,outer=mid?d/mid:0;
+   return {
+     slot:i,x:first+i*spacing,
+     y:569+Math.abs(d)*(n<=5?8:5)-(game.hover===i?12:0),
+     w:width,h:height,angle:outer*maxAngle
+   };
  });
 }
 function cardPolygon(c){
@@ -183,6 +193,20 @@ function drawTable(now){
  cardBack(45,691,56,68,'DECK',game.draw.length);
  cardBack(126,691,56,68,'DISCARD',game.discard.length);
  register(27,660,83,140,'deck');register(111,660,84,140,'discard');
+ // Subtle enchanted filigree behind the low, tightly overlapped hand.
+ ctx.save();
+ const fanGlow=ctx.createRadialGradient(800,740,38,800,740,295);
+ fanGlow.addColorStop(0,'#f2c78829');
+ fanGlow.addColorStop(.6,'#9673a413');
+ fanGlow.addColorStop(1,'#070b1800');
+ ctx.fillStyle=fanGlow;ctx.fillRect(505,553,590,247);
+ ctx.beginPath();ctx.ellipse(800,783,253,38,0,Math.PI*1.08,Math.PI*1.92);
+ ctx.strokeStyle='#d4ac7e65';ctx.lineWidth=1.5;ctx.stroke();
+ for(const dx of [-244,-183,0,183,244]){
+  ctx.beginPath();ctx.arc(800+dx,780-(dx===0?23:3),dx===0?2.7:1.7,0,Math.PI*2);
+  ctx.fillStyle=dx===0?'#ffe4adab':'#e8c58b69';ctx.fill();
+ }
+ ctx.restore();
  // Draw back-to-front. Raised center cards win overlapping hit tests.
  const fan=handLayout(),middle=(fan.length-1)/2;
  const order=fan.slice().sort((a,b)=>Math.abs(b.slot-middle)-Math.abs(a.slot-middle));

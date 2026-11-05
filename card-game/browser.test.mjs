@@ -121,6 +121,11 @@ try {
       assert(fan[0].angle<fan[1].angle&&fan[2].angle===0&&fan[4].angle>0,'Hand has realistic left-to-right fan angles');
       assert(fan[0].x+fan[0].w>fan[1].x,'Cards overlap like a real hand');
       assert(fan[2].y<fan[0].y,'Middle of the hand is raised');
+      assert(fan[2].y>=565,'Cards sit closer to the bottom edge');
+      assert(fan[1].x-fan[0].x<=66,'Cards are packed into a tighter fan');
+      assert(Math.abs(fan[0].angle)<=.23&&Math.abs(fan[4].angle)<=.23,'The fantasy fan keeps controlled outer tilt');
+      assert(fan[2].x+fan[2].w/2>=775&&fan[2].x+fan[2].w/2<=825,'The hand is horizontally centred');
+      assert(fan.every(c=>Math.max(...c.polygon.map(p=>p.y))<795),'Lower fan remains entirely visible on phone landscape');
       assert.match(jsRaw,/const gaugeY=447/,'Health bars are anchored under characters');
       assert.match(sceneJS,/positions=\[/,'Sprites are laid out on the battlefield');
       const visiblePoint=async slot=>{
