@@ -7,8 +7,8 @@ const bg=back?.getContext('2d',{alpha:false}),fog=atmo?.getContext('2d',{alpha:t
 if(!ctx||!bg||!fog){window.MoonfallScene={render(){},cue(){},reset(){},getStats(){return {mode:'unavailable',actors:0}}};return}
 const W=1600,H=800,PI=Math.PI,T=PI*2;
 const positions=[220,380,540,700,1060,1220,1380],ground=[445,447,446,445,445,446,447];
-const kindColors={strike:'#dcb5ff',bolt:'#84dfff',area:'#f76d9e',defend:'#f2cf82',heal:'#81efd2',enemy:'#ff9b93',burn:'#ffa962'};
-const impact={strike:.56,bolt:.56,area:.55,defend:.52,heal:.52,enemy:.56,burn:.46};
+const kindColors={strike:'#dcb5ff',bolt:'#84dfff',area:'#f76d9e',defend:'#f2cf82',heal:'#81efd2',enemy:'#ff9b93',burn:'#ffa962',ward:'#f2d69b',hex:'#dcb4f7',bargain:'#c66fd6'};
+const impact={strike:.56,bolt:.56,area:.55,defend:.52,heal:.52,enemy:.56,burn:.46,ward:.53,hex:.56,bargain:.51};
 const actors=[
  {name:'Seraphine',type:'paladin',coat:'#ddd7ea',deep:'#534e7b',trim:'#efc789',hair:'#f5e6cc',skin:'#efd9ce',glow:'#ffd995',weapon:'blade',height:245},
  {name:'Akari',type:'rogue',coat:'#9d3459',deep:'#291f49',trim:'#df8da5',hair:'#232035',skin:'#f1ccba',glow:'#ef78c1',weapon:'twin',height:228},
@@ -384,7 +384,7 @@ function effects(now){
    if(strength>0){
     glow(ctx,from.x,from.y,isMelee?51:92,col,strength*(isMelee?.24:.42));
     if(isMelee)brightSlash(from.x,from.y,26+strength*17,col,strength*.38,e.source<4?1:-1);
-    else if(e.kind==='defend')wardSigil(from.x,from.y,20+strength*31,col,strength*.85,p*.6);
+    else if(['defend','ward','bargain'].includes(e.kind))wardSigil(from.x,from.y,20+strength*31,col,strength*.85,p*.6);
     else magicalCircle(from.x,from.y,16+strength*30,col,strength*.86,p*3);
     if(!reduced)for(let j=0;j<10;j++){
      const a=j*T/10+now*.0017,r=48-24*strength+(j%3)*5;
@@ -392,14 +392,14 @@ function effects(now){
     }
    }
   }
-  if(e.kind==='heal'||e.kind==='defend'){
+  if(['heal','defend','ward','bargain'].includes(e.kind)){
    if(p<.40)continue;
    const ids=e.kind==='defend'?[0,1,2,3]:[e.target];
    const q=ease((p-.40)/.36),fade=1-ease((p-.78)/.22);
    for(const id of ids){
     const x=positions[id],y=ground[id]-actors[id].height*.5,r=38+q*48;
     glow(ctx,x,y,r*1.1,col,fade*.16);
-    if(e.kind==='defend')wardSigil(x,y,r,col,fade*.78,p*.3);
+    if(['defend','ward','bargain'].includes(e.kind))wardSigil(x,y,r,col,fade*.78,p*.3);
     else{
      ctx.save();ctx.strokeStyle=col;ctx.lineWidth=3;ctx.globalAlpha=fade*.7;
      ctx.beginPath();ctx.ellipse(x,y,r,r*.42,0,0,T);ctx.stroke();ctx.restore();
