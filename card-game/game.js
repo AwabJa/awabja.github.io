@@ -233,7 +233,7 @@ function drawTable(now){
  fanGlow.addColorStop(0,'#f2c78829');
  fanGlow.addColorStop(.6,'#9673a413');
  fanGlow.addColorStop(1,'#070b1800');
- ctx.fillStyle=fanGlow;ctx.fillRect(505,553,590,247);
+ ctx.fillStyle=fanGlow;ctx.fillRect(470,520,660,280);
  ctx.beginPath();ctx.ellipse(800,783,253,38,0,Math.PI*1.08,Math.PI*1.92);
  ctx.strokeStyle='#d4ac7e65';ctx.lineWidth=1.5;ctx.stroke();
  for(const dx of [-244,-183,0,183,244]){
@@ -244,6 +244,8 @@ function drawTable(now){
  // Draw back-to-front. Raised center cards win overlapping hit tests.
  const fan=handLayout(),middle=(fan.length-1)/2;
  const order=fan.slice().sort((a,b)=>Math.abs(b.slot-middle)-Math.abs(a.slot-middle));
+ // Give the card under the pointer the top layer so its illustration/title are visible.
+ if(game.hover>=0){const i=order.findIndex(c=>c.slot===game.hover);if(i>=0)order.push(...order.splice(i,1))}
  for(const c of order){
    ctx.save();ctx.translate(c.x+c.w/2,c.y+c.h*.88);ctx.rotate(c.angle);
    cardFrame(game.hand[c.slot],c.slot,-c.w/2,-c.h*.88,c.w,c.h);
