@@ -229,6 +229,7 @@ try {
       assert.equal(played.discard.length,1,'Card enters discard');
       await click(75,715);
       assert.equal((await state()).preview,'deck','Draw pile can be inspected');
+      if(width===844)await page.screenshot({path:join(root,'art-preview-deck.png')});
       await click(1190,136);
       assert.equal((await state()).preview,null,'Deck closes');
       await click(1492,700);
@@ -241,6 +242,7 @@ try {
       assert.equal(next.energy,next.maxEnergy,'Turn refills energy');
       assert.equal(next.hand.length,5,'New hand drawn');
       assert.deepEqual(next.hand,[5,6,7,8,9],'New second-turn cards introduce different tactics');
+      if(width===844)await page.screenshot({path:join(root,'art-preview-new-cards.png')});
       // A real play of one new card: expose makes the selected enemy vulnerable.
       const mark=await visiblePoint(1);
       assert(mark,'The newly drawn Akari mark card is tappable');
