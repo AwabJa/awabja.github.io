@@ -82,11 +82,11 @@ function fixedBackground(){
   // Shallow horizontal joints and receding stone slabs establish a real ground plane.
   for(let row=0;row<14;row++){
    const depth=Math.pow((row+1)/14,1.6),y=397+depth*400;
-   line(bg,0,y,W,y,row%3===0?'#b6a8c52b':'#8192ac16',row%4===0?2:1);
+   line(bg,0,y,W,y,row%3===0?'#b6a8c518':'#8192ac0b',row%4===0?2:1);
   }
   for(let column=-22;column<=22;column++){
    const near=800+column*64,far=800+column*13;
-   line(bg,far,396,near,800,column%4===0?'#96a6bf20':'#8796b214',column%5===0?2:1);
+   line(bg,far,396,near,800,column%4===0?'#96a6bf10':'#8796b209',column%5===0?2:1);
   }
   // Restrained reflected torchlight connects the background to the actors.
   for(const [x,color] of [[160,'#eaa579'],[780,'#f1b479'],[1455,'#e0a08c']]){
