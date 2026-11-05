@@ -9,47 +9,28 @@ const root=dirname(fileURLToPath(import.meta.url));
 const htmlRaw=await readFile(join(root,'index.html'),'utf8');
 const css=await readFile(join(root,'style.css'),'utf8');
 const jsRaw=await readFile(join(root,'game.js'),'utf8');
-const sceneJS=await readFile(join(root,'scene25d.js'),'utf8');
-const rebuiltSceneJS=await readFile(join(root,'scene-rebuild-prototype.js'),'utf8');
-const rebuildHtml=await readFile(join(root,'rebuild-preview.html'),'utf8');
-assert.match(rebuildHtml,/scene-rebuild-prototype\.js/, 'Preview uses the replacement renderer');
-assert.match(htmlRaw,/scene25d\.js/, 'Live game remains on the original renderer');
-assert.match(rebuiltSceneJS,/artSystem:'procedural character rigs and gothic courtyard'/, 'New scene uses independently articulated fighters');
-assert.match(rebuiltSceneJS,/function fixedBackground\(/, 'New courtyard redraws the environment instead of tinting the old asset');
-assert.match(rebuiltSceneJS,/function model\(/, 'Rigged character models replace whole-sprite wobble');
-assert.match(rebuiltSceneJS,/function effects\(/, 'Spell casting has independent timed effects');
-const background=(await readFile(join(root,'assets/backdrop2.webp'))).toString('base64');
-const actors=(await readFile(join(root,'assets/characters.webp'))).toString('base64');
+const sceneJS=await readFile(join(root,'scene-rebuild-prototype.js'),'utf8');
+assert.match(htmlRaw,/scene-rebuild-prototype\\.js/,'The live entry point loads the new renderer');
+assert.doesNotMatch(htmlRaw,/scene25d\\.js/,'The old renderer is not loaded');
+assert.match(sceneJS,/artSystem:'procedural character rigs and gothic courtyard'/,'The replacement has articulated fighters');
+assert.match(sceneJS,/function fixedBackground\\(/,'The replacement draws its own courtyard');
+assert.match(sceneJS,/function model\\(/,'The replacement renders articulated character models');
+assert.match(sceneJS,/function effects\\(/,'The replacement has independent spell choreography');
 const cards=(await readFile(join(root,'assets/cards-hd.webp'))).toString('base64');
-const framesAllies=(await readFile(join(root,'assets/frames-allies.webp'))).toString('base64');
-const framesEnemies=(await readFile(join(root,'assets/frames-enemies.webp'))).toString('base64');
 const manifest=JSON.parse(await readFile(join(root,'manifest.webmanifest'),'utf8'));
-assert.match(htmlRaw,/src="game\.js\?v=moonfall-v2-polish-1"/);
-assert.match(htmlRaw,/src="scene25d\.js\?v=moonfall-v2-polish-1"/);
+assert.match(htmlRaw,/src="game\\.js\\?v=moonfall-new-world-1"/);
+assert.match(htmlRaw,/src="scene-rebuild-prototype\\.js\\?v=moonfall-new-world-1"/);
 assert.match(htmlRaw,/<canvas id="sceneBackground"/);
 assert.match(htmlRaw,/<canvas id="sceneAtmosphere"/);
 assert.match(htmlRaw,/<canvas id="sceneWorld"/);
-assert.match(sceneJS,/function paintFixedBackground\(/);
-assert.match(sceneJS,/function paintAtmosphere\(/);
-assert.doesNotMatch(sceneJS,/Math\.sin\(t\*\.15\)\*3/,'No backdrop sway');
 assert.match(htmlRaw,/apple-mobile-web-app-capable/);
-assert.match(htmlRaw,/href="style\.css\?v=moonfall-v2-polish-1"/);
-assert.doesNotMatch(jsRaw,/sceneArt|battle-hd|atlas\.webp/,'Old painted battlefield not used');
-assert.match(sceneJS,/7 independent characters/);
-assert.match(sceneJS,/function cue\(e\)/,'Renderer exposes event-based action animation');
-assert.match(sceneJS,/function drawSpells\(now\)/,'Renderer draws spell and attack effects');
-assert.match(sceneJS,/function castOrigin\(i,now\)/,'Magic is anchored to a moving character landmark');
-assert.match(jsRaw,/function impactCue\(/,'Combat changes are queued for impact frames');
-assert.match(jsRaw,/flushImpacts\(now\)/,'Combat state is resolved during the animation loop');
-assert.match(sceneJS,/function clipActor\(i,pose,left,top,w,h\)/,'Sprite animation frames clip out stray background pixels');
-assert.match(sceneJS,/function actorMove\(i,now\)/,'Sprites have wind-up and hit reactions');
-assert.match(sceneJS,/function poseFor\(i,now,alive\)/,'Dedicated action frames are selected by game events');
-assert(framesAllies.length>500000&&framesEnemies.length>500000,'High-quality prebaked sprite frame atlases exist');
-assert.match(sceneJS,/drawActor\(/);
-assert.doesNotMatch(sceneJS,/getContext\('webgl'/);
-assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-clean-sprites-1'/);
-assert(cards.length>100000,'Card art must be present');
-assert(background.length>150000 && actors.length>100000,'High-resolution illustration layers must be present');
+assert.match(htmlRaw,/href="style\\.css\\?v=moonfall-new-world-1"/);
+assert.match(jsRaw,/function impactCue\\(/,'Combat actions resolve on the rendered impact frames');
+assert.match(jsRaw,/flushImpacts\\(now\\)/,'Gameplay updates share the animation clock');
+assert.match(jsRaw,/SEE ANIMATIONS/,'The game keeps its spell-animation showcase');
+assert.match(jsRaw,/cardsArt\\.src='assets\\/cards-hd\\.webp\\?v=moonfall-clean-sprites-1'/);
+assert(cards.length>100000,'Card art is available');
+assert.doesNotMatch(sceneJS,/assets\\/frames-allies\\.webp|assets\\/backdrop2\\.webp/,'The rebuilt scene does not need the old art');
 assert.equal(manifest.display,'fullscreen');
 assert.equal(manifest.orientation,'landscape');
 assert.match(css,/\.game-shell\{position:relative;width:100vw!important;height:100dvh!important/);
@@ -59,10 +40,7 @@ const html=htmlRaw.replace(/<meta http-equiv="Content-Security-Policy"[^>]+>/,''
   .replace(/<link rel="stylesheet"[^>]+>/,`<style>${css}</style>`)
   .replace(/<script src="[^"]+" defer><\/script>/g,'');
 const js=jsRaw.replace("cardsArt.src='assets/cards-hd.webp?v=moonfall-clean-sprites-1';",`cardsArt.src='data:image/webp;base64,${cards}';`);
-const scene=sceneJS.replace("background.src='assets/backdrop2.webp?v=moonfall-clean-sprites-1';",`background.src='data:image/webp;base64,${background}';`)
- .replace("actors.src='assets/characters.webp?v=moonfall-clean-sprites-1';",`actors.src='data:image/webp;base64,${actors}';`)
- .replace("frameAtlases[0].src='assets/frames-allies.webp?v=moonfall-clean-sprites-1';",`frameAtlases[0].src='data:image/webp;base64,${framesAllies}';`)
- .replace("frameAtlases[1].src='assets/frames-enemies.webp?v=moonfall-clean-sprites-1';",`frameAtlases[1].src='data:image/webp;base64,${framesEnemies}';`);
+const scene=sceneJS;
 let executablePath;
 for (const candidate of [process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/chromium'].filter(Boolean)) {
   try {await access(candidate);executablePath=candidate;break;} catch {}
@@ -93,19 +71,16 @@ try {
     assert(fixedAfter.atmosphereFrames>fixedStart.atmosphereFrames,'Atmosphere independently animates');
     assert.equal(fixedAfter.layerCount,4,'Four independent scene and HUD layers');
     const modelStats=await page.evaluate(()=>window.MoonfallScene?.getStats());
-    assert.equal(modelStats?.actors,7,'Seven independently rendered anime character sprites');
-    assert.equal(modelStats?.castAnchors.length,7,'Each character has an independent casting origin');
-    assert.equal(modelStats?.ground.length,7,'Seven fighters share a stable battle ground plane');
-    assert(modelStats.castAnchors.every(p=>p.x>=60&&p.x<=1510&&p.y>=140&&p.y<=450),'Every spell origin stays within the battlefield');
-    assert.equal(modelStats?.cutouts,7,'Seven cleaned silhouettes clip out old scene pixels');
-    assert.equal(modelStats?.cutoutMode,'foreground-only animated silhouettes');
-    assert.equal(modelStats?.mode,'layered-2.5D','Renderer is an illustrated 2.5D scene');
-    await page.waitForFunction(()=>window.MoonfallScene.getStats().atlasLoaded.every(Boolean),null,{timeout:10000});
-    const frames=await page.evaluate(()=>window.MoonfallScene.getStats());
-    assert.equal(frames.framesPerAction,6,'Six individually baked frames per action');
-    assert.deepEqual(frames.actionNames,['idle','walk','attack','cast','hurt']);
-    assert.equal(frames.animationStates.length,7,'All seven characters have animated states');
-    assert.equal(frames.actorOffsets.length,7,'Animation positions are independently tracked');
+    assert.equal(modelStats?.actors,7,'Seven rebuilt characters');
+    assert.equal(modelStats?.mode,'rigged-illustration','The rebuilt renderer is live');
+    assert.equal(modelStats?.assetDependencies,0,'New art does not depend on legacy sprite atlases');
+    assert.equal(modelStats?.castAnchors.length,7,'Seven moving casting-hand anchors');
+    assert.equal(modelStats?.ground.length,7,'All fighters are grounded');
+    assert.equal(modelStats?.riggedParts,70,'The new model renderer has articulated body components');
+    assert(modelStats.castAnchors.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)),'Casting origins are finite');
+    assert(modelStats.castAnchors.every(p=>p.x>=40&&p.x<=1550&&p.y>=70&&p.y<=470),'Casting origins remain within the battlefield');
+    assert.equal(modelStats.animationStates.length,7,'All seven character rigs have states');
+    assert.equal(modelStats.actorOffsets.length,7,'All seven actors move independently');
     assert.match(jsRaw,/SEE ANIMATIONS/,'A visible animation showcase exists');
     assert(Math.abs(box.width-width)<=1 && Math.abs(box.height-height)<=1,'Canvas fills entire viewport');
     const raster=await page.evaluate(()=>({w:document.getElementById('game').width,h:document.getElementById('game').height}));
@@ -219,30 +194,6 @@ try {
     assert.deepEqual(errors,[],'No browser JavaScript errors at '+width+'×'+height);
     await page.close();
   }
-  // Preview smoke test: the new renderer is intentionally isolated from the production index.
-  {
-    const page=await browser.newPage({viewport:{width:1440,height:800}});
-    const errors=[];
-    page.on('pageerror',error=>errors.push(error.message));
-    await page.setContent(html);
-    await page.addScriptTag({content:rebuiltSceneJS});
-    await page.addScriptTag({content:js});
-    await page.locator('#loadMessage').waitFor({state:'hidden'});
-    await page.waitForFunction(()=>window.MoonfallScene.getStats().backgroundPaints>=1 && window.MoonfallScene.getStats().frames>=3,null,{timeout:10000});
-    const before=await page.evaluate(()=>window.MoonfallScene.getStats());
-    assert.equal(before.mode,'rigged-illustration','Preview renderer uses new original rigged models');
-    assert.equal(before.actors,7,'All seven rebuilt fighters render');
-    assert.equal(before.assetDependencies,0,'Preview art does not depend on old sprite atlases');
-    assert(before.castAnchors.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)),'Every fighter has a real casting hand anchor');
-    assert(before.castAnchors.every(p=>p.x>40&&p.x<1550&&p.y>70&&p.y<470),'Hands are in plausible battlefield positions');
-    await page.evaluate(()=>window.MoonfallScene.cue({kind:'bolt',source:3,target:4}));
-    await page.waitForFunction(()=>window.MoonfallScene.getStats().animationStates[3]==='cast',null,{timeout:1500});
-    await page.waitForFunction(initial=>Math.abs(window.MoonfallScene.getStats().castAnchors[3].x-initial)>12,before.castAnchors[3].x,{timeout:1500});
-    const during=await page.evaluate(()=>window.MoonfallScene.getStats());
-    assert(Math.abs(during.castAnchors[3].x-before.castAnchors[3].x)>12,'The casting hand physically moves during spell wind-up');
-    assert.equal(during.backgroundPaints,before.backgroundPaints,'Battlefield architecture remains stationary');
-    assert.deepEqual(errors,[],'Preview has no JavaScript errors');
-    await page.close();
-  }
-  console.log('MOONFALL FRAME ANIMATIONS PASSED: production game and isolated visual rebuild preview');
+  // The rebuilt renderer is tested directly by the production gameplay loop above.
+  console.log('MOONFALL REBUILD PASSED: new courtyard, seven articulated fighters, synced combat and mobile controls');
 } finally {await browser.close();}
