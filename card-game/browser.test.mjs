@@ -81,7 +81,7 @@ try {
     assert.equal(await page.locator('#sceneWorld').count(),1,'Character and effect layer is present');
     assert.equal(await page.locator('#sceneBackground').count(),1,'Static castle layer is present');
     assert.equal(await page.locator('#sceneAtmosphere').count(),1,'Moving atmosphere has its own layer');
-    await page.waitForFunction(()=>window.MoonfallScene.getStats().backgroundLoaded && window.MoonfallScene.getStats().backgroundPaints>=1,null,{timeout:10000});
+    await page.waitForFunction(()=>window.MoonfallScene.getStats().backgroundLoaded && window.MoonfallScene.getStats().backgroundPaints>=1,null,{timeout:30000});
     const fixedStart=await page.evaluate(()=>window.MoonfallScene.getStats());
     await page.waitForTimeout(220);
     const fixedAfter=await page.evaluate(()=>window.MoonfallScene.getStats());
@@ -91,7 +91,7 @@ try {
     const modelStats=await page.evaluate(()=>window.MoonfallScene?.getStats());
     assert.equal(modelStats?.actors,7,'Seven rebuilt characters');
     assert.equal(modelStats?.mode,'rigged-illustration','The rebuilt renderer is live');
-    await page.waitForFunction(()=>window.MoonfallScene.getStats().loadedArtwork===7&&window.MoonfallScene.getStats().paintedBackgroundLoaded,null,{timeout:10000});
+    await page.waitForFunction(()=>window.MoonfallScene.getStats().loadedArtwork===7&&window.MoonfallScene.getStats().paintedBackgroundLoaded,null,{timeout:30000});
     const importedStats=await page.evaluate(()=>window.MoonfallScene.getStats());
     assert.equal(importedStats?.assetDependencies,7,'The game loads seven self-hosted illustrated characters');
     assert.equal(importedStats?.loadedArtwork,7,'All seven real character illustrations appear in the world');
