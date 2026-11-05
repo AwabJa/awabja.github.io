@@ -437,10 +437,14 @@ function effects(now){
     brightSlash(x,y,30+flight*24,col,.35+Math.sin(u*PI)*.61,e.source<4?1:-1);
     if(!reduced)for(let n=0;n<5;n++)particle(x-(to.x-from.x)*n*.012,y+12*n*.35,2+n*.35,col,(1-n/6)*.65);
    }else{
-    glow(ctx,x,y,58,col,.35);
+    glow(ctx,from.x,from.y,46,col,(1-u)*.34);
+    magicalCircle(from.x,from.y,22,col,.64*(1-u)+.26,p*5);
+    glow(ctx,x,y,58,col,.39);
     magicalCircle(x,y,14,col,.92,u*5);
-    if(!reduced)lightningPath(from.x,from.y,x,y,col,(1-u)*.75,e.source+e.target);
-    particle(x,y,6,'#f7f8ff',.91);
+    // A visible electrical path makes the spell read as a release from Kael,
+    // rather than a floating rune that only appears on the enemy.
+    if(!reduced)lightningPath(from.x,from.y,x,y,col,.42+(1-u)*.52,e.source+e.target);
+    particle(x,y,7,'#f7f8ff',.96);
    }
   }
   if(p>=e.impact){
