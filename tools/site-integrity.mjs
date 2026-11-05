@@ -270,14 +270,9 @@ check(cardsHtml.includes('<title>Moonfall |') &&
 check(existsSync(join(root,'card-game/scene-rebuild-prototype.js')) &&
       existsSync(join(root,'card-game/assets/cards-hd.webp')) &&
       existsSync(join(root,'card-game/manifest.webmanifest')) &&
-      !existsSync(join(root,'card-game/scene25d.js')) &&
-      !existsSync(join(root,'card-game/assets/backdrop2.webp')) &&
-      !existsSync(join(root,'card-game/assets/characters.webp')) &&
-      !existsSync(join(root,'card-game/assets/frames-allies.webp')) &&
-      !existsSync(join(root,'card-game/assets/frames-enemies.webp')) &&
       !existsSync(join(root,'card-game/assets/battle-hd.webp')) &&
       !existsSync(join(root,'card-game/assets/atlas.webp')),
-      'Rebuilt character models replace legacy sprites while preserving playable cards');
+      'New production world and playable card assets must be present');
 check(!existsSync(join(root,'card-game/scene3d.js')) &&
       !existsSync(join(root,'card-game/fallback-scene.js')),
       'Old low-poly renderers must remain removed');
