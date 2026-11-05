@@ -73,7 +73,7 @@ try {
     await page.goto(origin+'/index.html',{waitUntil:'domcontentloaded'});
     await page.locator('#loadMessage').waitFor({state:'hidden'});
     const canvas=page.locator('#game');
-    const box=await canvas.boundingBox();
+    const box=await page.evaluate(()=>{const r=document.getElementById('game').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height}});
     assert(box && box.width>=100 && box.height>=50,'Canvas must render at '+width+'×'+height);
     assert.equal(await page.locator('#sceneWorld').count(),1,'Character and effect layer is present');
     assert.equal(await page.locator('#sceneBackground').count(),1,'Static castle layer is present');
@@ -118,7 +118,7 @@ try {
     if(width===844||width===932){
       assert(box.height<=height+1,'Landscape canvas fits phone height');
       const click=async(x,y)=>{
-        const rect=await canvas.boundingBox();
+        const rect=await page.evaluate(()=>{const r=document.getElementById('game').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height}});
         await page.mouse.click(rect.x+x/1600*rect.width,rect.y+y/800*rect.height);
         await page.waitForTimeout(65);
       };
@@ -183,7 +183,7 @@ try {
       const inspector=page.locator('#cardInspector');
       await inspector.waitFor({state:'visible'});
       assert.equal(await page.locator('#cardInspectorName').textContent(),'Crimson Bloom','Mobile inspector shows the real card title');
-      assert((await page.locator('#cardInspectorPlay').boundingBox()).height>=40,'Mobile play action has a finger-sized touch target');
+      assert((await page.evaluate(()=>document.getElementById('cardInspectorPlay').getBoundingClientRect().height))>=40,'Mobile play action has a finger-sized touch target');
       await page.locator('#cardInspectorCancel').click();
       assert.equal((await state()).preview,null,'Mobile cancel closes preview');
       const left=await visiblePoint(0);
