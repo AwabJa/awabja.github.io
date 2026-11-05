@@ -111,6 +111,20 @@ function hpBar(x,y,w,h,amount,total,friend){rr(x,y,w,h,2,'#111621db','#736968',1
  const ratio=Math.max(0,Math.min(1,amount/total));
  if(ratio>0)rr(x+2,y+2,Math.max(0,(w-4)*ratio),h-4,1,gradient(x,y,w,h,friend?[[0,'#8feaaf'],[1,'#257b72']]:[[0,'#ffa2a4'],[1,'#a03960']]));
 }
+function enemyIntent(i,turn=game.turn){
+ if(i===0)return turn%3===0?{kind:'reap',label:'REAP',damage:52}:{kind:'bleed',label:'BLEED',damage:39};
+ if(i===1)return turn%3===2?{kind:'disrupt',label:'DISRUPT',damage:29}:turn%3===0?{kind:'siphon',label:'SIPHON',damage:40}:{kind:'siphon',label:'DRAIN',damage:34};
+ return turn%3===2?{kind:'fortify',label:'FORTIFY',damage:0}:{kind:'crush',label:'CRUSH',damage:58};
+}
+function enemyTarget(i,party=game.allies){
+ const living=party.map((ally,j)=>ally.hp>0?j:-1).filter(j=>j>=0);
+ if(!living.length)return -1;
+ const guarded=living.find(j=>party[j].guardTurns>0);
+ if(guarded!==undefined)return guarded;
+ if(i===0)return living.reduce((a,b)=>party[a].hp<=party[b].hp?a:b);
+ if(i===1)return living.reduce((a,b)=>party[a].shield<=party[b].shield?a:b);
+ return living.reduce((a,b)=>party[a].hp>=party[b].hp?a:b);
+}
 function drawHeader(){
  // Floating HUD, not a website navigation strip.
  const grad=ctx.createLinearGradient(0,0,0,106);
@@ -118,7 +132,7 @@ function drawHeader(){
  ctx.fillStyle=grad;ctx.fillRect(0,0,W,106);
  text('✧',31,37,42,THEME.gold,'Georgia');
  text('MOONFALL',79,35,34,THEME.cream,'Georgia','left','700');
- text('ILLUSTRATED CARDS',300,39,14,'#e7d4b2','system-ui','left','700');
+ text('TACTICAL COURT',300,39,14,'#e7d4b2','system-ui','left','700');
  if(isResolving()){
   rr(433,22,179,31,7,'#292239ed','#e7c690bd',1);
   text('✦ RESOLVING',523,38,13,'#ffdfa2','system-ui','center','800');
@@ -140,7 +154,9 @@ function scene(){
   text(a.name,x,gaugeY+11,15,THEME.cream,'Georgia','center','600');
   hpBar(x-60,gaugeY+22,120,10,a.hp,a.maxHp,true);
   text(a.hp+' / '+a.maxHp,x,gaugeY+39,12,'#dcf7e2','system-ui','center','700');
-  if(a.shield>0)text('◆'+a.shield,x+62,gaugeY+10,10,'#a9d5ff','system-ui','right');
+  if(a.shield>0)text('SH '+a.shield,x+62,gaugeY+10,11,'#a9d5ff','system-ui','right');
+  if(a.guardTurns>0)text('GUARD',x-65,gaugeY-13,10,'#f7d7a8','system-ui','left','750');
+  if(a.bleedTurns>0)text('BLEED',x+67,gaugeY-13,10,'#f4a3a9','system-ui','right','750');
   if(a.hp===0){rr(x-70,gaugeY,140,45,6,'#0a0e17a9');text('FALLEN',x,gaugeY+20,13,THEME.red,'Georgia','center');}
   register(x-70,190,140,gaugeY+45-190,'ally',i,a.hp>0);
  }
@@ -151,7 +167,13 @@ function scene(){
   text(e.name,x,gaugeY+11,15,THEME.cream,'Georgia','center','600');
   hpBar(x-61,gaugeY+22,122,10,e.hp,e.maxHp,false);
   text(e.hp+' / '+e.maxHp,x,gaugeY+39,12,'#ffe3e8','system-ui','center','700');
-  if(e.burnTurns>0)text('✦',x+62,gaugeY+10,13,'#f8ad75','Georgia','right');
+  const intent=enemyIntent(i);
+  rr(x-71,gaugeY-34,142,27,6,'#191627df','#da9c8f99',1);
+  fittedCardText(intent.label+(intent.damage?' '+intent.damage:''),x,gaugeY-20,130,12,10,'#f3cebc','system-ui','850');
+  if(e.shield>0)text('SH '+e.shield,x+70,gaugeY+11,10,'#c5dffb','system-ui','right','800');
+  if(e.weakTurns>0)text('WEAK',x+69,gaugeY+40,9,'#b2eac5','system-ui','right','800');
+  if(e.exposedTurns>0)text('EXPOSED',x+70,gaugeY+54,10,'#fac8a7','system-ui','right','800');
+  if(e.burnTurns>0)text('BURN',x-70,gaugeY+54,10,'#f8ad75','system-ui','left','800');
   if(e.hp===0){rr(x-71,gaugeY,142,45,6,'#0b0d17b8');text('DEFEATED',x,gaugeY+20,12,'#ffd0bb','Georgia','center');}
   register(x-72,190,144,gaugeY+45-190,'enemy',i,e.hp>0);
  }
