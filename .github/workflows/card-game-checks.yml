@@ -44,5 +44,6 @@ jobs:
           path: |
             card-game/art-preview.png
             card-game/art-preview-phone.png
+            card-game/art-preview-spell.png
           if-no-files-found: warn
           retention-days: 7
