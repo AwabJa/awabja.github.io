@@ -309,43 +309,131 @@ function magicalCircle(x,y,r,color,alpha=1,spin=0){ctx.save();ctx.globalAlpha=al
  for(let q=0;q<8;q++){const a=q*T/8+spin;line(ctx,x+Math.cos(a)*r*.76,y+Math.sin(a)*r*.76,x+Math.cos(a)*r*1.12,y+Math.sin(a)*r*1.12,color,1.5)}
  ctx.beginPath();for(let i=0;i<8;i++){const a=spin+i*T/8;i?ctx.lineTo(x+Math.cos(a)*r*.68,y+Math.sin(a)*r*.68):ctx.moveTo(x+Math.cos(a)*r*.68,y+Math.sin(a)*r*.68)}ctx.closePath();ctx.stroke();ctx.restore()}
 function particle(x,y,r,color,alpha=1){ctx.save();ctx.globalAlpha=alpha;ellipse(ctx,x,y,r,r,color);ctx.restore()}
-function effects(now){activeCueCount=0;cues=cues.filter(e=>now<e.start+e.duration);
- for(const e of cues){const p=(now-e.start)/e.duration;if(p<0||p>1)continue;activeCueCount++;
+// Each spell family has a distinct silhouette: blade arcs, lightning, petals,
+ // rising healing lights or interlocking protective runes.
+function wardSigil(x,y,r,color,opacity,rotation=0){
+ ctx.save();ctx.globalAlpha=opacity;ctx.translate(x,y);ctx.rotate(rotation);
+ ctx.strokeStyle=color;ctx.lineWidth=3;
+ for(const factor of [1,.78]){
+  ctx.beginPath();
+  for(let i=0;i<6;i++){const a=T*i/6-PI/2;
+   if(!i)ctx.moveTo(Math.cos(a)*r*factor,Math.sin(a)*r*factor);
+   else ctx.lineTo(Math.cos(a)*r*factor,Math.sin(a)*r*factor)}
+  ctx.closePath();ctx.stroke();
+ }
+ for(let i=0;i<6;i++){const a=T*i/6;
+  line(ctx,Math.cos(a)*r*.48,Math.sin(a)*r*.48,Math.cos(a)*r*.91,Math.sin(a)*r*.91,color,1.5)}
+ ctx.restore();
+}
+function brightSlash(x,y,r,color,opacity,dir=1){
+ ctx.save();ctx.globalAlpha=opacity;ctx.lineCap='round';
+ ctx.shadowColor=color;ctx.shadowBlur=18;ctx.strokeStyle=color;ctx.lineWidth=9;
+ ctx.beginPath();ctx.ellipse(x,y,r,r*.55,dir*.44,-PI*.70,PI*.52);ctx.stroke();
+ ctx.shadowBlur=0;ctx.strokeStyle='#f8f9ff';ctx.lineWidth=2.2;ctx.stroke();ctx.restore();
+}
+function lightningPath(ax,ay,bx,by,color,opacity,seed=0){
+ ctx.save();ctx.globalAlpha=opacity;ctx.lineCap='round';ctx.lineJoin='round';
+ for(let layer=0;layer<2;layer++){
+  ctx.strokeStyle=layer?'#f8f9ff':color;ctx.lineWidth=layer?2:8;
+  ctx.shadowColor=color;ctx.shadowBlur=layer?4:19;ctx.beginPath();
+  ctx.moveTo(ax,ay);
+  for(let i=1;i<8;i++){const u=i/8,w=(Math.sin(u*PI)*16)*(rand(seed*17+i*29)-.5);
+   const dx=bx-ax,dy=by-ay,l=Math.max(1,Math.hypot(dx,dy));
+   ctx.lineTo(ax+dx*u-dy/l*w,ay+dy*u+dx/l*w)}
+  ctx.lineTo(bx,by);ctx.stroke();
+ }
+ ctx.restore();
+}
+function crimsonPetal(x,y,rotation,scale,opacity){
+ ctx.save();ctx.translate(x,y);ctx.rotate(rotation);ctx.scale(scale,scale);ctx.globalAlpha=opacity;
+ path(ctx,[[0,0],[-6,-12],[0,-24],[8,-14]],'#ff668f','#ffe1bd',1);
+ ctx.restore();
+}
+function effects(now){
+ activeCueCount=0;
+ cues=cues.filter(e=>now<e.start+e.duration);
+ for(const e of cues){
+  const p=(now-e.start)/e.duration;
+  if(p<0||p>1)continue;
+  activeCueCount++;
   const from=castPoints[e.source],to={x:positions[e.target],y:ground[e.target]-actors[e.target].height*.51},col=e.color;
-  if(e.kind!=='burn'&&p<.42){const strength=ease((p-.04)/.29)*(1-ease((p-.35)/.08));if(strength>0){
-    glow(ctx,from.x,from.y,92,col,strength*.42);magicalCircle(from.x,from.y,16+strength*32,col,strength*.9,p*3);
-    for(let j=0;j<15;j++){const a=j*T/15+now*.002,r=62-33*strength+(j%3)*7;
-     particle(from.x+Math.cos(a)*r,from.y+Math.sin(a)*r,1.1+(j%4)*.6,col,strength*.82)}
-  }}
+  const isMelee=e.kind==='strike'||e.kind==='enemy';
+  // Anticipation belongs to the caster, not a magic circle spawned on the enemy.
+  if(e.kind!=='burn'&&p<.40){
+   const strength=ease((p-.03)/.30)*(1-ease((p-.35)/.08));
+   if(strength>0){
+    glow(ctx,from.x,from.y,isMelee?51:92,col,strength*(isMelee?.24:.42));
+    if(isMelee)brightSlash(from.x,from.y,26+strength*17,col,strength*.38,e.source<4?1:-1);
+    else if(e.kind==='defend')wardSigil(from.x,from.y,20+strength*31,col,strength*.85,p*.6);
+    else magicalCircle(from.x,from.y,16+strength*30,col,strength*.86,p*3);
+    if(!reduced)for(let j=0;j<10;j++){
+     const a=j*T/10+now*.0017,r=48-24*strength+(j%3)*5;
+     particle(from.x+Math.cos(a)*r,from.y+Math.sin(a)*r,1.1+(j%4)*.55,col,strength*.7);
+    }
+   }
+  }
   if(e.kind==='heal'||e.kind==='defend'){
-   if(p<.4)continue;
-   const ids=e.kind==='defend'?[0,1,2,3]:[e.target];const q=ease((p-.40)/.38),fade=1-ease((p-.77)/.23);
-   for(const id of ids){const x=positions[id],y=ground[id]-actors[id].height*.5;
-    glow(ctx,x,y,87,col,fade*.20);magicalCircle(x,y,28+q*56,col,fade*.75,-p*1.5);
-    for(let n=0;n<13;n++){const a=n*T/13,rad=40+q*70;
-     particle(x+Math.cos(a)*rad,y+Math.sin(a)*rad*.6,1.8,col,fade*.85)}
-   }continue
+   if(p<.40)continue;
+   const ids=e.kind==='defend'?[0,1,2,3]:[e.target];
+   const q=ease((p-.40)/.36),fade=1-ease((p-.78)/.22);
+   for(const id of ids){
+    const x=positions[id],y=ground[id]-actors[id].height*.5,r=38+q*48;
+    glow(ctx,x,y,r*1.1,col,fade*.16);
+    if(e.kind==='defend')wardSigil(x,y,r,col,fade*.78,p*.3);
+    else{
+     ctx.save();ctx.strokeStyle=col;ctx.lineWidth=3;ctx.globalAlpha=fade*.7;
+     ctx.beginPath();ctx.ellipse(x,y,r,r*.42,0,0,T);ctx.stroke();ctx.restore();
+     if(!reduced)for(let n=0;n<12;n++){
+      const a=n*T/12+id,y2=y+55-q*105+(n%3)*9;
+      particle(x+Math.cos(a)*(20+n%4*12),y2,2+(n%3),col,fade*(.5+rand(n+id)*.5));
+     }
+    }
+   }continue;
   }
   if(e.kind==='burn'){
-   if(p<e.impact)continue;const q=clamp((p-e.impact)/(1-e.impact));glow(ctx,to.x,to.y,85,col,(1-q)*.25);
-   for(let n=0;n<19;n++){const theta=n*T/19;particle(to.x+Math.cos(theta)*(23+q*61),to.y+Math.sin(theta)*36-q*48,2.4,col,(1-q)*.85)}continue;
+   if(p<e.impact)continue;
+   const q=clamp((p-e.impact)/(1-e.impact)),fade=1-ease(q);
+   glow(ctx,to.x,to.y,92,col,fade*.2);
+   for(let n=0;n<16;n++){const a=n*T/16;
+    const x=to.x+Math.cos(a)*(19+q*49),y=to.y+Math.sin(a)*22-q*72;
+    particle(x,y,2.2+n%3,col,fade*.72)}
+   continue;
   }
   if(e.kind==='area'){
-   if(p<e.impact)continue;const q=clamp((p-e.impact)/(1-e.impact)),r=22+ease(q/.6)*133;
-   glow(ctx,to.x,to.y,r*1.25,col,(1-q)*.23);
-   magicalCircle(to.x,to.y,r,col,(1-q)*.85,q*1.8);
-   for(let n=0;n<22;n++){const a=n*T/22+q*2.3;particle(to.x+Math.cos(a)*r,to.y+Math.sin(a)*r*.66,2.3,col,(1-q)*.95)}continue;
+   if(p<e.impact)continue;
+   const q=clamp((p-e.impact)/(1-e.impact)),fade=1-ease(q),r=22+ease(q/.62)*130;
+   glow(ctx,to.x,to.y,r*1.2,col,fade*.19);
+   magicalCircle(to.x,to.y,r*.75,col,fade*.56,q*1.4);
+   for(let n=0;n<18;n++){const a=n*T/18+q*1.5;
+    const x=to.x+Math.cos(a)*r,y=to.y+Math.sin(a)*r*.7-q*19;
+    if(!reduced)crimsonPetal(x,y,a+q*4,.7+(n%4)*.17,fade*.8);
+    else particle(x,y,3,col,fade);
+   }continue;
   }
-  if(p>=.37&&p<=e.impact){const u=ease((p-.37)/(e.impact-.37)),x=from.x+(to.x-from.x)*u,y=from.y+(to.y-from.y)*u-63*Math.sin(u*PI);
-   for(let n=0;n<10;n++){const q=clamp(u-n*.03),px=from.x+(to.x-from.x)*q,py=from.y+(to.y-from.y)*q-63*Math.sin(q*PI);
-    particle(px,py,3.4+n*.48,col,(1-n/10)*.62)}
-   glow(ctx,x,y,48,col,.55);magicalCircle(x,y,13,col,.95,u*5);particle(x,y,7,'#f9f8ff',.9)
+  const release=.37,flight=clamp((p-release)/(e.impact-release));
+  if(p>=release&&p<=e.impact){
+   const u=ease(flight),x=from.x+(to.x-from.x)*u,y=from.y+(to.y-from.y)*u-55*Math.sin(u*PI);
+   if(isMelee){
+    brightSlash(x,y,30+flight*24,col,.35+Math.sin(u*PI)*.61,e.source<4?1:-1);
+    if(!reduced)for(let n=0;n<5;n++)particle(x-(to.x-from.x)*n*.012,y+12*n*.35,2+n*.35,col,(1-n/6)*.65);
+   }else{
+    glow(ctx,x,y,58,col,.35);
+    magicalCircle(x,y,14,col,.92,u*5);
+    if(!reduced)lightningPath(from.x,from.y,x,y,col,(1-u)*.75,e.source+e.target);
+    particle(x,y,6,'#f7f8ff',.91);
+   }
   }
-  if(p>=e.impact){const q=clamp((p-e.impact)/(1-e.impact)),fade=1-ease(q),r=14+ease(q/.5)*129;
-   glow(ctx,to.x,to.y,r,col,fade*.25);
-   magicalCircle(to.x,to.y,r,col,fade*.94,now*.002);
-   for(let n=0;n<24;n++){const a=n*T/24+q*.7,dist=r*(.6+rand(n*17)*.45);
-    particle(to.x+Math.cos(a)*dist,to.y+Math.sin(a)*dist*.72,2.3+rand(n)*2.8,col,fade*.90)}
+  if(p>=e.impact){
+   const q=clamp((p-e.impact)/(1-e.impact)),fade=1-ease(q),r=13+ease(q/.5)*116;
+   glow(ctx,to.x,to.y,r,col,fade*.22);
+   if(isMelee)brightSlash(to.x,to.y,r*.8,col,fade*.9,e.source<4?1:-1);
+   else{
+    magicalCircle(to.x,to.y,r*.63,col,fade*.74,now*.002);
+    if(!reduced)lightningPath(to.x-r*.49,to.y+r*.20,to.x+r*.48,to.y-r*.22,col,fade*.66,e.source+29);
+   }
+   for(let n=0;n<20;n++){const a=n*T/20+q*.5,dist=r*(.53+rand(n*17)*.44);
+    if(!reduced||n%3===0)particle(to.x+Math.cos(a)*dist,to.y+Math.sin(a)*dist*.7,2.2+rand(n)*2.4,col,fade*.83);
+   }
   }
  }
 }
