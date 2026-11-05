@@ -37,11 +37,11 @@ const artwork=[cardsArt];
 cardsArt.src='assets/cards-hd.webp?v=moonfall-clean-sprites-1';
 const W=1600,H=800,THEME={gold:'#f1d4a1',cream:'#f7e7d0',muted:'#bac0cb',blue:'#a6cbff',red:'#ef8799',green:'#9be3b6'};
 const CARDS=[
- {id:'shadow',name:'Shadow Step',rarity:'Rare',cost:1,kind:'attack',description:'Deal 135 damage to your selected enemy. If this defeats it, regain 1 energy.',amount:135,flavor:'Disappear into the night. Return as a blade.',symbol:'✧',hue:'#c4a6ff'},
- {id:'aegis',name:'Guardian Aegis',rarity:'Epic',cost:2,kind:'defend',description:'Give every surviving ally 70 shield, blocking incoming enemy damage.',amount:70,flavor:'Even the moon cannot pierce this ward.',symbol:'⬡',hue:'#e8d09a'},
- {id:'bloom',name:'Crimson Bloom',rarity:'Legendary',cost:3,kind:'area',description:'Deal 95 damage to all living enemies. Apply 20 burn for two turns.',amount:95,flavor:'Let the scarlet petals fall.',symbol:'✿',hue:'#ffbaaf'},
- {id:'healing',name:'Healing Wind',rarity:'Rare',cost:2,kind:'heal',description:'Restore 100 health to your selected ally, up to their maximum.',amount:100,flavor:'A soft wind follows the fallen.',symbol:'✳',hue:'#aae6c3'},
- {id:'bolt',name:'Arcane Bolt',rarity:'Common',cost:1,kind:'attack',description:'Deal 115 lightning damage to the selected enemy.',amount:115,flavor:'A spark can shatter the darkness.',symbol:'ϟ',hue:'#a6bbff'}
+ {id:'shadow',name:'Shadow Step',rarity:'Rare',cost:1,kind:'attack',description:'Deal 135 damage to your selected enemy. If this defeats it, regain 1 energy.',amount:135,flavor:'Disappear into the night. Return as a blade.',hue:'#c4a6ff'},
+ {id:'aegis',name:'Guardian Aegis',rarity:'Epic',cost:2,kind:'defend',description:'Give every surviving ally 70 shield, blocking incoming enemy damage.',amount:70,flavor:'Even the moon cannot pierce this ward.',hue:'#e8d09a'},
+ {id:'bloom',name:'Crimson Bloom',rarity:'Legendary',cost:3,kind:'area',description:'Deal 95 damage to all living enemies. Apply 20 burn for two turns.',amount:95,flavor:'Let the scarlet petals fall.',hue:'#ffbaaf'},
+ {id:'healing',name:'Healing Wind',rarity:'Rare',cost:2,kind:'heal',description:'Restore 100 health to your selected ally, up to their maximum.',amount:100,flavor:'A soft wind follows the fallen.',hue:'#aae6c3'},
+ {id:'bolt',name:'Arcane Bolt',rarity:'Common',cost:1,kind:'attack',description:'Deal 115 lightning damage to the selected enemy.',amount:115,flavor:'A spark can shatter the darkness.',hue:'#a6bbff'}
 ];
 const ALLIES=[
  {name:'Seraphine',maxHp:190,x:220},{name:'Akari',maxHp:180,x:380},{name:'Elowen',maxHp:185,x:540},{name:'Kael',maxHp:195,x:700}
@@ -161,12 +161,12 @@ function cardFrame(index,slot,x,y,w,h,large=false){
    ctx.save();ctx.beginPath();ctx.roundRect(dx,dy,dw,dh,4);ctx.clip();
    ctx.drawImage(cardsArt,sx,sy,sw,sh,dx,dy,dw,dh);ctx.restore();
  }
- else{glow(x+w/2,y+125,70,c.hue);text(c.symbol,x+w/2,y+120,64,c.hue,'Georgia','center')}
+ else{rr(x+10,y+39,w-20,h-105,5,'#25243c');fittedCardText('ARTWORK LOADING',x+w/2,y+h*.48,w-25,12,9,'#e6d7ba','system-ui');}
  const badge=large?37:30;
  rr(x+10,y+10,badge,badge,badge/2,'#25233b','#fae2b8',2);
  text(c.cost,x+10+badge/2,y+10+badge/2,large?24:19,THEME.cream,'Georgia','center','700');
  if(large)text(c.rarity.toUpperCase(),x+w-14,y+25,11,'#ffe1ba','system-ui','right','900');
- else text(c.symbol,x+w-19,y+21,18,c.hue,'Georgia','center','700');
+ else text(c.rarity.toUpperCase(),x+w-12,y+25,9,'#ffe1ba','system-ui','right','850');
  const bandH=large?66:56;
  rr(x+8,y+h-bandH-8,w-16,bandH,5,'#111523f7','#dabd8bce',1.5);
  fittedCardText(c.name,x+w/2,y+h-bandH+9,w-25,large?24:14,large?17:10.8,THEME.cream);
