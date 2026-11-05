@@ -177,8 +177,12 @@ function cardFrame(index,slot,x,y,w,h,large=false){
 function cardBack(x,y,w,h,label,count){
  ctx.save();ctx.shadowBlur=10;ctx.shadowColor='#0009';rr(x,y,w,h,9,gradient(x,y,w,h,[[0,'#44344d'],[1,'#171625']]),'#ba9a70',3);ctx.restore();
  rr(x+9,y+9,w-18,h-18,6,'#151729','#dfbe8888',1.5);
- ctx.beginPath();ctx.arc(x+w/2,y+h/2-9,w*.27,0,Math.PI*2);ctx.strokeStyle='#e5c188a0';ctx.lineWidth=2;ctx.stroke();
- text('✧',x+w/2,y+h/2-9,54,THEME.gold,'Georgia','center');
+ const cx=x+w/2,cy=y+h/2-9;
+ ctx.save();ctx.strokeStyle='#e5c188c9';ctx.lineWidth=1.6;
+ ctx.beginPath();ctx.arc(cx,cy,w*.24,0,Math.PI*2);ctx.stroke();
+ ctx.beginPath();ctx.moveTo(cx,cy-14);ctx.lineTo(cx+9,cy);ctx.lineTo(cx,cy+14);ctx.lineTo(cx-9,cy);ctx.closePath();ctx.stroke();
+ ctx.beginPath();ctx.moveTo(cx-15,cy);ctx.lineTo(cx+15,cy);ctx.moveTo(cx,cy-17);ctx.lineTo(cx,cy+17);ctx.stroke();
+ ctx.restore();
  text(label,x+w/2,y+h+22,17,'#f2d6af','Georgia','center');
  pill(String(count),x+w/2-22,y-17,44,30,'#211b2b','#d4b783',17);
 }
