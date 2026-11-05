@@ -97,7 +97,7 @@ function drawHeader(){
  ctx.fillStyle=grad;ctx.fillRect(0,0,W,106);
  text('✧',31,37,42,THEME.gold,'Georgia');
  text('MOONFALL',79,35,34,THEME.cream,'Georgia','left','700');
- text('SHATTERED COURT',300,39,14,'#e7d4b2','system-ui','left','700');
+ text('ILLUSTRATED CARDS',300,39,14,'#e7d4b2','system-ui','left','700');
  if(isResolving()){
   rr(433,22,179,31,7,'#292239ed','#e7c690bd',1);
   text('✦ RESOLVING',523,38,13,'#ffdfa2','system-ui','center','800');
@@ -144,7 +144,7 @@ function cardFrame(index,slot,x,y,w,h,large=false){
  const c=CARDS[index];const active=game.energy>=c.cost;
  ctx.save();
  ctx.shadowColor=slot===game.hover?'#ffe0a5b5':'#050414d0';
- ctx.shadowBlur=slot===game.hover?26:17;ctx.shadowOffsetY=7;
+ ctx.shadowBlur=slot===game.hover?30:19;ctx.shadowOffsetY=9;
  rr(x,y,w,h,11,gradient(x,y,w,h,[[0,'#f0d4a0'],[.32,'#53416b'],[1,'#d6ae78']]),slot===game.hover?'#fff2ca':'#dcbb81',3);
  ctx.restore();
  ctx.save();ctx.strokeStyle='#fff1c27a';ctx.lineWidth=1;
@@ -162,16 +162,16 @@ function cardFrame(index,slot,x,y,w,h,large=false){
    ctx.drawImage(cardsArt,sx,sy,sw,sh,dx,dy,dw,dh);ctx.restore();
  }
  else{rr(x+10,y+39,w-20,h-105,5,'#25243c');fittedCardText('ARTWORK LOADING',x+w/2,y+h*.48,w-25,12,9,'#e6d7ba','system-ui');}
- const badge=large?37:30;
+ const badge=large?37:34;
  rr(x+10,y+10,badge,badge,badge/2,'#25233b','#fae2b8',2);
- text(c.cost,x+10+badge/2,y+10+badge/2,large?24:19,THEME.cream,'Georgia','center','700');
+ text(c.cost,x+10+badge/2,y+10+badge/2,large?24:21,THEME.cream,'Georgia','center','700');
  if(large)text(c.rarity.toUpperCase(),x+w-14,y+25,11,'#ffe1ba','system-ui','right','900');
  else text(c.rarity.toUpperCase(),x+w-12,y+25,9,'#ffe1ba','system-ui','right','850');
- const bandH=large?66:56;
+ const bandH=large?66:60;
  rr(x+8,y+h-bandH-8,w-16,bandH,5,'#111523f7','#dabd8bce',1.5);
- fittedCardText(c.name,x+w/2,y+h-bandH+9,w-25,large?24:14,large?17:10.8,THEME.cream);
+ fittedCardText(c.name,x+w/2,y+h-bandH+9,w-23,large?24:18,large?17:12.5,THEME.cream);
  const kindLabel=large?c.kind.toUpperCase()+' · '+c.cost+' ENERGY':c.kind.toUpperCase();
- fittedCardText(kindLabel,x+w/2,y+h-25,w-21,large?13:10,9,c.hue,'system-ui','850');
+ fittedCardText(kindLabel,x+w/2,y+h-25,w-21,large?13:11,10,c.hue,'system-ui','850');
  if(!large&&!active){rr(x+6,y+6,w-12,h-12,7,'#0a0a1666')}
 }
 function cardBack(x,y,w,h,label,count){
@@ -186,18 +186,18 @@ function cardBack(x,y,w,h,label,count){
 function handLayout(){
  const n=game.hand.length,mid=(n-1)/2;
  // The viewport is uniformly letterboxed; all card geometry is true 2:3.
- const height=186,width=height*(2/3);
+ const height=220,width=height*(2/3);
  // A tighter fan leaves a clearer battlefield and makes the cards feel held together.
- const spacing=n<=5?65:Math.max(49,Math.min(65,360/Math.max(1,n-1)));
+ const spacing=n<=5?79:Math.max(60,Math.min(79,420/Math.max(1,n-1)));
  const total=width+Math.max(0,n-1)*spacing;
  const first=800-total/2-game.handScroll;
  // Narrower viewports automatically reduce card tilt to avoid clipping the bottom edge.
- const maxAngle=Math.min(.225,25/Math.max(70,width/2));
+ const maxAngle=Math.min(.19,22/Math.max(70,width/2));
  return Array.from({length:n},(_,i)=>{
    const d=i-mid,outer=mid?d/mid:0;
    return {
      slot:i,x:first+i*spacing,
-     y:569+Math.abs(d)*(n<=5?8:5)-(game.hover===i?12:0),
+     y:533+Math.abs(d)*(n<=5?9:5)-(game.hover===i?19:0),
      w:width,h:height,angle:outer*maxAngle
    };
  });
