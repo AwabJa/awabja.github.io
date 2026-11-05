@@ -1,7 +1,8 @@
 /** Moonfall 2.5D illustrated layers and complete playable card actions. */
 import assert from 'node:assert/strict';
 import {readFile, access} from 'node:fs/promises';
-import {dirname, join} from 'node:path';
+import {createServer} from 'node:http';
+import {dirname, join, resolve, extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright-core';
 
@@ -17,12 +18,12 @@ assert.match(sceneJS,/function fixedBackground\(/,'The replacement draws its own
 assert.match(sceneJS,/function model\(/,'The replacement renders articulated character models');
 assert.match(sceneJS,/function effects\(/,'The replacement has independent spell choreography');
 const cards=(await readFile(join(root,'assets/cards-hd.webp'))).toString('base64');
-const artwork=await Promise.all(Array.from({length:7},async(_,i)=>{
-  const png=await readFile(join(root,'assets/illustrated/actor-'+i+'.png'));
-  assert(png.length>20000,'The imported character has a real PNG payload');
-  return 'data:image/png;base64,'+png.toString('base64');
-}));
-const painterlyBackground='data:image/webp;base64,'+(await readFile(join(root,'assets/backdrop2.webp'))).toString('base64');
+for(let i=0;i<7;i++){
+ const png=await readFile(join(root,'assets/illustrated/actor-'+i+'.png'));
+ assert(png.length>20000,'The imported sprite is present as a real PNG asset');
+}
+const paintedBackground=await readFile(join(root,'assets/backdrop2.webp'));
+assert(paintedBackground.length>100000,'High-resolution painted backdrop is available');
 const manifest=JSON.parse(await readFile(join(root,'manifest.webmanifest'),'utf8'));
 assert.match(htmlRaw,/src="game\.js\?v=moonfall-new-world-1"/);
 assert.match(htmlRaw,/src="scene-rebuild-prototype\.js\?v=moonfall-new-world-1"/);
@@ -41,12 +42,20 @@ assert.equal(manifest.display,'fullscreen');
 assert.equal(manifest.orientation,'landscape');
 assert.match(css,/\.game-shell\{position:relative;width:100vw!important;height:100dvh!important/);
 
-// Inline only in tests to avoid network dependencies and guarantee the tested source is this commit.
-const html=htmlRaw.replace(/<meta http-equiv="Content-Security-Policy"[^>]+>/,'')
-  .replace(/<link rel="stylesheet"[^>]+>/,`<style>${css}</style>`)
-  .replace(/<script src="[^"]+" defer><\/script>/g,'');
-const js=jsRaw.replace("cardsArt.src='assets/cards-hd.webp?v=moonfall-clean-sprites-1';",`cardsArt.src='data:image/webp;base64,${cards}';`);
-const scene=sceneJS;
+// Test the actual first-party asset URLs and CSP, without injecting large base64 images.
+const server=createServer(async(req,res)=>{
+ try{
+  const pathname=new URL(req.url||'/','http://localhost').pathname;
+  const filename=resolve(root,'.'+pathname);
+  if(!filename.startsWith(root+'/')){res.writeHead(403).end();return}
+  const body=await readFile(filename);
+  const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.webmanifest':'application/manifest+json'};
+  res.writeHead(200,{'Content-Type':types[extname(filename)]||'application/octet-stream'});
+  res.end(body);
+ }catch{res.writeHead(404).end()}
+});
+await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
+const origin='http://127.0.0.1:'+server.address().port;
 let executablePath;
 for (const candidate of [process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/chromium'].filter(Boolean)) {
   try {await access(candidate);executablePath=candidate;break;} catch {}
@@ -59,13 +68,7 @@ try {
     const page=await browser.newPage({viewport:{width,height},isMobile:width<900,hasTouch:width<900});
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
-    await page.setContent(html);
-    await page.evaluate(({artwork,painterlyBackground})=>{
-      window.__moonfallArtSources=artwork;
-      window.__moonfallBackgroundSource=painterlyBackground;
-    },{artwork,painterlyBackground});
-    await page.addScriptTag({content:scene});
-    await page.addScriptTag({content:js});
+    await page.goto(origin+'/index.html',{waitUntil:'domcontentloaded'});
     await page.locator('#loadMessage').waitFor({state:'hidden'});
     const canvas=page.locator('#game');
     const box=await canvas.boundingBox();
@@ -222,4 +225,4 @@ try {
   }
   // The rebuilt renderer is tested directly by the production gameplay loop above.
   console.log('MOONFALL ART IMPORT PASSED: seven illustrated characters, painted environment, responsive cards and combat');
-} finally {await browser.close();}
+} finally {await browser.close();await new Promise(ok=>server.close(ok));}
