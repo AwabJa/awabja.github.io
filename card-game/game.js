@@ -475,7 +475,7 @@ function play(){
    },i*65);
   });
  }else if(c.kind==='bargain'){
-  impactCue('bargain',4,allyTarget,()=>{
+  impactCue('bargain',3,allyTarget,()=>{
    const a=game.allies[allyTarget];if(a.hp<=c.amount)return;
    a.hp-=c.amount;game.energy=Math.min(game.maxEnergy,game.energy+1);
    drawCards(2);markFx(allyTarget,'−'+c.amount,THEME.red,'ally');
