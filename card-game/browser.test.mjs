@@ -29,17 +29,18 @@ for(let i=0;i<7;i++){
 const paintedBackground=await readFile(join(root,'assets/backdrop2.webp'));
 assert(paintedBackground.length>100000,'High-resolution painted backdrop is available');
 const manifest=JSON.parse(await readFile(join(root,'manifest.webmanifest'),'utf8'));
-assert.match(htmlRaw,/src="game\.js\?v=moonfall-illustrated-hand-2"/);
-assert.match(htmlRaw,/src="scene-rebuild-prototype\.js\?v=moonfall-illustrated-hand-2"/);
+assert.match(htmlRaw,/src="game\.js\?v=moonfall-tactics-v1"/);
+assert.match(htmlRaw,/src="scene-rebuild-prototype\.js\?v=moonfall-tactics-v1"/);
 assert.match(htmlRaw,/<canvas id="sceneBackground"/);
 assert.match(htmlRaw,/<canvas id="sceneAtmosphere"/);
 assert.match(htmlRaw,/<canvas id="sceneWorld"/);
 assert.match(htmlRaw,/apple-mobile-web-app-capable/);
-assert.match(htmlRaw,/href="style\.css\?v=moonfall-illustrated-hand-2"/);
+assert.match(htmlRaw,/href="style\.css\?v=moonfall-tactics-v1"/);
 assert.doesNotMatch(jsRaw,/c\\.symbol|symbol:'[^']+'/,'Card art never uses decorative emoji symbols');
 assert.match(jsRaw,/function impactCue\(/,'Combat actions resolve on the rendered impact frames');
 assert.match(jsRaw,/flushImpacts\(now\)/,'Gameplay updates share the animation clock');
-assert.match(jsRaw,/SEE ANIMATIONS/,'The game keeps its spell-animation showcase');
+assert.doesNotMatch(jsRaw,/SEE ANIMATIONS|demoAnimations|motionDemo/,'No developer animation showcase ships in gameplay');
+assert.match(jsRaw,/Seraphine’s Vow|Akari’s Mark/,'The twelve-card expansion is included');
 assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-clean-sprites-1'/);
 assert(cards.length>100000,'Card art is available');
 assert.doesNotMatch(sceneJS,/assets\/frames-allies\.webp/,'The rebuilt scene does not use damaged old character atlases');
@@ -82,7 +83,17 @@ try {
     assert.equal(await page.locator('#sceneWorld').count(),1,'Character and effect layer is present');
     assert.equal(await page.locator('#sceneBackground').count(),1,'Static castle layer is present');
     assert.equal(await page.locator('#sceneAtmosphere').count(),1,'Moving atmosphere has its own layer');
-    await page.waitForFunction(()=>window.MoonfallScene.getStats().backgroundLoaded && window.MoonfallScene.getStats().backgroundPaints>=1,null,{timeout:30000});
+    try{
+      await page.waitForFunction(()=>window.MoonfallScene?.getStats?.().backgroundLoaded && window.MoonfallScene.getStats().backgroundPaints>=1,null,{timeout:12000});
+    }catch(error){
+      const diag=await page.evaluate(()=>({
+        canvas:document.getElementById('game')?.dataset,
+        loadMessage:document.getElementById('loadMessage')?.className,
+        sceneStats:window.MoonfallScene?.getStats?.()??null
+      }));
+      console.error('Moonfall first-frame diagnostics',JSON.stringify({width,height,diag,errors}));
+      throw error;
+    }
     const fixedStart=await page.evaluate(()=>window.MoonfallScene.getStats());
     await page.waitForTimeout(220);
     const fixedAfter=await page.evaluate(()=>window.MoonfallScene.getStats());
@@ -104,7 +115,7 @@ try {
     assert(modelStats.castAnchors.every(p=>p.x>=40&&p.x<=1550&&p.y>=70&&p.y<=470),'Casting origins remain within the battlefield');
     assert.equal(modelStats.animationStates.length,7,'All seven character rigs have states');
     assert.equal(modelStats.actorOffsets.length,7,'All seven actors move independently');
-    assert.match(jsRaw,/SEE ANIMATIONS/,'A visible animation showcase exists');
+    assert.doesNotMatch(jsRaw,/SEE ANIMATIONS/,'The live HUD does not expose a developer test button');
     assert(Math.abs(box.width/box.height-2)<.01,'Stage maintains a true 2:1 aspect ratio');
     assert(Math.abs(box.x-(width-box.width)/2)<=1.5 && Math.abs(box.y-(height-box.height)/2)<=1.5,
       'Stage is centred in the screen without distorting characters or typography');
@@ -166,11 +177,14 @@ try {
           return null;
         },slot);
       };
-      // Showcase can be opened from the keyboard and does not alter game state.
-      const beforeDemo=await state();
+      // No development-only animation UI, with all combat actions still playable.
+      assert.equal((await state()).cardCount,12,'The game offers twelve unique cards');
+      assert.equal((await state()).artLoaded,7,'All seven newly imported character portraits are ready as card artwork');
+      assert.equal((await state()).intents[0].label,'BLEED','The Reaper telegraphs a tactical bleed attack');
+      assert.equal((await state()).intents[1].label,'DRAIN','The Oracle telegraphs a life drain');
+      assert.equal((await state()).intents[2].label,'CRUSH','The Knight telegraphs a heavy strike');
       await page.keyboard.press('m');
-      await page.waitForFunction(()=>window.MoonfallScene.getStats().lastCue==='enemy',null,{timeout:1500});
-      assert.deepEqual((await state()).foes,beforeDemo.foes,'Animation demo does not inflict damage');
+      assert.equal((await state()).turn,1,'The old animation hotkey is inert');
       // Reveal guide with keyboard and dismiss without affecting the battle.
       await page.keyboard.press('h');
       assert.equal((await state()).preview,'guide','Help overlay opens');
@@ -203,9 +217,9 @@ try {
       await page.locator('#cardInspectorPlay').click();
       const played=await state();
       assert.equal(played.energy,2,'Confirm spends energy');
-      assert.equal(played.foes[1].hp,300,'Damage is not applied before the visible spell strikes');
+      assert.equal(played.foes[1].hp,375,'Damage is not applied before the visible spell strikes');
       assert(played.pendingImpacts>0&&played.resolving,'Card play locks further actions while its hit is pending');
-      await page.waitForFunction(()=>window.__moonfallTestState().foes[1].hp===165,null,{timeout:5000});
+      await page.waitForFunction(()=>window.__moonfallTestState().foes[1].hp===285,null,{timeout:5000});
       assert.equal((await state()).resolving,false,'Impact unlocks the next card action');
       const afterStrike=await page.evaluate(()=>window.MoonfallScene.getStats());
       assert.equal(afterStrike.backgroundPaints,fixedAfter.backgroundPaints,'The architecture is still fixed during attacks');
@@ -215,6 +229,7 @@ try {
       assert.equal(played.discard.length,1,'Card enters discard');
       await click(75,715);
       assert.equal((await state()).preview,'deck','Draw pile can be inspected');
+      if(width===844)await page.screenshot({path:join(root,'art-preview-deck.png')});
       await click(1190,136);
       assert.equal((await state()).preview,null,'Deck closes');
       await click(1492,700);
@@ -226,6 +241,24 @@ try {
       assert.equal(enemyStats.lastCue,'enemy','End Turn triggers enemy attack motion');
       assert.equal(next.energy,next.maxEnergy,'Turn refills energy');
       assert.equal(next.hand.length,5,'New hand drawn');
+      assert.deepEqual(next.hand,[5,6,7,8,9],'New second-turn cards introduce different tactics');
+      if(width===844)await page.screenshot({path:join(root,'art-preview-new-cards.png')});
+      // A real play of one new card: expose makes the selected enemy vulnerable.
+      const mark=await visiblePoint(1);
+      assert(mark,'The newly drawn Akari mark card is tappable');
+      await click(mark.x,mark.y);
+      assert.equal((await state()).previewCard,'mark','New card shows its distinct description');
+      await page.locator('#cardInspectorPlay').click();
+      await page.waitForFunction(()=>window.__moonfallTestState().foes[1].exposedTurns===2,null,{timeout:5000});
+      assert.equal((await state()).energy,2,'The expose card spends its one energy');
+      // The guard card protects an ally and makes the next enemy selection strategic.
+      const vow=await visiblePoint(0);
+      assert(vow,'The new Seraphine guard card is tappable');
+      await click(vow.x,vow.y);
+      assert.equal((await state()).previewCard,'vow','The new guard card is independently selectable');
+      await page.locator('#cardInspectorPlay').click();
+      await page.waitForFunction(()=>window.__moonfallTestState().allies[0].guardTurns===1,null,{timeout:5000});
+      assert((await state()).allies[0].shield>=70,'Guard adds focused shield');
       await click(1280,35);
       assert.equal((await state()).turn,1,'Restart resets battle');
     }

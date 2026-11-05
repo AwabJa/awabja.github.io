@@ -1,34 +1,25 @@
 # Moonfall — Shattered Court
 
-**Play:** https://awabja.github.io/card-game/
+**Game:** https://awabja.github.io/card-game/
 
-Moonfall is a landscape-first browser fantasy card battle. Four allies fight three enemies using a five-card hand, energy, shields, healing, burn, and timed attack animations. It supports landscape phones and desktops.
+Moonfall is a browser-based, landscape-first tactical fantasy card battle. Four illustrated heroes face three enemies in a tougher encounter with visible enemy intents, shielding, damage-over-time effects, and twelve distinct cards. The production scene remains hand-painted and self-hosted.
 
-## Artwork and presentation
+## Gameplay
 
-- The game now uses **seven self-hosted illustrated 384×512 PNG character sprites** from `assets/illustrated/`, with original source and the publisher's licence declaration recorded in [SOURCES.md](assets/illustrated/SOURCES.md).
-- The gothic castle uses the painted `assets/backdrop2.webp` scene, with a perspective stone-floor treatment, controlled moonlight, and atmosphere drawn over it.
-- Combat sprites remain **single static character poses** with code-driven windups, dashes, afterimages, casting glow and damage recoil. These improve presentation but are **not hand-drawn attack frames or actual skeletal animations**.
-- Magic now has distinct visual families for blade arcs, lightning, shield hexes, healing rings, crimson petals, burn and impacts. Health changes are synchronized with visible hit times.
-- The five illustrated cards still use `assets/cards-hd.webp`. Small cards have clearer labels, and phones use an accessible CSS-based inspector with readable text and touch-friendly Play/Keep buttons.
-- The battlefield canvas and the HUD maintain a uniform 2:1 aspect ratio instead of stretching character proportions across different screens.
+The previous "See Animations" demonstration button and M shortcut have been removed from the actual game. Animations occur when a player or enemy takes an action.
 
-## Controls
+**Twelve abilities:** Shadow Step, Guardian Aegis, Crimson Bloom, Healing Wind, Arcane Bolt, Seraphine’s Vow, Akari’s Mark, Elowen’s Hymn, Kael’s Tempest, Reaper’s Bargain, Oracle’s Curse and Night Knight’s Oath. The first five use the original card art atlas. The seven new cards use self-hosted illustrated character portraits; all descriptions, costs and effects are distinct. No emoji substitutes are used on card faces.
 
-1. On a phone, rotate to landscape. On desktop, enter fullscreen if desired.
-2. Tap an enemy or ally to select the target.
-3. Tap a card to inspect its effect and energy cost. Choose Play Card or Keep in Hand.
-4. End Turn to trigger enemy actions and refill the hand.
-5. Keyboard: 1–5 choose cards, E ends the turn, H opens Help, M plays the animation showcase without changing combat state, Escape closes overlays.
+**Strategic decisions:** enemies display their intentions before each round, use different targeting logic, cause bleeding or energy disruption, gain shield, and can recover health. Players can mark enemies for +30% follow-up damage, weaken attacks, redirect enemy attacks, gain an ally counterattack, cleanse bleed, or sacrifice health for cards and energy. Shield absorbs damage before HP. Enemy HP and attack pressure are higher than in the initial prototype.
 
-## Code
+**Play:** rotate your phone to landscape, select an enemy or ally, inspect a card and choose Play or Keep, then End Turn. Keyboard: 1–5 select hand cards, E ends turn, H opens help, Escape closes overlays.
 
-- `index.html`: four canvas layers and the responsive card inspector.
-- `game.js`: cards, combat, preview and HUD, impact resolution.
-- `scene-rebuild-prototype.js`: painterly backdrop, self-hosted character art, grounded movement and spell effects.
-- `style.css`: uniform stage sizing and real-pixel mobile inspector typography.
-- `browser.test.mjs`: mobile portrait/landscape and desktop regression checks. CI also captures actual gameplay screenshots.
+## Artwork and limitations
 
-## Honest limitations
+The seven self-hosted 384×512 illustrated characters are static images. The renderer adds windup, recoil and casting effects but **does not have separate painted attack, idle or casting poses**. True animated characters require new sprite sheets or rigged layered illustrations; code-only movement cannot convincingly articulate a single painting. Imported art source and licensing declaration are documented in [assets/illustrated/SOURCES.md](assets/illustrated/SOURCES.md).
 
-The illustrated fighters have **one still pose per character**, not separate attacking/casting frames. The rebuilt spell choreography does not change that constraint. A production-quality release would need coordinated per-character pose sheets or layered artwork with proper joint locations, additional environmental painting, and redesigned card illustration typography. This release remains a playable, locally rendered prototype, not a persistent or multiplayer game.
+## Architecture and testing
+
+`game.js` maintains the twelve-card deck, the battle-state machine, distinct enemy intents and timed combat updates. `scene-rebuild-prototype.js` composites the painted gothic battlefield, illustrated characters and spell choreography. `index.html` and `style.css` provide a phone-friendly responsive inspector. `browser.test.mjs` covers desktop and mobile, card art loading, combat and new status effects.
+
+The game remains a standalone single-player encounter, not a full campaign, multiplayer game or roguelike with persistent progression.
