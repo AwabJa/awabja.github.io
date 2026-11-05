@@ -3,6 +3,34 @@ const canvas=document.getElementById('game');
 const ctx=canvas.getContext('2d',{alpha:true});
 const messageNode=document.getElementById('announcer');
 const loading=document.getElementById('loadMessage');
+const inspector=document.getElementById('cardInspector');
+const inspectorArt=document.getElementById('cardInspectorArt');
+const inspectorPlay=document.getElementById('cardInspectorPlay');
+const inspectorCancel=document.getElementById('cardInspectorCancel');
+const mobileInspector=window.matchMedia('(max-width:1050px)');
+let inspectorKey='';
+function renderCardInspector(){
+ const preview=game.preview;
+ const visible=mobileInspector.matches&&preview?.type==='card'&&!game.ended;
+ inspector.hidden=!visible;inspector.setAttribute('aria-hidden',String(!visible));
+ if(!visible){inspectorKey='';return}
+ const c=CARDS[preview.index],key=c.id+':'+game.energy+':'+!!preview.readonly;
+ if(inspectorKey===key)return;
+ inspectorKey=key;
+ document.getElementById('cardInspectorName').textContent=c.name;
+ document.getElementById('cardInspectorRarity').textContent=c.rarity.toUpperCase()+'  ·  '+c.kind.toUpperCase();
+ document.getElementById('cardInspectorCost').textContent=String(c.cost);
+ document.getElementById('cardInspectorDescription').textContent=c.description;
+ document.getElementById('cardInspectorFlavor').textContent=c.flavor;
+ inspectorArt.style.backgroundPosition=(preview.index*25)+'% 50%';
+ inspectorPlay.hidden=!!preview.readonly;
+ inspectorPlay.disabled=game.energy<c.cost||!!preview.readonly;
+ inspectorPlay.textContent=inspectorPlay.disabled?'Not enough energy':'Play card';
+ inspectorCancel.textContent=preview.readonly?'Back to deck':'Keep in hand';
+}
+inspectorPlay.addEventListener('click',()=>{if(game.preview?.type==='card'&&!game.preview.readonly)play()});
+inspectorCancel.addEventListener('click',()=>{game.preview=game.preview?.readonly?{type:'deck'}:null});
+
 const cardsArt=new Image();
 cardsArt.decoding='async';
 const artwork=[cardsArt];
@@ -107,6 +135,11 @@ function scene(){
   register(x-72,190,144,gaugeY+45-190,'enemy',i,e.hp>0);
  }
 }
+function fittedCardText(value,x,y,maxW,size,minSize,color,font='Georgia',weight='700'){
+ ctx.font=`${weight} ${size}px ${font}`;
+ const fitted=Math.max(minSize,Math.min(size,size*maxW/Math.max(1,ctx.measureText(String(value)).width)));
+ text(value,x,y,fitted,color,font,'center',weight);
+}
 function cardFrame(index,slot,x,y,w,h,large=false){
  const c=CARDS[index];const active=game.energy>=c.cost;
  ctx.save();
@@ -120,7 +153,7 @@ function cardFrame(index,slot,x,y,w,h,large=false){
  rr(x+9,y+9,w-18,h-18,5,null,'#997a59',.7);
  rr(x+10,y+12,w-20,h-24,6,gradient(x+10,y,w-20,h,[[0,'#3b324b'],[1,'#171727']]));
  if(cardsArt.complete&&cardsArt.naturalWidth>0){
-   const dx=x+12,dy=y+39,dw=w-24,dh=h-105,srcW=276,srcH=272;
+   const dx=x+(large?12:9),dy=y+(large?39:35),dw=w-(large?24:18),dh=h-(large?105:93),srcW=276,srcH=272;
    const targetRatio=dw/dh,sourceRatio=srcW/srcH;
    let sx=276*index,sy=0,sw=srcW,sh=srcH;
    if(sourceRatio>targetRatio){sw=srcH*targetRatio;sx+=Math.max(0,(srcW-sw)/2)}
@@ -129,13 +162,16 @@ function cardFrame(index,slot,x,y,w,h,large=false){
    ctx.drawImage(cardsArt,sx,sy,sw,sh,dx,dy,dw,dh);ctx.restore();
  }
  else{glow(x+w/2,y+125,70,c.hue);text(c.symbol,x+w/2,y+120,64,c.hue,'Georgia','center')}
- rr(x+14,y+12,39,37,20,'#27213e','#f9d8aa',2);
- text(c.cost,x+34,y+31,25,THEME.cream,'Georgia','center','700');
- text(c.rarity.toUpperCase(),x+w-12,y+24,large?11:9,'#fbe0bb','system-ui','right','900');
- rr(x+10,y+h-66,w-20,54,5,'#171423f5','#d3b889aa',1.5);
- for(const o of [15,w-15]){text('✧',x+o,y+h-59,11,THEME.gold,'Georgia','center')}
- text(c.name,x+w/2,y+h-49,large?23:14,THEME.cream,'Georgia','center');
- text(c.kind.toUpperCase()+' · '+c.cost+' ENERGY',x+w/2,y+h-24,large?13:9,c.hue,'system-ui','center','800');
+ const badge=large?37:30;
+ rr(x+10,y+10,badge,badge,badge/2,'#25233b','#fae2b8',2);
+ text(c.cost,x+10+badge/2,y+10+badge/2,large?24:19,THEME.cream,'Georgia','center','700');
+ if(large)text(c.rarity.toUpperCase(),x+w-14,y+25,11,'#ffe1ba','system-ui','right','900');
+ else text(c.symbol,x+w-19,y+21,18,c.hue,'Georgia','center','700');
+ const bandH=large?66:56;
+ rr(x+8,y+h-bandH-8,w-16,bandH,5,'#111523f7','#dabd8bce',1.5);
+ fittedCardText(c.name,x+w/2,y+h-bandH+9,w-25,large?24:14,large?17:10.8,THEME.cream);
+ const kindLabel=large?c.kind.toUpperCase()+' · '+c.cost+' ENERGY':c.kind.toUpperCase();
+ fittedCardText(kindLabel,x+w/2,y+h-25,w-21,large?13:10,9,c.hue,'system-ui','850');
  if(!large&&!active){rr(x+6,y+6,w-12,h-12,7,'#0a0a1666')}
 }
 function cardBack(x,y,w,h,label,count){
@@ -281,7 +317,11 @@ function draw(now=performance.now()){
    canvas.dataset.phase=game.ended||'playing';lastSnapshotAt=now;
  }
  zones.length=0;window.MoonfallScene?.render(now,game);ctx.clearRect(0,0,W,H);scene();drawHeader();drawTable(now);drawParticles(now);
- if(game.preview?.type==='card')drawPreview();else if(game.preview?.type==='deck')drawDeck();else if(game.preview?.type==='guide')drawGuide();
+ if(game.preview?.type==='card'){
+  if(mobileInspector.matches){ctx.fillStyle='#050914dc';ctx.fillRect(0,0,W,H)}
+  else drawPreview();
+ }else if(game.preview?.type==='deck')drawDeck();else if(game.preview?.type==='guide')drawGuide();
+ renderCardInspector();
  if(game.ended)drawResult();
  requestAnimationFrame(draw);
 }
