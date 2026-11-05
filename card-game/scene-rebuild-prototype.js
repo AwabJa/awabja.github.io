@@ -90,8 +90,9 @@ function fixedBackground(){
   }
   // Restrained reflected torchlight connects the background to the actors.
   for(const [x,color] of [[160,'#eaa579'],[780,'#f1b479'],[1455,'#e0a08c']]){
-   const pool=gradient(bg,x,475,245,[[0,color+'2d'],[.55,color+'0d'],[1,color+'00']]);
-   bg.save();bg.translate(x,481);bg.scale(1,.33);bg.fillStyle=pool;bg.fillRect(-245,-245,490,490);bg.restore();
+   bg.save();bg.translate(x,481);bg.scale(1,.33);
+   const pool=gradient(bg,0,0,245,[[0,color+'2d'],[.55,color+'0d'],[1,color+'00']]);
+   bg.fillStyle=pool;bg.fillRect(-245,-245,490,490);bg.restore();
   }
   const farMist=linear(bg,0,234,0,428,[[0,'#9baed900'],[.60,'#9eb9e01c'],[1,'#849bb700']]);
   bg.fillStyle=farMist;bg.fillRect(0,234,W,194);
