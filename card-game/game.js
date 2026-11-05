@@ -353,9 +353,9 @@ function drawDeck(){
 function drawGuide(){
  overlayFrame('HOW TO PLAY','One battle. Four allies. Three enemies. No complicated setup.');
  const steps=[
-  ['1', 'CHOOSE A TARGET', 'Tap an enemy to attack it, or tap an ally to choose who receives healing.'],
-  ['2', 'INSPECT A CARD', 'Tap any card in your hand. Read its power and energy cost. Then press PLAY CARD.'],
-  ['3', 'END YOUR TURN', 'When you are done, End Turn lets the surviving enemies attack and draws your next hand.']
+  ['1', 'READ ENEMY INTENTS', 'Each enemy telegraphs BLEED, DRAIN, DISRUPT, FORTIFY or CRUSH above its health bar.'],
+  ['2', 'PLAY YOUR CARDS', 'Twelve unique cards can shield, expose, weaken, heal, or draw more cards. Pick targets carefully.'],
+  ['3', 'PLAN YOUR NEXT TURN', 'End Turn triggers enemy moves, bleeding and shield effects. Survive and defeat the court.']
  ];
  steps.forEach((v,i)=>{const y=257+i*123;rr(320,y,70,66,16,'#4c3950','#dab780',2);text(v[0],355,y+33,29,THEME.gold,'Georgia','center');text(v[1],415,y+13,24,THEME.cream,'system-ui','left','800');wrap(v[2],415,y+50,760,19,'#cec6d6',29)});
  pill('START BATTLE',619,616,365,66,'#67513c','#f7d49d',25);register(619,616,365,66,'close');
@@ -575,7 +575,17 @@ function chooseAction(x,y){
 window.__moonfallHitTest=(x,y)=>{const z=chooseAction(x,y);return z?{action:z.action,meta:z.meta}:null};
 window.__moonfallPreviewSize=()=>({width:419*(2/3),height:419});
 window.__moonfallFanLayout=()=>handLayout().map(c=>({slot:c.slot,card:CARDS[game.hand[c.slot]]?.id,x:c.x,y:c.y,w:c.w,h:c.h,angle:c.angle,polygon:cardPolygon(c)}));
-window.__moonfallTestState=()=>({models:window.MoonfallScene?.getStats?.()||null,turn:game.turn,energy:game.energy,maxEnergy:game.maxEnergy,hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,allies:game.allies.map(a=>({hp:a.hp,shield:a.shield})),foes:game.foes.map(f=>({hp:f.hp,burnTurns:f.burnTurns})),ended:game.ended,pendingImpacts:pendingImpacts.length,resolving:isResolving(),previewCard:game.preview?.type==='card'?CARDS[game.preview.index].id:null});
+window.__moonfallTestState=()=>({
+ models:window.MoonfallScene?.getStats?.()||null,turn:game.turn,energy:game.energy,maxEnergy:game.maxEnergy,energyTax:game.energyTax,
+ cardCount:CARDS.length,artLoaded:portraits.filter(p=>p.complete&&p.naturalWidth>0).length,
+ hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],
+ preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,
+ allies:game.allies.map(a=>({hp:a.hp,shield:a.shield,guardTurns:a.guardTurns,retaliate:a.retaliate,bleedTurns:a.bleedTurns})),
+ foes:game.foes.map(f=>({hp:f.hp,shield:f.shield,burnTurns:f.burnTurns,weakTurns:f.weakTurns,exposedTurns:f.exposedTurns})),
+ intents:game.foes.map((f,i)=>f.hp>0?enemyIntent(i):null),
+ ended:game.ended,pendingImpacts:pendingImpacts.length,resolving:isResolving(),
+ previewCard:game.preview?.type==='card'?CARDS[game.preview.index].id:null
+});
 function activate(z){if(!z)return;
  if(game.ended){if(z.action==='restart'){clearImpacts();game=freshGame();game.draw=game.draw.slice(5);window.MoonfallScene?.reset?.();announce('New battle started.');}return}
  if(isResolving()&&z.action!=='restart')return;
