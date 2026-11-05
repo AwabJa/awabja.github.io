@@ -229,6 +229,10 @@ try {
     }
     if(width===1440){
       await page.screenshot({path:join(root,'art-preview.png')});
+      // Capture a real cast mid-flight, not a concept image or idle-only preview.
+      await page.evaluate(()=>window.MoonfallScene.cue({kind:'bolt',source:3,target:5}));
+      await page.waitForTimeout(710);
+      await page.screenshot({path:join(root,'art-preview-spell.png')});
     }
     assert.deepEqual(errors,[],'No browser JavaScript errors at '+width+'×'+height);
     await page.close();
