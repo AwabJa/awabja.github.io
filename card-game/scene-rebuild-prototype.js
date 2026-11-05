@@ -73,9 +73,28 @@ function fixedBackground(){
  // Prefer the authored painterly castle to the old vector geometry.
  if(paintedBackground.complete&&paintedBackground.naturalWidth>0){
   bg.drawImage(paintedBackground,0,0,W,H);
-  // Harmonize the imported anime illustrations with the blue-violet night scene.
-  const shade=linear(bg,0,0,0,H,[[0,'#0c123429'],[.57,'#11182b0d'],[1,'#0609174c']]);
-  bg.fillStyle=shade;bg.fillRect(0,0,W,H);
+  // Preserve the cathedral art but remove the distracting mirrored-floor repetition.
+  // The replacement floor has its own perspective and an unobstructed stage line.
+  const skyShade=linear(bg,0,0,0,470,[[0,'#101c363d'],[.58,'#15204218'],[1,'#080e1d20']]);
+  bg.fillStyle=skyShade;bg.fillRect(0,0,W,470);
+  const terrace=linear(bg,0,390,0,H,[[0,'#17203334'],[.17,'#1923379c'],[.46,'#111a2cdb'],[1,'#080f1edc']]);
+  bg.fillStyle=terrace;bg.fillRect(0,390,W,H-390);
+  // Shallow horizontal joints and receding stone slabs establish a real ground plane.
+  for(let row=0;row<14;row++){
+   const depth=Math.pow((row+1)/14,1.6),y=397+depth*400;
+   line(bg,0,y,W,y,row%3===0?'#b6a8c52b':'#8192ac16',row%4===0?2:1);
+  }
+  for(let column=-22;column<=22;column++){
+   const near=800+column*64,far=800+column*13;
+   line(bg,far,396,near,800,column%4===0?'#96a6bf20':'#8796b214',column%5===0?2:1);
+  }
+  // Restrained reflected torchlight connects the background to the actors.
+  for(const [x,color] of [[160,'#eaa579'],[780,'#f1b479'],[1455,'#e0a08c']]){
+   const pool=gradient(bg,x,475,245,[[0,color+'2d'],[.55,color+'0d'],[1,color+'00']]);
+   bg.save();bg.translate(x,481);bg.scale(1,.33);bg.fillStyle=pool;bg.fillRect(-245,-245,490,490);bg.restore();
+  }
+  const farMist=linear(bg,0,234,0,428,[[0,'#9baed900'],[.60,'#9eb9e01c'],[1,'#849bb700']]);
+  bg.fillStyle=farMist;bg.fillRect(0,234,W,194);
   dirty=false;backgroundPaints++;return;
  }
  bg.fillStyle=linear(bg,0,0,0,590,[[0,'#060c21'],[.36,'#1c2e50'],[.78,'#43394e'],[1,'#111827']]);bg.fillRect(0,0,W,H);
@@ -437,7 +456,10 @@ function effects(now){
   }
  }
 }
-function foreground(now){const g=linear(ctx,0,383,0,552,[[0,'#171b3200'],[.54,'#a5b6db0b'],[1,'#070b19a2']]);ctx.fillStyle=g;ctx.fillRect(0,385,W,168);
+function foreground(now){
+ // Let hero silhouettes and contact shadows remain clear above the card hand.
+ const g=linear(ctx,0,490,0,800,[[0,'#171b3200'],[.65,'#a5b6db08'],[1,'#070b197a']]);
+ ctx.fillStyle=g;ctx.fillRect(0,490,W,310);
  // Balanced vignette retains readability along the front-line silhouettes.
  ctx.fillStyle=gradient(ctx,800,275,1080,[[0,'#09101d00'],[.65,'#08101a03'],[1,'#030711a1']]);ctx.fillRect(0,0,W,H);
 }
