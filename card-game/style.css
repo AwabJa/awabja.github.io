@@ -85,3 +85,51 @@ canvas{display:block;width:100%!important;height:100%!important;touch-action:non
   background:
     radial-gradient(ellipse at center,#26304a 0%,#111829 56%,#080b17 100%);
 }
+
+/* Stage 1: real-CSS card inspector keeps readable typography and touch targets
+   at phone pixel sizes instead of shrinking the entire 1600px game canvas. */
+.card-inspector[hidden]{display:none!important}
+.card-inspector{display:none}
+@media (max-width:1050px){
+ .card-inspector:not([hidden]){
+  position:absolute;z-index:5;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(94vw,770px);max-height:calc(100dvh - 22px);overflow-y:auto;
+  padding:clamp(12px,2.1vw,22px);display:grid;grid-template-columns:minmax(115px,32%) minmax(0,1fr);
+  align-items:center;gap:clamp(12px,2vw,24px);border:2px solid #dcb87d;border-radius:16px;
+  background:linear-gradient(135deg,#292036 0%,#17182d 56%,#0f1728 100%);
+  box-shadow:0 0 0 300vmax #030713c9,0 20px 70px #000d,inset 0 0 32px #c59b6030;
+  color:#f8ebd5;pointer-events:auto;
+ }
+ .card-inspector-art{
+  position:relative;width:100%;aspect-ratio:1;
+  border:2px solid #d9b574;border-radius:12px;
+  background-image:url('assets/cards-hd.webp?v=moonfall-clean-sprites-1');
+  background-repeat:no-repeat;background-size:500% 100%;background-position:0 50%;
+  box-shadow:0 8px 23px #000a,0 0 0 5px #d1a96e1c;
+ }
+ .card-inspector-cost{
+  display:grid;place-items:center;position:absolute;left:-10px;top:-10px;
+  min-width:39px;height:39px;border-radius:50%;border:2px solid #ecd6a8;
+  background:linear-gradient(#4b3964,#1a2542);box-shadow:0 3px 9px #0009;
+  font:bold 23px Georgia,serif;color:#fff3df;
+ }
+ .card-inspector-content{min-width:0;display:flex;flex-direction:column;gap:clamp(5px,1vw,10px)}
+ .card-inspector-rarity{font:800 clamp(10px,1.3vw,13px) system-ui,sans-serif;letter-spacing:.12em;color:#eecb97}
+ .card-inspector-content h2{margin:0;font:700 clamp(20px,3.1vw,34px)/1.08 Georgia,serif;color:#fff1d8}
+ .card-inspector-content p{margin:0;font:500 clamp(12px,1.5vw,16px)/1.42 system-ui,sans-serif;color:#f2e5d9}
+ .card-inspector-content .card-inspector-flavor{font:italic clamp(11px,1.4vw,14px)/1.25 Georgia,serif;color:#cbbdd2}
+ .card-inspector-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+ .card-inspector-actions button{
+  flex:1 1 125px;min-height:46px;padding:9px 12px;border-radius:9px;
+  font:800 clamp(12px,1.6vw,16px)/1.15 system-ui,sans-serif;cursor:pointer;
+ }
+ .card-inspector-play{border:2px solid #f4d79d;color:#241d2b;background:linear-gradient(#f9dfa6,#c69e6d)}
+ .card-inspector-play:disabled{opacity:.55;cursor:not-allowed}
+ .card-inspector-cancel{border:1px solid #bda8bd;background:#323047;color:#fff1e1}
+ .card-inspector-actions button:focus-visible{outline:3px solid #a6e7ff;outline-offset:2px}
+}
+@media(max-width:460px){
+ .card-inspector:not([hidden]){grid-template-columns:100px minmax(0,1fr);gap:10px;padding:12px}
+ .card-inspector-actions{gap:6px}
+ .card-inspector-actions button{min-height:42px;font-size:11px;padding:6px}
+}
