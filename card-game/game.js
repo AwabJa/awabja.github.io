@@ -149,10 +149,8 @@ function cardBack(x,y,w,h,label,count){
 // Finger-fan layout: preserved 2:3 card ratio, overlapping edges and curved baseline.
 function handLayout(){
  const n=game.hand.length,mid=(n-1)/2;
- // Preserve the physical 2:3 aspect ratio in stretched phone landscapes.
- const height=186;
- const xScale=Math.max(.2,canvas.clientWidth/W),yScale=Math.max(.2,canvas.clientHeight/H);
- const width=height*(2/3)*(yScale/xScale);
+ // The viewport is uniformly letterboxed; all card geometry is true 2:3.
+ const height=186,width=height*(2/3);
  // A tighter fan leaves a clearer battlefield and makes the cards feel held together.
  const spacing=n<=5?65:Math.max(49,Math.min(65,360/Math.max(1,n-1)));
  const total=width+Math.max(0,n-1)*spacing;
@@ -230,8 +228,7 @@ function overlayFrame(title,sub){ctx.fillStyle='#070a15d9';ctx.fillRect(0,0,W,H)
 function drawPreview(){
  const idx=game.preview.index,c=CARDS[idx];
  overlayFrame('CARD DETAILS','Inspect first. Playing is always a separate decision.');
- const pixelStretch=(canvas.clientWidth/W)/(canvas.clientHeight/H);
- const previewWidth=419*(2/3)/pixelStretch;
+ const previewWidth=419*(2/3);
  cardFrame(idx,-1,445-previewWidth/2,208,previewWidth,419,true);
  text(c.name,650,255,41,THEME.cream,'Georgia');
  text(c.rarity.toUpperCase()+'  ·  '+c.kind.toUpperCase(),650,311,20,c.hue,'system-ui','left','800');
@@ -410,7 +407,7 @@ function chooseAction(x,y){
     x>=t.x&&x<=t.x+t.w&&y>=t.y&&y<=t.y+t.h))||null;
 }
 window.__moonfallHitTest=(x,y)=>{const z=chooseAction(x,y);return z?{action:z.action,meta:z.meta}:null};
-window.__moonfallPreviewSize=()=>{const stretch=(canvas.clientWidth/W)/(canvas.clientHeight/H);return {width:419*(2/3)/stretch,height:419}};
+window.__moonfallPreviewSize=()=>({width:419*(2/3),height:419});
 window.__moonfallFanLayout=()=>handLayout().map(c=>({slot:c.slot,card:CARDS[game.hand[c.slot]]?.id,x:c.x,y:c.y,w:c.w,h:c.h,angle:c.angle,polygon:cardPolygon(c)}));
 window.__moonfallTestState=()=>({models:window.MoonfallScene?.getStats?.()||null,turn:game.turn,energy:game.energy,maxEnergy:game.maxEnergy,hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,allies:game.allies.map(a=>({hp:a.hp,shield:a.shield})),foes:game.foes.map(f=>({hp:f.hp,burnTurns:f.burnTurns})),ended:game.ended,pendingImpacts:pendingImpacts.length,resolving:isResolving(),previewCard:game.preview?.type==='card'?CARDS[game.preview.index].id:null});
 function activate(z){if(!z)return;

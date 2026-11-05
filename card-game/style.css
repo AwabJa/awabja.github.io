@@ -68,3 +68,20 @@ canvas{display:block;width:100%!important;height:100%!important;touch-action:non
 #sceneAtmosphere{z-index:1;pointer-events:none;background:transparent!important}
 #sceneWorld{z-index:2;pointer-events:none;background:transparent!important}
 #game{z-index:3;pointer-events:auto;background:transparent!important}
+
+/* Never stretch 1600×800 content to the device's arbitrary aspect ratio.
+   Centre one consistent 2:1 stage within the edge-to-edge viewport.
+   The slim outer gutters are intentional; drawing and hit-testing share
+   the same physical X/Y scale at every supported device size. */
+#sceneBackground,#sceneAtmosphere,#sceneWorld,#game{
+  inset:auto!important;
+  left:50%!important;
+  top:50%!important;
+  width:min(100vw,200dvh)!important;
+  height:min(100dvh,50vw)!important;
+  transform:translate(-50%,-50%);
+}
+.game-shell{
+  background:
+    radial-gradient(ellipse at center,#26304a 0%,#111829 56%,#080b17 100%);
+}
