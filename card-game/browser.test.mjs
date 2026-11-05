@@ -68,6 +68,7 @@ try {
     const page=await browser.newPage({viewport:{width,height},isMobile:width<900,hasTouch:width<900});
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
+    await page.addInitScript(() => { localStorage.setItem('arcana-slice-guide-v1','done'); });
     await page.goto(origin+'/index.html',{waitUntil:'domcontentloaded'});
     await page.locator('#loadMessage').waitFor({state:'hidden'});
     const canvas=page.locator('#game');
