@@ -1,63 +1,42 @@
-# Moonfall — layered 2.5D battle
+# Moonfall — Shattered Court
 
 **Live game:** https://awabja.github.io/card-game/
 
-The earlier low-poly WebGL scene was removed and replaced with a **layered 2.5D battle renderer**: an original gothic illustrated courtyard, seven individually composited anime-style character sprites, layered idle movement, secondary sprite deformation, foreground drifting leaves and embers, animated fog, target glows, wind-up attack motion and hit reactions. These are illustrated sprite layers, **not 3D polygon models**; further artwork and rigging would be needed for console-quality multi-frame animation.
+Moonfall is a full-viewport, landscape-first gothic fantasy card battle featuring four allies, three enemies, and a completely rebuilt **procedural 2D battlefield**. As of this replacement, the original background and cutout character sprite atlases are no longer loaded.
 
 ## Playing
 
-1. On mobile, rotate to **landscape**. The battle fills the viewport. Fullscreen can be enabled where supported; on iPhone use Safari's Add to Home Screen option.
-2. Tap an enemy to target it, or an ally for healing.
-3. Tap a card in the compact fanned hand. Read the larger preview, then choose **Play Card** or **Keep in Hand**. Inspecting never spends energy.
-4. End Turn to let enemies attack, apply damage and shields, then refill your hand.
-5. Defeat all three enemies before all four allies fall.
+1. Open the game on desktop or rotate your phone to landscape.
+2. Choose an enemy to attack, or an ally to heal.
+3. Tap a card to inspect it, then Play Card to cast (or Keep in Hand to cancel).
+4. Watch the animated action resolve at the visible impact frame.
+5. End Turn to trigger enemy attacks. Defeat three enemies before all four heroes fall.
 
-## Character frame animation
+## New world and characters
 
-All **seven** characters now have sprite atlases containing **six separate rendered frames** for each of five actions: idle, walking, attacking, casting and taking damage (**210 frames total**). Walking is used during approach/recovery, attacks during strikes, spells for card abilities, and hurt frames on impacts. The renderer switches frames on gameplay event cues, rather than relying solely on procedural wobble.
+- New moonlit gothic courtyard composed directly in Canvas, with cathedral towers, ruins, bridges, a wet stone ground plane, crimson foliage, torches, and a separate atmosphere.
+- Seven redesigned articulated **2D illustration rigs**. Their heads, faces, capes, legs, arms, weapons, and casting hands are drawn and moved as separate geometry.
+- Distinct character silhouettes, palettes, and equipment for Seraphine, Akari, Elowen, Kael, the Dusk Reaper, Blood Oracle, and Night Knight.
+- The illustration style is **procedural vector art**, not 3D meshes or hand-painted high-resolution anime character artwork. It will look more graphic and flatter than a cinematic painted concept image.
 
-**Art production note:** These frames are generated/deformed from the existing character illustrations, not separately hand-drawn or skeletal-rigged by an animator. This is a substantial upgrade in animation state coverage, but a professional character-animation pass would require redrawing or rigging distinct limbs and fabric layers.
+## Casting and effects
 
-## Implemented
+- Hand-anchored casting circles and light buildup before release.
+- Spells travel through the world from the animated hands toward the chosen target.
+- Distinct attack, healing, shield, area, burn, and enemy hit effects.
+- Damage, heals, shields, and status effects resolve at their rendered impact moments.
+- Accessible reduced-motion behaviour when system preferences request it.
 
-- Four allied illustrated character sprites and three individually targetable enemy sprites, animated independently on a separate scene canvas
-- 2.5D depth effect: subtle parallax courtyard, flickering braziers, drifting fog/embers/leaves and per-character shadows
-- Five original illustrated attack, shield, heal and area cards, consistent fanned geometry and larger readable previews
-- Energy, damage, burn, shield, healing, piles, enemy turns, win/lose and restart
-- Spell and action effects are tied to real combat: attack lunges/projectiles, timed hit recoil, area bursts, healing rings, shields and staggered enemy attack cues
-- Fullscreen landscape web app with portrait orientation guide and Home Screen manifest
-- No tracking, payment systems, accounts, CDN or third-party runtime scripts
+## Architecture
 
-## New animation showcase
+The renderer is `scene-rebuild-prototype.js`, loaded by `index.html` as the production world. It uses the layered `sceneBackground`, `sceneAtmosphere`, and `sceneWorld` canvases; `game.js` maintains the original playable card logic and HUD. The background stays fixed between resizes; only characters, atmospheric effects, spell effects, and HUD repaint.
 
-Tap **SEE ANIMATIONS** at the lower-left of the battlefield (or press **M**) to watch a scripted sword strike, healing spell, area magic, and enemy attack. The animation showcase does not change HP, energy or cards. Ordinary card play also triggers these larger action sequences. The version marker on the HUD reads **MOTION V2**.
+The original `scene25d.js` and its `backdrop2.webp`, `characters.webp`, `frames-allies.webp`, and `frames-enemies.webp` assets have been retired. Only `assets/cards-hd.webp` remains necessary for the five illustrated cards.
 
-## Limitations
+## Current limitations
 
-This is an **art-directed playable vertical slice**, not a finished anime RPG. The scene uses separately composited character cutouts from original concept artwork; some sprite-edge cleanup and additional hand-painted animation frames are still needed. The current new motion deforms and translates illustrated sprites; it is not true skeletal rigging or unique hand-drawn attack frames. The backdrop uses repeated stone architecture to fill areas behind the characters. It is not a fully authored environment. No online multiplayer or persistent collection has been implemented.
+This is a functional 2D art rebuild, not a production-ready painted anime RPG. It has animated component rigs, not cinematic 3D character meshes, custom skeletal asset pipelines, or unique hand-painted attack frames. Additional high-resolution art and manual animation work would be needed for that level of finish. The card collection is not persistent and there is no online multiplayer or account system.
 
-All gameplay lives in the existing browser-side game logic; the card rules remain testable and independent of the 2.5D presentation. The game is separate from Flow and Serivia.
+## Testing
 
-## Fixed-world scene compositor
-
-The gothic courtyard is now a dedicated **static `sceneBackground` canvas**, rendered only after the background asset loads or the screen resolution changes. The separate `sceneAtmosphere` canvas holds moving fog and torchlight; `sceneWorld` contains characters, spells, particles, and hit reactions; the `game` canvas contains health bars, hand, card previews, and controls. No animation translates or repositions the architecture.
-
-The mobile browser test checks that the static canvas does not repaint while the other layers animate and while a card is played. Browser-based fullscreen depends on the operating system; the card battle remains landscape-first.
-
-## Foreground-only sprite masks
-
-All seven character sprites now use manually refined silhouette masks to remove fragments of the original castle, pillars and waterfall that were accidentally embedded in the sprite atlases. Masks deform along with the existing idle, walking, attacking, casting and damage frames, keeping the actor separate from the fixed courtyard without downloading new large textures. Source character artwork remains concept quality and will need dedicated clean drawings for production.
-
-
-## V2 presentation polish (November 2026)
-
-The V2 branch improves the existing illustrated vertical slice without replacing its game rules or large source illustrations:
-
-- **Actor-relative spell origins:** magic releases from per-character hand/weapon landmarks and follows actor movement, rather than starting from fixed character centres.
-- **Impact-synchronized rules:** damage, burn, healing and shields are applied at their visible contact/arrival frames. Player actions stay locked during unresolved combat impacts, and enemy turns finish after their attack sequence.
-- **Grounded fighters:** stronger consistent contact shadows follow lunges, idle animation no longer enters unrelated combat states, and body bob/tilt is restrained.
-- **Scene cohesion:** background and character color treatment is more consistent, with stable depth grading and quieter environmental lighting.
-- **Feedback:** a resolving indicator and clearer hit text accompany combat.
-- **Regression checks:** browser tests assert casting anchors, deferred impact timing, fixed architecture and responsive layouts.
-
-This pass improves **presentation and choreography using the existing art assets**. The original illustrations and deformation-generated atlases remain; it does **not** yet provide newly hand-drawn animation, a fully repainted environment, or production-grade rigged character models.
+`node card-game/browser.test.mjs` checks landscape and portrait mobile as well as desktop, verifies the new renderer and articulated models, and exercises selection, preview, card play, deferred impact events, turns, deck, and restart.
