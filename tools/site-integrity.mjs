@@ -263,19 +263,21 @@ const cardsApp=readFileSync(join(root,'card-game/game.js'),'utf8');
 check(cardsHtml.includes('<title>Moonfall |') &&
       cardsHtml.includes('src="game.js?v=') &&
       cardsHtml.includes('href="style.css?v=') &&
-      cardsHtml.includes('src="scene25d.js?v=') &&
+      cardsHtml.includes('src="scene-rebuild-prototype.js?v=') &&
+      !cardsHtml.includes('src="scene25d.js?v=') &&
       cardsHtml.includes('id="sceneWorld"') &&
-      cardsHtml.includes('id="game"'), 'Moonfall game must load the illustrated landscape canvas');
-check(existsSync(join(root,'card-game/scene25d.js')) &&
-      existsSync(join(root,'card-game/assets/backdrop2.webp')) &&
-      existsSync(join(root,'card-game/assets/characters.webp')) &&
+      cardsHtml.includes('id="game"'), 'Moonfall must load the replacement gothic renderer and card battle');
+check(existsSync(join(root,'card-game/scene-rebuild-prototype.js')) &&
       existsSync(join(root,'card-game/assets/cards-hd.webp')) &&
-      existsSync(join(root,'card-game/assets/frames-allies.webp')) &&
-      existsSync(join(root,'card-game/assets/frames-enemies.webp')) &&
       existsSync(join(root,'card-game/manifest.webmanifest')) &&
+      !existsSync(join(root,'card-game/scene25d.js')) &&
+      !existsSync(join(root,'card-game/assets/backdrop2.webp')) &&
+      !existsSync(join(root,'card-game/assets/characters.webp')) &&
+      !existsSync(join(root,'card-game/assets/frames-allies.webp')) &&
+      !existsSync(join(root,'card-game/assets/frames-enemies.webp')) &&
       !existsSync(join(root,'card-game/assets/battle-hd.webp')) &&
       !existsSync(join(root,'card-game/assets/atlas.webp')),
-      'Illustrated 2.5D layers and fullscreen metadata ship without old 3D renderer');
+      'Rebuilt character models replace legacy sprites while preserving playable cards');
 check(!existsSync(join(root,'card-game/scene3d.js')) &&
       !existsSync(join(root,'card-game/fallback-scene.js')),
       'Old low-poly renderers must remain removed');
