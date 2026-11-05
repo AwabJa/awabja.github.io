@@ -12,11 +12,17 @@ const jsRaw=await readFile(join(root,'game.js'),'utf8');
 const sceneJS=await readFile(join(root,'scene-rebuild-prototype.js'),'utf8');
 assert.match(htmlRaw,/scene-rebuild-prototype\.js/,'The live entry point loads the new renderer');
 assert.doesNotMatch(htmlRaw,/scene25d\.js/,'The old renderer is not loaded');
-assert.match(sceneJS,/artSystem:'procedural character rigs and gothic courtyard'/,'The replacement has articulated fighters');
+assert.match(sceneJS,/artSystem:'self-hosted painted castle and seven imported illustrated sprites'/,'The game draws imported artwork instead of polygonal actor bodies');
 assert.match(sceneJS,/function fixedBackground\(/,'The replacement draws its own courtyard');
 assert.match(sceneJS,/function model\(/,'The replacement renders articulated character models');
 assert.match(sceneJS,/function effects\(/,'The replacement has independent spell choreography');
 const cards=(await readFile(join(root,'assets/cards-hd.webp'))).toString('base64');
+const artwork=await Promise.all(Array.from({length:7},async(_,i)=>{
+  const png=await readFile(join(root,'assets/illustrated/actor-'+i+'.png'));
+  assert(png.length>20000,'The imported character has a real PNG payload');
+  return 'data:image/png;base64,'+png.toString('base64');
+}));
+const painterlyBackground='data:image/webp;base64,'+(await readFile(join(root,'assets/backdrop2.webp'))).toString('base64');
 const manifest=JSON.parse(await readFile(join(root,'manifest.webmanifest'),'utf8'));
 assert.match(htmlRaw,/src="game\.js\?v=moonfall-new-world-1"/);
 assert.match(htmlRaw,/src="scene-rebuild-prototype\.js\?v=moonfall-new-world-1"/);
@@ -30,7 +36,7 @@ assert.match(jsRaw,/flushImpacts\(now\)/,'Gameplay updates share the animation c
 assert.match(jsRaw,/SEE ANIMATIONS/,'The game keeps its spell-animation showcase');
 assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-clean-sprites-1'/);
 assert(cards.length>100000,'Card art is available');
-assert.doesNotMatch(sceneJS,/assets\/frames-allies\.webp|assets\/backdrop2\.webp/,'The rebuilt scene does not need the old art');
+assert.doesNotMatch(sceneJS,/assets\/frames-allies\.webp/,'The rebuilt scene does not use damaged old character atlases');
 assert.equal(manifest.display,'fullscreen');
 assert.equal(manifest.orientation,'landscape');
 assert.match(css,/\.game-shell\{position:relative;width:100vw!important;height:100dvh!important/);
@@ -54,6 +60,10 @@ try {
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
     await page.setContent(html);
+    await page.evaluate(({artwork,painterlyBackground})=>{
+      window.__moonfallArtSources=artwork;
+      window.__moonfallBackgroundSource=painterlyBackground;
+    },{artwork,painterlyBackground});
     await page.addScriptTag({content:scene});
     await page.addScriptTag({content:js});
     await page.locator('#loadMessage').waitFor({state:'hidden'});
@@ -73,7 +83,11 @@ try {
     const modelStats=await page.evaluate(()=>window.MoonfallScene?.getStats());
     assert.equal(modelStats?.actors,7,'Seven rebuilt characters');
     assert.equal(modelStats?.mode,'rigged-illustration','The rebuilt renderer is live');
-    assert.equal(modelStats?.assetDependencies,0,'New art does not depend on legacy sprite atlases');
+    await page.waitForFunction(()=>window.MoonfallScene.getStats().loadedArtwork===7&&window.MoonfallScene.getStats().paintedBackgroundLoaded,null,{timeout:10000});
+    const importedStats=await page.evaluate(()=>window.MoonfallScene.getStats());
+    assert.equal(importedStats?.assetDependencies,7,'The game loads seven self-hosted illustrated characters');
+    assert.equal(importedStats?.loadedArtwork,7,'All seven real character illustrations appear in the world');
+    assert(importedStats?.paintedBackgroundLoaded,'A painterly environment replaces the flat vector backdrop');
     assert.equal(modelStats?.castAnchors.length,7,'Seven moving casting-hand anchors');
     assert.equal(modelStats?.ground.length,7,'All fighters are grounded');
     assert.equal(modelStats?.riggedParts,70,'The new model renderer has articulated body components');
@@ -200,9 +214,12 @@ try {
       await click(1280,35);
       assert.equal((await state()).turn,1,'Restart resets battle');
     }
+    if(width===1440){
+      await page.screenshot({path:join(root,'art-preview.png')});
+    }
     assert.deepEqual(errors,[],'No browser JavaScript errors at '+width+'×'+height);
     await page.close();
   }
   // The rebuilt renderer is tested directly by the production gameplay loop above.
-  console.log('MOONFALL REBUILD PASSED: new courtyard, seven articulated fighters, synced combat and mobile controls');
+  console.log('MOONFALL ART IMPORT PASSED: seven illustrated characters, painted environment, responsive cards and combat');
 } finally {await browser.close();}
