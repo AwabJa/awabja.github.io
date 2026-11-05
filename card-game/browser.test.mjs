@@ -83,7 +83,17 @@ try {
     assert.equal(await page.locator('#sceneWorld').count(),1,'Character and effect layer is present');
     assert.equal(await page.locator('#sceneBackground').count(),1,'Static castle layer is present');
     assert.equal(await page.locator('#sceneAtmosphere').count(),1,'Moving atmosphere has its own layer');
-    await page.waitForFunction(()=>window.MoonfallScene.getStats().backgroundLoaded && window.MoonfallScene.getStats().backgroundPaints>=1,null,{timeout:30000});
+    try{
+      await page.waitForFunction(()=>window.MoonfallScene?.getStats?.().backgroundLoaded && window.MoonfallScene.getStats().backgroundPaints>=1,null,{timeout:12000});
+    }catch(error){
+      const diag=await page.evaluate(()=>({
+        canvas:document.getElementById('game')?.dataset,
+        loadMessage:document.getElementById('loadMessage')?.className,
+        sceneStats:window.MoonfallScene?.getStats?.()??null
+      }));
+      console.error('Moonfall first-frame diagnostics',JSON.stringify({width,height,diag,errors}));
+      throw error;
+    }
     const fixedStart=await page.evaluate(()=>window.MoonfallScene.getStats());
     await page.waitForTimeout(220);
     const fixedAfter=await page.evaluate(()=>window.MoonfallScene.getStats());
