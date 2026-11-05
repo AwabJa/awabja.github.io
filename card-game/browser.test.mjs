@@ -18,6 +18,9 @@ assert.match(sceneJS,/function fixedBackground\(/,'The replacement draws its own
 assert.match(sceneJS,/function model\(/,'The replacement renders articulated character models');
 assert.match(htmlRaw,/id="cardInspector"/,'Mobile has a responsive accessible card inspector');
 assert.match(sceneJS,/function effects\(/,'The replacement has independent spell choreography');
+for(const name of ['wardSigil','brightSlash','lightningPath','crimsonPetal'])
+ assert(sceneJS.includes('function '+name+'('),'Spell families have distinct '+name+' visuals');
+assert.match(sceneJS,/const terrace=linear\(bg,0,390,0,H/,'Painted castle is grounded by perspective-correct stone terrain');
 const cards=(await readFile(join(root,'assets/cards-hd.webp'))).toString('base64');
 for(let i=0;i<7;i++){
  const png=await readFile(join(root,'assets/illustrated/actor-'+i+'.png'));
@@ -183,6 +186,7 @@ try {
       const inspector=page.locator('#cardInspector');
       await inspector.waitFor({state:'visible'});
       assert.equal(await page.locator('#cardInspectorName').textContent(),'Crimson Bloom','Mobile inspector shows the real card title');
+      if(width===844)await page.screenshot({path:join(root,'art-preview-phone.png')});
       assert((await page.evaluate(()=>document.getElementById('cardInspectorPlay').getBoundingClientRect().height))>=40,'Mobile play action has a finger-sized touch target');
       await page.locator('#cardInspectorCancel').click();
       assert.equal((await state()).preview,null,'Mobile cancel closes preview');
