@@ -22,7 +22,15 @@ function renderCardInspector(){
  document.getElementById('cardInspectorCost').textContent=String(c.cost);
  document.getElementById('cardInspectorDescription').textContent=c.description;
  document.getElementById('cardInspectorFlavor').textContent=c.flavor;
- inspectorArt.style.backgroundPosition=(preview.index*25)+'% 50%';
+ if(c.portrait!==undefined){
+  inspectorArt.style.backgroundImage=`radial-gradient(circle at 50% 40%,${c.hue}55,#14182c 70%),url("assets/illustrated/actor-${c.portrait}.png")`;
+  inspectorArt.style.backgroundSize='100% 100%,contain';
+  inspectorArt.style.backgroundPosition='center,center';
+ }else{
+  inspectorArt.style.backgroundImage="url('assets/cards-hd.webp?v=moonfall-clean-sprites-1')";
+  inspectorArt.style.backgroundSize='500% 100%';
+  inspectorArt.style.backgroundPosition=(preview.index*25)+'% 50%';
+ }
  inspectorPlay.hidden=!!preview.readonly;
  inspectorPlay.disabled=game.energy<c.cost||!!preview.readonly;
  inspectorPlay.textContent=inspectorPlay.disabled?'Not enough energy':'Play card';
@@ -33,25 +41,38 @@ inspectorCancel.addEventListener('click',()=>{game.preview=game.preview?.readonl
 
 const cardsArt=new Image();
 cardsArt.decoding='async';
+const portraits=Array.from({length:7},(_,i)=>{const img=new Image();img.decoding='async';img.src=`assets/illustrated/actor-${i}.png?v=moonfall-characters-v2`;return img});
 const artwork=[cardsArt];
 cardsArt.src='assets/cards-hd.webp?v=moonfall-clean-sprites-1';
 const W=1600,H=800,THEME={gold:'#f1d4a1',cream:'#f7e7d0',muted:'#bac0cb',blue:'#a6cbff',red:'#ef8799',green:'#9be3b6'};
 const CARDS=[
- {id:'shadow',name:'Shadow Step',rarity:'Rare',cost:1,kind:'attack',description:'Deal 135 damage to your selected enemy. If this defeats it, regain 1 energy.',amount:135,flavor:'Disappear into the night. Return as a blade.',hue:'#c4a6ff'},
- {id:'aegis',name:'Guardian Aegis',rarity:'Epic',cost:2,kind:'defend',description:'Give every surviving ally 70 shield, blocking incoming enemy damage.',amount:70,flavor:'Even the moon cannot pierce this ward.',hue:'#e8d09a'},
- {id:'bloom',name:'Crimson Bloom',rarity:'Legendary',cost:3,kind:'area',description:'Deal 95 damage to all living enemies. Apply 20 burn for two turns.',amount:95,flavor:'Let the scarlet petals fall.',hue:'#ffbaaf'},
- {id:'healing',name:'Healing Wind',rarity:'Rare',cost:2,kind:'heal',description:'Restore 100 health to your selected ally, up to their maximum.',amount:100,flavor:'A soft wind follows the fallen.',hue:'#aae6c3'},
- {id:'bolt',name:'Arcane Bolt',rarity:'Common',cost:1,kind:'attack',description:'Deal 115 lightning damage to the selected enemy.',amount:115,flavor:'A spark can shatter the darkness.',hue:'#a6bbff'}
+ {id:'shadow',name:'Shadow Step',rarity:'Rare',cost:1,kind:'attack',description:'Deal 90 damage to the selected enemy. If this defeats it, regain 1 energy.',amount:90,flavor:'A blade in the space between moonbeams.',hue:'#c4a6ff'},
+ {id:'aegis',name:'Guardian Aegis',rarity:'Epic',cost:2,kind:'defend',description:'Grant all surviving allies 28 shield. Block enemy attacks before health is lost.',amount:28,flavor:'The steadfast hold when the night rises.',hue:'#e8d09a'},
+ {id:'bloom',name:'Crimson Bloom',rarity:'Legendary',cost:3,kind:'area',description:'Deal 38 damage to every enemy and apply 12 burn for two rounds.',amount:38,flavor:'The petals are sharper than they appear.',hue:'#ffbaaf'},
+ {id:'healing',name:'Healing Wind',rarity:'Rare',cost:2,kind:'heal',description:'Restore 75 health to your selected living ally.',amount:75,flavor:'A quiet breath against the coming storm.',hue:'#aae6c3'},
+ {id:'bolt',name:'Arcane Bolt',rarity:'Common',cost:1,kind:'attack',description:'Deal 78 lightning damage to the selected enemy.',amount:78,flavor:'Power tempered with precision.',hue:'#a6bbff'},
+ {id:'vow',name:'Seraphine’s Vow',rarity:'Epic',cost:2,kind:'guard',description:'Grant the selected ally 70 shield and draw enemy attacks to them this round.',amount:70,portrait:0,flavor:'She holds the line. The court will not pass.',hue:'#f1d39b'},
+ {id:'mark',name:'Akari’s Mark',rarity:'Rare',cost:1,kind:'expose',description:'Strike one enemy for 45 damage. Mark it to take 30% more damage for two rounds.',amount:45,portrait:1,flavor:'There is no hiding from the marked blade.',hue:'#e893ba'},
+ {id:'hymn',name:'Elowen’s Hymn',rarity:'Rare',cost:2,kind:'healall',description:'Heal each surviving ally for 37 health and cleanse bleeding.',amount:37,portrait:2,flavor:'A chorus that refuses to fade.',hue:'#a6ecd5'},
+ {id:'tempest',name:'Kael’s Tempest',rarity:'Epic',cost:3,kind:'chain',description:'Deal 52 lightning damage to every surviving enemy.',amount:52,portrait:3,flavor:'One spell, a thousand crackling stars.',hue:'#9ecbff'},
+ {id:'bargain',name:'Reaper’s Bargain',rarity:'Epic',cost:0,kind:'bargain',description:'Selected ally loses 22 health. Gain 1 energy and draw two cards. Cannot sacrifice an ally.',amount:22,portrait:4,flavor:'Even power borrowed from death has a price.',hue:'#e5a3c0'},
+ {id:'curse',name:'Oracle’s Curse',rarity:'Rare',cost:1,kind:'hex',description:'Deal 30 damage and weaken the chosen enemy’s attacks by 35% for two rounds.',amount:30,portrait:5,flavor:'Her prophecies become their weaknesses.',hue:'#f4a0b6'},
+ {id:'resolve',name:'Night Knight’s Oath',rarity:'Epic',cost:2,kind:'riposte',description:'Give the selected ally 60 shield. Their next blocked enemy strike returns 35 damage.',amount:60,portrait:6,flavor:'A vow engraved on black steel.',hue:'#c2b5e3'}
 ];
 const ALLIES=[
  {name:'Seraphine',maxHp:190,x:220},{name:'Akari',maxHp:180,x:380},{name:'Elowen',maxHp:185,x:540},{name:'Kael',maxHp:195,x:700}
 ];
 const FOES=[
- {name:'Dusk Reaper',maxHp:250,x:1060,attack:34},{name:'Blood Oracle',maxHp:300,x:1220,attack:39},{name:'Night Knight',maxHp:340,x:1380,attack:44}
+ {name:'Dusk Reaper',maxHp:330,x:1060,attack:40},
+ {name:'Blood Oracle',maxHp:375,x:1220,attack:36},
+ {name:'Night Knight',maxHp:440,x:1380,attack:55}
 ];
 function freshGame(){return {
- allies:ALLIES.map(x=>({...x,hp:x.maxHp,shield:0})),foes:FOES.map(x=>({...x,hp:x.maxHp,burn:0,burnTurns:0})),
- turn:1,energy:3,maxEnergy:3,draw:[0,1,2,3,4,1,0,4,2,3,0,4,1,2,4,3,0,1],discard:[],hand:[0,1,2,3,4],
+ allies:ALLIES.map(x=>({...x,hp:x.maxHp,shield:0,guardTurns:0,retaliate:0,bleed:0,bleedTurns:0})),
+ foes:FOES.map(x=>({...x,hp:x.maxHp,shield:0,burn:0,burnTurns:0,weakTurns:0,exposedTurns:0})),
+ turn:1,energy:3,maxEnergy:3,
+ draw:[0,1,2,3,4,5,6,7,8,9,10,11,0,4,5,1,6,2,7,3,8,4,9,10,11,0,6,4,5,2],
+ discard:[],hand:[0,1,2,3,4],energyTax:0,
  selectedEnemy:0,selectedAlly:0,preview:null,history:null,ended:false,guide:false,handScroll:0,
  toast:'Tap a card to inspect it, then choose PLAY CARD.',toastAt:performance.now(),fx:[],lastEffect:null,hover:-1,
  initial:true};}
@@ -152,7 +173,7 @@ function cardFrame(index,slot,x,y,w,h,large=false){
  rr(x+6,y+6,w-12,h-12,7,'#161624','#c3a578',1.4);
  rr(x+9,y+9,w-18,h-18,5,null,'#997a59',.7);
  rr(x+10,y+12,w-20,h-24,6,gradient(x+10,y,w-20,h,[[0,'#3b324b'],[1,'#171727']]));
- if(cardsArt.complete&&cardsArt.naturalWidth>0){
+ if(index<5&&cardsArt.complete&&cardsArt.naturalWidth>0){
    const dx=x+(large?12:9),dy=y+(large?39:35),dw=w-(large?24:18),dh=h-(large?105:93),srcW=276,srcH=272;
    const targetRatio=dw/dh,sourceRatio=srcW/srcH;
    let sx=276*index,sy=0,sw=srcW,sh=srcH;
@@ -160,8 +181,18 @@ function cardFrame(index,slot,x,y,w,h,large=false){
    else{sh=srcW/targetRatio;sy+=Math.max(0,(srcH-sh)/2)}
    ctx.save();ctx.beginPath();ctx.roundRect(dx,dy,dw,dh,4);ctx.clip();
    ctx.drawImage(cardsArt,sx,sy,sw,sh,dx,dy,dw,dh);ctx.restore();
+ }else if(c.portrait!==undefined&&portraits[c.portrait].complete&&portraits[c.portrait].naturalWidth>0){
+  const dx=x+10,dy=y+(large?39:35),dw=w-20,dh=h-(large?105:93);
+  const art=portraits[c.portrait];
+  ctx.save();ctx.beginPath();ctx.roundRect(dx,dy,dw,dh,4);ctx.clip();
+  ctx.fillStyle=gradient(dx,dy,dw,dh,[[0,c.hue+'8c'],[.42,'#222740'],[1,'#111528']]);ctx.fillRect(dx,dy,dw,dh);
+  const artH=dh*.99,artW=artH*art.naturalWidth/art.naturalHeight;
+  ctx.shadowColor=c.hue;ctx.shadowBlur=18;ctx.drawImage(art,dx+(dw-artW)/2,dy+dh-artH,artW,artH);
+  ctx.restore();
+ }else{
+  rr(x+10,y+39,w-20,h-105,5,'#25243c');
+  fittedCardText('ARTWORK LOADING',x+w/2,y+h*.48,w-25,12,9,'#e6d7ba','system-ui');
  }
- else{rr(x+10,y+39,w-20,h-105,5,'#25243c');fittedCardText('ARTWORK LOADING',x+w/2,y+h*.48,w-25,12,9,'#e6d7ba','system-ui');}
  const badge=large?37:34;
  rr(x+10,y+10,badge,badge,badge/2,'#25233b','#fae2b8',2);
  text(c.cost,x+10+badge/2,y+10+badge/2,large?24:21,THEME.cream,'Georgia','center','700');
@@ -226,8 +257,9 @@ function drawTable(now){
   ctx.beginPath();ctx.moveTo(x,y-8);ctx.lineTo(x+7,y);ctx.lineTo(x,y+8);ctx.lineTo(x-7,y);ctx.closePath();ctx.fill();
  }
  // This is deliberately visible and does NOT modify hit points or spend cards.
- pill('▶ SEE ANIMATIONS',233,599,218,46,'#423148e8','#edcd94',16);
- register(233,599,218,46,'motionDemo');
+ // Show actual tactical information, not an internal animation-test button.
+ rr(233,599,245,46,8,'#172034d8','#b4a17d8d',1);
+ text('Read enemy intents above their bars',355,623,11,'#dfcbb7','system-ui','center','650');
  cardBack(45,691,56,68,'DECK',game.draw.length);
  cardBack(126,691,56,68,'DISCARD',game.discard.length);
  register(27,660,83,140,'deck');register(111,660,84,140,'discard');
@@ -286,15 +318,15 @@ function drawPreview(){
 function drawDeck(){
  overlayFrame(game.history==='discard'?'DISCARD PILE':'YOUR DECK',game.history==='discard'?'Cards already played in this battle.':'Choose a card to inspect. You cannot play it from here.');
  const list=game.history==='discard'?game.discard:[...game.draw,...game.hand,...game.discard];
- const counts=Array(5).fill(0);list.forEach(n=>counts[n]++);
- for(let i=0;i<5;i++){
+ const counts=Array(CARDS.length).fill(0);list.forEach(n=>counts[n]++);
+ for(let i=0;i<CARDS.length;i++){
    if(game.history==='discard'&&!counts[i])continue;
-   const x=320+i*199, y=274;
-   cardFrame(i,-1,x,y,180,279,true);
-   pill('× '+counts[i],x+42,574,96,41,'#272233','#bd9a7c',19);
-   register(x,y,182,327,'deckcard',i);
+   const x=319+(i%6)*160,y=230+Math.floor(i/6)*220;
+   cardFrame(i,-1,x,y,140,207,true);
+   pill('×'+counts[i],x+92,y+9,43,29,'#272233','#bd9a7c',15);
+   register(x,y,140,210,'deckcard',i);
  }
- text('Tap an illustrated card to read its full ability.',800,647,20,'#d9c7c2','system-ui','center');
+ text('Twelve unique cards. Tap any to read its full ability.',800,689,18,'#d9c7c2','system-ui','center');
 }
 function drawGuide(){
  overlayFrame('HOW TO PLAY','One battle. Four allies. Three enemies. No complicated setup.');
@@ -330,17 +362,6 @@ function draw(now=performance.now()){
  renderCardInspector();
  if(game.ended)drawResult();
  requestAnimationFrame(draw);
-}
-function demoAnimations(){
- if(game.preview||game.ended)return;
- const showcase=[
-  {kind:'strike',source:1,target:4,delay:0},
-  {kind:'heal',source:2,target:0,delay:1700},
-  {kind:'area',source:0,target:5,delay:3400},
-  {kind:'enemy',source:6,target:3,delay:5300}
- ];
- showcase.forEach(c=>window.MoonfallScene?.cue?.(c));
- announce('Animation demo: sword attack, spellcasting, area magic, and enemy strike. No health is changed.');
 }
 function aliveEnemy(){return game.foes.findIndex(e=>e.hp>0)}
 function aliveAlly(){return game.allies.findIndex(a=>a.hp>0)}
@@ -477,7 +498,6 @@ function activate(z){if(!z)return;
   case 'discard':game.preview={type:'deck'};game.history='discard';announce('Discard pile opened.');break;
   case 'end':endTurn();break;
   case 'restart':clearImpacts();game=freshGame();game.draw=game.draw.slice(5);window.MoonfallScene?.reset?.();announce('New battle started.');break;
-  case 'motionDemo':demoAnimations();break;
   case 'guide':game.preview={type:'guide'};break;
  }
 }
@@ -496,7 +516,6 @@ window.addEventListener('keydown',e=>{
  if(/^([1-9])$/.test(e.key)){selectCard(Number(e.key)-1);return}
  if(e.key.toLowerCase()==='e'){endTurn();return}
  if(e.key.toLowerCase()==='h'){game.preview={type:'guide'};return}
- if(e.key.toLowerCase()==='m'){demoAnimations();return}
  });
 function configureResolution(){
  const box=canvas.getBoundingClientRect();
