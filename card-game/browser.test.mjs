@@ -82,7 +82,11 @@ try {
     assert.equal(modelStats.animationStates.length,7,'All seven character rigs have states');
     assert.equal(modelStats.actorOffsets.length,7,'All seven actors move independently');
     assert.match(jsRaw,/SEE ANIMATIONS/,'A visible animation showcase exists');
-    assert(Math.abs(box.width-width)<=1 && Math.abs(box.height-height)<=1,'Canvas fills entire viewport');
+    assert(Math.abs(box.width/box.height-2)<.01,'Stage maintains a true 2:1 aspect ratio');
+    assert(Math.abs(box.x-(width-box.width)/2)<=1.5 && Math.abs(box.y-(height-box.height)/2)<=1.5,
+      'Stage is centred in the screen without distorting characters or typography');
+    assert(box.width<=width+1 && box.height<=height+1,'Stage remains within the viewport');
+    assert(Math.abs(box.width/1600-box.height/800)<.005,'Both canvas axes use the same physical scale');
     const raster=await page.evaluate(()=>({w:document.getElementById('game').width,h:document.getElementById('game').height}));
     assert(raster.w>=1600 && raster.h>=800,'Canvas draws above baseline logical resolution');
     assert.equal(await page.locator('#fullscreenButton').count(),1,'Fullscreen control is present');
@@ -115,7 +119,7 @@ try {
       assert.equal(before.allies.length,4,'Four separate allied models');
       const fan=await page.evaluate(()=>window.__moonfallFanLayout());
       assert.equal(fan.length,5,'Five cards form the opening hand');
-      assert(fan.every(c=>Math.abs((c.w/c.h)*((width/height)/2)-2/3)<.025),'Each physical card has an unsquished 2:3 ratio');
+      assert(fan.every(c=>Math.abs(c.w/c.h-2/3)<.001),'Each card has a true 2:3 aspect ratio independent of device geometry');
       assert(fan.every(c=>Math.max(...c.polygon.map(p=>p.y))<800),'The entire card hand fits inside the screen');
       assert(fan.every(c=>Math.min(...c.polygon.map(p=>p.y))>500),'Cards stay below character health bars');
       assert(fan[0].angle<fan[1].angle&&fan[2].angle===0&&fan[4].angle>0,'Hand has realistic left-to-right fan angles');
@@ -155,7 +159,7 @@ try {
       await click(center.x,center.y);
       assert.equal((await state()).previewCard,'bloom','Center card expands to correct full card preview');
       const preview=await page.evaluate(()=>window.__moonfallPreviewSize());
-      assert(Math.abs((preview.width/preview.height)*((width/height)/2)-2/3)<.025,'Expanded card keeps physical 2:3 ratio');
+      assert(Math.abs(preview.width/preview.height-2/3)<.001,'Expanded card keeps physical 2:3 ratio');
       assert.equal((await state()).energy,3,'Preview does not spend energy');
       await click(1112,628);
       assert.equal((await state()).preview,null,'Cancel closes preview');
