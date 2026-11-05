@@ -37,11 +37,11 @@ const artwork=[cardsArt];
 cardsArt.src='assets/cards-hd.webp?v=moonfall-clean-sprites-1';
 const W=1600,H=800,THEME={gold:'#f1d4a1',cream:'#f7e7d0',muted:'#bac0cb',blue:'#a6cbff',red:'#ef8799',green:'#9be3b6'};
 const CARDS=[
- {id:'shadow',name:'Shadow Step',rarity:'Rare',cost:1,kind:'attack',description:'Deal 135 damage to your selected enemy. If this defeats it, regain 1 energy.',amount:135,flavor:'Disappear into the night. Return as a blade.',symbol:'✧',hue:'#c4a6ff'},
- {id:'aegis',name:'Guardian Aegis',rarity:'Epic',cost:2,kind:'defend',description:'Give every surviving ally 70 shield, blocking incoming enemy damage.',amount:70,flavor:'Even the moon cannot pierce this ward.',symbol:'⬡',hue:'#e8d09a'},
- {id:'bloom',name:'Crimson Bloom',rarity:'Legendary',cost:3,kind:'area',description:'Deal 95 damage to all living enemies. Apply 20 burn for two turns.',amount:95,flavor:'Let the scarlet petals fall.',symbol:'✿',hue:'#ffbaaf'},
- {id:'healing',name:'Healing Wind',rarity:'Rare',cost:2,kind:'heal',description:'Restore 100 health to your selected ally, up to their maximum.',amount:100,flavor:'A soft wind follows the fallen.',symbol:'✳',hue:'#aae6c3'},
- {id:'bolt',name:'Arcane Bolt',rarity:'Common',cost:1,kind:'attack',description:'Deal 115 lightning damage to the selected enemy.',amount:115,flavor:'A spark can shatter the darkness.',symbol:'ϟ',hue:'#a6bbff'}
+ {id:'shadow',name:'Shadow Step',rarity:'Rare',cost:1,kind:'attack',description:'Deal 135 damage to your selected enemy. If this defeats it, regain 1 energy.',amount:135,flavor:'Disappear into the night. Return as a blade.',hue:'#c4a6ff'},
+ {id:'aegis',name:'Guardian Aegis',rarity:'Epic',cost:2,kind:'defend',description:'Give every surviving ally 70 shield, blocking incoming enemy damage.',amount:70,flavor:'Even the moon cannot pierce this ward.',hue:'#e8d09a'},
+ {id:'bloom',name:'Crimson Bloom',rarity:'Legendary',cost:3,kind:'area',description:'Deal 95 damage to all living enemies. Apply 20 burn for two turns.',amount:95,flavor:'Let the scarlet petals fall.',hue:'#ffbaaf'},
+ {id:'healing',name:'Healing Wind',rarity:'Rare',cost:2,kind:'heal',description:'Restore 100 health to your selected ally, up to their maximum.',amount:100,flavor:'A soft wind follows the fallen.',hue:'#aae6c3'},
+ {id:'bolt',name:'Arcane Bolt',rarity:'Common',cost:1,kind:'attack',description:'Deal 115 lightning damage to the selected enemy.',amount:115,flavor:'A spark can shatter the darkness.',hue:'#a6bbff'}
 ];
 const ALLIES=[
  {name:'Seraphine',maxHp:190,x:220},{name:'Akari',maxHp:180,x:380},{name:'Elowen',maxHp:185,x:540},{name:'Kael',maxHp:195,x:700}
@@ -97,7 +97,7 @@ function drawHeader(){
  ctx.fillStyle=grad;ctx.fillRect(0,0,W,106);
  text('✧',31,37,42,THEME.gold,'Georgia');
  text('MOONFALL',79,35,34,THEME.cream,'Georgia','left','700');
- text('SHATTERED COURT',300,39,14,'#e7d4b2','system-ui','left','700');
+ text('ILLUSTRATED CARDS',300,39,14,'#e7d4b2','system-ui','left','700');
  if(isResolving()){
   rr(433,22,179,31,7,'#292239ed','#e7c690bd',1);
   text('✦ RESOLVING',523,38,13,'#ffdfa2','system-ui','center','800');
@@ -144,7 +144,7 @@ function cardFrame(index,slot,x,y,w,h,large=false){
  const c=CARDS[index];const active=game.energy>=c.cost;
  ctx.save();
  ctx.shadowColor=slot===game.hover?'#ffe0a5b5':'#050414d0';
- ctx.shadowBlur=slot===game.hover?26:17;ctx.shadowOffsetY=7;
+ ctx.shadowBlur=slot===game.hover?30:19;ctx.shadowOffsetY=9;
  rr(x,y,w,h,11,gradient(x,y,w,h,[[0,'#f0d4a0'],[.32,'#53416b'],[1,'#d6ae78']]),slot===game.hover?'#fff2ca':'#dcbb81',3);
  ctx.restore();
  ctx.save();ctx.strokeStyle='#fff1c27a';ctx.lineWidth=1;
@@ -161,24 +161,28 @@ function cardFrame(index,slot,x,y,w,h,large=false){
    ctx.save();ctx.beginPath();ctx.roundRect(dx,dy,dw,dh,4);ctx.clip();
    ctx.drawImage(cardsArt,sx,sy,sw,sh,dx,dy,dw,dh);ctx.restore();
  }
- else{glow(x+w/2,y+125,70,c.hue);text(c.symbol,x+w/2,y+120,64,c.hue,'Georgia','center')}
- const badge=large?37:30;
+ else{rr(x+10,y+39,w-20,h-105,5,'#25243c');fittedCardText('ARTWORK LOADING',x+w/2,y+h*.48,w-25,12,9,'#e6d7ba','system-ui');}
+ const badge=large?37:34;
  rr(x+10,y+10,badge,badge,badge/2,'#25233b','#fae2b8',2);
- text(c.cost,x+10+badge/2,y+10+badge/2,large?24:19,THEME.cream,'Georgia','center','700');
+ text(c.cost,x+10+badge/2,y+10+badge/2,large?24:21,THEME.cream,'Georgia','center','700');
  if(large)text(c.rarity.toUpperCase(),x+w-14,y+25,11,'#ffe1ba','system-ui','right','900');
- else text(c.symbol,x+w-19,y+21,18,c.hue,'Georgia','center','700');
- const bandH=large?66:56;
+ else text(c.rarity.toUpperCase(),x+w-12,y+25,9,'#ffe1ba','system-ui','right','850');
+ const bandH=large?66:60;
  rr(x+8,y+h-bandH-8,w-16,bandH,5,'#111523f7','#dabd8bce',1.5);
- fittedCardText(c.name,x+w/2,y+h-bandH+9,w-25,large?24:14,large?17:10.8,THEME.cream);
+ fittedCardText(c.name,x+w/2,y+h-bandH+9,w-23,large?24:18,large?17:12.5,THEME.cream);
  const kindLabel=large?c.kind.toUpperCase()+' · '+c.cost+' ENERGY':c.kind.toUpperCase();
- fittedCardText(kindLabel,x+w/2,y+h-25,w-21,large?13:10,9,c.hue,'system-ui','850');
+ fittedCardText(kindLabel,x+w/2,y+h-25,w-21,large?13:11,10,c.hue,'system-ui','850');
  if(!large&&!active){rr(x+6,y+6,w-12,h-12,7,'#0a0a1666')}
 }
 function cardBack(x,y,w,h,label,count){
  ctx.save();ctx.shadowBlur=10;ctx.shadowColor='#0009';rr(x,y,w,h,9,gradient(x,y,w,h,[[0,'#44344d'],[1,'#171625']]),'#ba9a70',3);ctx.restore();
  rr(x+9,y+9,w-18,h-18,6,'#151729','#dfbe8888',1.5);
- ctx.beginPath();ctx.arc(x+w/2,y+h/2-9,w*.27,0,Math.PI*2);ctx.strokeStyle='#e5c188a0';ctx.lineWidth=2;ctx.stroke();
- text('✧',x+w/2,y+h/2-9,54,THEME.gold,'Georgia','center');
+ const cx=x+w/2,cy=y+h/2-9;
+ ctx.save();ctx.strokeStyle='#e5c188c9';ctx.lineWidth=1.6;
+ ctx.beginPath();ctx.arc(cx,cy,w*.24,0,Math.PI*2);ctx.stroke();
+ ctx.beginPath();ctx.moveTo(cx,cy-14);ctx.lineTo(cx+9,cy);ctx.lineTo(cx,cy+14);ctx.lineTo(cx-9,cy);ctx.closePath();ctx.stroke();
+ ctx.beginPath();ctx.moveTo(cx-15,cy);ctx.lineTo(cx+15,cy);ctx.moveTo(cx,cy-17);ctx.lineTo(cx,cy+17);ctx.stroke();
+ ctx.restore();
  text(label,x+w/2,y+h+22,17,'#f2d6af','Georgia','center');
  pill(String(count),x+w/2-22,y-17,44,30,'#211b2b','#d4b783',17);
 }
@@ -186,18 +190,18 @@ function cardBack(x,y,w,h,label,count){
 function handLayout(){
  const n=game.hand.length,mid=(n-1)/2;
  // The viewport is uniformly letterboxed; all card geometry is true 2:3.
- const height=186,width=height*(2/3);
+ const height=220,width=height*(2/3);
  // A tighter fan leaves a clearer battlefield and makes the cards feel held together.
- const spacing=n<=5?65:Math.max(49,Math.min(65,360/Math.max(1,n-1)));
+ const spacing=n<=5?79:Math.max(60,Math.min(79,420/Math.max(1,n-1)));
  const total=width+Math.max(0,n-1)*spacing;
  const first=800-total/2-game.handScroll;
  // Narrower viewports automatically reduce card tilt to avoid clipping the bottom edge.
- const maxAngle=Math.min(.225,25/Math.max(70,width/2));
+ const maxAngle=Math.min(.19,22/Math.max(70,width/2));
  return Array.from({length:n},(_,i)=>{
    const d=i-mid,outer=mid?d/mid:0;
    return {
      slot:i,x:first+i*spacing,
-     y:569+Math.abs(d)*(n<=5?8:5)-(game.hover===i?12:0),
+     y:533+Math.abs(d)*(n<=5?9:5)-(game.hover===i?19:0),
      w:width,h:height,angle:outer*maxAngle
    };
  });
@@ -233,7 +237,7 @@ function drawTable(now){
  fanGlow.addColorStop(0,'#f2c78829');
  fanGlow.addColorStop(.6,'#9673a413');
  fanGlow.addColorStop(1,'#070b1800');
- ctx.fillStyle=fanGlow;ctx.fillRect(505,553,590,247);
+ ctx.fillStyle=fanGlow;ctx.fillRect(470,520,660,280);
  ctx.beginPath();ctx.ellipse(800,783,253,38,0,Math.PI*1.08,Math.PI*1.92);
  ctx.strokeStyle='#d4ac7e65';ctx.lineWidth=1.5;ctx.stroke();
  for(const dx of [-244,-183,0,183,244]){
@@ -244,6 +248,8 @@ function drawTable(now){
  // Draw back-to-front. Raised center cards win overlapping hit tests.
  const fan=handLayout(),middle=(fan.length-1)/2;
  const order=fan.slice().sort((a,b)=>Math.abs(b.slot-middle)-Math.abs(a.slot-middle));
+ // Give the card under the pointer the top layer so its illustration/title are visible.
+ if(game.hover>=0){const i=order.findIndex(c=>c.slot===game.hover);if(i>=0)order.push(...order.splice(i,1))}
  for(const c of order){
    ctx.save();ctx.translate(c.x+c.w/2,c.y+c.h*.88);ctx.rotate(c.angle);
    cardFrame(game.hand[c.slot],c.slot,-c.w/2,-c.h*.88,c.w,c.h);
