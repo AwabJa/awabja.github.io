@@ -37,10 +37,10 @@ jobs:
           fi
           node card-game/browser.test.mjs
       - name: Save Moonfall actual artwork and mobile inspector screenshots
-        if: always() && github.ref == 'refs/heads/moonfall-polish-cards-motion-fx-scene'
+        if: always() && github.ref == 'refs/heads/moonfall-card-art-not-emojis'
         uses: actions/upload-artifact@v4
         with:
-          name: moonfall-polish-real-game-screenshots
+          name: moonfall-corrected-card-screenshots
           path: |
             card-game/art-preview.png
             card-game/art-preview-phone.png
