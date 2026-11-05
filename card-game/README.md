@@ -31,7 +31,7 @@ Moonfall is a full-viewport, landscape-first gothic fantasy card battle featurin
 
 The renderer is `scene-rebuild-prototype.js`, loaded by `index.html` as the production world. It uses the layered `sceneBackground`, `sceneAtmosphere`, and `sceneWorld` canvases; `game.js` maintains the original playable card logic and HUD. The background stays fixed between resizes; only characters, atmospheric effects, spell effects, and HUD repaint.
 
-The original `scene25d.js` and its `backdrop2.webp`, `characters.webp`, `frames-allies.webp`, and `frames-enemies.webp` assets have been retired. Only `assets/cards-hd.webp` remains necessary for the five illustrated cards.
+The original `scene25d.js` and its `backdrop2.webp`, `characters.webp`, `frames-allies.webp`, and `frames-enemies.webp` assets are **not loaded by the live game**. Repository deletion was unavailable during this deployment, so those legacy files remain in version control but are inactive. Only `assets/cards-hd.webp` is used for the five illustrated cards.
 
 ## Current limitations
 
