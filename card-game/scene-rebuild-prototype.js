@@ -152,10 +152,20 @@ function actorAnimation(i,now){
  if(e.target===i&&p>=e.impact&&!['heal','defend'].includes(e.kind)){hurt=Math.max(hurt,(1-ease((p-e.impact)/.37)));state='hurt'}
  if(e.source===i&&e.kind!=='burn'){
   if(e.kind==='strike'||e.kind==='enemy'){
-   state='attack';let a=ease((p-.19)/.34)*(1-ease((p-.67)/.27));
-   let sign=i<4?1:-1;move=sign*Math.min(129,Math.abs(positions[e.target]-positions[i])*.21)*a;
-   lift=-9*Math.sin(PI*ease((p-.2)/.65));slash=ease((p-.25)/.25)*(1-ease((p-.66)/.19));arm=-.43*ease((p-.06)/.18)+1.1*slash;turn=-.08*slash;
-  }else{state='cast';cast=ease((p-.06)/.27)*(1-ease((p-.7)/.25));arm=-.65*cast;offHand=.27*cast;turn=-.045*cast;}
+   state='attack';
+   const windup=ease((p-.06)/.19)*(1-ease((p-.32)/.10));
+   const dash=ease((p-.27)/.22)*(1-ease((p-.65)/.24));
+   const sign=i<4?1:-1;
+   move=sign*(-19*windup+Math.min(132,Math.abs(positions[e.target]-positions[i])*.23)*dash);
+   lift=-12*Math.sin(PI*ease((p-.22)/.55));slash=dash;
+   arm=-.57*windup+1.13*slash;turn=-.13*slash+.055*windup;
+  }else{
+   state='cast';
+   const focus=ease((p-.05)/.24),release=ease((p-.38)/.15);
+   cast=focus*(1-ease((p-.76)/.18));
+   arm=-.65*cast;offHand=.27*cast;turn=-.065*cast+.08*release;
+   lift=-4*cast;
+  }
  }
  }
  return {move,lift,arm,offHand,turn,cast,slash,hurt,state};
@@ -179,13 +189,36 @@ function drawnCharacter(i,now,hp,selected){
  ctx.save();ctx.translate(x,ground[i]+1);ctx.scale(1,.22);ctx.fillStyle=shadow;
  ctx.beginPath();ctx.arc(0,0,width*.49,0,T);ctx.fill();ctx.restore();
  if(selected&&hp>0)ellipse(ctx,x,ground[i]+2,width*.35,10,'#e4b78312','#ffdfb5bf',2);
+ // A drawn cutout cannot articulate individual limbs. Staged weight shifts,
+ // a short windup, impact recoil and controlled afterimages make the pose readable
+ // without falsely stretching a static illustration into rubber-like movement.
+ const idle=hp>0&&!reduced?Math.sin(now*.00135+i*1.7)*.004:0;
+ const attackPose=a.state==='attack'?Math.min(1,a.slash):0;
+ const castPose=a.state==='cast'?a.cast:0;
  ctx.save();ctx.translate(x,y);
- ctx.rotate((a.turn+(!reduced&&hp>0?Math.sin(now*.0016+i)*.006:0))*face);
- if(a.hurt)ctx.translate(-face*a.hurt*7,0);
+ ctx.rotate((a.turn+idle)*face);
+ if(a.hurt)ctx.translate(-face*a.hurt*14,5*a.hurt);
+ ctx.scale(1+attackPose*.025+castPose*.012,1-attackPose*.023);
+ if(a.slash>.12&&!reduced){
+  for(let trail=2;trail>=1;trail--){
+   ctx.save();
+   ctx.globalAlpha=.10*a.slash*(3-trail);
+   ctx.filter='blur(2px)';
+   ctx.drawImage(img,-width*.5-face*trail*19,-height,width,height);
+   ctx.restore();
+  }
+ }
  ctx.globalAlpha=hp>0?1:.28;
  ctx.filter=hp>0?'drop-shadow(0px 8px 10px rgba(2,3,11,.64))':'grayscale(1) brightness(.64)';
  ctx.drawImage(img,-width*.5,-height,width,height);
- ctx.filter='none';ctx.restore();
+ ctx.filter='none';
+ if(a.hurt>.08&&hp>0){
+  ctx.globalCompositeOperation='screen';ctx.globalAlpha=a.hurt*.25;
+  ctx.filter='brightness(0) invert(1)';
+  ctx.drawImage(img,-width*.5,-height,width,height);
+  ctx.filter='none';ctx.globalCompositeOperation='source-over';
+ }
+ ctx.restore();
  // Each illustration retains a fixed foot anchor and a believable casting point.
  // Still-image sprites cannot articulate fingers: richer attack poses require authored frames.
  const reach=(.22+a.cast*.12)*width;
