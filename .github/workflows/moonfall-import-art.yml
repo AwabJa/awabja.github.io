@@ -1,0 +1,59 @@
+name: Import Moonfall illustrated character art
+on:
+  push:
+    branches: [moonfall-imported-art-prototype]
+    paths:
+      - .github/workflows/moonfall-import-art.yml
+permissions:
+  contents: write
+jobs:
+  import-art:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Download source sprites under CC0 and validate PNG dimensions
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p card-game/assets/illustrated
+          slugs=(
+            warrior-knight-hero-anime
+            rogue-assassin-cloaked-anime
+            healer-priestess-serene-anime
+            mage-cryomancer-boy-anime
+            necromancer-bone-king-anime
+            necromancer-grave-maiden-anime
+            paladin-dark-anti-hero-anime
+          )
+          for i in "${!slugs[@]}"; do
+            curl --fail --location --silent --show-error --retry 3 \
+              --max-time 35 \
+              "https://freegamesprites.com/images/ai-sprites/generated/${slugs[$i]}.png" \
+              --output "card-game/assets/illustrated/actor-$i.png"
+          done
+          python3 - <<'PY'
+          import struct
+          from pathlib import Path
+          sprites = sorted(Path("card-game/assets/illustrated").glob("actor-*.png"))
+          assert len(sprites)==7
+          for file in sprites:
+              data = file.read_bytes()
+              assert data[:8]==b"\x89PNG\r\n\x1a\n", f"Not PNG: {file}"
+              w,h = struct.unpack(">II",data[16:24])
+              assert (w,h)==(384,512), f"Wrong dimensions: {file} {w}x{h}"
+              assert len(data)>20000, f"Unusually small sprite: {file}"
+              print(file, w, h, len(data))
+          PY
+      - name: Commit licensed, self-hosted artwork
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add card-game/assets/illustrated/
+          if ! git diff --cached --quiet; then
+            git commit -m "Moonfall: import seven real anime-style CC0 character PNGs"
+            git push origin HEAD:moonfall-imported-art-prototype
+          fi
