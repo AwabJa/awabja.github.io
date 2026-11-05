@@ -1,42 +1,34 @@
 # Moonfall — Shattered Court
 
-**Live game:** https://awabja.github.io/card-game/
+**Play:** https://awabja.github.io/card-game/
 
-Moonfall is a full-viewport, landscape-first gothic fantasy card battle featuring four allies, three enemies, and a completely rebuilt **procedural 2D battlefield**. As of this replacement, the original background and cutout character sprite atlases are no longer loaded.
+Moonfall is a landscape-first browser fantasy card battle. Four allies fight three enemies using a five-card hand, energy, shields, healing, burn, and timed attack animations. It supports landscape phones and desktops.
 
-## Playing
+## Artwork and presentation
 
-1. Open the game on desktop or rotate your phone to landscape.
-2. Choose an enemy to attack, or an ally to heal.
-3. Tap a card to inspect it, then Play Card to cast (or Keep in Hand to cancel).
-4. Watch the animated action resolve at the visible impact frame.
-5. End Turn to trigger enemy attacks. Defeat three enemies before all four heroes fall.
+- The game now uses **seven self-hosted illustrated 384×512 PNG character sprites** from `assets/illustrated/`, with original source and the publisher's licence declaration recorded in [SOURCES.md](assets/illustrated/SOURCES.md).
+- The gothic castle uses the painted `assets/backdrop2.webp` scene, with a perspective stone-floor treatment, controlled moonlight, and atmosphere drawn over it.
+- Combat sprites remain **single static character poses** with code-driven windups, dashes, afterimages, casting glow and damage recoil. These improve presentation but are **not hand-drawn attack frames or actual skeletal animations**.
+- Magic now has distinct visual families for blade arcs, lightning, shield hexes, healing rings, crimson petals, burn and impacts. Health changes are synchronized with visible hit times.
+- The five illustrated cards still use `assets/cards-hd.webp`. Small cards have clearer labels, and phones use an accessible CSS-based inspector with readable text and touch-friendly Play/Keep buttons.
+- The battlefield canvas and the HUD maintain a uniform 2:1 aspect ratio instead of stretching character proportions across different screens.
 
-## New world and characters
+## Controls
 
-- New moonlit gothic courtyard composed directly in Canvas, with cathedral towers, ruins, bridges, a wet stone ground plane, crimson foliage, torches, and a separate atmosphere.
-- Seven redesigned articulated **2D illustration rigs**. Their heads, faces, capes, legs, arms, weapons, and casting hands are drawn and moved as separate geometry.
-- Distinct character silhouettes, palettes, and equipment for Seraphine, Akari, Elowen, Kael, the Dusk Reaper, Blood Oracle, and Night Knight.
-- The illustration style is **procedural vector art**, not 3D meshes or hand-painted high-resolution anime character artwork. It will look more graphic and flatter than a cinematic painted concept image.
+1. On a phone, rotate to landscape. On desktop, enter fullscreen if desired.
+2. Tap an enemy or ally to select the target.
+3. Tap a card to inspect its effect and energy cost. Choose Play Card or Keep in Hand.
+4. End Turn to trigger enemy actions and refill the hand.
+5. Keyboard: 1–5 choose cards, E ends the turn, H opens Help, M plays the animation showcase without changing combat state, Escape closes overlays.
 
-## Casting and effects
+## Code
 
-- Hand-anchored casting circles and light buildup before release.
-- Spells travel through the world from the animated hands toward the chosen target.
-- Distinct attack, healing, shield, area, burn, and enemy hit effects.
-- Damage, heals, shields, and status effects resolve at their rendered impact moments.
-- Accessible reduced-motion behaviour when system preferences request it.
+- `index.html`: four canvas layers and the responsive card inspector.
+- `game.js`: cards, combat, preview and HUD, impact resolution.
+- `scene-rebuild-prototype.js`: painterly backdrop, self-hosted character art, grounded movement and spell effects.
+- `style.css`: uniform stage sizing and real-pixel mobile inspector typography.
+- `browser.test.mjs`: mobile portrait/landscape and desktop regression checks. CI also captures actual gameplay screenshots.
 
-## Architecture
+## Honest limitations
 
-The renderer is `scene-rebuild-prototype.js`, loaded by `index.html` as the production world. It uses the layered `sceneBackground`, `sceneAtmosphere`, and `sceneWorld` canvases; `game.js` maintains the original playable card logic and HUD. The background stays fixed between resizes; only characters, atmospheric effects, spell effects, and HUD repaint.
-
-The original `scene25d.js` and its `backdrop2.webp`, `characters.webp`, `frames-allies.webp`, and `frames-enemies.webp` assets are **not loaded by the live game**. Repository deletion was unavailable during this deployment, so those legacy files remain in version control but are inactive. Only `assets/cards-hd.webp` is used for the five illustrated cards.
-
-## Current limitations
-
-This is a functional 2D art rebuild, not a production-ready painted anime RPG. It has animated component rigs, not cinematic 3D character meshes, custom skeletal asset pipelines, or unique hand-painted attack frames. Additional high-resolution art and manual animation work would be needed for that level of finish. The card collection is not persistent and there is no online multiplayer or account system.
-
-## Testing
-
-`node card-game/browser.test.mjs` checks landscape and portrait mobile as well as desktop, verifies the new renderer and articulated models, and exercises selection, preview, card play, deferred impact events, turns, deck, and restart.
+The illustrated fighters have **one still pose per character**, not separate attacking/casting frames. The rebuilt spell choreography does not change that constraint. A production-quality release would need coordinated per-character pose sheets or layered artwork with proper joint locations, additional environmental painting, and redesigned card illustration typography. This release remains a playable, locally rendered prototype, not a persistent or multiplayer game.

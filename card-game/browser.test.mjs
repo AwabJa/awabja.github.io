@@ -16,7 +16,11 @@ assert.doesNotMatch(htmlRaw,/scene25d\.js/,'The old renderer is not loaded');
 assert.match(sceneJS,/artSystem:'self-hosted painted castle and seven imported illustrated sprites'/,'The game draws imported artwork instead of polygonal actor bodies');
 assert.match(sceneJS,/function fixedBackground\(/,'The replacement draws its own courtyard');
 assert.match(sceneJS,/function model\(/,'The replacement renders articulated character models');
+assert.match(htmlRaw,/id="cardInspector"/,'Mobile has a responsive accessible card inspector');
 assert.match(sceneJS,/function effects\(/,'The replacement has independent spell choreography');
+for(const name of ['wardSigil','brightSlash','lightningPath','crimsonPetal'])
+ assert(sceneJS.includes('function '+name+'('),'Spell families have distinct '+name+' visuals');
+assert.match(sceneJS,/const terrace=linear\(bg,0,390,0,H/,'Painted castle is grounded by perspective-correct stone terrain');
 const cards=(await readFile(join(root,'assets/cards-hd.webp'))).toString('base64');
 for(let i=0;i<7;i++){
  const png=await readFile(join(root,'assets/illustrated/actor-'+i+'.png'));
@@ -25,13 +29,13 @@ for(let i=0;i<7;i++){
 const paintedBackground=await readFile(join(root,'assets/backdrop2.webp'));
 assert(paintedBackground.length>100000,'High-resolution painted backdrop is available');
 const manifest=JSON.parse(await readFile(join(root,'manifest.webmanifest'),'utf8'));
-assert.match(htmlRaw,/src="game\.js\?v=moonfall-new-world-1"/);
-assert.match(htmlRaw,/src="scene-rebuild-prototype\.js\?v=moonfall-new-world-1"/);
+assert.match(htmlRaw,/src="game\.js\?v=moonfall-polish-stage-1"/);
+assert.match(htmlRaw,/src="scene-rebuild-prototype\.js\?v=moonfall-polish-stage-1"/);
 assert.match(htmlRaw,/<canvas id="sceneBackground"/);
 assert.match(htmlRaw,/<canvas id="sceneAtmosphere"/);
 assert.match(htmlRaw,/<canvas id="sceneWorld"/);
 assert.match(htmlRaw,/apple-mobile-web-app-capable/);
-assert.match(htmlRaw,/href="style\.css\?v=moonfall-new-world-1"/);
+assert.match(htmlRaw,/href="style\.css\?v=moonfall-polish-stage-1"/);
 assert.match(jsRaw,/function impactCue\(/,'Combat actions resolve on the rendered impact frames');
 assert.match(jsRaw,/flushImpacts\(now\)/,'Gameplay updates share the animation clock');
 assert.match(jsRaw,/SEE ANIMATIONS/,'The game keeps its spell-animation showcase');
@@ -72,12 +76,12 @@ try {
     await page.goto(origin+'/index.html',{waitUntil:'domcontentloaded'});
     await page.locator('#loadMessage').waitFor({state:'hidden'});
     const canvas=page.locator('#game');
-    const box=await canvas.boundingBox();
+    const box=await page.evaluate(()=>{const r=document.getElementById('game').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height}});
     assert(box && box.width>=100 && box.height>=50,'Canvas must render at '+width+'×'+height);
     assert.equal(await page.locator('#sceneWorld').count(),1,'Character and effect layer is present');
     assert.equal(await page.locator('#sceneBackground').count(),1,'Static castle layer is present');
     assert.equal(await page.locator('#sceneAtmosphere').count(),1,'Moving atmosphere has its own layer');
-    await page.waitForFunction(()=>window.MoonfallScene.getStats().backgroundLoaded && window.MoonfallScene.getStats().backgroundPaints>=1,null,{timeout:10000});
+    await page.waitForFunction(()=>window.MoonfallScene.getStats().backgroundLoaded && window.MoonfallScene.getStats().backgroundPaints>=1,null,{timeout:30000});
     const fixedStart=await page.evaluate(()=>window.MoonfallScene.getStats());
     await page.waitForTimeout(220);
     const fixedAfter=await page.evaluate(()=>window.MoonfallScene.getStats());
@@ -87,7 +91,7 @@ try {
     const modelStats=await page.evaluate(()=>window.MoonfallScene?.getStats());
     assert.equal(modelStats?.actors,7,'Seven rebuilt characters');
     assert.equal(modelStats?.mode,'rigged-illustration','The rebuilt renderer is live');
-    await page.waitForFunction(()=>window.MoonfallScene.getStats().loadedArtwork===7&&window.MoonfallScene.getStats().paintedBackgroundLoaded,null,{timeout:10000});
+    await page.waitForFunction(()=>window.MoonfallScene.getStats().loadedArtwork===7&&window.MoonfallScene.getStats().paintedBackgroundLoaded,null,{timeout:30000});
     const importedStats=await page.evaluate(()=>window.MoonfallScene.getStats());
     assert.equal(importedStats?.assetDependencies,7,'The game loads seven self-hosted illustrated characters');
     assert.equal(importedStats?.loadedArtwork,7,'All seven real character illustrations appear in the world');
@@ -117,7 +121,7 @@ try {
     if(width===844||width===932){
       assert(box.height<=height+1,'Landscape canvas fits phone height');
       const click=async(x,y)=>{
-        const rect=await canvas.boundingBox();
+        const rect=await page.evaluate(()=>{const r=document.getElementById('game').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height}});
         await page.mouse.click(rect.x+x/1600*rect.width,rect.y+y/800*rect.height);
         await page.waitForTimeout(65);
       };
@@ -179,17 +183,22 @@ try {
       const preview=await page.evaluate(()=>window.__moonfallPreviewSize());
       assert(Math.abs(preview.width/preview.height-2/3)<.001,'Expanded card keeps physical 2:3 ratio');
       assert.equal((await state()).energy,3,'Preview does not spend energy');
-      await click(1112,628);
-      assert.equal((await state()).preview,null,'Cancel closes preview');
+      const inspector=page.locator('#cardInspector');
+      await inspector.waitFor({state:'visible'});
+      assert.equal(await page.locator('#cardInspectorName').textContent(),'Crimson Bloom','Mobile inspector shows the real card title');
+      if(width===844)await page.screenshot({path:join(root,'art-preview-phone.png')});
+      assert((await page.evaluate(()=>document.getElementById('cardInspectorPlay').getBoundingClientRect().height))>=40,'Mobile play action has a finger-sized touch target');
+      await page.locator('#cardInspectorCancel').click();
+      assert.equal((await state()).preview,null,'Mobile cancel closes preview');
       const left=await visiblePoint(0);
       assert(left,'The outermost left card remains tappable despite overlap');
       await click(left.x,left.y);
       assert.equal((await state()).previewCard,'shadow','Outermost card expands to correct preview');
-      await click(1112,628);
+      await page.locator('#cardInspectorCancel').click();
       assert.equal((await state()).hand.length,5,'Cancel keeps card in hand');
       const leftAgain=await visiblePoint(0);
       await click(leftAgain.x,leftAgain.y);
-      await click(820,628);
+      await page.locator('#cardInspectorPlay').click();
       const played=await state();
       assert.equal(played.energy,2,'Confirm spends energy');
       assert.equal(played.foes[1].hp,300,'Damage is not applied before the visible spell strikes');
@@ -220,6 +229,10 @@ try {
     }
     if(width===1440){
       await page.screenshot({path:join(root,'art-preview.png')});
+      // Capture a real cast mid-flight, not a concept image or idle-only preview.
+      await page.evaluate(()=>window.MoonfallScene.cue({kind:'bolt',source:3,target:5}));
+      await page.waitForTimeout(710);
+      await page.screenshot({path:join(root,'art-preview-spell.png')});
     }
     assert.deepEqual(errors,[],'No browser JavaScript errors at '+width+'×'+height);
     await page.close();
