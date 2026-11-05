@@ -20,6 +20,17 @@ const actors=[
 ];
 let cues=[],frames=0,backgroundPaints=0,atmosphereFrames=0,lastCue=null,dirty=true,nowClock=0,activeCueCount=0;
 const states=actors.map(()=> 'idle'),offsets=actors.map(()=>0),castPoints=actors.map(()=>({x:0,y:0})),previous=actors.map(()=>null),hits=actors.map(()=>0);
+// These are real, transparent illustration files imported to this repository.
+// No drawn-body substitute is displayed once the image finishes loading.
+const importedArt=actors.map((_,i)=>{
+ const sprite=new Image();
+ sprite.decoding='async';
+ sprite.src=window.__moonfallArtSources?.[i]||`assets/illustrated/actor-${i}.png?v=moonfall-imported-art-1`;
+ return sprite;
+});
+const paintedBackground=new Image();
+paintedBackground.onload=()=>{dirty=true};
+paintedBackground.src=window.__moonfallBackgroundSource||'assets/backdrop2.webp?v=moonfall-imported-art-1';
 const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches??false;
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const ease=x=>{x=clamp(x);return x*x*(3-2*x)};
@@ -59,6 +70,14 @@ function tree(g,x,y,scale,color){g.save();g.translate(x,y);g.scale(scale,scale);
  g.restore()}
 function fixedBackground(){
  bg.setTransform(back.width/W,0,0,back.height/H,0,0);
+ // Prefer the authored painterly castle to the old vector geometry.
+ if(paintedBackground.complete&&paintedBackground.naturalWidth>0){
+  bg.drawImage(paintedBackground,0,0,W,H);
+  // Harmonize the imported anime illustrations with the blue-violet night scene.
+  const shade=linear(bg,0,0,0,H,[[0,'#0c123429'],[.57,'#11182b0d'],[1,'#0609174c']]);
+  bg.fillStyle=shade;bg.fillRect(0,0,W,H);
+  dirty=false;backgroundPaints++;return;
+ }
  bg.fillStyle=linear(bg,0,0,0,590,[[0,'#060c21'],[.36,'#1c2e50'],[.78,'#43394e'],[1,'#111827']]);bg.fillRect(0,0,W,H);
  // The moon and far mountains make a new open sightline rather than a repeated castle facade.
  glow(bg,826,112,300,'#aec8f1',.22);ellipse(bg,826,110,97,97,'#f0ecdf');ellipse(bg,811,97,83,83,'#e8e9e4');
@@ -149,7 +168,33 @@ function blade(g,x,y,c,scale=1){g.save();g.translate(x,y);g.scale(scale,scale);
 function staff(g,x,y,c){g.save();g.translate(x,y);line(g,0,5,13,-141,'#070d22',11);line(g,0,5,13,-141,'#cfb89a',6);
  glow(g,13,-151,34,c.glow,.41);ellipse(g,13,-153,13,16,c.glow,'#ffffffd7',2);
  for(let j=0;j<4;j++){const q=j*T/4;line(g,13,-153,13+Math.cos(q)*25,-153+Math.sin(q)*25,c.trim,2)}g.restore()}
+function drawnCharacter(i,now,hp,selected){
+ const img=importedArt[i];
+ if(!img.complete||!img.naturalWidth)return false;
+ const c=actors[i],a=actorAnimation(i,now);
+ const face=i<4?1:-1,x=positions[i]+a.move,y=ground[i]+a.lift;
+ const height=c.height*1.02,width=height*384/512;
+ offsets[i]=a.move;states[i]=a.state;
+ const shadow=gradient(ctx,x,ground[i]+2,width*.49,[[0,'#02030bcb'],[.64,'#03060c65'],[1,'#06091500']]);
+ ctx.save();ctx.translate(x,ground[i]+1);ctx.scale(1,.22);ctx.fillStyle=shadow;
+ ctx.beginPath();ctx.arc(0,0,width*.49,0,T);ctx.fill();ctx.restore();
+ if(selected&&hp>0)ellipse(ctx,x,ground[i]+2,width*.35,10,'#e4b78312','#ffdfb5bf',2);
+ ctx.save();ctx.translate(x,y);
+ ctx.rotate((a.turn+(!reduced&&hp>0?Math.sin(now*.0016+i)*.006:0))*face);
+ if(a.hurt)ctx.translate(-face*a.hurt*7,0);
+ ctx.globalAlpha=hp>0?1:.28;
+ ctx.filter=hp>0?'drop-shadow(0px 8px 10px rgba(2,3,11,.64))':'grayscale(1) brightness(.64)';
+ ctx.drawImage(img,-width*.5,-height,width,height);
+ ctx.filter='none';ctx.restore();
+ // Each illustration retains a fixed foot anchor and a believable casting point.
+ // Still-image sprites cannot articulate fingers: richer attack poses require authored frames.
+ const reach=(.22+a.cast*.12)*width;
+ castPoints[i]={x:x+face*reach,y:y-height*(.57+a.cast*.14)};
+ if(a.hurt>0&&hp>0)glow(ctx,x,ground[i]-height*.56,58,c.glow,a.hurt*.1);
+ return true;
+}
 function model(i,now,hp,selected){
+ if(drawnCharacter(i,now,hp,selected))return;
  const c=actors[i],a=actorAnimation(i,now),x=positions[i]+a.move,y=ground[i]+a.lift,height=c.height;
  const front=i<4?1:-1,scale=height/250;
  const breathing=!reduced&&hp>0?Math.sin(now*.0014+i)*.65:0;
@@ -281,5 +326,5 @@ function render(now,game){sync();if(dirty)fixedBackground();atmosphere(now);ctx.
  for(let i=0;i<7;i++)model(i,now,hp[i],i<4?game.selectedAlly===i:game.selectedEnemy===i-4);
  effects(now);foreground(now);frames++;nowClock=now;
 }
-window.MoonfallScene={render,cue,reset,getStats(){return {mode:'rigged-illustration',actors:7,backgroundFixed:true,backgroundLoaded:true,backgroundPaints,atmosphereFrames,layerCount:4,frames,activeEffects:activeCueCount,lastCue,reducedMotion:reduced,animationStates:[...states],actorOffsets:[...offsets],castAnchors:castPoints.map(p=>({...p})),ground:ground.slice(),riggedParts:7*10,artSystem:'procedural character rigs and gothic courtyard',assetDependencies:0}}};
+window.MoonfallScene={render,cue,reset,getStats(){return {mode:'rigged-illustration',actors:7,backgroundFixed:true,backgroundLoaded:true,backgroundPaints,atmosphereFrames,layerCount:4,frames,activeEffects:activeCueCount,lastCue,reducedMotion:reduced,animationStates:[...states],actorOffsets:[...offsets],castAnchors:castPoints.map(p=>({...p})),ground:ground.slice(),riggedParts:7*10,artSystem:'self-hosted painted castle and seven imported illustrated sprites',assetDependencies:7,loadedArtwork:importedArt.filter(a=>a.complete&&a.naturalWidth>0).length,paintedBackgroundLoaded:paintedBackground.complete&&paintedBackground.naturalWidth>0}}};
 })();

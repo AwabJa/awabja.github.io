@@ -36,3 +36,11 @@ jobs:
             exit 1
           fi
           node card-game/browser.test.mjs
+      - name: Preserve actual Moonfall art-import screenshot
+        if: always() && github.ref == 'refs/heads/moonfall-imported-art-prototype'
+        uses: actions/upload-artifact@v4
+        with:
+          name: moonfall-imported-art-screenshot
+          path: card-game/art-preview.png
+          if-no-files-found: ignore
+          retention-days: 5
