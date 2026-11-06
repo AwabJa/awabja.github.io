@@ -31,6 +31,11 @@ function renderCardInspector(){
   inspectorArt.style.backgroundSize='500% 100%';
   inspectorArt.style.backgroundPosition=(preview.index*25)+'% 50%';
  }
+ if(c.rewardArt!==undefined){
+  inspectorArt.style.backgroundImage=`radial-gradient(circle at 50% 40%,${c.hue}55,#14182c 70%),url("assets/rewards/reward-${c.rewardArt}.png")`;
+  inspectorArt.style.backgroundSize='100% 100%,contain';
+  inspectorArt.style.backgroundPosition='center,center';
+ }
  inspectorPlay.hidden=!!preview.readonly;
  inspectorPlay.disabled=game.energy<c.cost||!!preview.readonly;
  inspectorPlay.textContent=inspectorPlay.disabled?'Not enough energy':'Play card';
@@ -42,6 +47,7 @@ inspectorCancel.addEventListener('click',()=>{game.preview=game.preview?.readonl
 const cardsArt=new Image();
 cardsArt.decoding='async';
 const portraits=Array.from({length:7},(_,i)=>{const img=new Image();img.decoding='async';img.src=`assets/illustrated/actor-${i}.png?v=moonfall-characters-v2`;return img});
+const rewardArt=Array.from({length:6},(_,i)=>{const img=new Image();img.decoding='async';img.src=`assets/rewards/reward-${i}.png?v=moonfall-deck-variety-1`;return img});
 const artwork=[cardsArt];
 cardsArt.src='assets/cards-hd.webp?v=moonfall-clean-sprites-1';
 const W=1600,H=800,THEME={gold:'#f1d4a1',cream:'#f7e7d0',muted:'#bac0cb',blue:'#a6cbff',red:'#ef8799',green:'#9be3b6'};
@@ -57,7 +63,13 @@ const CARDS=[
  {id:'tempest',name:'Kael’s Tempest',rarity:'Epic',cost:3,kind:'chain',description:'Deal 52 lightning damage to every surviving enemy.',amount:52,portrait:3,flavor:'One spell, a thousand crackling stars.',hue:'#9ecbff'},
  {id:'bargain',name:'Reaper’s Bargain',rarity:'Epic',cost:0,kind:'bargain',description:'Selected ally loses 22 health. Gain 1 energy and draw two cards. Cannot sacrifice an ally.',amount:22,portrait:4,flavor:'Even power borrowed from death has a price.',hue:'#e5a3c0'},
  {id:'curse',name:'Oracle’s Curse',rarity:'Rare',cost:1,kind:'hex',description:'Deal 30 damage and weaken the chosen enemy’s attacks by 35% for two rounds.',amount:30,portrait:5,flavor:'Her prophecies become their weaknesses.',hue:'#f4a0b6'},
- {id:'resolve',name:'Night Knight’s Oath',rarity:'Epic',cost:2,kind:'riposte',description:'Give the selected ally 60 shield. Their next blocked enemy strike returns 35 damage.',amount:60,portrait:6,flavor:'A vow engraved on black steel.',hue:'#c2b5e3'}
+ {id:'resolve',name:'Night Knight’s Oath',rarity:'Epic',cost:2,kind:'riposte',description:'Give the selected ally 60 shield. Their next blocked enemy strike returns 35 damage.',amount:60,portrait:6,flavor:'A vow engraved on black steel.',hue:'#c2b5e3'},
+ {id:'ember',name:'Ember Cascade',rarity:'Epic',cost:2,kind:'ignite',description:'Deal 45 damage and apply 18 burn to a selected enemy for three rounds.',amount:45,rewardArt:0,flavor:'One ember wakes a burning sky.',hue:'#ff9e7a'},
+ {id:'thorn',name:'Thorn Arrow',rarity:'Rare',cost:1,kind:'expose',description:'Deal 58 damage and expose the selected enemy for two rounds.',amount:58,rewardArt:1,flavor:'The forest knows its quarry.',hue:'#9de3b2'},
+ {id:'dragon',name:'Dragon Invocation',rarity:'Legendary',cost:3,kind:'chain',description:'Strike all surviving enemies for 72 damage with summoned dragonfire.',amount:72,rewardArt:2,flavor:'Old scales, older oaths.',hue:'#ffb27e'},
+ {id:'iron',name:'Iron Benediction',rarity:'Rare',cost:2,kind:'guard',description:'Protect one ally with 85 shield and draw enemy focus this round.',amount:85,rewardArt:3,flavor:'Fear breaks before the shield.',hue:'#f4d99c'},
+ {id:'duelist',name:'Duelist’s Feint',rarity:'Rare',cost:1,kind:'attackdraw',description:'Strike an enemy for 65 damage, then draw a card.',amount:65,rewardArt:4,flavor:'A false opening conceals a perfect strike.',hue:'#d2b3ff'},
+ {id:'grace',name:'Celestial Grace',rarity:'Epic',cost:3,kind:'healall',description:'Restore 55 health to all living allies and cleanse bleeding.',amount:55,rewardArt:5,flavor:'A light that outlives the eclipse.',hue:'#aedffb'}
 ];
 const ALLIES=[
  {name:'Seraphine',maxHp:190,x:220},{name:'Akari',maxHp:180,x:380},{name:'Elowen',maxHp:185,x:540},{name:'Kael',maxHp:195,x:700}
@@ -67,16 +79,29 @@ const FOES=[
  {name:'Blood Oracle',maxHp:375,x:1220,attack:36},
  {name:'Night Knight',maxHp:440,x:1380,attack:55}
 ];
+const ENCOUNTERS=['SHATTERED GATE','BLOOD CHAPEL','ECLIPSE THRONE'];
+const STARTER_DECK=Array.from({length:12},(_,i)=>i);
+function makeFoes(stage){
+ const factor=[.74,.99,1.18][stage-1]||1;
+ return FOES.map((base,i)=>{
+   const maxHp=Math.round(base.maxHp*factor);
+   return {...base,maxHp,hp:maxHp,
+    shield:stage===3?(i===2?60:25):stage===2&&i===2?25:0,
+    burn:0,burnTurns:0,weakTurns:0,exposedTurns:0};
+ });
+}
 function freshGame(){return {
  allies:ALLIES.map(x=>({...x,hp:x.maxHp,shield:0,guardTurns:0,retaliate:0,bleed:0,bleedTurns:0})),
- foes:FOES.map(x=>({...x,hp:x.maxHp,shield:0,burn:0,burnTurns:0,weakTurns:0,exposedTurns:0})),
- turn:1,energy:3,maxEnergy:3,
- draw:[0,1,2,3,4,5,6,7,8,9,10,11,0,4,5,1,6,2,7,3,8,4,9,10,11,0,6,4,5,2],
- discard:[],hand:[0,1,2,3,4],energyTax:0,
+ foes:makeFoes(1),
+ stage:1,owned:[...STARTER_DECK],rewardChoices:[],rewardHistory:[],
+ turn:1,energy:3,maxEnergy:3,draw:shuffle([...STARTER_DECK]),
+ discard:[],hand:[],energyTax:0,
  selectedEnemy:0,selectedAlly:0,preview:null,history:null,ended:false,guide:false,handScroll:0,
- toast:'Tap a card to inspect it, then choose PLAY CARD.',toastAt:performance.now(),fx:[],lastEffect:null,hover:-1,
- initial:true};}
-let game=freshGame();game.draw=game.draw.slice(5);
+ toast:'Each battle begins with a shuffled hand. Choose cards and react to enemy intents.',
+ toastAt:performance.now(),fx:[],lastEffect:null,hover:-1,initial:true
+}}
+let game=freshGame();drawToFive();
+
 // Combat state changes land on the same frame as their corresponding animation hits.
 let pendingImpacts=[],afterImpacts=null;
 function isResolving(){return pendingImpacts.length>0||afterImpacts!==null}
@@ -203,9 +228,11 @@ function cardFrame(index,slot,x,y,w,h,large=false){
    else{sh=srcW/targetRatio;sy+=Math.max(0,(srcH-sh)/2)}
    ctx.save();ctx.beginPath();ctx.roundRect(dx,dy,dw,dh,4);ctx.clip();
    ctx.drawImage(cardsArt,sx,sy,sw,sh,dx,dy,dw,dh);ctx.restore();
- }else if(c.portrait!==undefined&&portraits[c.portrait].complete&&portraits[c.portrait].naturalWidth>0){
+ }else if((c.portrait!==undefined||c.rewardArt!==undefined)&&
+          (c.rewardArt!==undefined?rewardArt[c.rewardArt]:portraits[c.portrait]).complete&&
+          (c.rewardArt!==undefined?rewardArt[c.rewardArt]:portraits[c.portrait]).naturalWidth>0){
   const dx=x+10,dy=y+(large?39:35),dw=w-20,dh=h-(large?105:93);
-  const art=portraits[c.portrait];
+  const art=c.rewardArt!==undefined?rewardArt[c.rewardArt]:portraits[c.portrait];
   ctx.save();ctx.beginPath();ctx.roundRect(dx,dy,dw,dh,4);ctx.clip();
   ctx.fillStyle=gradient(dx,dy,dw,dh,[[0,c.hue+'8c'],[.42,'#222740'],[1,'#111528']]);ctx.fillRect(dx,dy,dw,dh);
   const artH=dh*.99,artW=artH*art.naturalWidth/art.naturalHeight;
