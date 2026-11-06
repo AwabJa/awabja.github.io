@@ -17,6 +17,12 @@ assert.match(sceneJS,/artSystem:'self-hosted painted castle and seven imported i
 assert.match(sceneJS,/function fixedBackground\(/,'The replacement draws its own courtyard');
 assert.match(sceneJS,/function model\(/,'The replacement renders articulated character models');
 assert.match(htmlRaw,/id="cardInspector"/,'Mobile has a responsive accessible card inspector');
+assert.match(htmlRaw,/src="card-polish\.js\?v=moonfall-card-atelier-v1"/,'The live game loads its real card atelier renderer');
+const polishJS=await readFile(join(root,'card-polish.js'),'utf8');
+assert.match(polishJS,/window.MoonfallCardPolish=/,'A real art compositing engine is present');
+assert.match(polishJS,/function spell\(/,'Each card gets thematic spell effects within the illustrated art');
+assert.match(polishJS,/function draw\(/,'All cards receive fantasy rarity metalwork and cost gems');
+assert.match(css,/@keyframes moonfall-card-enter/,'Responsive inspector has a real entrance animation');
 assert.match(sceneJS,/function effects\(/,'The replacement has independent spell choreography');
 for(const name of ['wardSigil','brightSlash','lightningPath','crimsonPetal'])
  assert(sceneJS.includes('function '+name+'('),'Spell families have distinct '+name+' visuals');
@@ -39,13 +45,13 @@ for(let i=0;i<6;i++){
 const paintedBackground=await readFile(join(root,'assets/backdrop2.webp'));
 assert(paintedBackground.length>100000,'High-resolution painted backdrop is available');
 const manifest=JSON.parse(await readFile(join(root,'manifest.webmanifest'),'utf8'));
-assert.match(htmlRaw,/src="game\.js\?v=moonfall-deck-forging-v1"/);
-assert.match(htmlRaw,/src="scene-rebuild-prototype\.js\?v=moonfall-deck-forging-v1"/);
+assert.match(htmlRaw,/src="game\.js\?v=moonfall-card-atelier-v1"/);
+assert.match(htmlRaw,/src="scene-rebuild-prototype\.js\?v=moonfall-card-atelier-v1"/);
 assert.match(htmlRaw,/<canvas id="sceneBackground"/);
 assert.match(htmlRaw,/<canvas id="sceneAtmosphere"/);
 assert.match(htmlRaw,/<canvas id="sceneWorld"/);
 assert.match(htmlRaw,/apple-mobile-web-app-capable/);
-assert.match(htmlRaw,/href="style\.css\?v=moonfall-deck-forging-v1"/);
+assert.match(htmlRaw,/href="style\.css\?v=moonfall-card-atelier-v1"/);
 assert.doesNotMatch(jsRaw,/c\\.symbol|symbol:'[^']+'/,'Card art never uses decorative emoji symbols');
 assert.match(jsRaw,/function impactCue\(/,'Combat actions resolve on the rendered impact frames');
 assert.match(jsRaw,/flushImpacts\(now\)/,'Gameplay updates share the animation clock');
@@ -164,6 +170,8 @@ try {
       const state=()=>page.evaluate(()=>window.__moonfallTestState());
       const before=await state();
       assert.equal(before.hand.length,5,'Five opening cards');
+      await page.waitForFunction(()=>window.MoonfallCardPolish?.getStats().cachedIllustrations>=5,null,{timeout:10000});
+
       assert.equal(before.cardCount,18,'Eighteen different illustrated abilities exist');
       assert.equal(before.owned.length,12,'A run begins with twelve unique starter cards');
       assert.equal(before.stage,1,'The run starts with the Shattered Gate');
@@ -236,12 +244,17 @@ try {
       assert(center,'The center card exposes a tappable face');
       await click(center.x,center.y);
       assert.equal((await state()).previewCard,'bloom','Center card expands to correct full card preview');
+      if(width===844)await page.screenshot({path:join(root,'art-preview-selection.png')});
       const preview=await page.evaluate(()=>window.__moonfallPreviewSize());
       assert(Math.abs(preview.width/preview.height-2/3)<.001,'Expanded card keeps physical 2:3 ratio');
       assert.equal((await state()).energy,3,'Preview does not spend energy');
       const inspector=page.locator('#cardInspector');
       await inspector.waitFor({state:'visible'});
       assert.equal(await page.locator('#cardInspectorName').textContent(),'Crimson Bloom','Mobile inspector shows the real card title');
+      const inspectorImage=await page.locator('#cardInspectorArt').evaluate(x=>({image:x.style.backgroundImage,size:x.style.backgroundSize,rarity:x.closest('#cardInspector').dataset.rarity}));
+      assert(inspectorImage.image.includes('data:image/webp;base64'),'The mobile preview uses the same high-resolution art composition, not the old thumbnail');
+      assert.equal(inspectorImage.size,'cover','Illustration fills its focus area');
+      assert.equal(inspectorImage.rarity,'legendary','Legendary rarity drives the selected-card frame');
       if(width===844)await page.screenshot({path:join(root,'art-preview-phone.png')});
       assert((await page.evaluate(()=>document.getElementById('cardInspectorPlay').getBoundingClientRect().height))>=40,'Mobile play action has a finger-sized touch target');
       await page.locator('#cardInspectorCancel').click();
@@ -303,8 +316,8 @@ try {
       await page.evaluate(()=>window.__moonfallFixture.winAct());
       await page.locator('#rewardPanel').waitFor({state:'visible'});
       assert.equal((await page.locator('.reward-choice').count()),3,'Each victory offers three distinct card rewards');
-      assert(await page.locator('.reward-choice img').first().evaluate(img=>img.complete&&img.naturalWidth===384),
-       'The reward art is a real, loaded PNG and not an emoji');
+      assert(await page.locator('.reward-choice img').first().evaluate(img=>img.complete&&img.naturalWidth>=384),
+       'The reward displays a full-size composed fantasy illustration, not an emoji');
       const firstRewards=(await state()).rewardChoices;
       assert.equal(new Set(firstRewards).size,3,'No duplicate rewards in the offer');
       if(width===844)await page.screenshot({path:join(root,'art-preview-reward.png')});
@@ -338,6 +351,13 @@ try {
     }
     if(width===1440){
       await page.screenshot({path:join(root,'art-preview.png')});
+      const hover=await page.evaluate(()=>window.__moonfallFanLayout()[2]);
+      const rect=await page.evaluate(()=>{const r=document.getElementById('game').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height}});
+      await page.mouse.move(rect.x+(hover.x+hover.w*.50)/1600*rect.width,rect.y+(hover.y+hover.h*.41)/800*rect.height);
+      await page.waitForTimeout(280);
+      if((await page.evaluate(()=>window.__moonfallFanLayout()[2].y))<hover.y-16)
+       await page.screenshot({path:join(root,'art-preview-hand-focus.png')});
+      await page.mouse.move(rect.x+20,rect.y+20);
       // Capture a real cast mid-flight, not a concept image or idle-only preview.
       await page.evaluate(()=>window.MoonfallScene.cue({kind:'bolt',source:3,target:5}));
       await page.waitForTimeout(710);
