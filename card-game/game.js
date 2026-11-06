@@ -421,30 +421,42 @@ function drawPreview(){
  register(646,593,337,76,'play',null,affordable);register(1003,593,270,76,'close');
 }
 function drawDeck(){
- overlayFrame(game.history==='discard'?'DISCARD PILE':'YOUR DECK',game.history==='discard'?'Cards already played in this battle.':'Choose a card to inspect. You cannot play it from here.');
+ overlayFrame(game.history==='discard'?'DISCARD PILE':'YOUR DECK',
+  game.history==='discard'?'Cards already played in this encounter.':'Your evolving deck — tap any card to inspect its ability.');
  const list=game.history==='discard'?game.discard:[...game.draw,...game.hand,...game.discard];
- const counts=Array(CARDS.length).fill(0);list.forEach(n=>counts[n]++);
- for(let i=0;i<CARDS.length;i++){
-   if(game.history==='discard'&&!counts[i])continue;
-   const x=319+(i%6)*160,y=230+Math.floor(i/6)*220;
-   cardFrame(i,-1,x,y,140,207,true);
-   pill('×'+counts[i],x+92,y+9,43,29,'#272233','#bd9a7c',15);
-   register(x,y,140,210,'deckcard',i);
- }
- text('Twelve unique cards. Tap any to read its full ability.',800,689,18,'#d9c7c2','system-ui','center');
+ const counts=Array(CARDS.length).fill(0);
+ list.forEach(n=>{if(Number.isInteger(n)&&counts[n]!==undefined)counts[n]++});
+ const indices=counts.map((v,i)=>({v,i})).filter(({v})=>game.history!=='discard'||v>0);
+ const totalPages=Math.max(1,Math.ceil(indices.length/12));
+ game.deckPage=Math.max(0,Math.min(game.deckPage,totalPages-1));
+ const visible=indices.slice(game.deckPage*12,game.deckPage*12+12);
+ visible.forEach(({v,i},j)=>{
+  const x=320+(j%6)*160,y=218+Math.floor(j/6)*213;
+  cardFrame(i,-1,x,y,128,192,true);
+  pill('×'+v,x+80,y+8,43,28,'#272233','#bd9a7c',15);
+  register(x,y,130,194,'deckcard',i);
+ });
+ pill('← PREV',305,647,170,47,'#2c2941','#c3a47f',17);
+ pill('NEXT →',1126,647,170,47,'#2c2941','#c3a47f',17);
+ register(305,647,170,47,'deckprev',null,game.deckPage>0);
+ register(1126,647,170,47,'decknext',null,game.deckPage<totalPages-1);
+ text('PAGE '+(game.deckPage+1)+' / '+totalPages+' · '+indices.length+' TYPES · '+list.length+' CARDS',
+  800,671,17,'#dfcbb9','system-ui','center','750');
 }
+
 function drawGuide(){
- overlayFrame('HOW TO PLAY','One battle. Four allies. Three enemies. No complicated setup.');
+ overlayFrame('HOW TO PLAY','One run, three acts, eighteen unique cards. Choose your rewards.');
  const steps=[
-  ['1', 'READ ENEMY INTENTS', 'Each enemy telegraphs BLEED, DRAIN, DISRUPT, FORTIFY or CRUSH above its health bar.'],
-  ['2', 'PLAY YOUR CARDS', 'Twelve unique cards can shield, expose, weaken, heal, or draw more cards. Pick targets carefully.'],
-  ['3', 'PLAN YOUR NEXT TURN', 'End Turn triggers enemy moves, bleeding and shield effects. Survive and defeat the court.']
+  ['1', 'EVERY HAND IS DIFFERENT', 'Your twelve starter cards are shuffled at the beginning of each run. Read the enemy intents.'],
+  ['2', 'THREE DISTINCT ACTS', 'Defeat the enemy court in three increasingly difficult encounters while keeping heroes alive.'],
+  ['3', 'FORGE YOUR OWN DECK', 'After each act, choose one of three new illustrated reward cards for the next encounter.']
  ];
  steps.forEach((v,i)=>{const y=257+i*123;rr(320,y,70,66,16,'#4c3950','#dab780',2);text(v[0],355,y+33,29,THEME.gold,'Georgia','center');text(v[1],415,y+13,24,THEME.cream,'system-ui','left','800');wrap(v[2],415,y+50,760,19,'#cec6d6',29)});
  pill('START BATTLE',619,616,365,66,'#67513c','#f7d49d',25);register(619,616,365,66,'close');
 }
 function drawResult(){
- overlayFrame(game.ended==='win'?'VICTORY — MOONFALL CLEARED':'THE PARTY HAS FALLEN',game.ended==='win'?'All three enemies have been defeated.':'Your four heroes have fallen. Try a different card strategy.');
+ overlayFrame(game.ended==='win'?'VICTORY — ALL THREE ACTS CLEARED':'THE PARTY HAS FALLEN',
+  game.ended==='win'?'Your evolving deck survived every encounter.':'Act '+game.stage+' ended your run. Try a different strategy.');
  text(game.ended==='win'?'✦':'☾',800,340,145,THEME.gold,'Georgia','center');
  text(game.ended==='win'?'THE CATHEDRAL IS YOURS':'YOUR LEGEND IS NOT OVER',800,461,28,THEME.cream,'Georgia','center');
  pill('PLAY AGAIN',604,582,390,70,'#684c3e','#f2d4a4',26);register(604,582,390,70,'restart');
@@ -683,7 +695,7 @@ window.__moonfallTestState=()=>({
  previewCard:game.preview?.type==='card'?CARDS[game.preview.index].id:null
 });
 function activate(z){if(!z)return;
- if(game.ended){if(z.action==='restart'){clearImpacts();game=freshGame();game.draw=game.draw.slice(5);window.MoonfallScene?.reset?.();announce('New battle started.');}return}
+ if(game.ended){if(z.action==='restart'){clearImpacts();game=freshGame();drawToFive();window.MoonfallScene?.reset?.();announce('New battle started.');}return}
  if(isResolving()&&z.action!=='restart')return;
  if(game.preview){
   switch(z.action){
@@ -691,7 +703,9 @@ function activate(z){if(!z)return;
    case 'play':play();return;
    case 'backdeck':game.preview={type:'deck'};return;
    case 'deckcard':game.preview={type:'card',index:z.meta,readonly:true};return;
-   case 'restart':clearImpacts();game=freshGame();game.draw=game.draw.slice(5);window.MoonfallScene?.reset?.();return;
+   case 'decknext':game.deckPage++;return;
+   case 'deckprev':game.deckPage=Math.max(0,game.deckPage-1);return;
+   case 'restart':clearImpacts();game=freshGame();drawToFive();window.MoonfallScene?.reset?.();return;
   }
   return;
  }
@@ -699,24 +713,24 @@ function activate(z){if(!z)return;
   case 'ally':game.selectedAlly=z.meta;announce('Healing target: '+game.allies[z.meta].name+'.');break;
   case 'enemy':game.selectedEnemy=z.meta;announce('Attack target: '+game.foes[z.meta].name+'.');break;
   case 'card':selectCard(z.meta);break;
-  case 'deck':game.preview={type:'deck'};game.history='deck';announce('Your deck is open. Tap a card to inspect it.');break;
-  case 'discard':game.preview={type:'deck'};game.history='discard';announce('Discard pile opened.');break;
+  case 'deck':game.preview={type:'deck'};game.history='deck';game.deckPage=0;announce('Browse your evolving deck.');break;
+  case 'discard':game.preview={type:'deck'};game.history='discard';game.deckPage=0;announce('Discard pile opened.');break;
   case 'end':endTurn();break;
-  case 'restart':clearImpacts();game=freshGame();game.draw=game.draw.slice(5);window.MoonfallScene?.reset?.();announce('New battle started.');break;
+  case 'restart':clearImpacts();game=freshGame();drawToFive();window.MoonfallScene?.reset?.();announce('New battle started.');break;
   case 'guide':game.preview={type:'guide'};break;
  }
 }
 function xy(event){const box=canvas.getBoundingClientRect();return {x:(event.clientX-box.left)/box.width*W,y:(event.clientY-box.top)/box.height*H}}
 canvas.addEventListener('pointerdown',e=>{const p=xy(e);pointer={id:e.pointerId,x:p.x,y:p.y,scroll:game.handScroll,moved:false};canvas.setPointerCapture(e.pointerId);});
-canvas.addEventListener('pointermove',e=>{const p=xy(e);if(pointer&&pointer.id===e.pointerId){const dx=p.x-pointer.x,dy=p.y-pointer.y;if(Math.abs(dx)>13&&pointer.y>=480&&pointer.y<800&&pointer.x>=280&&pointer.x<1325){pointer.moved=true;const total=194+Math.max(0,game.hand.length-1)*(game.hand.length<=5?148:120),visible=980,max=Math.max(0,total-visible);game.handScroll=Math.max(0,Math.min(max,pointer.scroll-dx));return}}
+canvas.addEventListener('pointermove',e=>{const p=xy(e);if(pointer&&pointer.id===e.pointerId){const dx=p.x-pointer.x,dy=p.y-pointer.y;if(Math.abs(dx)>13&&pointer.y>=480&&pointer.y<800&&pointer.x>=280&&pointer.x<1325){pointer.moved=true;const total=147+Math.max(0,game.hand.length-1)*(game.hand.length<=5?79:60),visible=980,max=Math.max(0,total-visible);game.handScroll=Math.max(0,Math.min(max,pointer.scroll-dx));return}}
  const zone=chooseAction(p.x,p.y);game.hover=zone?.action==='card'?zone.meta:-1;});
 canvas.addEventListener('pointerup',e=>{if(!pointer||pointer.id!==e.pointerId)return;const p=xy(e);const moved=pointer.moved;pointer=null;if(!moved)activate(chooseAction(p.x,p.y));});
 canvas.addEventListener('pointercancel',()=>pointer=null);
-canvas.addEventListener('wheel',e=>{const r=canvas.getBoundingClientRect();const p=xy(e);if(!game.preview&&p.y>475&&p.x>273&&p.x<1330){e.preventDefault();const max=Math.max(0,194+Math.max(0,game.hand.length-1)*(game.hand.length<=5?148:120)-980);game.handScroll=Math.max(0,Math.min(max,game.handScroll+e.deltaY+e.deltaX))}},{passive:false});
+canvas.addEventListener('wheel',e=>{const r=canvas.getBoundingClientRect();const p=xy(e);if(!game.preview&&p.y>475&&p.x>273&&p.x<1330){e.preventDefault();const max=Math.max(0,147+Math.max(0,game.hand.length-1)*(game.hand.length<=5?79:60)-980);game.handScroll=Math.max(0,Math.min(max,game.handScroll+e.deltaY+e.deltaX))}},{passive:false});
 window.addEventListener('keydown',e=>{
  if(e.key==='Escape'){game.preview=null;return}
  if(isResolving())return;
- if(game.ended){if(e.key==='Enter'){clearImpacts();game=freshGame();game.draw=game.draw.slice(5);window.MoonfallScene?.reset?.()}return}
+ if(game.ended){if(e.key==='Enter'){clearImpacts();game=freshGame();drawToFive();window.MoonfallScene?.reset?.()}return}
  if(game.preview){if(e.key==='Enter'&&game.preview.type==='card'&&!game.preview.readonly)play();return}
  if(/^([1-9])$/.test(e.key)){selectCard(Number(e.key)-1);return}
  if(e.key.toLowerCase()==='e'){endTurn();return}
