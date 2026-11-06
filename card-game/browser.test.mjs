@@ -17,10 +17,11 @@ assert.match(sceneJS,/artSystem:'self-hosted painted castle and seven imported i
 assert.match(sceneJS,/function fixedBackground\(/,'The replacement draws its own courtyard');
 assert.match(sceneJS,/function model\(/,'The replacement renders articulated character models');
 assert.match(htmlRaw,/id="cardInspector"/,'Mobile has a responsive accessible card inspector');
-assert.match(htmlRaw,/src="card-polish\.js\?v=moonfall-card-atelier-v1"/,'The live game loads its real card atelier renderer');
+assert.match(htmlRaw,/src="card-polish\.js\?v=moonfall-scene-paintings-v1"/,'The live game loads its real card atelier renderer');
 const polishJS=await readFile(join(root,'card-polish.js'),'utf8');
 assert.match(polishJS,/window.MoonfallCardPolish=/,'A real art compositing engine is present');
-assert.match(polishJS,/function spell\(/,'Each card gets thematic spell effects within the illustrated art');
+assert.match(polishJS,/const im=images\.scenes\?\.\[index\]/,'The cards use dedicated full-scene paintings, not character portraits');
+assert.doesNotMatch(polishJS,/function spell\(/,'No synthetic spell overlay conceals the actual scene paintings');
 assert.match(polishJS,/function draw\(/,'All cards receive fantasy rarity metalwork and cost gems');
 assert.match(css,/@keyframes moonfall-card-enter/,'Responsive inspector has a real entrance animation');
 assert.match(sceneJS,/function effects\(/,'The replacement has independent spell choreography');
@@ -42,16 +43,26 @@ for(let i=0;i<6;i++){
  const png=await readFile(join(root,'assets/encounters/enemy-'+i+'.png'));
  assert(png.length>20000&&png.readUInt32BE(16)===384&&png.readUInt32BE(20)===512,'Every new enemy has its own full-size real illustration');
 }
+// Verify all 18 *different* licensed scene paintings were imported and committed.
+const importedScenes=[];
+for(let i=0;i<18;i++){
+ const data=await readFile(join(root,'assets/card-scenes/card-'+i+'.jpg'));
+ assert(data.length>35000,'Each card has a full-size standalone painted scene');
+ assert(data[0]===0xff&&data[1]===0xd8&&data.at(-2)===0xff&&data.at(-1)===0xd9,'Artwork is a valid JPEG');
+ importedScenes.push(data.toString('base64').slice(0,1000));
+}
+assert.equal(new Set(importedScenes).size,18,'All 18 paintings differ from each other');
+assert.match(htmlRaw,/Soimoi Tarot · Mike Koz/,'The painter receives visible in-game CC BY attribution');
 const paintedBackground=await readFile(join(root,'assets/backdrop2.webp'));
 assert(paintedBackground.length>100000,'High-resolution painted backdrop is available');
 const manifest=JSON.parse(await readFile(join(root,'manifest.webmanifest'),'utf8'));
-assert.match(htmlRaw,/src="game\.js\?v=moonfall-card-atelier-v1"/);
-assert.match(htmlRaw,/src="scene-rebuild-prototype\.js\?v=moonfall-card-atelier-v1"/);
+assert.match(htmlRaw,/src="game\.js\?v=moonfall-scene-paintings-v1"/);
+assert.match(htmlRaw,/src="scene-rebuild-prototype\.js\?v=moonfall-scene-paintings-v1"/);
 assert.match(htmlRaw,/<canvas id="sceneBackground"/);
 assert.match(htmlRaw,/<canvas id="sceneAtmosphere"/);
 assert.match(htmlRaw,/<canvas id="sceneWorld"/);
 assert.match(htmlRaw,/apple-mobile-web-app-capable/);
-assert.match(htmlRaw,/href="style\.css\?v=moonfall-card-atelier-v1"/);
+assert.match(htmlRaw,/href="style\.css\?v=moonfall-scene-paintings-v1"/);
 assert.doesNotMatch(jsRaw,/c\\.symbol|symbol:'[^']+'/,'Card art never uses decorative emoji symbols');
 assert.match(jsRaw,/function impactCue\(/,'Combat actions resolve on the rendered impact frames');
 assert.match(jsRaw,/flushImpacts\(now\)/,'Gameplay updates share the animation clock');
@@ -73,7 +84,7 @@ const server=createServer(async(req,res)=>{
   const filename=resolve(root,'.'+pathname);
   if(!filename.startsWith(root+'/')){res.writeHead(403).end();return}
   const body=await readFile(filename);
-  const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.webmanifest':'application/manifest+json'};
+  const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml','.webmanifest':'application/manifest+json'};
   res.writeHead(200,{'Content-Type':types[extname(filename)]||'application/octet-stream'});
   res.end(body);
  }catch{res.writeHead(404).end()}
@@ -170,6 +181,8 @@ try {
       const state=()=>page.evaluate(()=>window.__moonfallTestState());
       const before=await state();
       assert.equal(before.hand.length,5,'Five opening cards');
+      await page.waitForFunction(()=>window.__moonfallTestState().sceneCardArtLoaded===18,null,{timeout:15000});
+      assert.equal((await state()).sceneCardArtLoaded,18,'All eighteen separate painted scenes are decoded in the live browser');
       await page.waitForFunction(()=>window.MoonfallCardPolish?.getStats().cachedIllustrations>=5,null,{timeout:10000});
 
       assert.equal(before.cardCount,18,'Eighteen different illustrated abilities exist');
@@ -370,5 +383,5 @@ try {
     await page.close();
   }
   // The rebuilt renderer is tested directly by the production gameplay loop above.
-  console.log('MOONFALL DECK FORGING PASSED: 18 illustrated card types, random starter, three acts and two drafted rewards');
+  console.log('MOONFALL ACTUAL CARD ART PASSED: 18 distinct full-scene paintings, mobile selection and complete gameplay');
 } finally {await browser.close();await new Promise(ok=>server.close(ok));}
