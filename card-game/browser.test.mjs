@@ -355,8 +355,11 @@ try {
       const rect=await page.evaluate(()=>{const r=document.getElementById('game').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height}});
       await page.mouse.move(rect.x+(hover.x+hover.w*.50)/1600*rect.width,rect.y+(hover.y+hover.h*.41)/800*rect.height);
       await page.waitForTimeout(280);
-      if((await page.evaluate(()=>window.__moonfallFanLayout()[2].y))<hover.y-16)
-       await page.screenshot({path:join(root,'art-preview-hand-focus.png')});
+      const activeHand=await page.evaluate(()=>window.__moonfallFanLayout());
+      assert(activeHand[2].y<hover.y-16,'Hovered illustration rises above the resting hand');
+      assert(activeHand[1].x<hover.x-20,'The left neighbor spreads away from the focused card');
+      assert(activeHand[3].x>hover.x+2*79+16,'The right neighbor spreads away from the focused card');
+      await page.screenshot({path:join(root,'art-preview-hand-focus.png')});
       await page.mouse.move(rect.x+20,rect.y+20);
       // Capture a real cast mid-flight, not a concept image or idle-only preview.
       await page.evaluate(()=>window.MoonfallScene.cue({kind:'bolt',source:3,target:5}));
