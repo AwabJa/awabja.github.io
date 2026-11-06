@@ -26,21 +26,29 @@ for(let i=0;i<7;i++){
  const png=await readFile(join(root,'assets/illustrated/actor-'+i+'.png'));
  assert(png.length>20000,'The imported sprite is present as a real PNG asset');
 }
+for(let i=0;i<6;i++){
+ const png=await readFile(join(root,'assets/rewards/reward-'+i+'.png'));
+ assert(png.length>18000&&png[0]===137&&png[1]===80,'Each distinct reward is a first-party PNG');
+ assert.equal(png.readUInt32BE(16),384,'Reward illustration is full resolution');
+ assert.equal(png.readUInt32BE(20),512,'Reward portrait is proportionate');
+}
 const paintedBackground=await readFile(join(root,'assets/backdrop2.webp'));
 assert(paintedBackground.length>100000,'High-resolution painted backdrop is available');
 const manifest=JSON.parse(await readFile(join(root,'manifest.webmanifest'),'utf8'));
-assert.match(htmlRaw,/src="game\.js\?v=moonfall-tactics-v1"/);
-assert.match(htmlRaw,/src="scene-rebuild-prototype\.js\?v=moonfall-tactics-v1"/);
+assert.match(htmlRaw,/src="game\.js\?v=moonfall-deck-forging-v1"/);
+assert.match(htmlRaw,/src="scene-rebuild-prototype\.js\?v=moonfall-deck-forging-v1"/);
 assert.match(htmlRaw,/<canvas id="sceneBackground"/);
 assert.match(htmlRaw,/<canvas id="sceneAtmosphere"/);
 assert.match(htmlRaw,/<canvas id="sceneWorld"/);
 assert.match(htmlRaw,/apple-mobile-web-app-capable/);
-assert.match(htmlRaw,/href="style\.css\?v=moonfall-tactics-v1"/);
+assert.match(htmlRaw,/href="style\.css\?v=moonfall-deck-forging-v1"/);
 assert.doesNotMatch(jsRaw,/c\\.symbol|symbol:'[^']+'/,'Card art never uses decorative emoji symbols');
 assert.match(jsRaw,/function impactCue\(/,'Combat actions resolve on the rendered impact frames');
 assert.match(jsRaw,/flushImpacts\(now\)/,'Gameplay updates share the animation clock');
 assert.doesNotMatch(jsRaw,/SEE ANIMATIONS|demoAnimations|motionDemo/,'No developer animation showcase ships in gameplay');
-assert.match(jsRaw,/Seraphine’s Vow|Akari’s Mark/,'The twelve-card expansion is included');
+assert.match(jsRaw,/Seraphine’s Vow|Akari’s Mark/,'The illustrated starter set is included');
+assert.match(jsRaw,/Dragon Invocation|Ember Cascade|Celestial Grace/,'Six distinct illustrated reward cards are defined');
+assert.match(htmlRaw,/id="rewardPanel"/,'A native accessible draft panel is present');
 assert.match(jsRaw,/cardsArt\.src='assets\/cards-hd\.webp\?v=moonfall-clean-sprites-1'/);
 assert(cards.length>100000,'Card art is available');
 assert.doesNotMatch(sceneJS,/assets\/frames-allies\.webp/,'The rebuilt scene does not use damaged old character atlases');
@@ -66,6 +74,16 @@ let executablePath;
 for (const candidate of [process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/chromium'].filter(Boolean)) {
   try {await access(candidate);executablePath=candidate;break;} catch {}
 }
+const testingJS=jsRaw.replace(/\}\)\(\);\s*$/, `
+ window.__moonfallFixture={
+  setOpening(){
+   game.hand=[0,1,2,3,4];game.draw=shuffle(game.owned.filter(i=>i>4));game.discard=[];
+   game.preview=null;game.hover=-1;game.energy=3;
+  },
+  winAct(){clearImpacts();game.preview=null;game.ended=false;game.foes.forEach(f=>{f.hp=0;f.shield=0});winCheck();}
+ };
+})();`);
+assert.notEqual(testingJS,jsRaw,'The test-only fixture is injected without altering production source');
 const browser=await chromium.launch(executablePath?
   {executablePath,headless:true,args:['--no-sandbox']}:
   {channel:'chrome',headless:true,args:['--no-sandbox']});
@@ -75,6 +93,8 @@ try {
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
     await page.addInitScript(() => { localStorage.setItem('arcana-slice-guide-v1','done'); });
+    // Instrument only the localhost browser run. There is no production cheat/debug control.
+    await page.route(/\/game\.js\?v=/,route=>route.fulfill({body:testingJS,contentType:'text/javascript'}));
     await page.goto(origin+'/index.html',{waitUntil:'domcontentloaded'});
     await page.locator('#loadMessage').waitFor({state:'hidden'});
     const canvas=page.locator('#game');
@@ -140,6 +160,13 @@ try {
       const state=()=>page.evaluate(()=>window.__moonfallTestState());
       const before=await state();
       assert.equal(before.hand.length,5,'Five opening cards');
+      assert.equal(before.cardCount,18,'Eighteen different illustrated abilities exist');
+      assert.equal(before.owned.length,12,'A run begins with twelve unique starter cards');
+      assert.equal(before.stage,1,'The run starts with the Shattered Gate');
+      assert.equal(new Set([...before.hand,...before.draw]).size,12,'Each starter card appears once, not repeatedly in a fixed copied deck');
+      assert.equal(before.rewardArtLoaded,6,'All six new illustration files are loaded');
+      // A controlled layout fixture is used *after* checking the genuinely random opening.
+      await page.evaluate(()=>window.__moonfallFixture.setOpening());
       // Check real gameplay-related frame transitions, not just code presence.
       await page.evaluate(()=>window.MoonfallScene.cue({kind:'strike',source:1,target:5}));
       await page.waitForFunction(()=>window.MoonfallScene.getStats().animationStates[1]==='attack',null,{timeout:1500});
@@ -178,7 +205,7 @@ try {
         },slot);
       };
       // No development-only animation UI, with all combat actions still playable.
-      assert.equal((await state()).cardCount,12,'The game offers twelve unique cards');
+      assert.equal((await state()).cardCount,18,'The game offers eighteen unique card designs');
       assert.equal((await state()).artLoaded,7,'All seven newly imported character portraits are ready as card artwork');
       assert.equal((await state()).intents[0].label,'BLEED','The Reaper telegraphs a tactical bleed attack');
       assert.equal((await state()).intents[1].label,'DRAIN','The Oracle telegraphs a life drain');
@@ -217,9 +244,9 @@ try {
       await page.locator('#cardInspectorPlay').click();
       const played=await state();
       assert.equal(played.energy,2,'Confirm spends energy');
-      assert.equal(played.foes[1].hp,375,'Damage is not applied before the visible spell strikes');
+      assert.equal(played.foes[1].hp,Math.round(375*.74),'Damage is not applied before the visible spell strikes');
       assert(played.pendingImpacts>0&&played.resolving,'Card play locks further actions while its hit is pending');
-      await page.waitForFunction(()=>window.__moonfallTestState().foes[1].hp===285,null,{timeout:5000});
+      await page.waitForFunction(expected=>window.__moonfallTestState().foes[1].hp===expected,Math.round(375*.74)-90,{timeout:5000});
       assert.equal((await state()).resolving,false,'Impact unlocks the next card action');
       const afterStrike=await page.evaluate(()=>window.MoonfallScene.getStats());
       assert.equal(afterStrike.backgroundPaints,fixedAfter.backgroundPaints,'The architecture is still fixed during attacks');
@@ -259,8 +286,37 @@ try {
       await page.locator('#cardInspectorPlay').click();
       await page.waitForFunction(()=>window.__moonfallTestState().allies[0].guardTurns===1,null,{timeout:5000});
       assert((await state()).allies[0].shield>=70,'Guard adds focused shield');
-      await click(1280,35);
-      assert.equal((await state()).turn,1,'Restart resets battle');
+      // Forge a real illustrated reward in the first transition.
+      await page.evaluate(()=>window.__moonfallFixture.winAct());
+      await page.locator('#rewardPanel').waitFor({state:'visible'});
+      assert.equal((await page.locator('.reward-choice').count()),3,'Each victory offers three distinct card rewards');
+      assert(await page.locator('.reward-choice img').first().evaluate(img=>img.complete&&img.naturalWidth===384),
+       'The reward art is a real, loaded PNG and not an emoji');
+      const firstRewards=(await state()).rewardChoices;
+      assert.equal(new Set(firstRewards).size,3,'No duplicate rewards in the offer');
+      if(width===844)await page.screenshot({path:join(root,'art-preview-reward.png')});
+      await page.locator('.reward-choice').first().click();
+      await page.waitForFunction(()=>window.__moonfallTestState().stage===2);
+      const second=await state();
+      assert.equal(second.owned.length,13,'The selected reward permanently joins this run deck');
+      assert(second.owned.includes(firstRewards[0]),'The chosen unique card is owned');
+      assert.equal(second.hand.length,5,'The new encounter starts with a shuffled hand');
+      assert.equal(new Set([...second.draw,...second.hand]).size,13,'The new deck has no copied filler cards');
+      assert.equal(second.foes[0].hp,Math.round(330*.99),'The second act has different enemy difficulty');
+      if(width===844)await page.screenshot({path:join(root,'art-preview-act-two.png')});
+      await page.evaluate(()=>window.__moonfallFixture.winAct());
+      await page.locator('#rewardPanel').waitFor({state:'visible'});
+      const nextRewards=(await state()).rewardChoices;
+      assert(!nextRewards.includes(firstRewards[0]),'Previously chosen reward cannot be re-offered');
+      await page.locator('.reward-choice').last().click();
+      await page.waitForFunction(()=>window.__moonfallTestState().stage===3);
+      assert.equal((await state()).owned.length,14,'Second drafted illustration is added to the evolving deck');
+      await page.evaluate(()=>window.__moonfallFixture.winAct());
+      await page.waitForFunction(()=>window.__moonfallTestState().ended==='win');
+      assert.equal(await page.locator('#rewardPanel').isVisible(),false,'The run ends after the third act, not an endless duplicate reward loop');
+      await page.keyboard.press('Enter');
+      await page.waitForFunction(()=>window.__moonfallTestState().stage===1);
+      assert.equal((await state()).hand.length,5,'Restart draws a brand new shuffled opening hand');
     }
     if(width===1440){
       await page.screenshot({path:join(root,'art-preview.png')});
@@ -273,5 +329,5 @@ try {
     await page.close();
   }
   // The rebuilt renderer is tested directly by the production gameplay loop above.
-  console.log('MOONFALL ART IMPORT PASSED: seven illustrated characters, painted environment, responsive cards and combat');
+  console.log('MOONFALL DECK FORGING PASSED: 18 illustrated card types, random starter, three acts and two drafted rewards');
 } finally {await browser.close();await new Promise(ok=>server.close(ok));}
