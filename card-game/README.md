@@ -1,25 +1,30 @@
-# Moonfall — Shattered Court
+# Moonfall — Shattered Court: Deck Forging
 
-**Game:** https://awabja.github.io/card-game/
+**Play:** https://awabja.github.io/card-game/
 
-Moonfall is a browser-based, landscape-first tactical fantasy card battle. Four illustrated heroes face three enemies in a tougher encounter with visible enemy intents, shielding, damage-over-time effects, and twelve distinct cards. The production scene remains hand-painted and self-hosted.
+Moonfall is a landscape-first illustrated fantasy card battle. This build has **18 unique card artworks and abilities**, a shuffled opening hand, three escalating encounters, and an illustrated **choose-one-of-three** reward draft after the first and second encounters. The game no longer deals its starting hand or the next five cards in a scripted order.
 
-## Gameplay
+## The run
 
-The previous "See Animations" demonstration button and M shortcut have been removed from the actual game. Animations occur when a player or enemy takes an action.
+- Every new run shuffles a twelve-card starter deck: one copy of each starter card. The first five are dealt without replacement, and the deck only reshuffles played/discarded cards when depleted. Restarting shuffles again.
+- Each act contains the Shattered Court's three enemies, with escalating HP, shields and enemy-intent patterns across the Shattered Gate, Blood Chapel and Eclipse Throne.
+- When you clear act 1 or 2, a **native, keyboard/touch-accessible card-forging screen** offers three randomly drawn, never-previously-acquired rewards. Choose one to permanently add it to your deck for the rest of the run. Surviving heroes regain 28% of maximum HP between acts.
+- Clear the third act to win. A loss ends the run.
+- Cards have different costs and effects: attack, focused protection, bleed cleansing, burn, weaken, expose, energy and card draw, and other choices. Enemies telegraph their intended actions.
 
-**Twelve abilities:** Shadow Step, Guardian Aegis, Crimson Bloom, Healing Wind, Arcane Bolt, Seraphine’s Vow, Akari’s Mark, Elowen’s Hymn, Kael’s Tempest, Reaper’s Bargain, Oracle’s Curse and Night Knight’s Oath. The first five use the original card art atlas. The seven new cards use self-hosted illustrated character portraits; all descriptions, costs and effects are distinct. No emoji substitutes are used on card faces.
+## Real artwork
 
-**Strategic decisions:** enemies display their intentions before each round, use different targeting logic, cause bleeding or energy disruption, gain shield, and can recover health. Players can mark enemies for +30% follow-up damage, weaken attacks, redirect enemy attacks, gain an ally counterattack, cleanse bleed, or sacrifice health for cards and energy. Shield absorbs damage before HP. Enemy HP and attack pressure are higher than in the initial prototype.
+- The first five card illustrations are stored in the self-hosted `assets/cards-hd.webp` atlas.
+- Seven additional card illustrations are the seven self-hosted painted anime-style character PNGs under `assets/illustrated/`.
+- Six newly imported illustrated reward cards under `assets/rewards/` use **six different 384×512 PNGs** from the same CC0-labeled source pack; original filenames and source links are documented in [assets/rewards/SOURCES.md](assets/rewards/SOURCES.md).
+- There are no emoji art placeholders on the card faces.
 
-**Play:** rotate your phone to landscape, select an enemy or ally, inspect a card and choose Play or Keep, then End Turn. Keyboard: 1–5 select hand cards, E ends turn, H opens help, Escape closes overlays.
+The characters on the actual battlefield **remain still illustrations** with code-driven motion and spell VFX; they do not have real articulated walk, idle, cast or attack sprite sequences. That is a separate asset-creation limitation, not fixed by improving the deck.
 
-## Artwork and limitations
+## Controls & implementation
 
-The seven self-hosted 384×512 illustrated characters are static images. The renderer adds windup, recoil and casting effects but **does not have separate painted attack, idle or casting poses**. True animated characters require new sprite sheets or rigged layered illustrations; code-only movement cannot convincingly articulate a single painting. Imported art source and licensing declaration are documented in [assets/illustrated/SOURCES.md](assets/illustrated/SOURCES.md).
+On desktop or phone in landscape, select a foe or ally, tap a card to inspect it, then tap Play or Keep. End Turn resolves enemy intent attacks and draws five cards. Tap Deck to inspect your owned deck and use page controls when it expands. Rewards use native responsive buttons to maintain readable typography on phones. Keyboard: 1–5 cards, E End Turn, H Help, Escape close dialogs.
 
-## Architecture and testing
-
-`game.js` maintains the twelve-card deck, the battle-state machine, distinct enemy intents and timed combat updates. `scene-rebuild-prototype.js` composites the painted gothic battlefield, illustrated characters and spell choreography. `index.html` and `style.css` provide a phone-friendly responsive inspector. `browser.test.mjs` covers desktop and mobile, card art loading, combat and new status effects.
-
-The game remains a standalone single-player encounter, not a full campaign, multiplayer game or roguelike with persistent progression.
+- `game.js` implements deck shuffling, card combat, the three-act state machine and reward choices.
+- `scene-rebuild-prototype.js` renders the illustrated combat.
+- `browser.test.mjs` verifies real desktop/mobile gameplay and simulated encounter wins **only through test-instrumented page scripts** (not a production developer/cheat control). The workflow records real screenshots of the reward choice and act transition.
