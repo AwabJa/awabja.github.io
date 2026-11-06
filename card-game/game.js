@@ -48,7 +48,7 @@ function renderReward(){
   const art=document.createElement('div');art.className='reward-art';
   art.style.background=`radial-gradient(circle at 45% 42%,${card.hue}77,#111729 72%)`;
   const img=document.createElement('img');
-  const illustration=window.MoonfallCardPolish?.getArt(card,index,{cards:cardsArt,portraits,rewards:rewardArt});
+  const illustration=window.MoonfallCardPolish?.getArt(card,index,{cards:cardsArt,portraits,rewards:rewardArt,scenes:sceneCardArt});
   img.src=illustration?illustration.toDataURL('image/webp',.86):
    `assets/rewards/reward-${card.rewardArt}.png?v=moonfall-deck-variety-1`;
   img.alt='';img.loading='eager';art.appendChild(img);
@@ -77,7 +77,7 @@ function renderCardInspector(){
  if(!visible){inspectorKey='';return}
  const c=CARDS[preview.index];
  const painter=window.MoonfallCardPolish;
- const painted=painter?.getArt(c,preview.index,{cards:cardsArt,portraits,rewards:rewardArt})||null;
+ const painted=painter?.getArt(c,preview.index,{cards:cardsArt,portraits,rewards:rewardArt,scenes:sceneCardArt})||null;
  const key=c.id+':'+game.energy+':'+!!preview.readonly+':'+!!painted;
  if(inspectorKey===key)return;
  inspectorKey=key;
@@ -122,6 +122,11 @@ const cardsArt=new Image();
 cardsArt.decoding='async';
 const portraits=Array.from({length:7},(_,i)=>{const img=new Image();img.decoding='async';img.src=`assets/illustrated/actor-${i}.png?v=moonfall-characters-v2`;return img});
 const rewardArt=Array.from({length:6},(_,i)=>{const img=new Image();img.decoding='async';img.src=`assets/rewards/reward-${i}.png?v=moonfall-deck-variety-1`;return img});
+const sceneCardArt=Array.from({length:18},(_,i)=>{
+ const image=new Image();image.decoding='async';
+ image.src=`assets/card-scenes/card-${i}.jpg?v=moonfall-scene-art-1`;
+ return image;
+});
 const artwork=[cardsArt];
 cardsArt.src='assets/cards-hd.webp?v=moonfall-clean-sprites-1';
 const reducedCardMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -293,7 +298,7 @@ function cardFrame(index,slot,x,y,w,h,large=false,options={}){
  const c=CARDS[index];const active=game.energy>=c.cost;
  if(window.MoonfallCardPolish){
   window.MoonfallCardPolish.draw(ctx,c,index,x,y,w,h,large,
-   {cards:cardsArt,portraits,rewards:rewardArt},
+   {cards:cardsArt,portraits,rewards:rewardArt,scenes:sceneCardArt},
    {energy:game.energy,hover:slot===game.hover,selected:!!options.selected,
     now:options.now||performance.now(),reduced:reducedCardMotion});
   return;
@@ -771,6 +776,7 @@ window.__moonfallTestState=()=>({
  models:window.MoonfallScene?.getStats?.()||null,turn:game.turn,energy:game.energy,maxEnergy:game.maxEnergy,energyTax:game.energyTax,
  cardCount:CARDS.length,artLoaded:portraits.filter(p=>p.complete&&p.naturalWidth>0).length,
  rewardArtLoaded:rewardArt.filter(p=>p.complete&&p.naturalWidth>0).length,
+ sceneCardArtLoaded:sceneCardArt.filter(p=>p.complete&&p.naturalWidth>0).length,
  stage:game.stage,owned:[...game.owned],rewardChoices:[...game.rewardChoices],
  deckPage:game.deckPage,rewardHistory:[...game.rewardHistory],mulliganAvailable:game.mulliganAvailable,
  hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],

@@ -247,3 +247,16 @@ canvas{display:block;width:100%!important;height:100%!important;touch-action:non
 
 /* Keep faces and visible spell gestures in view on short landscape screens. */
 @media (max-height:480px){.reward-art{height:clamp(92px,31dvh,138px)}.reward-choice{gap:3px}}
+
+/* Visible author/license credit for the 18 fully replaced card paintings. */
+.source-art-credit{
+ position:absolute;z-index:4;left:14%;bottom:4px;
+ max-width:40%;font:500 10px/1.25 system-ui,sans-serif;
+ letter-spacing:.015em;color:#b9a9b9;background:#0a0e1ca6;
+ border-radius:4px;padding:2px 6px;opacity:.8;
+}
+.source-art-credit a{color:#d8c9af;text-decoration:underline;text-underline-offset:2px}
+.source-art-credit a:focus-visible{outline:2px solid #ffe6a8;outline-offset:2px}
+@media(max-width:1000px){
+ .source-art-credit{font-size:8px;max-width:55%;left:15%;bottom:1px}
+}
