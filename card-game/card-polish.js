@@ -69,7 +69,7 @@ function art(card,index,images){
  for(let i=0;i<5;i++){g.fillStyle='rgba(253,235,243,'+(.013+i*.006)+')';g.beginPath();g.moveTo(i*94-80,0);g.lineTo(i*94+42,0);g.lineTo(i*94+180,560);g.lineTo(i*94+100,560);g.fill()}
  if(index<5)g.drawImage(im,index*276,0,276,272,-18,48,456,467);
  else{
-  let h=im.naturalHeight,w=im.naturalWidth,sh=h*.89,sw=Math.min(w,sh*.83);
+  let h=im.naturalHeight,w=im.naturalWidth,sh=h*.72,sw=Math.min(w,sh*.83);
   g.save();g.shadowColor='#05091b';g.shadowBlur=32;
   g.drawImage(im,(w-sw)*.5,h*.03,sw,sh,-5,16,430,515);g.restore();
  }
