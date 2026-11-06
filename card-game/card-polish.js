@@ -17,46 +17,6 @@ function glow(ctx,x,y,r,color){
  g.addColorStop(0,rgba(color,.5));g.addColorStop(.4,rgba(color,.17));g.addColorStop(1,rgba(color,0));
  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,T);ctx.fill();
 }
-function spell(ctx,card,index){
- let mode=card.kind,h=card.hue;
- ctx.save();ctx.globalCompositeOperation='screen';ctx.lineCap='round';
- if(['attack','attackdraw','expose'].includes(mode)){
-  for(let i=0;i<3;i++){
-   ctx.beginPath();ctx.moveTo(-40,365+i*45);ctx.quadraticCurveTo(125,330+i*15,480,75+i*42);
-   ctx.shadowColor=h;ctx.shadowBlur=13;ctx.strokeStyle=i===1?'#f1f1ff':h;ctx.lineWidth=i===1?6:3;ctx.stroke();
-  }
- }else if(['chain','hex'].includes(mode)){
-  ring(ctx,210,240,132,h,index*.25);ring(ctx,210,240,82,'#b9e8ff',-index*.3);
-  for(let i=0;i<5;i++){
-   let x=35+i*72,y=400-i*17;
-   ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+32,y-56);ctx.lineTo(x+16,y-87);ctx.lineTo(x+82,y-178);
-   ctx.strokeStyle=i%2?h:'#d6eaff';ctx.lineWidth=4;ctx.shadowColor=h;ctx.shadowBlur=12;ctx.stroke();
-  }
- }else if(['guard','riposte','defend'].includes(mode)){
-  ring(ctx,213,260,158,h,index*.15);ring(ctx,213,260,102,'#fae4c7',index*.19);
-  ctx.strokeStyle='#fff1d4';ctx.lineWidth=4;ctx.beginPath();
-  for(let i=0;i<6;i++){const a=i*T/6-PI/2;const x=213+Math.cos(a)*122,y=260+Math.sin(a)*143;if(!i)ctx.moveTo(x,y);else ctx.lineTo(x,y)}
-  ctx.closePath();ctx.stroke();
- }else if(['heal','healall'].includes(mode)){
-  for(let i=0;i<8;i++){let x=27+i*55;
-   let g=ctx.createLinearGradient(x,45,x,485);g.addColorStop(0,'#ffffff00');g.addColorStop(.48,rgba(h,.65));g.addColorStop(1,'#ffffff00');
-   line(ctx,x,60,x-23,480,g,3);
-  }
-  ring(ctx,211,260,136,h,index*.1);
- }else if(['bargain','area','ignite'].includes(mode)){
-  ring(ctx,213,271,139,h,index*.18);
-  for(let j=0;j<27;j++){let a=j*T/27+index*.15,r=80+rand(j*41+index)*170,x=209+Math.cos(a)*r,y=261+Math.sin(a)*r*.83;
-   ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.fillStyle=j%4===0?'#fff0db':h;ctx.globalAlpha=.25+.55*rand(j*7+index);
-   ctx.beginPath();ctx.moveTo(0,-12);ctx.bezierCurveTo(8,-12,14,0,0,14);ctx.bezierCurveTo(-14,0,-8,-12,0,-12);ctx.fill();ctx.restore();
-  }
- }
- ctx.shadowBlur=0;
- for(let j=0;j<26;j++){let x=rand(index*41+j*17)*420,y=rand(index*61+j*23)*470;
-  ctx.fillStyle=j%5===0?'#fff4e0':h;ctx.globalAlpha=.2+.55*rand(j*77+index);
-  ctx.beginPath();ctx.arc(x,y,1+rand(j*21)*2.4,0,T);ctx.fill();
- }
- ctx.restore();
-}
 function art(card,index,images){
  if(cache.has(card.id))return cache.get(card.id);
  // This is a real *replacement illustration*, not the original character
