@@ -48,8 +48,12 @@ function renderReward(){
   const art=document.createElement('div');art.className='reward-art';
   art.style.background=`radial-gradient(circle at 45% 42%,${card.hue}77,#111729 72%)`;
   const img=document.createElement('img');
-  img.src=`assets/rewards/reward-${card.rewardArt}.png?v=moonfall-deck-variety-1`;
+  const illustration=window.MoonfallCardPolish?.getArt(card,index,{cards:cardsArt,portraits,rewards:rewardArt});
+  img.src=illustration?illustration.toDataURL('image/webp',.86):
+   `assets/rewards/reward-${card.rewardArt}.png?v=moonfall-deck-variety-1`;
   img.alt='';img.loading='eager';art.appendChild(img);
+  button.style.setProperty('--reward-metal',
+   (window.MoonfallCardPolish?.rarityTones?.[card.rarity]||['#d8ba86'])[0]);
   const meta=document.createElement('div');meta.className='reward-meta';
   const rarity=document.createElement('span');rarity.className='reward-rarity';rarity.textContent=card.rarity+' · '+card.kind;
   const cost=document.createElement('span');cost.className='reward-cost';cost.textContent=card.cost+' ENERGY';
