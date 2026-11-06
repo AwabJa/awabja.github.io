@@ -697,7 +697,7 @@ window.__moonfallTestState=()=>({
  hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],
  preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,
  allies:game.allies.map(a=>({hp:a.hp,shield:a.shield,guardTurns:a.guardTurns,retaliate:a.retaliate,bleedTurns:a.bleedTurns})),
- foes:game.foes.map(f=>({hp:f.hp,shield:f.shield,burnTurns:f.burnTurns,weakTurns:f.weakTurns,exposedTurns:f.exposedTurns})),
+ foes:game.foes.map(f=>({name:f.name,hp:f.hp,shield:f.shield,burnTurns:f.burnTurns,weakTurns:f.weakTurns,exposedTurns:f.exposedTurns})),
  intents:game.foes.map((f,i)=>f.hp>0?enemyIntent(i):null),
  ended:game.ended,pendingImpacts:pendingImpacts.length,resolving:isResolving(),
  previewCard:game.preview?.type==='card'?CARDS[game.preview.index].id:null
