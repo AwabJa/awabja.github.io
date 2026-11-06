@@ -59,26 +59,26 @@ function spell(ctx,card,index){
 }
 function art(card,index,images){
  if(cache.has(card.id))return cache.get(card.id);
- const im=index<5?images.cards:card.rewardArt!==undefined?images.rewards[card.rewardArt]:images.portraits[card.portrait];
+ // This is a real *replacement illustration*, not the original character
+ // sprite with a colored filter or a procedural effect painted on top.
+ const im=images.scenes?.[index];
  if(!ready(im))return null;
  const off=document.createElement('canvas');off.width=420;off.height=560;
  const g=off.getContext('2d');g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
- const base=g.createLinearGradient(0,0,420,560);
- base.addColorStop(0,'#131e39');base.addColorStop(.36,card.hue);base.addColorStop(.75,'#25223d');base.addColorStop(1,'#080a17');
- g.fillStyle=base;g.fillRect(0,0,420,560);glow(g,225,190,310,card.hue);
- for(let i=0;i<5;i++){g.fillStyle='rgba(253,235,243,'+(.013+i*.006)+')';g.beginPath();g.moveTo(i*94-80,0);g.lineTo(i*94+42,0);g.lineTo(i*94+180,560);g.lineTo(i*94+100,560);g.fill()}
- if(index<5)g.drawImage(im,index*276,0,276,272,-18,48,456,467);
- else{
-  let h=im.naturalHeight,w=im.naturalWidth,sh=h*.72,sw=Math.min(w,sh*.83);
-  g.save();g.shadowColor='#05091b';g.shadowBlur=32;
-  g.drawImage(im,(w-sw)*.5,h*.03,sw,sh,-5,16,430,515);g.restore();
- }
- let fog=g.createLinearGradient(0,0,0,560);fog.addColorStop(0,'#07091836');fog.addColorStop(.4,'#0b102100');fog.addColorStop(1,'#090818cb');
- g.fillStyle=fog;g.fillRect(0,0,420,560);
- spell(g,card,index);
- const vignette=g.createRadialGradient(200,250,100,210,260,390);
- vignette.addColorStop(0,'#07091000');vignette.addColorStop(1,'#050611b2');
- g.fillStyle=vignette;g.fillRect(0,0,420,560);
+ const iw=im.naturalWidth,ih=im.naturalHeight;
+ // Cover-crop with a small view shift towards the center of the scene.
+ const target=420/560,source=iw/ih;
+ let sx=0,sy=0,sw=iw,sh=ih;
+ if(source>target){sw=ih*target;sx=(iw-sw)*.5}
+ else{sh=iw/target;sy=(ih-sh)*.40}
+ g.drawImage(im,sx,sy,sw,sh,0,0,420,560);
+ // Keep the painter's palette intact; reserve enchantment for the frame
+ // and the separate interaction state, not for obscuring the painting.
+ const shade=g.createLinearGradient(0,0,0,560);
+ shade.addColorStop(0,'rgba(2,4,12,.04)');
+ shade.addColorStop(.67,'rgba(2,4,12,0)');
+ shade.addColorStop(1,'rgba(3,5,15,.38)');
+ g.fillStyle=shade;g.fillRect(0,0,420,560);
  cache.set(card.id,off);return off;
 }
 function fit(ctx,value,x,y,w,base,min,color,font){
@@ -140,5 +140,5 @@ function aura(ctx,x,y,r,card,t=0){
  ctx.fillStyle=i%5?'#b9d8ff':'#fff0b8';ctx.beginPath();ctx.arc(x+Math.cos(a)*d,y+Math.sin(a)*d,1.3+i%3,0,T);ctx.fill()}
  ctx.restore();
 }
-window.MoonfallCardPolish={draw,aura,getArt:art,getStats:()=>({cachedIllustrations:cache.size,renderer:'Card Atelier'})};
+window.MoonfallCardPolish={draw,aura,getArt:art,getStats:()=>({cachedIllustrations:cache.size,renderer:'Scene Art Replacement',newArtSources:18})};
 })();
