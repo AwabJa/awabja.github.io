@@ -6,8 +6,8 @@ Moonfall is a landscape-first illustrated fantasy card battle. This build has **
 
 ## The run
 
-- Every new run shuffles a twelve-card starter deck: one copy of each starter card. The first five are dealt without replacement, and the deck only reshuffles played/discarded cards when depleted. Restarting shuffles again.
-- Each act contains the Shattered Court's three enemies, with escalating HP, shields and enemy-intent patterns across the Shattered Gate, Blood Chapel and Eclipse Throne.
+- Every new run shuffles a twelve-card starter deck: one copy of each starter card. The first five are dealt without replacement, and the deck only reshuffles played/discarded cards when depleted. Restarting shuffles again. A visible **Redraw Hand** action replaces your five cards once per act; this uses no energy.
+- Each act contains a **different illustrated lineup of three enemies** with escalating HP, shields, enemy-intent patterns and distinct ambient colour grading across the Shattered Gate, Blood Chapel and Eclipse Throne. Six additional self-hosted enemy portraits are documented in [assets/encounters/SOURCES.md](assets/encounters/SOURCES.md).
 - When you clear act 1 or 2, a **native, keyboard/touch-accessible card-forging screen** offers three randomly drawn, never-previously-acquired rewards. Choose one to permanently add it to your deck for the rest of the run. Surviving heroes regain 28% of maximum HP between acts.
 - Clear the third act to win. A loss ends the run.
 - Cards have different costs and effects: attack, focused protection, bleed cleansing, burn, weaken, expose, energy and card draw, and other choices. Enemies telegraph their intended actions.
@@ -23,7 +23,7 @@ The characters on the actual battlefield **remain still illustrations** with cod
 
 ## Controls & implementation
 
-On desktop or phone in landscape, select a foe or ally, tap a card to inspect it, then tap Play or Keep. End Turn resolves enemy intent attacks and draws five cards. Tap Deck to inspect your owned deck and use page controls when it expands. Rewards use native responsive buttons to maintain readable typography on phones. Keyboard: 1–5 cards, E End Turn, H Help, Escape close dialogs.
+On desktop or phone in landscape, select a foe or ally, tap a card to inspect it, then tap Play or Keep. End Turn resolves enemy intent attacks and draws five cards. Tap Deck to inspect your owned deck and use page controls when it expands. Rewards use native responsive buttons to maintain readable typography on phones. Keyboard: 1–5 cards, E End Turn, R Redraw Hand, H Help, Escape close dialogs.
 
 - `game.js` implements deck shuffling, card combat, the three-act state machine and reward choices.
 - `scene-rebuild-prototype.js` renders the illustrated combat.
