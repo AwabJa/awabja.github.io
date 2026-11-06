@@ -64,12 +64,17 @@ function renderReward(){
 }
 
 let inspectorKey='';
+const inspectorDataUrls=new Map();
 function renderCardInspector(){
  const preview=game.preview;
- const visible=mobileInspector.matches&&preview?.type==='card'&&!game.ended;
+ const visible=mobileInspector.matches&&preview?.type==='card'&&!game.ended&&
+   (reducedCardMotion||!preview.at||performance.now()-preview.at>=270);
  inspector.hidden=!visible;inspector.setAttribute('aria-hidden',String(!visible));
  if(!visible){inspectorKey='';return}
- const c=CARDS[preview.index],key=c.id+':'+game.energy+':'+!!preview.readonly;
+ const c=CARDS[preview.index];
+ const painter=window.MoonfallCardPolish;
+ const painted=painter?.getArt(c,preview.index,{cards:cardsArt,portraits,rewards:rewardArt})||null;
+ const key=c.id+':'+game.energy+':'+!!preview.readonly+':'+!!painted;
  if(inspectorKey===key)return;
  inspectorKey=key;
  document.getElementById('cardInspectorName').textContent=c.name;
@@ -77,6 +82,9 @@ function renderCardInspector(){
  document.getElementById('cardInspectorCost').textContent=String(c.cost);
  document.getElementById('cardInspectorDescription').textContent=c.description;
  document.getElementById('cardInspectorFlavor').textContent=c.flavor;
+ inspector.style.setProperty('--card-accent',c.hue);
+ inspector.dataset.rarity=c.rarity.toLowerCase();
+ inspector.dataset.kind=c.kind;
  if(c.portrait!==undefined){
   inspectorArt.style.backgroundImage=`radial-gradient(circle at 50% 40%,${c.hue}55,#14182c 70%),url("assets/illustrated/actor-${c.portrait}.png")`;
   inspectorArt.style.backgroundSize='100% 100%,contain';
@@ -90,6 +98,13 @@ function renderCardInspector(){
   inspectorArt.style.backgroundImage=`radial-gradient(circle at 50% 40%,${c.hue}55,#14182c 70%),url("assets/rewards/reward-${c.rewardArt}.png")`;
   inspectorArt.style.backgroundSize='100% 100%,contain';
   inspectorArt.style.backgroundPosition='center,center';
+ }
+ if(painted){
+  let uri=inspectorDataUrls.get(c.id);
+  if(!uri){uri=painted.toDataURL('image/webp',.86);inspectorDataUrls.set(c.id,uri)}
+  inspectorArt.style.backgroundImage='url("'+uri+'")';
+  inspectorArt.style.backgroundSize='cover';
+  inspectorArt.style.backgroundPosition='center center';
  }
  inspectorPlay.hidden=!!preview.readonly;
  inspectorPlay.disabled=game.energy<c.cost||!!preview.readonly;
@@ -105,6 +120,7 @@ const portraits=Array.from({length:7},(_,i)=>{const img=new Image();img.decoding
 const rewardArt=Array.from({length:6},(_,i)=>{const img=new Image();img.decoding='async';img.src=`assets/rewards/reward-${i}.png?v=moonfall-deck-variety-1`;return img});
 const artwork=[cardsArt];
 cardsArt.src='assets/cards-hd.webp?v=moonfall-clean-sprites-1';
+const reducedCardMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const W=1600,H=800,THEME={gold:'#f1d4a1',cream:'#f7e7d0',muted:'#bac0cb',blue:'#a6cbff',red:'#ef8799',green:'#9be3b6'};
 const CARDS=[
  {id:'shadow',name:'Shadow Step',rarity:'Rare',cost:1,kind:'attack',description:'Deal 90 damage to the selected enemy. If this defeats it, regain 1 energy.',amount:90,flavor:'A blade in the space between moonbeams.',hue:'#c4a6ff'},
@@ -269,8 +285,15 @@ function fittedCardText(value,x,y,maxW,size,minSize,color,font='Georgia',weight=
  const fitted=Math.max(minSize,Math.min(size,size*maxW/Math.max(1,ctx.measureText(String(value)).width)));
  text(value,x,y,fitted,color,font,'center',weight);
 }
-function cardFrame(index,slot,x,y,w,h,large=false){
+function cardFrame(index,slot,x,y,w,h,large=false,options={}){
  const c=CARDS[index];const active=game.energy>=c.cost;
+ if(window.MoonfallCardPolish){
+  window.MoonfallCardPolish.draw(ctx,c,index,x,y,w,h,large,
+   {cards:cardsArt,portraits,rewards:rewardArt},
+   {energy:game.energy,hover:slot===game.hover,selected:!!options.selected,
+    now:options.now||performance.now(),reduced:reducedCardMotion});
+  return;
+ }
  ctx.save();
  ctx.shadowColor=slot===game.hover?'#ffe0a5b5':'#050414d0';
  ctx.shadowBlur=slot===game.hover?30:19;ctx.shadowOffsetY=9;
