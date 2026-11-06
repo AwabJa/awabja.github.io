@@ -426,7 +426,7 @@ function drawDeck(){
  const list=game.history==='discard'?game.discard:[...game.draw,...game.hand,...game.discard];
  const counts=Array(CARDS.length).fill(0);
  list.forEach(n=>{if(Number.isInteger(n)&&counts[n]!==undefined)counts[n]++});
- const indices=counts.map((v,i)=>({v,i})).filter(({v})=>game.history!=='discard'||v>0);
+ const indices=counts.map((v,i)=>({v,i})).filter(({v})=>v>0);
  const totalPages=Math.max(1,Math.ceil(indices.length/12));
  game.deckPage=Math.max(0,Math.min(game.deckPage,totalPages-1));
  const visible=indices.slice(game.deckPage*12,game.deckPage*12+12);
@@ -686,6 +686,9 @@ window.__moonfallFanLayout=()=>handLayout().map(c=>({slot:c.slot,card:CARDS[game
 window.__moonfallTestState=()=>({
  models:window.MoonfallScene?.getStats?.()||null,turn:game.turn,energy:game.energy,maxEnergy:game.maxEnergy,energyTax:game.energyTax,
  cardCount:CARDS.length,artLoaded:portraits.filter(p=>p.complete&&p.naturalWidth>0).length,
+ rewardArtLoaded:rewardArt.filter(p=>p.complete&&p.naturalWidth>0).length,
+ stage:game.stage,owned:[...game.owned],rewardChoices:[...game.rewardChoices],
+ deckPage:game.deckPage,rewardHistory:[...game.rewardHistory],
  hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],
  preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,
  allies:game.allies.map(a=>({hp:a.hp,shield:a.shield,guardTurns:a.guardTurns,retaliate:a.retaliate,bleedTurns:a.bleedTurns})),
