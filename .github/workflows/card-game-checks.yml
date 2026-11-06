@@ -40,12 +40,14 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: moonfall-tactical-cards-visual-check
+          name: moonfall-deck-forging-real-screenshots
           path: |
             card-game/art-preview.png
             card-game/art-preview-phone.png
             card-game/art-preview-spell.png
             card-game/art-preview-deck.png
             card-game/art-preview-new-cards.png
+            card-game/art-preview-reward.png
+            card-game/art-preview-act-two.png
           if-no-files-found: warn
           retention-days: 7
