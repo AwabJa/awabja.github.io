@@ -170,7 +170,15 @@ try {
       assert.equal(new Set([...before.hand,...before.draw]).size,12,'Each starter card appears once, not repeatedly in a fixed copied deck');
       await page.waitForFunction(()=>window.__moonfallTestState().rewardArtLoaded===6,null,{timeout:12000});
       assert.equal((await state()).rewardArtLoaded,6,'All six new illustration files are loaded');
-      // A controlled layout fixture is used *after* checking the genuinely random opening.
+      // A physical touch action changes the hand exactly once, without repeating cards.
+      await click(350,620);
+      const redrawn=await state();
+      assert.equal(redrawn.mulliganAvailable,false,'Redraw consumes the one free reroll per act');
+      assert.equal(redrawn.hand.length,5,'Redraw deals five fresh cards');
+      assert(redrawn.hand.every(card=>!before.hand.includes(card)),'Redraw is genuinely different from the opening five');
+      await click(350,620);
+      assert.deepEqual((await state()).hand,redrawn.hand,'A second redraw in the same act is blocked');
+      // Controlled layout fixture is used *after* verifying genuine random draws and redraw.
       await page.evaluate(()=>window.__moonfallFixture.setOpening());
       // Check real gameplay-related frame transitions, not just code presence.
       await page.evaluate(()=>window.MoonfallScene.cue({kind:'strike',source:1,target:5}));
@@ -304,6 +312,7 @@ try {
       await page.waitForFunction(()=>window.__moonfallTestState().stage===2);
       const second=await state();
       assert.equal(second.owned.length,13,'The selected reward permanently joins this run deck');
+      assert.equal(second.mulliganAvailable,true,'Each new act grants another real redraw choice');
       assert(second.owned.includes(firstRewards[0]),'The chosen unique card is owned');
       assert.equal(second.hand.length,5,'The new encounter starts with a shuffled hand');
       assert.equal(new Set([...second.draw,...second.hand]).size,13,'The new deck has no copied filler cards');
