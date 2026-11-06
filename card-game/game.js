@@ -135,12 +135,17 @@ const FOES=[
  {name:'Night Knight',maxHp:440,x:1380,attack:55}
 ];
 const ENCOUNTERS=['SHATTERED GATE','BLOOD CHAPEL','ECLIPSE THRONE'];
+const ENEMY_LINEUPS=[
+ ['Dusk Reaper','Blood Oracle','Night Knight'],
+ ['Grave Stalker','Veil Seer','Ash Inquisitor'],
+ ['Lich Acolyte','Blood Summoner','Eclipse Warden']
+];
 const STARTER_DECK=Array.from({length:12},(_,i)=>i);
 function makeFoes(stage){
  const factor=[.74,.99,1.18][stage-1]||1;
  return FOES.map((base,i)=>{
    const maxHp=Math.round(base.maxHp*factor);
-   return {...base,maxHp,hp:maxHp,
+   return {...base,name:ENEMY_LINEUPS[stage-1][i],maxHp,hp:maxHp,
     shield:stage===3?(i===2?60:25):stage===2&&i===2?25:0,
     burn:0,burnTurns:0,weakTurns:0,exposedTurns:0};
  });
