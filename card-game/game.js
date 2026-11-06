@@ -25,7 +25,7 @@ function chooseReward(index){
  game.turn=1;game.energy=3;game.maxEnergy=3;game.energyTax=0;
  game.draw=shuffle([...game.owned]);game.hand=[];game.discard=[];
  game.selectedEnemy=0;game.selectedAlly=Math.max(0,aliveAlly());
- game.preview=null;game.deckPage=0;game.handScroll=0;game.hover=-1;
+ game.preview=null;game.deckPage=0;game.handScroll=0;game.hover=-1;game.mulliganAvailable=true;
  game.ended=false;game.rewardChoices=[];
  rewardKey='';rewardPanel.hidden=true;
  clearImpacts();window.MoonfallScene?.reset?.();
@@ -153,7 +153,7 @@ function makeFoes(stage){
 function freshGame(){return {
  allies:ALLIES.map(x=>({...x,hp:x.maxHp,shield:0,guardTurns:0,retaliate:0,bleed:0,bleedTurns:0})),
  foes:makeFoes(1),
- stage:1,owned:[...STARTER_DECK],rewardChoices:[],rewardHistory:[],
+ stage:1,owned:[...STARTER_DECK],rewardChoices:[],rewardHistory:[],mulliganAvailable:true,
  turn:1,energy:3,maxEnergy:3,draw:shuffle([...STARTER_DECK]),
  discard:[],hand:[],energyTax:0,
  selectedEnemy:0,selectedAlly:0,preview:null,history:null,ended:false,guide:false,handScroll:0,
@@ -366,10 +366,13 @@ function drawTable(now){
   const x=130+i*22,y=625;ctx.fillStyle=i<game.energy?'#a2eaf9':'#41455b';
   ctx.beginPath();ctx.moveTo(x,y-8);ctx.lineTo(x+7,y);ctx.lineTo(x,y+8);ctx.lineTo(x-7,y);ctx.closePath();ctx.fill();
  }
- // This is deliberately visible and does NOT modify hit points or spend cards.
- // Show actual tactical information, not an internal animation-test button.
- rr(233,599,245,46,8,'#172034d8','#b4a17d8d',1);
- text('Read enemy intents above their bars',355,623,11,'#dfcbb7','system-ui','center','650');
+ // Genuine tactical agency: one free hand redraw per encounter.
+ rr(225,572,255,88,10,game.mulliganAvailable?'#293b4de8':'#171e2adb',
+  game.mulliganAvailable?'#9dc6d8':'#616674',2);
+ text(game.mulliganAvailable?'REDRAW HAND':'REDRAW USED',352,600,19,
+  game.mulliganAvailable?THEME.cream:'#a0a3ad','Georgia','center','700');
+ text('ONE FREE REROLL PER ACT',352,634,12,'#cbd5dc','system-ui','center','750');
+ register(225,572,255,88,'mulligan',null,game.mulliganAvailable&&!game.ended&&!isResolving());
  cardBack(45,691,56,68,'DECK',game.draw.length);
  cardBack(126,691,56,68,'DISCARD',game.discard.length);
  register(27,660,83,140,'deck');register(111,660,84,140,'discard');
@@ -492,6 +495,14 @@ function markFx(target,words,color,team='enemy'){game.fx.push({target,words,colo
 function actionCue(kind,source,target,delay=0){return window.MoonfallScene?.cue?.({kind,source,target,delay})}
 function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
 function drawToFive(){drawCards(Math.max(0,5-game.hand.length));game.handScroll=0}
+function redrawHand(){
+ if(game.ended||game.preview||isResolving()||!game.mulliganAvailable)return false;
+ game.mulliganAvailable=false;
+ game.discard.push(...game.hand);game.hand=[];
+ drawToFive();
+ announce('Hand redrawn. Your free reroll for this act is used.');
+ return true;
+}
 function selectCard(slot){if(slot<0||slot>=game.hand.length||game.ended)return;game.preview={type:'card',index:game.hand[slot],slot,readonly:false};announce('Card selected. Read its ability, then choose Play Card or Keep in Hand.')}
 function targetDamage(target,damage){
  const foe=game.foes[target];if(!foe||foe.hp<=0)return 0;
@@ -693,7 +704,7 @@ window.__moonfallTestState=()=>({
  cardCount:CARDS.length,artLoaded:portraits.filter(p=>p.complete&&p.naturalWidth>0).length,
  rewardArtLoaded:rewardArt.filter(p=>p.complete&&p.naturalWidth>0).length,
  stage:game.stage,owned:[...game.owned],rewardChoices:[...game.rewardChoices],
- deckPage:game.deckPage,rewardHistory:[...game.rewardHistory],
+ deckPage:game.deckPage,rewardHistory:[...game.rewardHistory],mulliganAvailable:game.mulliganAvailable,
  hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],
  preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,
  allies:game.allies.map(a=>({hp:a.hp,shield:a.shield,guardTurns:a.guardTurns,retaliate:a.retaliate,bleedTurns:a.bleedTurns})),
@@ -724,6 +735,7 @@ function activate(z){if(!z)return;
   case 'deck':game.preview={type:'deck'};game.history='deck';game.deckPage=0;announce('Browse your evolving deck.');break;
   case 'discard':game.preview={type:'deck'};game.history='discard';game.deckPage=0;announce('Discard pile opened.');break;
   case 'end':endTurn();break;
+  case 'mulligan':redrawHand();break;
   case 'restart':clearImpacts();game=freshGame();drawToFive();window.MoonfallScene?.reset?.();announce('New battle started.');break;
   case 'guide':game.preview={type:'guide'};break;
  }
@@ -742,6 +754,7 @@ window.addEventListener('keydown',e=>{
  if(game.preview){if(e.key==='Enter'&&game.preview.type==='card'&&!game.preview.readonly)play();return}
  if(/^([1-9])$/.test(e.key)){selectCard(Number(e.key)-1);return}
  if(e.key.toLowerCase()==='e'){endTurn();return}
+ if(e.key.toLowerCase()==='r'){redrawHand();return}
  if(e.key.toLowerCase()==='h'){game.preview={type:'guide'};return}
  });
 function configureResolution(){
