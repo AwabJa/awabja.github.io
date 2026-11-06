@@ -230,7 +230,7 @@ canvas{display:block;width:100%!important;height:100%!important;touch-action:non
 }
 .reward-choice{border-color:var(--reward-metal,#bca078);overflow:hidden}
 .reward-art{border-color:var(--reward-metal,#bfa87d);position:relative}
-.reward-art img{object-fit:cover}
+.reward-art img{object-fit:cover;object-position:center 18%}
 .reward-art::after{
  content:'';position:absolute;inset:0;pointer-events:none;
  border:1px solid #fff3d047;border-radius:7px;
@@ -244,3 +244,6 @@ canvas{display:block;width:100%!important;height:100%!important;touch-action:non
  .card-inspector:not([hidden]),.card-inspector-art,.card-inspector-art::after{animation:none!important}
  .reward-choice,.reward-art img{transition:none!important}
 }
+
+/* Keep faces and visible spell gestures in view on short landscape screens. */
+@media (max-height:480px){.reward-art{height:clamp(92px,31dvh,138px)}.reward-choice{gap:3px}}
