@@ -1,0 +1,68 @@
+name: Import actual full-scene card illustrations
+on:
+  push:
+    branches: [moonfall-real-card-illustration-replacement]
+    paths:
+      - .github/workflows/moonfall-import-scene-cards.yml
+permissions:
+  contents: write
+jobs:
+  import-illustrations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download 18 separately illustrated CC BY 4.0 tarot scenes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p card-game/assets/card-scenes
+          names=(
+            Swords07.jpg
+            08_Strength.jpg
+            13_Death.jpg
+            14_Temperance.jpg
+            01_Magician.jpg
+            11_Justice.jpg
+            Swords02.jpg
+            17_Star.jpg
+            16_Tower.jpg
+            15_Devil.jpg
+            02_High_Priestess.jpg
+            07_Chariot.jpg
+            19_Sun.jpg
+            Wands08.jpg
+            21_World.jpg
+            04_Emperor.jpg
+            Swords05.jpg
+            20_Judgement.jpg
+          )
+          for i in "${!names[@]}"; do
+            curl --fail --location --retry 3 --silent --show-error --max-time 40 \
+              "https://raw.githubusercontent.com/mixvlad/TarotCards/main/tarot/soimoi/720px/${names[$i]}" \
+              -o "card-game/assets/card-scenes/card-$i.jpg"
+          done
+          python3 - <<'PY'
+          from pathlib import Path
+          files=sorted(Path('card-game/assets/card-scenes').glob('card-*.jpg'))
+          assert len(files)==18,(len(files),'expected 18 distinct images')
+          hashes=set()
+          import hashlib
+          for file in files:
+            data=file.read_bytes()
+            assert len(data)>35000,(file,len(data))
+            assert data.startswith(b'\xff\xd8') and data.endswith(b'\xff\xd9'),file
+            hashes.add(hashlib.sha256(data).digest())
+            print(file,len(data))
+          assert len(hashes)==18,'some cards use identical image files'
+          PY
+      - name: Commit genuine new art
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add card-game/assets/card-scenes
+          if ! git diff --cached --quiet; then
+            git commit -m "Moonfall: replace recycled card portraits with 18 scene paintings"
+            git push origin HEAD:moonfall-real-card-illustration-replacement
+          fi
