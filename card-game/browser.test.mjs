@@ -32,6 +32,10 @@ for(let i=0;i<6;i++){
  assert.equal(png.readUInt32BE(16),384,'Reward illustration is full resolution');
  assert.equal(png.readUInt32BE(20),512,'Reward portrait is proportionate');
 }
+for(let i=0;i<6;i++){
+ const png=await readFile(join(root,'assets/encounters/enemy-'+i+'.png'));
+ assert(png.length>20000&&png.readUInt32BE(16)===384&&png.readUInt32BE(20)===512,'Every new enemy has its own full-size real illustration');
+}
 const paintedBackground=await readFile(join(root,'assets/backdrop2.webp'));
 assert(paintedBackground.length>100000,'High-resolution painted backdrop is available');
 const manifest=JSON.parse(await readFile(join(root,'manifest.webmanifest'),'utf8'));
@@ -304,6 +308,9 @@ try {
       assert.equal(second.hand.length,5,'The new encounter starts with a shuffled hand');
       assert.equal(new Set([...second.draw,...second.hand]).size,13,'The new deck has no copied filler cards');
       assert.equal(second.foes[0].hp,Math.round(330*.99),'The second act has different enemy difficulty');
+      await page.waitForFunction(()=>window.MoonfallScene.getStats().loadedEncounterArtwork===6,null,{timeout:12000});
+      assert.equal(second.foes[0].name,'Grave Stalker','Act two introduces a visually different enemy lineup');
+      await page.waitForTimeout(240);
       if(width===844)await page.screenshot({path:join(root,'art-preview-act-two.png')});
       await page.evaluate(()=>window.__moonfallFixture.winAct());
       await page.locator('#rewardPanel').waitFor({state:'visible'});
@@ -312,6 +319,7 @@ try {
       await page.locator('.reward-choice').last().click();
       await page.waitForFunction(()=>window.__moonfallTestState().stage===3);
       assert.equal((await state()).owned.length,14,'Second drafted illustration is added to the evolving deck');
+      assert.equal((await state()).foes[2].name,'Eclipse Warden','Act three has its own boss character artwork');
       await page.evaluate(()=>window.__moonfallFixture.winAct());
       await page.waitForFunction(()=>window.__moonfallTestState().ended==='win');
       assert.equal(await page.locator('#rewardPanel').isVisible(),false,'The run ends after the third act, not an endless duplicate reward loop');
