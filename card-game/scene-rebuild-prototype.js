@@ -28,6 +28,11 @@ const importedArt=actors.map((_,i)=>{
  sprite.src=window.__moonfallArtSources?.[i]||`assets/illustrated/actor-${i}.png?v=moonfall-imported-art-1`;
  return sprite;
 });
+const encounterArt=Array.from({length:6},(_,i)=>{
+ const sprite=new Image();sprite.decoding='async';
+ sprite.src=`assets/encounters/enemy-${i}.png?v=moonfall-encounters-v1`;
+ return sprite;
+});
 const paintedBackground=new Image();
 paintedBackground.onload=()=>{dirty=true};
 paintedBackground.src=window.__moonfallBackgroundSource||'assets/backdrop2.webp?v=moonfall-imported-art-1';
@@ -144,11 +149,16 @@ function fixedBackground(){
  const veil=linear(bg,0,410,0,555,[[0,'#191d3200'],[.5,'#20223815'],[1,'#080e1e8c']]);bg.fillStyle=veil;bg.fillRect(0,405,W,200);
  dirty=false;backgroundPaints++;
 }
-function atmosphere(now){
+function atmosphere(now,stage=1){
  fog.setTransform(atmo.width/W,0,0,atmo.height/H,0,0);fog.clearRect(0,0,W,H);
+ if(stage>1){
+  const tint=stage===2?'#72394f1d':'#5c4a9c24';
+  fog.fillStyle=tint;fog.fillRect(0,0,W,H);
+ }
+ const mistColor=stage===2?'#c799bd':stage===3?'#ada7e5':'#a0b8de';
  let t=now*.001;
  for(let i=0;i<13;i++){const x=(i*153+(reduced?0:t*([5,-9,8][i%3]))+1900)%1820-110,y=260+(i%4)*43;
-  glow(fog,x,y,97+(i%5)*19,'#a0b8de',.032)}
+  glow(fog,x,y,97+(i%5)*19,mistColor,.032)}
  if(!reduced)for(let i=0;i<22;i++){const x=(i*261+t*(10+i%4*8))%1730-60,y=((i*71+t*(13+i%3*8))%440)+50;
   ellipse(fog,x,y,2.6+rand(i)*2,1.4,'#b84d6998')}
  atmosphereFrames++;
@@ -198,8 +208,8 @@ function blade(g,x,y,c,scale=1){g.save();g.translate(x,y);g.scale(scale,scale);
 function staff(g,x,y,c){g.save();g.translate(x,y);line(g,0,5,13,-141,'#070d22',11);line(g,0,5,13,-141,'#cfb89a',6);
  glow(g,13,-151,34,c.glow,.41);ellipse(g,13,-153,13,16,c.glow,'#ffffffd7',2);
  for(let j=0;j<4;j++){const q=j*T/4;line(g,13,-153,13+Math.cos(q)*25,-153+Math.sin(q)*25,c.trim,2)}g.restore()}
-function drawnCharacter(i,now,hp,selected){
- const img=importedArt[i];
+function drawnCharacter(i,now,hp,selected,stage=1){
+ const img=i>=4&&stage>1?encounterArt[(stage-2)*3+i-4]:importedArt[i];
  if(!img.complete||!img.naturalWidth)return false;
  const c=actors[i],a=actorAnimation(i,now);
  const face=i<4?1:-1,x=positions[i]+a.move,y=ground[i]+a.lift;
@@ -246,8 +256,8 @@ function drawnCharacter(i,now,hp,selected){
  if(a.hurt>0&&hp>0)glow(ctx,x,ground[i]-height*.56,58,c.glow,a.hurt*.1);
  return true;
 }
-function model(i,now,hp,selected){
- if(drawnCharacter(i,now,hp,selected))return;
+function model(i,now,hp,selected,stage=1){
+ if(drawnCharacter(i,now,hp,selected,stage))return;
  const c=actors[i],a=actorAnimation(i,now),x=positions[i]+a.move,y=ground[i]+a.lift,height=c.height;
  const front=i<4?1:-1,scale=height/250;
  const breathing=!reduced&&hp>0?Math.sin(now*.0014+i)*.65:0;
@@ -468,11 +478,12 @@ function foreground(now){
  // Balanced vignette retains readability along the front-line silhouettes.
  ctx.fillStyle=gradient(ctx,800,275,1080,[[0,'#09101d00'],[.65,'#08101a03'],[1,'#030711a1']]);ctx.fillRect(0,0,W,H);
 }
-function render(now,game){sync();if(dirty)fixedBackground();atmosphere(now);ctx.clearRect(0,0,W,H);
+function render(now,game){sync();if(dirty)fixedBackground();atmosphere(now,game.stage||1);ctx.clearRect(0,0,W,H);
  const hp=[...game.allies.map(a=>a.hp),...game.foes.map(f=>f.hp)];
  hp.forEach((value,i)=>{if(previous[i]!=null&&value<previous[i])hits[i]=1;previous[i]=value});
- for(let i=0;i<7;i++)model(i,now,hp[i],i<4?game.selectedAlly===i:game.selectedEnemy===i-4);
+ for(let i=0;i<7;i++)model(i,now,hp[i],i<4?game.selectedAlly===i:game.selectedEnemy===i-4,game.stage||1);
  effects(now);foreground(now);frames++;nowClock=now;
 }
-window.MoonfallScene={render,cue,reset,getStats(){return {mode:'rigged-illustration',actors:7,backgroundFixed:true,backgroundLoaded:true,backgroundPaints,atmosphereFrames,layerCount:4,frames,activeEffects:activeCueCount,lastCue,reducedMotion:reduced,animationStates:[...states],actorOffsets:[...offsets],castAnchors:castPoints.map(p=>({...p})),ground:ground.slice(),riggedParts:7*10,artSystem:'self-hosted painted castle and seven imported illustrated sprites',assetDependencies:7,loadedArtwork:importedArt.filter(a=>a.complete&&a.naturalWidth>0).length,paintedBackgroundLoaded:paintedBackground.complete&&paintedBackground.naturalWidth>0}}};
+window.MoonfallScene={render,cue,reset,getStats(){return {mode:'rigged-illustration',actors:7,backgroundFixed:true,backgroundLoaded:true,backgroundPaints,atmosphereFrames,layerCount:4,frames,activeEffects:activeCueCount,lastCue,reducedMotion:reduced,animationStates:[...states],actorOffsets:[...offsets],castAnchors:castPoints.map(p=>({...p})),ground:ground.slice(),riggedParts:7*10,artSystem:'self-hosted painted castle and seven imported illustrated sprites',assetDependencies:7,loadedArtwork:importedArt.filter(a=>a.complete&&a.naturalWidth>0).length,
+ loadedEncounterArtwork:encounterArt.filter(a=>a.complete&&a.naturalWidth>0).length,paintedBackgroundLoaded:paintedBackground.complete&&paintedBackground.naturalWidth>0}}};
 })();
