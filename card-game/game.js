@@ -435,11 +435,13 @@ function drawTable(now){
 }
 function wrap(value,x,y,maxW,sz=24,color=THEME.cream,lineHeight=35){const words=value.split(' ');let line='';let row=0;ctx.font=`600 ${sz}px system-ui`;for(const word of words){const next=line?line+' '+word:word;if(ctx.measureText(next).width>maxW&&line){text(line,x,y+row*lineHeight,sz,color);line=word;row++}else line=next}if(line)text(line,x,y+row*lineHeight,sz,color);return row+1}
 function overlayFrame(title,sub){ctx.fillStyle='#070a15d9';ctx.fillRect(0,0,W,H);rr(245,95,1110,615,18,gradient(245,95,1110,615,[[0,'#2c2739'],[1,'#121727']]),'#d7b68b',3);text(title,300,142,36,THEME.cream,'Georgia');if(sub)text(sub,300,183,18,'#cbbdcb');pill('✕ CLOSE',1132,112,180,51,'#2a2b3b','#bca17c',19);register(1132,112,180,51,'close')}
-function drawPreview(){
+function drawPreview(now=performance.now()){
  const idx=game.preview.index,c=CARDS[idx];
- overlayFrame('CARD DETAILS','Inspect first. Playing is always a separate decision.');
+ overlayFrame('AWAKEN THIS CARD','Choose its power. The spell does not release until you confirm.');
  const previewWidth=419*(2/3);
- cardFrame(idx,-1,445-previewWidth/2,208,previewWidth,419,true);
+ const hoverY=!reducedCardMotion?Math.sin(now*.0021)*3:0;
+ if(window.MoonfallCardPolish)window.MoonfallCardPolish.aura(ctx,445,400,256,c,now);
+ cardFrame(idx,-1,445-previewWidth/2,208+hoverY,previewWidth,419,true,{selected:true,now});
  text(c.name,650,255,41,THEME.cream,'Georgia');
  text(c.rarity.toUpperCase()+'  ·  '+c.kind.toUpperCase(),650,311,20,c.hue,'system-ui','left','800');
  pill(`${c.cost} ENERGY`,650,346,170,43,'#342c3f','#cda77b',20);
@@ -450,6 +452,26 @@ function drawPreview(){
  pill(affordable?'PLAY CARD':'NOT ENOUGH ENERGY',646,593,337,76,affordable?'#75513de8':'#4e3e44','#e9c28d',25);
  pill('KEEP IN HAND',1003,593,270,76,'#2b2b3d','#bdb5bf',22);
  register(646,593,337,76,'play',null,affordable);register(1003,593,270,76,'close');
+}
+// The first quarter-second of selection is a real in-world animation.
+ // The card comes out of the hand before the inspector or detail screen appears.
+function focusTransition(now){
+ const preview=game.preview,card=CARDS[preview.index];if(!card)return;
+ const t=Math.max(0,Math.min(1,(now-preview.at)/270)),ease=1-Math.pow(1-t,3);
+ ctx.fillStyle='rgba(3,5,18,'+(ease*.82)+')';ctx.fillRect(0,0,W,H);
+ const fan=handLayout(now),source=fan[preview.slot]||{x:730,y:533,w:146.667,h:220,angle:0};
+ const w=source.w+(280-source.w)*ease,h=source.h+(419-source.h)*ease;
+ const x=source.x+(655-source.x)*ease,y=source.y+(177-source.y)*ease;
+ const cx=x+w/2,cy=y+h/2;
+ if(window.MoonfallCardPolish)window.MoonfallCardPolish.aura(ctx,cx,cy,100+235*ease,card,now);
+ ctx.save();ctx.translate(cx,cy);ctx.rotate(source.angle*(1-ease));
+ cardFrame(preview.index,-1,-w/2,-h/2,w,h,ease>.48,{selected:true,now});
+ ctx.restore();
+ if(!reducedCardMotion){
+  ctx.save();ctx.globalCompositeOperation='screen';ctx.strokeStyle=card.hue;
+  ctx.globalAlpha=ease*.53;ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.arc(cx,cy,60+160*ease,-.9,PI*1.65);ctx.stroke();ctx.restore();
+ }
 }
 function drawDeck(){
  overlayFrame(game.history==='discard'?'DISCARD PILE':'YOUR DECK',
@@ -504,8 +526,10 @@ function draw(now=performance.now()){
  }
  zones.length=0;window.MoonfallScene?.render(now,game);ctx.clearRect(0,0,W,H);scene();drawHeader();drawTable(now);drawParticles(now);
  if(game.preview?.type==='card'){
-  if(mobileInspector.matches){ctx.fillStyle='#050914dc';ctx.fillRect(0,0,W,H)}
-  else drawPreview();
+  if(!game.preview.readonly&&!reducedCardMotion&&game.preview.at&&now-game.preview.at<270)
+   focusTransition(now);
+  else if(mobileInspector.matches){ctx.fillStyle='#050914dc';ctx.fillRect(0,0,W,H)}
+  else drawPreview(now);
  }else if(game.preview?.type==='deck')drawDeck();else if(game.preview?.type==='guide')drawGuide();
  renderCardInspector();
  if(game.ended==='win'||game.ended==='lost')drawResult();
@@ -526,7 +550,11 @@ function redrawHand(){
  announce('Hand redrawn. Your free reroll for this act is used.');
  return true;
 }
-function selectCard(slot){if(slot<0||slot>=game.hand.length||game.ended)return;game.preview={type:'card',index:game.hand[slot],slot,readonly:false};announce('Card selected. Read its ability, then choose Play Card or Keep in Hand.')}
+function selectCard(slot){
+ if(slot<0||slot>=game.hand.length||game.ended)return;
+ game.preview={type:'card',index:game.hand[slot],slot,readonly:false,at:performance.now()};
+ announce('Card selected. Read its ability, then choose Play Card or Keep in Hand.');
+}
 function targetDamage(target,damage){
  const foe=game.foes[target];if(!foe||foe.hp<=0)return 0;
  const scaled=Math.max(0,Math.round(damage*(foe.exposedTurns>0?1.3:1)));
