@@ -77,7 +77,7 @@ for (const candidate of [process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/b
 const testingJS=jsRaw.replace(/\}\)\(\);\s*$/, `
  window.__moonfallFixture={
   setOpening(){
-   game.hand=[0,1,2,3,4];game.draw=shuffle(game.owned.filter(i=>i>4));game.discard=[];
+   game.hand=[0,1,2,3,4];game.draw=game.owned.filter(i=>i>4);game.discard=[];
    game.preview=null;game.hover=-1;game.energy=3;
   },
   winAct(){clearImpacts();game.preview=null;game.ended=false;game.foes.forEach(f=>{f.hp=0;f.shield=0});winCheck();}
