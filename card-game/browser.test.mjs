@@ -164,7 +164,8 @@ try {
       assert.equal(before.owned.length,12,'A run begins with twelve unique starter cards');
       assert.equal(before.stage,1,'The run starts with the Shattered Gate');
       assert.equal(new Set([...before.hand,...before.draw]).size,12,'Each starter card appears once, not repeatedly in a fixed copied deck');
-      assert.equal(before.rewardArtLoaded,6,'All six new illustration files are loaded');
+      await page.waitForFunction(()=>window.__moonfallTestState().rewardArtLoaded===6,null,{timeout:12000});
+      assert.equal((await state()).rewardArtLoaded,6,'All six new illustration files are loaded');
       // A controlled layout fixture is used *after* checking the genuinely random opening.
       await page.evaluate(()=>window.__moonfallFixture.setOpening());
       // Check real gameplay-related frame transitions, not just code presence.
