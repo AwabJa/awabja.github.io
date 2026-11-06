@@ -357,8 +357,8 @@ try {
       await page.waitForTimeout(280);
       const activeHand=await page.evaluate(()=>window.__moonfallFanLayout());
       assert(activeHand[2].y<hover.y-16,'Hovered illustration rises above the resting hand');
-      assert(activeHand[1].x<hover.x-20,'The left neighbor spreads away from the focused card');
-      assert(activeHand[3].x>hover.x+2*79+16,'The right neighbor spreads away from the focused card');
+      assert(activeHand[1].x<hover.x-79-16,'The left neighbor spreads away from the focused card');
+      assert(activeHand[3].x>hover.x+79+16,'The right neighbor spreads away from the focused card');
       await page.screenshot({path:join(root,'art-preview-hand-focus.png')});
       await page.mouse.move(rect.x+20,rect.y+20);
       // Capture a real cast mid-flight, not a concept image or idle-only preview.
