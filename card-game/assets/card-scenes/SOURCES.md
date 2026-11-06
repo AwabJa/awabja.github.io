@@ -8,9 +8,9 @@ The original works are tarot-style scenes and do **not** depict Moonfall-specifi
 
 | Card # | Moonfall card | Original Soimoi source file |
 | --- | --- | --- |
-| 0 | Shadow Step | [Swords07.jpg](https://github.com/mixvlad/TarotCards/blob/main/tarot/soimoi/720px/Swords07.jpg) |
+| 0 | Shadow Step | [Swords12.jpg](https://github.com/mixvlad/TarotCards/blob/main/tarot/soimoi/720px/Swords12.jpg) |
 | 1 | Guardian Aegis | [08_Strength.jpg](https://github.com/mixvlad/TarotCards/blob/main/tarot/soimoi/720px/08_Strength.jpg) |
-| 2 | Crimson Bloom | [13_Death.jpg](https://github.com/mixvlad/TarotCards/blob/main/tarot/soimoi/720px/13_Death.jpg) |
+| 2 | Crimson Bloom | [Cups01.jpg](https://github.com/mixvlad/TarotCards/blob/main/tarot/soimoi/720px/Cups01.jpg) |
 | 3 | Healing Wind | [14_Temperance.jpg](https://github.com/mixvlad/TarotCards/blob/main/tarot/soimoi/720px/14_Temperance.jpg) |
 | 4 | Arcane Bolt | [01_Magician.jpg](https://github.com/mixvlad/TarotCards/blob/main/tarot/soimoi/720px/01_Magician.jpg) |
 | 5 | Seraphine’s Vow | [11_Justice.jpg](https://github.com/mixvlad/TarotCards/blob/main/tarot/soimoi/720px/11_Justice.jpg) |
