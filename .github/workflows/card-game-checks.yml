@@ -10,6 +10,10 @@ on:
       - 'card-game/**'
       - '.github/workflows/card-game-checks.yml'
 
+concurrency:
+  group: moonfall-check-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
