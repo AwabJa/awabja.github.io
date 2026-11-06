@@ -174,7 +174,7 @@ function freshGame(){return {
  discard:[],hand:[],energyTax:0,
  selectedEnemy:0,selectedAlly:0,preview:null,history:null,ended:false,guide:false,handScroll:0,
  toast:'Each battle begins with a shuffled hand. Choose cards and react to enemy intents.',
- toastAt:performance.now(),fx:[],lastEffect:null,hover:-1,deckPage:0,initial:true
+ toastAt:performance.now(),fx:[],lastEffect:null,hover:-1,hoverAt:0,deckPage:0,initial:true
 }}
 let game=freshGame();drawToFive();
 
@@ -351,8 +351,12 @@ function cardBack(x,y,w,h,label,count){
  pill(String(count),x+w/2-22,y-17,44,30,'#211b2b','#d4b783',17);
 }
 // Finger-fan layout: preserved 2:3 card ratio, overlapping edges and curved baseline.
-function handLayout(){
+function handLayout(now=performance.now()){
  const n=game.hand.length,mid=(n-1)/2;
+ const active=game.preview?.type==='card'&&!game.preview.readonly?game.preview.slot:game.hover;
+ const entering=game.preview?.type==='card'&&!game.preview.readonly?game.preview.at:game.hoverAt;
+ const phase=active>=0?(reducedCardMotion?1:Math.max(0,Math.min(1,(now-(entering||now))/180))):0;
+ const smooth=phase*phase*(3-2*phase);
  // The viewport is uniformly letterboxed; all card geometry is true 2:3.
  const height=220,width=height*(2/3);
  // A tighter fan leaves a clearer battlefield and makes the cards feel held together.
@@ -364,9 +368,11 @@ function handLayout(){
  return Array.from({length:n},(_,i)=>{
    const d=i-mid,outer=mid?d/mid:0;
    return {
-     slot:i,x:first+i*spacing,
-     y:533+Math.abs(d)*(n<=5?9:5)-(game.hover===i?19:0),
-     w:width,h:height,angle:outer*maxAngle
+     slot:i,
+     x:first+i*spacing+(active<0||i===active?0:(i<active?-1:1)*(18+4*Math.min(2,Math.abs(i-active)-1))*smooth),
+     y:533+Math.abs(d)*(n<=5?9:5)-(i===active?(game.preview?.type==='card'?52:37)*smooth:0),
+     w:width,h:height,
+     angle:outer*maxAngle*(i===active?1-.85*smooth:1)
    };
  });
 }
@@ -414,13 +420,20 @@ function drawTable(now){
  }
  ctx.restore();
  // Draw back-to-front. Raised center cards win overlapping hit tests.
- const fan=handLayout(),middle=(fan.length-1)/2;
+ const fan=handLayout(now),middle=(fan.length-1)/2;
  const order=fan.slice().sort((a,b)=>Math.abs(b.slot-middle)-Math.abs(a.slot-middle));
- // Give the card under the pointer the top layer so its illustration/title are visible.
- if(game.hover>=0){const i=order.findIndex(c=>c.slot===game.hover);if(i>=0)order.push(...order.splice(i,1))}
+ const focusSlot=game.preview?.type==='card'&&!game.preview.readonly?game.preview.slot:game.hover;
+ // Open a pocket of space around the chosen card and paint it last.
+ if(focusSlot>=0){
+  const i=order.findIndex(c=>c.slot===focusSlot);
+  if(i>=0)order.push(...order.splice(i,1));
+  const f=fan[focusSlot],card=CARDS[game.hand[focusSlot]];
+  if(f&&card&&window.MoonfallCardPolish&&!reducedCardMotion)
+   window.MoonfallCardPolish.aura(ctx,f.x+f.w/2,f.y+f.h*.52,120,card,now);
+ }
  for(const c of order){
    ctx.save();ctx.translate(c.x+c.w/2,c.y+c.h*.88);ctx.rotate(c.angle);
-   cardFrame(game.hand[c.slot],c.slot,-c.w/2,-c.h*.88,c.w,c.h);
+   cardFrame(game.hand[c.slot],c.slot,-c.w/2,-c.h*.88,c.w,c.h,false,{selected:c.slot===focusSlot,now});
    ctx.restore();
    register(c.x,c.y,c.w,c.h,'card',c.slot,true,cardPolygon(c));
  }
@@ -470,7 +483,7 @@ function focusTransition(now){
  if(!reducedCardMotion){
   ctx.save();ctx.globalCompositeOperation='screen';ctx.strokeStyle=card.hue;
   ctx.globalAlpha=ease*.53;ctx.lineWidth=2.5;
-  ctx.beginPath();ctx.arc(cx,cy,60+160*ease,-.9,PI*1.65);ctx.stroke();ctx.restore();
+  ctx.beginPath();ctx.arc(cx,cy,60+160*ease,-.9,Math.PI*1.65);ctx.stroke();ctx.restore();
  }
 }
 function drawDeck(){
@@ -794,7 +807,9 @@ function activate(z){if(!z)return;
 function xy(event){const box=canvas.getBoundingClientRect();return {x:(event.clientX-box.left)/box.width*W,y:(event.clientY-box.top)/box.height*H}}
 canvas.addEventListener('pointerdown',e=>{const p=xy(e);pointer={id:e.pointerId,x:p.x,y:p.y,scroll:game.handScroll,moved:false};canvas.setPointerCapture(e.pointerId);});
 canvas.addEventListener('pointermove',e=>{const p=xy(e);if(pointer&&pointer.id===e.pointerId){const dx=p.x-pointer.x,dy=p.y-pointer.y;if(Math.abs(dx)>13&&pointer.y>=480&&pointer.y<800&&pointer.x>=280&&pointer.x<1325){pointer.moved=true;const total=147+Math.max(0,game.hand.length-1)*(game.hand.length<=5?79:60),visible=980,max=Math.max(0,total-visible);game.handScroll=Math.max(0,Math.min(max,pointer.scroll-dx));return}}
- const zone=chooseAction(p.x,p.y);game.hover=zone?.action==='card'?zone.meta:-1;});
+ const zone=chooseAction(p.x,p.y);
+ const nextHover=zone?.action==='card'?zone.meta:-1;
+ if(nextHover!==game.hover){game.hover=nextHover;game.hoverAt=performance.now()}});
 canvas.addEventListener('pointerup',e=>{if(!pointer||pointer.id!==e.pointerId)return;const p=xy(e);const moved=pointer.moved;pointer=null;if(!moved)activate(chooseAction(p.x,p.y));});
 canvas.addEventListener('pointercancel',()=>pointer=null);
 canvas.addEventListener('wheel',e=>{const r=canvas.getBoundingClientRect();const p=xy(e);if(!game.preview&&p.y>475&&p.x>273&&p.x<1330){e.preventDefault();const max=Math.max(0,147+Math.max(0,game.hand.length-1)*(game.hand.length<=5?79:60)-980);game.handScroll=Math.max(0,Math.min(max,game.handScroll+e.deltaY+e.deltaX))}},{passive:false});
