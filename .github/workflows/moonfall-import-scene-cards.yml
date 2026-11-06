@@ -64,5 +64,8 @@ jobs:
           git add card-game/assets/card-scenes
           if ! git diff --cached --quiet; then
             git commit -m "Moonfall: replace recycled card portraits with 18 scene paintings"
+            # Source/README edits may land while the download is in progress.
+            git fetch origin moonfall-real-card-illustration-replacement
+            git rebase origin/moonfall-real-card-illustration-replacement
             git push origin HEAD:moonfall-real-card-illustration-replacement
           fi
