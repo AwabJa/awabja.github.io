@@ -8,19 +8,23 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Moonfall">
 <meta name="mobile-web-app-capable" content="yes">
-<link rel="manifest" href="manifest.webmanifest?v=moonfall-card-atelier-v1">
-<meta name="description" content="Moonfall: an illustrated gothic tactical card game with premium rarity-framed fantasy cards, animated card selection, eighteen abilities and three acts.">
+<link rel="manifest" href="manifest.webmanifest?v=moonfall-scene-paintings-v1">
+<meta name="description" content="Moonfall: a gothic tactical card battle with eighteen individually illustrated painterly fantasy scenes, eighteen abilities and three acts.">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; frame-src 'none'; form-action 'self'; base-uri 'self'">
 <title>Moonfall | Shattered Court</title>
-<link rel="stylesheet" href="style.css?v=moonfall-card-atelier-v1">
-<script src="scene-rebuild-prototype.js?v=moonfall-card-atelier-v1" defer></script>
-<script src="card-polish.js?v=moonfall-card-atelier-v1" defer></script>
-<script src="game.js?v=moonfall-card-atelier-v1" defer></script>
+<link rel="stylesheet" href="style.css?v=moonfall-scene-paintings-v1">
+<script src="scene-rebuild-prototype.js?v=moonfall-scene-paintings-v1" defer></script>
+<script src="card-polish.js?v=moonfall-scene-paintings-v1" defer></script>
+<script src="game.js?v=moonfall-scene-paintings-v1" defer></script>
 </head>
 <body>
 <main class="experience" aria-label="Moonfall game">
   <div class="game-shell" id="gameShell">
+    <aside class="source-art-credit" aria-label="Card art attribution">
+      Card paintings: <a href="https://koz.tv/" target="_blank" rel="noopener noreferrer">Soimoi Tarot · Mike Koz</a>
+      (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>), cropped for Moonfall.
+    </aside>
     <button id="fullscreenButton" type="button" class="fullscreen-button" aria-label="Enter full screen">⛶ FULLSCREEN</button>
     <div id="fullscreenHint" class="fullscreen-hint" hidden role="status"><strong>iPhone fullscreen</strong><span>In Safari, tap Share → Add to Home Screen, then open Moonfall from its icon. The installed game can use the full available display.</span><button id="dismissFullscreenHint" type="button">Got it</button></div>
     <canvas id="sceneBackground" aria-hidden="true"></canvas>
