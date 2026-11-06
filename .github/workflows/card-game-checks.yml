@@ -40,7 +40,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: moonfall-deck-forging-real-screenshots
+          name: moonfall-card-atelier-real-screenshots
           path: |
             card-game/art-preview.png
             card-game/art-preview-phone.png
@@ -49,5 +49,7 @@ jobs:
             card-game/art-preview-new-cards.png
             card-game/art-preview-reward.png
             card-game/art-preview-act-two.png
+            card-game/art-preview-selection.png
+            card-game/art-preview-hand-focus.png
           if-no-files-found: warn
           retention-days: 7
