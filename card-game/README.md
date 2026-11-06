@@ -38,3 +38,9 @@ On desktop or phone in landscape, select a foe or ally, tap a card to inspect it
 - `game.js` implements deck shuffling, card combat, the three-act state machine and reward choices.
 - `scene-rebuild-prototype.js` renders the illustrated combat.
 - `browser.test.mjs` verifies real desktop/mobile gameplay and simulated encounter wins **only through test-instrumented page scripts** (not a production developer/cheat control). The workflow records real screenshots of the reward choice and act transition.
+
+## Illustrated scene-card replacement (candidate artwork)
+
+A new standalone image set in `assets/card-scenes/` assigns **18 separate painted fantasy scenes** to the 18 abilities. It is a genuine replacement of the old cropped character portraits, with a dedicated artist/source and visible CC BY 4.0 in-game credit (see `assets/card-scenes/SOURCES.md`). Selection motion, UI layout and combat mechanics are not being marketed as new art here. The paintings are sourced from Mike Koz's Soimoi Tarot, so they are stylistically coherent but not originally drawn for Moonfall's story or spell names.
+
+The first in-game screenshot review showed that paintings need stronger spell-to-scene correspondence. The Shadow Step and Crimson Bloom scene selections were revised; this branch remains under visual review, not an assertion of completed bespoke spell illustrations.
