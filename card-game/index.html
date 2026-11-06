@@ -8,14 +8,14 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Moonfall">
 <meta name="mobile-web-app-capable" content="yes">
-<link rel="manifest" href="manifest.webmanifest?v=moonfall-tactics-v1">
-<meta name="description" content="Moonfall: a gothic tactical card battle with twelve collectible abilities, challenging telegraphed enemies, and seven illustrated fighters.">
+<link rel="manifest" href="manifest.webmanifest?v=moonfall-deck-forging-v1">
+<meta name="description" content="Moonfall: a gothic tactical card battle with eighteen collectible abilities, challenging telegraphed enemies, and seven illustrated fighters.">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; frame-src 'none'; form-action 'self'; base-uri 'self'">
 <title>Moonfall | Shattered Court</title>
-<link rel="stylesheet" href="style.css?v=moonfall-tactics-v1">
-<script src="scene-rebuild-prototype.js?v=moonfall-tactics-v1" defer></script>
-<script src="game.js?v=moonfall-tactics-v1" defer></script>
+<link rel="stylesheet" href="style.css?v=moonfall-deck-forging-v1">
+<script src="scene-rebuild-prototype.js?v=moonfall-deck-forging-v1" defer></script>
+<script src="game.js?v=moonfall-deck-forging-v1" defer></script>
 </head>
 <body>
 <main class="experience" aria-label="Moonfall game">
@@ -25,7 +25,7 @@
     <canvas id="sceneBackground" aria-hidden="true"></canvas>
     <canvas id="sceneAtmosphere" aria-hidden="true"></canvas>
     <canvas id="sceneWorld" aria-hidden="true"></canvas>
-    <canvas id="game" width="1600" height="800" tabindex="0" aria-label="Illustrated gothic tactical battlefield with twelve distinct cards, enemy intents, spell effects and a fanned card hand. Tap a card to preview, then play it. Select enemy portraits to target.">Your browser must support canvas to play this game.</canvas>
+    <canvas id="game" width="1600" height="800" tabindex="0" aria-label="Illustrated gothic tactical battlefield with eighteen distinct cards, enemy intents, spell effects and a fanned card hand. Tap a card to preview, then play it. Select enemy portraits to target.">Your browser must support canvas to play this game.</canvas>
     <section id="cardInspector" class="card-inspector" role="dialog" aria-modal="true" aria-label="Card details" aria-hidden="true" hidden>
       <div class="card-inspector-art" id="cardInspectorArt" aria-hidden="true"><span class="card-inspector-cost" id="cardInspectorCost"></span></div>
       <div class="card-inspector-content">
@@ -39,6 +39,15 @@
         </div>
       </div>
     </section>
+    <section class="reward-panel" id="rewardPanel" role="dialog" aria-labelledby="rewardTitle" aria-modal="true" hidden>
+      <div class="reward-content">
+        <span class="reward-eyebrow">THE SHATTERED COURT · DECK FORGING</span>
+        <h2 id="rewardTitle">Choose your next card</h2>
+        <p id="rewardSubtitle">A new illustrated ability joins your deck for the next encounter.</p>
+        <div class="reward-choices" id="rewardChoices"></div>
+        <div class="reward-footer">One choice is permanent for this run. Your party regains some health before the next battle.</div>
+      </div>
+    </section>
     <div class="orientation-panel" id="orientationPanel" aria-live="polite">
       <span class="rotate-glyph" aria-hidden="true">↻</span>
       <h1>Turn your phone sideways</h1>
@@ -48,7 +57,7 @@
     <div id="announcer" class="visually-hidden" role="status" aria-live="polite"></div>
     <div class="load-message" id="loadMessage">Preparing the Moonfall battle…</div>
   </div>
-  <p class="below">Gothic tactical battlefield · Twelve card abilities · Enemy intents · Keyboard: 1–5, E, H, Esc</p>
+  <p class="below">Gothic tactical battlefield · Eighteen card abilities · Enemy intents · Keyboard: 1–5, E, H, Esc</p>
 </main>
 </body>
 </html>

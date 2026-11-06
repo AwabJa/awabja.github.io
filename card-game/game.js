@@ -8,6 +8,61 @@ const inspectorArt=document.getElementById('cardInspectorArt');
 const inspectorPlay=document.getElementById('cardInspectorPlay');
 const inspectorCancel=document.getElementById('cardInspectorCancel');
 const mobileInspector=window.matchMedia('(max-width:1050px)');
+const rewardPanel=document.getElementById('rewardPanel');
+const rewardSubtitle=document.getElementById('rewardSubtitle');
+const rewardChoicesNode=document.getElementById('rewardChoices');
+let rewardKey='';
+function chooseReward(index){
+ if(game.ended!=='reward'||isResolving()||!game.rewardChoices.includes(index))return;
+ game.owned.push(index);
+ game.rewardHistory.push(index);
+ game.stage++;
+ game.foes=makeFoes(game.stage);
+ game.allies.forEach(a=>{
+  if(a.hp>0)a.hp=Math.min(a.maxHp,a.hp+Math.round(a.maxHp*.28));
+  a.shield=0;a.guardTurns=0;a.retaliate=0;a.bleed=0;a.bleedTurns=0;
+ });
+ game.turn=1;game.energy=3;game.maxEnergy=3;game.energyTax=0;
+ game.draw=shuffle([...game.owned]);game.hand=[];game.discard=[];
+ game.selectedEnemy=0;game.selectedAlly=Math.max(0,aliveAlly());
+ game.preview=null;game.deckPage=0;game.handScroll=0;game.hover=-1;game.mulliganAvailable=true;
+ game.ended=false;game.rewardChoices=[];
+ rewardKey='';rewardPanel.hidden=true;
+ clearImpacts();window.MoonfallScene?.reset?.();
+ drawToFive();
+ announce(CARDS[index].name+' joined your deck. Entering '+ENCOUNTERS[game.stage-1]+' — Act '+game.stage+' of 3.');
+}
+function renderReward(){
+ const shown=game.ended==='reward'&&!isResolving();
+ rewardPanel.hidden=!shown;
+ if(!shown){rewardKey='';return}
+ const key=game.stage+'|'+game.rewardChoices.join(',');
+ if(key===rewardKey)return;
+ rewardKey=key;
+ rewardSubtitle.textContent='Act '+game.stage+' of 3 complete. Choose one of three new cards to forge into your deck.';
+ rewardChoicesNode.replaceChildren();
+ for(const index of game.rewardChoices){
+  const card=CARDS[index],button=document.createElement('button');
+  button.type='button';button.className='reward-choice';
+  button.setAttribute('aria-label','Add '+card.name+' to your deck and continue');
+  const art=document.createElement('div');art.className='reward-art';
+  art.style.background=`radial-gradient(circle at 45% 42%,${card.hue}77,#111729 72%)`;
+  const img=document.createElement('img');
+  img.src=`assets/rewards/reward-${card.rewardArt}.png?v=moonfall-deck-variety-1`;
+  img.alt='';img.loading='eager';art.appendChild(img);
+  const meta=document.createElement('div');meta.className='reward-meta';
+  const rarity=document.createElement('span');rarity.className='reward-rarity';rarity.textContent=card.rarity+' · '+card.kind;
+  const cost=document.createElement('span');cost.className='reward-cost';cost.textContent=card.cost+' ENERGY';
+  meta.append(rarity,cost);
+  const name=document.createElement('span');name.className='reward-name';name.textContent=card.name;
+  const description=document.createElement('span');description.className='reward-description';description.textContent=card.description;
+  const pick=document.createElement('span');pick.className='reward-pick';pick.textContent='Add to deck';
+  button.append(art,meta,name,description,pick);
+  button.addEventListener('click',()=>chooseReward(index));
+  rewardChoicesNode.appendChild(button);
+ }
+}
+
 let inspectorKey='';
 function renderCardInspector(){
  const preview=game.preview;
@@ -31,6 +86,11 @@ function renderCardInspector(){
   inspectorArt.style.backgroundSize='500% 100%';
   inspectorArt.style.backgroundPosition=(preview.index*25)+'% 50%';
  }
+ if(c.rewardArt!==undefined){
+  inspectorArt.style.backgroundImage=`radial-gradient(circle at 50% 40%,${c.hue}55,#14182c 70%),url("assets/rewards/reward-${c.rewardArt}.png")`;
+  inspectorArt.style.backgroundSize='100% 100%,contain';
+  inspectorArt.style.backgroundPosition='center,center';
+ }
  inspectorPlay.hidden=!!preview.readonly;
  inspectorPlay.disabled=game.energy<c.cost||!!preview.readonly;
  inspectorPlay.textContent=inspectorPlay.disabled?'Not enough energy':'Play card';
@@ -42,6 +102,7 @@ inspectorCancel.addEventListener('click',()=>{game.preview=game.preview?.readonl
 const cardsArt=new Image();
 cardsArt.decoding='async';
 const portraits=Array.from({length:7},(_,i)=>{const img=new Image();img.decoding='async';img.src=`assets/illustrated/actor-${i}.png?v=moonfall-characters-v2`;return img});
+const rewardArt=Array.from({length:6},(_,i)=>{const img=new Image();img.decoding='async';img.src=`assets/rewards/reward-${i}.png?v=moonfall-deck-variety-1`;return img});
 const artwork=[cardsArt];
 cardsArt.src='assets/cards-hd.webp?v=moonfall-clean-sprites-1';
 const W=1600,H=800,THEME={gold:'#f1d4a1',cream:'#f7e7d0',muted:'#bac0cb',blue:'#a6cbff',red:'#ef8799',green:'#9be3b6'};
@@ -57,7 +118,13 @@ const CARDS=[
  {id:'tempest',name:'Kael’s Tempest',rarity:'Epic',cost:3,kind:'chain',description:'Deal 52 lightning damage to every surviving enemy.',amount:52,portrait:3,flavor:'One spell, a thousand crackling stars.',hue:'#9ecbff'},
  {id:'bargain',name:'Reaper’s Bargain',rarity:'Epic',cost:0,kind:'bargain',description:'Selected ally loses 22 health. Gain 1 energy and draw two cards. Cannot sacrifice an ally.',amount:22,portrait:4,flavor:'Even power borrowed from death has a price.',hue:'#e5a3c0'},
  {id:'curse',name:'Oracle’s Curse',rarity:'Rare',cost:1,kind:'hex',description:'Deal 30 damage and weaken the chosen enemy’s attacks by 35% for two rounds.',amount:30,portrait:5,flavor:'Her prophecies become their weaknesses.',hue:'#f4a0b6'},
- {id:'resolve',name:'Night Knight’s Oath',rarity:'Epic',cost:2,kind:'riposte',description:'Give the selected ally 60 shield. Their next blocked enemy strike returns 35 damage.',amount:60,portrait:6,flavor:'A vow engraved on black steel.',hue:'#c2b5e3'}
+ {id:'resolve',name:'Night Knight’s Oath',rarity:'Epic',cost:2,kind:'riposte',description:'Give the selected ally 60 shield. Their next blocked enemy strike returns 35 damage.',amount:60,portrait:6,flavor:'A vow engraved on black steel.',hue:'#c2b5e3'},
+ {id:'ember',name:'Ember Cascade',rarity:'Epic',cost:2,kind:'ignite',description:'Deal 45 damage and apply 18 burn to a selected enemy for three rounds.',amount:45,rewardArt:0,flavor:'One ember wakes a burning sky.',hue:'#ff9e7a'},
+ {id:'thorn',name:'Thorn Arrow',rarity:'Rare',cost:1,kind:'expose',description:'Deal 58 damage and expose the selected enemy for two rounds.',amount:58,rewardArt:1,flavor:'The forest knows its quarry.',hue:'#9de3b2'},
+ {id:'dragon',name:'Dragon Invocation',rarity:'Legendary',cost:3,kind:'chain',description:'Strike all surviving enemies for 72 damage with summoned dragonfire.',amount:72,rewardArt:2,flavor:'Old scales, older oaths.',hue:'#ffb27e'},
+ {id:'iron',name:'Iron Benediction',rarity:'Rare',cost:2,kind:'guard',description:'Protect one ally with 85 shield and draw enemy focus this round.',amount:85,rewardArt:3,flavor:'Fear breaks before the shield.',hue:'#f4d99c'},
+ {id:'duelist',name:'Duelist’s Feint',rarity:'Rare',cost:1,kind:'attackdraw',description:'Strike an enemy for 65 damage, then draw a card.',amount:65,rewardArt:4,flavor:'A false opening conceals a perfect strike.',hue:'#d2b3ff'},
+ {id:'grace',name:'Celestial Grace',rarity:'Epic',cost:3,kind:'healall',description:'Restore 55 health to all living allies and cleanse bleeding.',amount:55,rewardArt:5,flavor:'A light that outlives the eclipse.',hue:'#aedffb'}
 ];
 const ALLIES=[
  {name:'Seraphine',maxHp:190,x:220},{name:'Akari',maxHp:180,x:380},{name:'Elowen',maxHp:185,x:540},{name:'Kael',maxHp:195,x:700}
@@ -67,16 +134,34 @@ const FOES=[
  {name:'Blood Oracle',maxHp:375,x:1220,attack:36},
  {name:'Night Knight',maxHp:440,x:1380,attack:55}
 ];
+const ENCOUNTERS=['SHATTERED GATE','BLOOD CHAPEL','ECLIPSE THRONE'];
+const ENEMY_LINEUPS=[
+ ['Dusk Reaper','Blood Oracle','Night Knight'],
+ ['Grave Stalker','Veil Seer','Ash Inquisitor'],
+ ['Lich Acolyte','Blood Summoner','Eclipse Warden']
+];
+const STARTER_DECK=Array.from({length:12},(_,i)=>i);
+function makeFoes(stage){
+ const factor=[.74,.99,1.18][stage-1]||1;
+ return FOES.map((base,i)=>{
+   const maxHp=Math.round(base.maxHp*factor);
+   return {...base,name:ENEMY_LINEUPS[stage-1][i],maxHp,hp:maxHp,
+    shield:stage===3?(i===2?60:25):stage===2&&i===2?25:0,
+    burn:0,burnTurns:0,weakTurns:0,exposedTurns:0};
+ });
+}
 function freshGame(){return {
  allies:ALLIES.map(x=>({...x,hp:x.maxHp,shield:0,guardTurns:0,retaliate:0,bleed:0,bleedTurns:0})),
- foes:FOES.map(x=>({...x,hp:x.maxHp,shield:0,burn:0,burnTurns:0,weakTurns:0,exposedTurns:0})),
- turn:1,energy:3,maxEnergy:3,
- draw:[0,1,2,3,4,5,6,7,8,9,10,11,0,4,5,1,6,2,7,3,8,4,9,10,11,0,6,4,5,2],
- discard:[],hand:[0,1,2,3,4],energyTax:0,
+ foes:makeFoes(1),
+ stage:1,owned:[...STARTER_DECK],rewardChoices:[],rewardHistory:[],mulliganAvailable:true,
+ turn:1,energy:3,maxEnergy:3,draw:shuffle([...STARTER_DECK]),
+ discard:[],hand:[],energyTax:0,
  selectedEnemy:0,selectedAlly:0,preview:null,history:null,ended:false,guide:false,handScroll:0,
- toast:'Tap a card to inspect it, then choose PLAY CARD.',toastAt:performance.now(),fx:[],lastEffect:null,hover:-1,
- initial:true};}
-let game=freshGame();game.draw=game.draw.slice(5);
+ toast:'Each battle begins with a shuffled hand. Choose cards and react to enemy intents.',
+ toastAt:performance.now(),fx:[],lastEffect:null,hover:-1,deckPage:0,initial:true
+}}
+let game=freshGame();drawToFive();
+
 // Combat state changes land on the same frame as their corresponding animation hits.
 let pendingImpacts=[],afterImpacts=null;
 function isResolving(){return pendingImpacts.length>0||afterImpacts!==null}
@@ -112,6 +197,7 @@ function hpBar(x,y,w,h,amount,total,friend){rr(x,y,w,h,2,'#111621db','#736968',1
  if(ratio>0)rr(x+2,y+2,Math.max(0,(w-4)*ratio),h-4,1,gradient(x,y,w,h,friend?[[0,'#8feaaf'],[1,'#257b72']]:[[0,'#ffa2a4'],[1,'#a03960']]));
 }
 function enemyIntent(i,turn=game.turn){
+ turn+=game.stage-1;
  if(i===0)return turn%3===0?{kind:'reap',label:'REAP',damage:52}:{kind:'bleed',label:'BLEED',damage:39};
  if(i===1)return turn%3===2?{kind:'disrupt',label:'DISRUPT',damage:29}:turn%3===0?{kind:'siphon',label:'SIPHON',damage:40}:{kind:'siphon',label:'DRAIN',damage:34};
  return turn%3===2?{kind:'fortify',label:'FORTIFY',damage:0}:{kind:'crush',label:'CRUSH',damage:58};
@@ -132,7 +218,7 @@ function drawHeader(){
  ctx.fillStyle=grad;ctx.fillRect(0,0,W,106);
  text('✧',31,37,42,THEME.gold,'Georgia');
  text('MOONFALL',79,35,34,THEME.cream,'Georgia','left','700');
- text('TACTICAL COURT',300,39,14,'#e7d4b2','system-ui','left','700');
+ text('ACT '+game.stage+' / 3 · '+ENCOUNTERS[game.stage-1],300,39,14,'#e7d4b2','system-ui','left','700');
  if(isResolving()){
   rr(433,22,179,31,7,'#292239ed','#e7c690bd',1);
   text('✦ RESOLVING',523,38,13,'#ffdfa2','system-ui','center','800');
@@ -203,9 +289,11 @@ function cardFrame(index,slot,x,y,w,h,large=false){
    else{sh=srcW/targetRatio;sy+=Math.max(0,(srcH-sh)/2)}
    ctx.save();ctx.beginPath();ctx.roundRect(dx,dy,dw,dh,4);ctx.clip();
    ctx.drawImage(cardsArt,sx,sy,sw,sh,dx,dy,dw,dh);ctx.restore();
- }else if(c.portrait!==undefined&&portraits[c.portrait].complete&&portraits[c.portrait].naturalWidth>0){
+ }else if((c.portrait!==undefined||c.rewardArt!==undefined)&&
+          (c.rewardArt!==undefined?rewardArt[c.rewardArt]:portraits[c.portrait]).complete&&
+          (c.rewardArt!==undefined?rewardArt[c.rewardArt]:portraits[c.portrait]).naturalWidth>0){
   const dx=x+10,dy=y+(large?39:35),dw=w-20,dh=h-(large?105:93);
-  const art=portraits[c.portrait];
+  const art=c.rewardArt!==undefined?rewardArt[c.rewardArt]:portraits[c.portrait];
   ctx.save();ctx.beginPath();ctx.roundRect(dx,dy,dw,dh,4);ctx.clip();
   ctx.fillStyle=gradient(dx,dy,dw,dh,[[0,c.hue+'8c'],[.42,'#222740'],[1,'#111528']]);ctx.fillRect(dx,dy,dw,dh);
   const artH=dh*.99,artW=artH*art.naturalWidth/art.naturalHeight;
@@ -278,10 +366,13 @@ function drawTable(now){
   const x=130+i*22,y=625;ctx.fillStyle=i<game.energy?'#a2eaf9':'#41455b';
   ctx.beginPath();ctx.moveTo(x,y-8);ctx.lineTo(x+7,y);ctx.lineTo(x,y+8);ctx.lineTo(x-7,y);ctx.closePath();ctx.fill();
  }
- // This is deliberately visible and does NOT modify hit points or spend cards.
- // Show actual tactical information, not an internal animation-test button.
- rr(233,599,245,46,8,'#172034d8','#b4a17d8d',1);
- text('Read enemy intents above their bars',355,623,11,'#dfcbb7','system-ui','center','650');
+ // Genuine tactical agency: one free hand redraw per encounter.
+ rr(225,572,255,88,10,game.mulliganAvailable?'#293b4de8':'#171e2adb',
+  game.mulliganAvailable?'#9dc6d8':'#616674',2);
+ text(game.mulliganAvailable?'REDRAW HAND':'REDRAW USED',352,600,19,
+  game.mulliganAvailable?THEME.cream:'#a0a3ad','Georgia','center','700');
+ text('ONE FREE REROLL PER ACT',352,634,12,'#cbd5dc','system-ui','center','750');
+ register(225,572,255,88,'mulligan',null,game.mulliganAvailable&&!game.ended&&!isResolving());
  cardBack(45,691,56,68,'DECK',game.draw.length);
  cardBack(126,691,56,68,'DISCARD',game.discard.length);
  register(27,660,83,140,'deck');register(111,660,84,140,'discard');
@@ -338,30 +429,42 @@ function drawPreview(){
  register(646,593,337,76,'play',null,affordable);register(1003,593,270,76,'close');
 }
 function drawDeck(){
- overlayFrame(game.history==='discard'?'DISCARD PILE':'YOUR DECK',game.history==='discard'?'Cards already played in this battle.':'Choose a card to inspect. You cannot play it from here.');
+ overlayFrame(game.history==='discard'?'DISCARD PILE':'YOUR DECK',
+  game.history==='discard'?'Cards already played in this encounter.':'Your evolving deck — tap any card to inspect its ability.');
  const list=game.history==='discard'?game.discard:[...game.draw,...game.hand,...game.discard];
- const counts=Array(CARDS.length).fill(0);list.forEach(n=>counts[n]++);
- for(let i=0;i<CARDS.length;i++){
-   if(game.history==='discard'&&!counts[i])continue;
-   const x=319+(i%6)*160,y=230+Math.floor(i/6)*220;
-   cardFrame(i,-1,x,y,140,207,true);
-   pill('×'+counts[i],x+92,y+9,43,29,'#272233','#bd9a7c',15);
-   register(x,y,140,210,'deckcard',i);
- }
- text('Twelve unique cards. Tap any to read its full ability.',800,689,18,'#d9c7c2','system-ui','center');
+ const counts=Array(CARDS.length).fill(0);
+ list.forEach(n=>{if(Number.isInteger(n)&&counts[n]!==undefined)counts[n]++});
+ const indices=counts.map((v,i)=>({v,i})).filter(({v})=>v>0);
+ const totalPages=Math.max(1,Math.ceil(indices.length/12));
+ game.deckPage=Math.max(0,Math.min(game.deckPage,totalPages-1));
+ const visible=indices.slice(game.deckPage*12,game.deckPage*12+12);
+ visible.forEach(({v,i},j)=>{
+  const x=320+(j%6)*160,y=218+Math.floor(j/6)*213;
+  cardFrame(i,-1,x,y,128,192,true);
+  pill('×'+v,x+80,y+8,43,28,'#272233','#bd9a7c',15);
+  register(x,y,130,194,'deckcard',i);
+ });
+ pill('← PREV',305,647,170,47,'#2c2941','#c3a47f',17);
+ pill('NEXT →',1126,647,170,47,'#2c2941','#c3a47f',17);
+ register(305,647,170,47,'deckprev',null,game.deckPage>0);
+ register(1126,647,170,47,'decknext',null,game.deckPage<totalPages-1);
+ text('PAGE '+(game.deckPage+1)+' / '+totalPages+' · '+indices.length+' TYPES · '+list.length+' CARDS',
+  800,671,17,'#dfcbb9','system-ui','center','750');
 }
+
 function drawGuide(){
- overlayFrame('HOW TO PLAY','One battle. Four allies. Three enemies. No complicated setup.');
+ overlayFrame('HOW TO PLAY','One run, three acts, eighteen unique cards. Choose your rewards.');
  const steps=[
-  ['1', 'READ ENEMY INTENTS', 'Each enemy telegraphs BLEED, DRAIN, DISRUPT, FORTIFY or CRUSH above its health bar.'],
-  ['2', 'PLAY YOUR CARDS', 'Twelve unique cards can shield, expose, weaken, heal, or draw more cards. Pick targets carefully.'],
-  ['3', 'PLAN YOUR NEXT TURN', 'End Turn triggers enemy moves, bleeding and shield effects. Survive and defeat the court.']
+  ['1', 'EVERY HAND IS DIFFERENT', 'Your twelve starter cards are shuffled at the beginning of each run. Read the enemy intents.'],
+  ['2', 'THREE DISTINCT ACTS', 'Defeat the enemy court in three increasingly difficult encounters while keeping heroes alive.'],
+  ['3', 'FORGE YOUR OWN DECK', 'After each act, choose one of three new illustrated reward cards for the next encounter.']
  ];
  steps.forEach((v,i)=>{const y=257+i*123;rr(320,y,70,66,16,'#4c3950','#dab780',2);text(v[0],355,y+33,29,THEME.gold,'Georgia','center');text(v[1],415,y+13,24,THEME.cream,'system-ui','left','800');wrap(v[2],415,y+50,760,19,'#cec6d6',29)});
  pill('START BATTLE',619,616,365,66,'#67513c','#f7d49d',25);register(619,616,365,66,'close');
 }
 function drawResult(){
- overlayFrame(game.ended==='win'?'VICTORY — MOONFALL CLEARED':'THE PARTY HAS FALLEN',game.ended==='win'?'All three enemies have been defeated.':'Your four heroes have fallen. Try a different card strategy.');
+ overlayFrame(game.ended==='win'?'VICTORY — ALL THREE ACTS CLEARED':'THE PARTY HAS FALLEN',
+  game.ended==='win'?'Your evolving deck survived every encounter.':'Act '+game.stage+' ended your run. Try a different strategy.');
  text(game.ended==='win'?'✦':'☾',800,340,145,THEME.gold,'Georgia','center');
  text(game.ended==='win'?'THE CATHEDRAL IS YOURS':'YOUR LEGEND IS NOT OVER',800,461,28,THEME.cream,'Georgia','center');
  pill('PLAY AGAIN',604,582,390,70,'#684c3e','#f2d4a4',26);register(604,582,390,70,'restart');
@@ -382,7 +485,8 @@ function draw(now=performance.now()){
   else drawPreview();
  }else if(game.preview?.type==='deck')drawDeck();else if(game.preview?.type==='guide')drawGuide();
  renderCardInspector();
- if(game.ended)drawResult();
+ if(game.ended==='win'||game.ended==='lost')drawResult();
+ renderReward();
  requestAnimationFrame(draw);
 }
 function aliveEnemy(){return game.foes.findIndex(e=>e.hp>0)}
@@ -391,6 +495,14 @@ function markFx(target,words,color,team='enemy'){game.fx.push({target,words,colo
 function actionCue(kind,source,target,delay=0){return window.MoonfallScene?.cue?.({kind,source,target,delay})}
 function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
 function drawToFive(){drawCards(Math.max(0,5-game.hand.length));game.handScroll=0}
+function redrawHand(){
+ if(game.ended||game.preview||isResolving()||!game.mulliganAvailable)return false;
+ game.mulliganAvailable=false;
+ game.discard.push(...game.hand);game.hand=[];
+ drawToFive();
+ announce('Hand redrawn. Your free reroll for this act is used.');
+ return true;
+}
 function selectCard(slot){if(slot<0||slot>=game.hand.length||game.ended)return;game.preview={type:'card',index:game.hand[slot],slot,readonly:false};announce('Card selected. Read its ability, then choose Play Card or Keep in Hand.')}
 function targetDamage(target,damage){
  const foe=game.foes[target];if(!foe||foe.hp<=0)return 0;
@@ -405,8 +517,18 @@ function targetDamage(target,damage){
  return dealt;
 }
 function winCheck(){
- if(game.foes.every(f=>f.hp<=0)){game.ended='win';announce('Victory! The Shattered Court is defeated.')}
- else if(game.allies.every(a=>a.hp<=0)){game.ended='lost';announce('Your party has fallen. Reconsider the enemy intents.')}
+ if(game.ended)return;
+ if(game.foes.every(f=>f.hp<=0)){
+  if(game.stage>=3){game.ended='win';announce('The Eclipse Throne is yours. All three acts cleared.')}
+  else{
+   game.ended='reward';
+   const unlocked=Array.from({length:6},(_,i)=>i+12).filter(i=>!game.owned.includes(i));
+   game.rewardChoices=shuffle(unlocked).slice(0,3);
+   announce('Act '+game.stage+' cleared. Choose one of three new illustrated cards.');
+  }
+ }else if(game.allies.every(a=>a.hp<=0)){
+  game.ended='lost';announce('Your party has fallen in Act '+game.stage+'. Reconsider enemy intents.');
+ }
 }
 function drawCards(count){
  for(let i=0;i<count&&game.hand.length<7;i++){
@@ -426,12 +548,14 @@ function play(){
   announce('The selected ally needs more than '+c.amount+' health for this bargain.');return
  }
  game.energy-=c.cost;game.hand.splice(slot,1);game.discard.push(index);game.preview=null;
- if(c.kind==='attack'||c.kind==='expose'||c.kind==='hex'){
+ if(['attack','expose','hex','attackdraw','ignite'].includes(c.kind)){
   if(enemyTargetIndex>=0)impactCue(index===0?'strike':c.kind==='attack'?'bolt':'hex',
    index===0||c.kind==='expose'?1:3,4+enemyTargetIndex,()=>{
    targetDamage(enemyTargetIndex,c.amount);
    const foe=game.foes[enemyTargetIndex];
    if(c.kind==='expose'&&foe.hp>0){foe.exposedTurns=Math.max(foe.exposedTurns,2);announce(foe.name+' exposed to follow-up attacks.')}
+   if(c.kind==='ignite'&&foe.hp>0){foe.burn=18;foe.burnTurns=Math.max(foe.burnTurns,3);announce(foe.name+' ignited for three rounds.')}
+   if(c.kind==='attackdraw')drawCards(1);
    if(c.kind==='hex'&&foe.hp>0){foe.weakTurns=Math.max(foe.weakTurns,2);announce(foe.name+' weakened for two enemy rounds.')}
    if(index===0&&foe.hp===0){game.energy=Math.min(game.maxEnergy,game.energy+1);announce('Shadow Step refunded 1 energy.')}
    winCheck();
@@ -497,7 +621,7 @@ function resolveEnemyAttacks(){
    },i*180);continue;
   }
   const target=enemyTarget(i,projected);if(target<0)break;
-  const dmg=Math.max(0,Math.round((intent.damage+Math.min(14,(game.turn-1)*3))*(foe.weakTurns>0?.65:1)));
+  const dmg=Math.max(0,Math.round((intent.damage+Math.min(14,(game.turn-1)*3)+(game.stage-1)*4)*(foe.weakTurns>0?.65:1)));
   const predictedBlock=Math.min(projected[target].shield,dmg);
   projected[target].shield-=predictedBlock;
   projected[target].hp=Math.max(0,projected[target].hp-(dmg-predictedBlock));
@@ -578,16 +702,19 @@ window.__moonfallFanLayout=()=>handLayout().map(c=>({slot:c.slot,card:CARDS[game
 window.__moonfallTestState=()=>({
  models:window.MoonfallScene?.getStats?.()||null,turn:game.turn,energy:game.energy,maxEnergy:game.maxEnergy,energyTax:game.energyTax,
  cardCount:CARDS.length,artLoaded:portraits.filter(p=>p.complete&&p.naturalWidth>0).length,
+ rewardArtLoaded:rewardArt.filter(p=>p.complete&&p.naturalWidth>0).length,
+ stage:game.stage,owned:[...game.owned],rewardChoices:[...game.rewardChoices],
+ deckPage:game.deckPage,rewardHistory:[...game.rewardHistory],mulliganAvailable:game.mulliganAvailable,
  hand:[...game.hand],draw:[...game.draw],discard:[...game.discard],
  preview:game.preview?.type||null,selectedEnemy:game.selectedEnemy,selectedAlly:game.selectedAlly,
  allies:game.allies.map(a=>({hp:a.hp,shield:a.shield,guardTurns:a.guardTurns,retaliate:a.retaliate,bleedTurns:a.bleedTurns})),
- foes:game.foes.map(f=>({hp:f.hp,shield:f.shield,burnTurns:f.burnTurns,weakTurns:f.weakTurns,exposedTurns:f.exposedTurns})),
+ foes:game.foes.map(f=>({name:f.name,hp:f.hp,shield:f.shield,burnTurns:f.burnTurns,weakTurns:f.weakTurns,exposedTurns:f.exposedTurns})),
  intents:game.foes.map((f,i)=>f.hp>0?enemyIntent(i):null),
  ended:game.ended,pendingImpacts:pendingImpacts.length,resolving:isResolving(),
  previewCard:game.preview?.type==='card'?CARDS[game.preview.index].id:null
 });
 function activate(z){if(!z)return;
- if(game.ended){if(z.action==='restart'){clearImpacts();game=freshGame();game.draw=game.draw.slice(5);window.MoonfallScene?.reset?.();announce('New battle started.');}return}
+ if(game.ended){if(z.action==='restart'){clearImpacts();game=freshGame();drawToFive();window.MoonfallScene?.reset?.();announce('New battle started.');}return}
  if(isResolving()&&z.action!=='restart')return;
  if(game.preview){
   switch(z.action){
@@ -595,7 +722,9 @@ function activate(z){if(!z)return;
    case 'play':play();return;
    case 'backdeck':game.preview={type:'deck'};return;
    case 'deckcard':game.preview={type:'card',index:z.meta,readonly:true};return;
-   case 'restart':clearImpacts();game=freshGame();game.draw=game.draw.slice(5);window.MoonfallScene?.reset?.();return;
+   case 'decknext':game.deckPage++;return;
+   case 'deckprev':game.deckPage=Math.max(0,game.deckPage-1);return;
+   case 'restart':clearImpacts();game=freshGame();drawToFive();window.MoonfallScene?.reset?.();return;
   }
   return;
  }
@@ -603,27 +732,29 @@ function activate(z){if(!z)return;
   case 'ally':game.selectedAlly=z.meta;announce('Healing target: '+game.allies[z.meta].name+'.');break;
   case 'enemy':game.selectedEnemy=z.meta;announce('Attack target: '+game.foes[z.meta].name+'.');break;
   case 'card':selectCard(z.meta);break;
-  case 'deck':game.preview={type:'deck'};game.history='deck';announce('Your deck is open. Tap a card to inspect it.');break;
-  case 'discard':game.preview={type:'deck'};game.history='discard';announce('Discard pile opened.');break;
+  case 'deck':game.preview={type:'deck'};game.history='deck';game.deckPage=0;announce('Browse your evolving deck.');break;
+  case 'discard':game.preview={type:'deck'};game.history='discard';game.deckPage=0;announce('Discard pile opened.');break;
   case 'end':endTurn();break;
-  case 'restart':clearImpacts();game=freshGame();game.draw=game.draw.slice(5);window.MoonfallScene?.reset?.();announce('New battle started.');break;
+  case 'mulligan':redrawHand();break;
+  case 'restart':clearImpacts();game=freshGame();drawToFive();window.MoonfallScene?.reset?.();announce('New battle started.');break;
   case 'guide':game.preview={type:'guide'};break;
  }
 }
 function xy(event){const box=canvas.getBoundingClientRect();return {x:(event.clientX-box.left)/box.width*W,y:(event.clientY-box.top)/box.height*H}}
 canvas.addEventListener('pointerdown',e=>{const p=xy(e);pointer={id:e.pointerId,x:p.x,y:p.y,scroll:game.handScroll,moved:false};canvas.setPointerCapture(e.pointerId);});
-canvas.addEventListener('pointermove',e=>{const p=xy(e);if(pointer&&pointer.id===e.pointerId){const dx=p.x-pointer.x,dy=p.y-pointer.y;if(Math.abs(dx)>13&&pointer.y>=480&&pointer.y<800&&pointer.x>=280&&pointer.x<1325){pointer.moved=true;const total=194+Math.max(0,game.hand.length-1)*(game.hand.length<=5?148:120),visible=980,max=Math.max(0,total-visible);game.handScroll=Math.max(0,Math.min(max,pointer.scroll-dx));return}}
+canvas.addEventListener('pointermove',e=>{const p=xy(e);if(pointer&&pointer.id===e.pointerId){const dx=p.x-pointer.x,dy=p.y-pointer.y;if(Math.abs(dx)>13&&pointer.y>=480&&pointer.y<800&&pointer.x>=280&&pointer.x<1325){pointer.moved=true;const total=147+Math.max(0,game.hand.length-1)*(game.hand.length<=5?79:60),visible=980,max=Math.max(0,total-visible);game.handScroll=Math.max(0,Math.min(max,pointer.scroll-dx));return}}
  const zone=chooseAction(p.x,p.y);game.hover=zone?.action==='card'?zone.meta:-1;});
 canvas.addEventListener('pointerup',e=>{if(!pointer||pointer.id!==e.pointerId)return;const p=xy(e);const moved=pointer.moved;pointer=null;if(!moved)activate(chooseAction(p.x,p.y));});
 canvas.addEventListener('pointercancel',()=>pointer=null);
-canvas.addEventListener('wheel',e=>{const r=canvas.getBoundingClientRect();const p=xy(e);if(!game.preview&&p.y>475&&p.x>273&&p.x<1330){e.preventDefault();const max=Math.max(0,194+Math.max(0,game.hand.length-1)*(game.hand.length<=5?148:120)-980);game.handScroll=Math.max(0,Math.min(max,game.handScroll+e.deltaY+e.deltaX))}},{passive:false});
+canvas.addEventListener('wheel',e=>{const r=canvas.getBoundingClientRect();const p=xy(e);if(!game.preview&&p.y>475&&p.x>273&&p.x<1330){e.preventDefault();const max=Math.max(0,147+Math.max(0,game.hand.length-1)*(game.hand.length<=5?79:60)-980);game.handScroll=Math.max(0,Math.min(max,game.handScroll+e.deltaY+e.deltaX))}},{passive:false});
 window.addEventListener('keydown',e=>{
  if(e.key==='Escape'){game.preview=null;return}
  if(isResolving())return;
- if(game.ended){if(e.key==='Enter'){clearImpacts();game=freshGame();game.draw=game.draw.slice(5);window.MoonfallScene?.reset?.()}return}
+ if(game.ended){if(e.key==='Enter'){clearImpacts();game=freshGame();drawToFive();window.MoonfallScene?.reset?.()}return}
  if(game.preview){if(e.key==='Enter'&&game.preview.type==='card'&&!game.preview.readonly)play();return}
  if(/^([1-9])$/.test(e.key)){selectCard(Number(e.key)-1);return}
  if(e.key.toLowerCase()==='e'){endTurn();return}
+ if(e.key.toLowerCase()==='r'){redrawHand();return}
  if(e.key.toLowerCase()==='h'){game.preview={type:'guide'};return}
  });
 function configureResolution(){
