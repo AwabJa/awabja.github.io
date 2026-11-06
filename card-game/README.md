@@ -12,6 +12,16 @@ Moonfall is a landscape-first illustrated fantasy card battle. This build has **
 - Clear the third act to win. A loss ends the run.
 - Cards have different costs and effects: attack, focused protection, bleed cleansing, burn, weaken, expose, energy and card draw, and other choices. Enemies telegraph their intended actions.
 
+
+## Card Atelier — four implemented phases
+
+1. **Full-bleed fantasy art composition:** `card-polish.js` repaints each of the 18 existing, distinct, self-hosted illustrations with per-card arcane lighting, lightning, slash trails, shields, petals and healing effects. Art is composed once at 420 × 560 pixels and cached for smooth rendering. This uses the previously licensed source illustrations and does not claim eighteen newly commissioned pieces.
+2. **Premium rarity frames:** card borders, metallic corner engravings, nameplates and gemstone energy costs now vary by Common, Rare, Epic and Legendary rarity. The artwork fills the whole card rather than a small central sticker.
+3. **Animated selection:** on tap, the selected card rises into focus against a dimmed battlefield before the details appear. The desktop preview adds a magical ring and gentle float; the real-pixel mobile inspector shares the same composed painting, accent colour and shine transition.
+4. **Responsive hand:** hovering or focusing a card straightens and raises it, parts adjacent cards, and brings the chosen card above the others without changing card hit zones or mechanics. Reduced-motion preferences disable the decorative animation.
+
+The between-act card reward picker uses those same composited illustrated textures, and controls stay large enough for landscape touch interaction. Browser CI checks the actual selection and neighbor movement and retains desktop/mobile screenshots.
+
 ## Real artwork
 
 - The first five card illustrations are stored in the self-hosted `assets/cards-hd.webp` atlas.

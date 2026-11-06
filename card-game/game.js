@@ -48,8 +48,12 @@ function renderReward(){
   const art=document.createElement('div');art.className='reward-art';
   art.style.background=`radial-gradient(circle at 45% 42%,${card.hue}77,#111729 72%)`;
   const img=document.createElement('img');
-  img.src=`assets/rewards/reward-${card.rewardArt}.png?v=moonfall-deck-variety-1`;
+  const illustration=window.MoonfallCardPolish?.getArt(card,index,{cards:cardsArt,portraits,rewards:rewardArt});
+  img.src=illustration?illustration.toDataURL('image/webp',.86):
+   `assets/rewards/reward-${card.rewardArt}.png?v=moonfall-deck-variety-1`;
   img.alt='';img.loading='eager';art.appendChild(img);
+  button.style.setProperty('--reward-metal',
+   (window.MoonfallCardPolish?.rarityTones?.[card.rarity]||['#d8ba86'])[0]);
   const meta=document.createElement('div');meta.className='reward-meta';
   const rarity=document.createElement('span');rarity.className='reward-rarity';rarity.textContent=card.rarity+' · '+card.kind;
   const cost=document.createElement('span');cost.className='reward-cost';cost.textContent=card.cost+' ENERGY';
@@ -64,12 +68,17 @@ function renderReward(){
 }
 
 let inspectorKey='';
+const inspectorDataUrls=new Map();
 function renderCardInspector(){
  const preview=game.preview;
- const visible=mobileInspector.matches&&preview?.type==='card'&&!game.ended;
+ const visible=mobileInspector.matches&&preview?.type==='card'&&!game.ended&&
+   (reducedCardMotion||!preview.at||performance.now()-preview.at>=270);
  inspector.hidden=!visible;inspector.setAttribute('aria-hidden',String(!visible));
  if(!visible){inspectorKey='';return}
- const c=CARDS[preview.index],key=c.id+':'+game.energy+':'+!!preview.readonly;
+ const c=CARDS[preview.index];
+ const painter=window.MoonfallCardPolish;
+ const painted=painter?.getArt(c,preview.index,{cards:cardsArt,portraits,rewards:rewardArt})||null;
+ const key=c.id+':'+game.energy+':'+!!preview.readonly+':'+!!painted;
  if(inspectorKey===key)return;
  inspectorKey=key;
  document.getElementById('cardInspectorName').textContent=c.name;
@@ -77,6 +86,9 @@ function renderCardInspector(){
  document.getElementById('cardInspectorCost').textContent=String(c.cost);
  document.getElementById('cardInspectorDescription').textContent=c.description;
  document.getElementById('cardInspectorFlavor').textContent=c.flavor;
+ inspector.style.setProperty('--card-accent',c.hue);
+ inspector.dataset.rarity=c.rarity.toLowerCase();
+ inspector.dataset.kind=c.kind;
  if(c.portrait!==undefined){
   inspectorArt.style.backgroundImage=`radial-gradient(circle at 50% 40%,${c.hue}55,#14182c 70%),url("assets/illustrated/actor-${c.portrait}.png")`;
   inspectorArt.style.backgroundSize='100% 100%,contain';
@@ -90,6 +102,13 @@ function renderCardInspector(){
   inspectorArt.style.backgroundImage=`radial-gradient(circle at 50% 40%,${c.hue}55,#14182c 70%),url("assets/rewards/reward-${c.rewardArt}.png")`;
   inspectorArt.style.backgroundSize='100% 100%,contain';
   inspectorArt.style.backgroundPosition='center,center';
+ }
+ if(painted){
+  let uri=inspectorDataUrls.get(c.id);
+  if(!uri){uri=painted.toDataURL('image/webp',.86);inspectorDataUrls.set(c.id,uri)}
+  inspectorArt.style.backgroundImage='url("'+uri+'")';
+  inspectorArt.style.backgroundSize='cover';
+  inspectorArt.style.backgroundPosition='center center';
  }
  inspectorPlay.hidden=!!preview.readonly;
  inspectorPlay.disabled=game.energy<c.cost||!!preview.readonly;
@@ -105,6 +124,7 @@ const portraits=Array.from({length:7},(_,i)=>{const img=new Image();img.decoding
 const rewardArt=Array.from({length:6},(_,i)=>{const img=new Image();img.decoding='async';img.src=`assets/rewards/reward-${i}.png?v=moonfall-deck-variety-1`;return img});
 const artwork=[cardsArt];
 cardsArt.src='assets/cards-hd.webp?v=moonfall-clean-sprites-1';
+const reducedCardMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const W=1600,H=800,THEME={gold:'#f1d4a1',cream:'#f7e7d0',muted:'#bac0cb',blue:'#a6cbff',red:'#ef8799',green:'#9be3b6'};
 const CARDS=[
  {id:'shadow',name:'Shadow Step',rarity:'Rare',cost:1,kind:'attack',description:'Deal 90 damage to the selected enemy. If this defeats it, regain 1 energy.',amount:90,flavor:'A blade in the space between moonbeams.',hue:'#c4a6ff'},
@@ -158,7 +178,7 @@ function freshGame(){return {
  discard:[],hand:[],energyTax:0,
  selectedEnemy:0,selectedAlly:0,preview:null,history:null,ended:false,guide:false,handScroll:0,
  toast:'Each battle begins with a shuffled hand. Choose cards and react to enemy intents.',
- toastAt:performance.now(),fx:[],lastEffect:null,hover:-1,deckPage:0,initial:true
+ toastAt:performance.now(),fx:[],lastEffect:null,hover:-1,hoverAt:0,deckPage:0,initial:true
 }}
 let game=freshGame();drawToFive();
 
@@ -269,8 +289,15 @@ function fittedCardText(value,x,y,maxW,size,minSize,color,font='Georgia',weight=
  const fitted=Math.max(minSize,Math.min(size,size*maxW/Math.max(1,ctx.measureText(String(value)).width)));
  text(value,x,y,fitted,color,font,'center',weight);
 }
-function cardFrame(index,slot,x,y,w,h,large=false){
+function cardFrame(index,slot,x,y,w,h,large=false,options={}){
  const c=CARDS[index];const active=game.energy>=c.cost;
+ if(window.MoonfallCardPolish){
+  window.MoonfallCardPolish.draw(ctx,c,index,x,y,w,h,large,
+   {cards:cardsArt,portraits,rewards:rewardArt},
+   {energy:game.energy,hover:slot===game.hover,selected:!!options.selected,
+    now:options.now||performance.now(),reduced:reducedCardMotion});
+  return;
+ }
  ctx.save();
  ctx.shadowColor=slot===game.hover?'#ffe0a5b5':'#050414d0';
  ctx.shadowBlur=slot===game.hover?30:19;ctx.shadowOffsetY=9;
@@ -328,8 +355,12 @@ function cardBack(x,y,w,h,label,count){
  pill(String(count),x+w/2-22,y-17,44,30,'#211b2b','#d4b783',17);
 }
 // Finger-fan layout: preserved 2:3 card ratio, overlapping edges and curved baseline.
-function handLayout(){
+function handLayout(now=performance.now()){
  const n=game.hand.length,mid=(n-1)/2;
+ const active=game.preview?.type==='card'&&!game.preview.readonly?game.preview.slot:game.hover;
+ const entering=game.preview?.type==='card'&&!game.preview.readonly?game.preview.at:game.hoverAt;
+ const phase=active>=0?(reducedCardMotion?1:Math.max(0,Math.min(1,(now-(entering||now))/180))):0;
+ const smooth=phase*phase*(3-2*phase);
  // The viewport is uniformly letterboxed; all card geometry is true 2:3.
  const height=220,width=height*(2/3);
  // A tighter fan leaves a clearer battlefield and makes the cards feel held together.
@@ -341,9 +372,11 @@ function handLayout(){
  return Array.from({length:n},(_,i)=>{
    const d=i-mid,outer=mid?d/mid:0;
    return {
-     slot:i,x:first+i*spacing,
-     y:533+Math.abs(d)*(n<=5?9:5)-(game.hover===i?19:0),
-     w:width,h:height,angle:outer*maxAngle
+     slot:i,
+     x:first+i*spacing+(active<0||i===active?0:(i<active?-1:1)*(18+4*Math.min(2,Math.abs(i-active)-1))*smooth),
+     y:533+Math.abs(d)*(n<=5?9:5)-(i===active?(game.preview?.type==='card'?52:37)*smooth:0),
+     w:width,h:height,
+     angle:outer*maxAngle*(i===active?1-.85*smooth:1)
    };
  });
 }
@@ -391,13 +424,20 @@ function drawTable(now){
  }
  ctx.restore();
  // Draw back-to-front. Raised center cards win overlapping hit tests.
- const fan=handLayout(),middle=(fan.length-1)/2;
+ const fan=handLayout(now),middle=(fan.length-1)/2;
  const order=fan.slice().sort((a,b)=>Math.abs(b.slot-middle)-Math.abs(a.slot-middle));
- // Give the card under the pointer the top layer so its illustration/title are visible.
- if(game.hover>=0){const i=order.findIndex(c=>c.slot===game.hover);if(i>=0)order.push(...order.splice(i,1))}
+ const focusSlot=game.preview?.type==='card'&&!game.preview.readonly?game.preview.slot:game.hover;
+ // Open a pocket of space around the chosen card and paint it last.
+ if(focusSlot>=0){
+  const i=order.findIndex(c=>c.slot===focusSlot);
+  if(i>=0)order.push(...order.splice(i,1));
+  const f=fan[focusSlot],card=CARDS[game.hand[focusSlot]];
+  if(f&&card&&window.MoonfallCardPolish&&!reducedCardMotion)
+   window.MoonfallCardPolish.aura(ctx,f.x+f.w/2,f.y+f.h*.52,120,card,now);
+ }
  for(const c of order){
    ctx.save();ctx.translate(c.x+c.w/2,c.y+c.h*.88);ctx.rotate(c.angle);
-   cardFrame(game.hand[c.slot],c.slot,-c.w/2,-c.h*.88,c.w,c.h);
+   cardFrame(game.hand[c.slot],c.slot,-c.w/2,-c.h*.88,c.w,c.h,false,{selected:c.slot===focusSlot,now});
    ctx.restore();
    register(c.x,c.y,c.w,c.h,'card',c.slot,true,cardPolygon(c));
  }
@@ -412,11 +452,13 @@ function drawTable(now){
 }
 function wrap(value,x,y,maxW,sz=24,color=THEME.cream,lineHeight=35){const words=value.split(' ');let line='';let row=0;ctx.font=`600 ${sz}px system-ui`;for(const word of words){const next=line?line+' '+word:word;if(ctx.measureText(next).width>maxW&&line){text(line,x,y+row*lineHeight,sz,color);line=word;row++}else line=next}if(line)text(line,x,y+row*lineHeight,sz,color);return row+1}
 function overlayFrame(title,sub){ctx.fillStyle='#070a15d9';ctx.fillRect(0,0,W,H);rr(245,95,1110,615,18,gradient(245,95,1110,615,[[0,'#2c2739'],[1,'#121727']]),'#d7b68b',3);text(title,300,142,36,THEME.cream,'Georgia');if(sub)text(sub,300,183,18,'#cbbdcb');pill('✕ CLOSE',1132,112,180,51,'#2a2b3b','#bca17c',19);register(1132,112,180,51,'close')}
-function drawPreview(){
+function drawPreview(now=performance.now()){
  const idx=game.preview.index,c=CARDS[idx];
- overlayFrame('CARD DETAILS','Inspect first. Playing is always a separate decision.');
+ overlayFrame('AWAKEN THIS CARD','Choose its power. The spell does not release until you confirm.');
  const previewWidth=419*(2/3);
- cardFrame(idx,-1,445-previewWidth/2,208,previewWidth,419,true);
+ const hoverY=!reducedCardMotion?Math.sin(now*.0021)*3:0;
+ if(window.MoonfallCardPolish)window.MoonfallCardPolish.aura(ctx,445,400,256,c,now);
+ cardFrame(idx,-1,445-previewWidth/2,208+hoverY,previewWidth,419,true,{selected:true,now});
  text(c.name,650,255,41,THEME.cream,'Georgia');
  text(c.rarity.toUpperCase()+'  ·  '+c.kind.toUpperCase(),650,311,20,c.hue,'system-ui','left','800');
  pill(`${c.cost} ENERGY`,650,346,170,43,'#342c3f','#cda77b',20);
@@ -427,6 +469,26 @@ function drawPreview(){
  pill(affordable?'PLAY CARD':'NOT ENOUGH ENERGY',646,593,337,76,affordable?'#75513de8':'#4e3e44','#e9c28d',25);
  pill('KEEP IN HAND',1003,593,270,76,'#2b2b3d','#bdb5bf',22);
  register(646,593,337,76,'play',null,affordable);register(1003,593,270,76,'close');
+}
+// The first quarter-second of selection is a real in-world animation.
+ // The card comes out of the hand before the inspector or detail screen appears.
+function focusTransition(now){
+ const preview=game.preview,card=CARDS[preview.index];if(!card)return;
+ const t=Math.max(0,Math.min(1,(now-preview.at)/270)),ease=1-Math.pow(1-t,3);
+ ctx.fillStyle='rgba(3,5,18,'+(ease*.82)+')';ctx.fillRect(0,0,W,H);
+ const fan=handLayout(now),source=fan[preview.slot]||{x:730,y:533,w:146.667,h:220,angle:0};
+ const w=source.w+(280-source.w)*ease,h=source.h+(419-source.h)*ease;
+ const x=source.x+(655-source.x)*ease,y=source.y+(177-source.y)*ease;
+ const cx=x+w/2,cy=y+h/2;
+ if(window.MoonfallCardPolish)window.MoonfallCardPolish.aura(ctx,cx,cy,100+235*ease,card,now);
+ ctx.save();ctx.translate(cx,cy);ctx.rotate(source.angle*(1-ease));
+ cardFrame(preview.index,-1,-w/2,-h/2,w,h,ease>.48,{selected:true,now});
+ ctx.restore();
+ if(!reducedCardMotion){
+  ctx.save();ctx.globalCompositeOperation='screen';ctx.strokeStyle=card.hue;
+  ctx.globalAlpha=ease*.53;ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.arc(cx,cy,60+160*ease,-.9,Math.PI*1.65);ctx.stroke();ctx.restore();
+ }
 }
 function drawDeck(){
  overlayFrame(game.history==='discard'?'DISCARD PILE':'YOUR DECK',
@@ -481,8 +543,10 @@ function draw(now=performance.now()){
  }
  zones.length=0;window.MoonfallScene?.render(now,game);ctx.clearRect(0,0,W,H);scene();drawHeader();drawTable(now);drawParticles(now);
  if(game.preview?.type==='card'){
-  if(mobileInspector.matches){ctx.fillStyle='#050914dc';ctx.fillRect(0,0,W,H)}
-  else drawPreview();
+  if(!game.preview.readonly&&!reducedCardMotion&&game.preview.at&&now-game.preview.at<270)
+   focusTransition(now);
+  else if(mobileInspector.matches){ctx.fillStyle='#050914dc';ctx.fillRect(0,0,W,H)}
+  else drawPreview(now);
  }else if(game.preview?.type==='deck')drawDeck();else if(game.preview?.type==='guide')drawGuide();
  renderCardInspector();
  if(game.ended==='win'||game.ended==='lost')drawResult();
@@ -503,7 +567,11 @@ function redrawHand(){
  announce('Hand redrawn. Your free reroll for this act is used.');
  return true;
 }
-function selectCard(slot){if(slot<0||slot>=game.hand.length||game.ended)return;game.preview={type:'card',index:game.hand[slot],slot,readonly:false};announce('Card selected. Read its ability, then choose Play Card or Keep in Hand.')}
+function selectCard(slot){
+ if(slot<0||slot>=game.hand.length||game.ended)return;
+ game.preview={type:'card',index:game.hand[slot],slot,readonly:false,at:performance.now()};
+ announce('Card selected. Read its ability, then choose Play Card or Keep in Hand.');
+}
 function targetDamage(target,damage){
  const foe=game.foes[target];if(!foe||foe.hp<=0)return 0;
  const scaled=Math.max(0,Math.round(damage*(foe.exposedTurns>0?1.3:1)));
@@ -743,7 +811,9 @@ function activate(z){if(!z)return;
 function xy(event){const box=canvas.getBoundingClientRect();return {x:(event.clientX-box.left)/box.width*W,y:(event.clientY-box.top)/box.height*H}}
 canvas.addEventListener('pointerdown',e=>{const p=xy(e);pointer={id:e.pointerId,x:p.x,y:p.y,scroll:game.handScroll,moved:false};canvas.setPointerCapture(e.pointerId);});
 canvas.addEventListener('pointermove',e=>{const p=xy(e);if(pointer&&pointer.id===e.pointerId){const dx=p.x-pointer.x,dy=p.y-pointer.y;if(Math.abs(dx)>13&&pointer.y>=480&&pointer.y<800&&pointer.x>=280&&pointer.x<1325){pointer.moved=true;const total=147+Math.max(0,game.hand.length-1)*(game.hand.length<=5?79:60),visible=980,max=Math.max(0,total-visible);game.handScroll=Math.max(0,Math.min(max,pointer.scroll-dx));return}}
- const zone=chooseAction(p.x,p.y);game.hover=zone?.action==='card'?zone.meta:-1;});
+ const zone=chooseAction(p.x,p.y);
+ const nextHover=zone?.action==='card'?zone.meta:-1;
+ if(nextHover!==game.hover){game.hover=nextHover;game.hoverAt=performance.now()}});
 canvas.addEventListener('pointerup',e=>{if(!pointer||pointer.id!==e.pointerId)return;const p=xy(e);const moved=pointer.moved;pointer=null;if(!moved)activate(chooseAction(p.x,p.y));});
 canvas.addEventListener('pointercancel',()=>pointer=null);
 canvas.addEventListener('wheel',e=>{const r=canvas.getBoundingClientRect();const p=xy(e);if(!game.preview&&p.y>475&&p.x>273&&p.x<1330){e.preventDefault();const max=Math.max(0,147+Math.max(0,game.hand.length-1)*(game.hand.length<=5?79:60)-980);game.handScroll=Math.max(0,Math.min(max,game.handScroll+e.deltaY+e.deltaX))}},{passive:false});

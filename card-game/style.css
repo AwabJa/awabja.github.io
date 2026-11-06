@@ -177,3 +177,73 @@ canvas{display:block;width:100%!important;height:100%!important;touch-action:non
  .reward-description{line-height:1.17}
  .reward-choice{gap:4px}
 }
+
+/* CARD ATELIER: the same full-bleed illustrated art, rarity metal and enchanted focus
+   across gameplay, inspector and between-act reward picker. */
+@keyframes moonfall-card-enter{
+ from{opacity:.25;transform:translate(-50%,-44%) scale(.93);filter:brightness(1.4)}
+ 70%{opacity:1;filter:brightness(1.12)}
+ to{opacity:1;transform:translate(-50%,-50%) scale(1);filter:brightness(1)}
+}
+@keyframes moonfall-art-breathe{
+ 0%,100%{filter:brightness(1) saturate(1)}
+ 50%{filter:brightness(1.075) saturate(1.13)}
+}
+@keyframes moonfall-art-shine{
+ 0%{transform:translateX(-145%) rotate(24deg);opacity:0}
+ 20%{opacity:.35}
+ 70%,100%{transform:translateX(340%) rotate(24deg);opacity:0}
+}
+@media (max-width:1050px){
+ .card-inspector:not([hidden]){
+  border-color:var(--card-accent,#dab77d);
+  box-shadow:0 0 0 300vmax #030713d7,0 24px 85px #000e,
+   0 0 40px color-mix(in srgb,var(--card-accent,#dab77d) 42%,transparent),
+   inset 0 0 24px #e6b98d25;
+  animation:moonfall-card-enter .32s cubic-bezier(.15,.85,.23,1.04) both;
+ }
+ .card-inspector-art{
+  aspect-ratio:3/4;max-height:calc(100dvh - 50px);
+  border:3px solid var(--card-accent,#d9b574);border-radius:12px;
+  background-size:cover;
+  box-shadow:0 0 0 4px #e7c59325,0 12px 26px #000c,
+   0 0 23px color-mix(in srgb,var(--card-accent,#d9b574) 45%,transparent);
+  animation:moonfall-art-breathe 3.9s ease-in-out infinite;
+  isolation:isolate;overflow:hidden;
+ }
+ .card-inspector-art::after{
+  content:'';position:absolute;inset:-25%;
+  pointer-events:none;
+  background:linear-gradient(90deg,transparent 42%,#ffffff40 51%,transparent 61%);
+  animation:moonfall-art-shine 4.8s ease-in-out infinite;
+  z-index:1;
+ }
+ .card-inspector-cost{z-index:2;border-color:var(--card-accent,#ecd6a8)}
+ .card-inspector-rarity{color:var(--card-accent,#eecb97)}
+ .card-inspector-play{
+  border-color:var(--card-accent,#f4d79d);
+  color:#fff0e0;text-shadow:0 1px 2px #070b20;
+  background:linear-gradient(115deg,#392848,var(--card-accent,#ac7a8d),#2b213c);
+  box-shadow:inset 0 1px #ffffff70,0 0 15px color-mix(in srgb,var(--card-accent,#f4d79d) 35%,transparent);
+ }
+ .card-inspector-play:not(:disabled):active{transform:scale(.96);filter:brightness(1.2)}
+}
+.reward-choice{border-color:var(--reward-metal,#bca078);overflow:hidden}
+.reward-art{border-color:var(--reward-metal,#bfa87d);position:relative}
+.reward-art img{object-fit:cover;object-position:center 18%}
+.reward-art::after{
+ content:'';position:absolute;inset:0;pointer-events:none;
+ border:1px solid #fff3d047;border-radius:7px;
+ box-shadow:inset 0 0 25px #0c102747;
+}
+.reward-choice:hover .reward-art img,.reward-choice:focus-visible .reward-art img{
+ transform:scale(1.06);filter:brightness(1.1) saturate(1.14);
+}
+.reward-art img{transition:transform .25s ease,filter .25s ease}
+@media (prefers-reduced-motion:reduce){
+ .card-inspector:not([hidden]),.card-inspector-art,.card-inspector-art::after{animation:none!important}
+ .reward-choice,.reward-art img{transition:none!important}
+}
+
+/* Keep faces and visible spell gestures in view on short landscape screens. */
+@media (max-height:480px){.reward-art{height:clamp(92px,31dvh,138px)}.reward-choice{gap:3px}}
